@@ -1,0 +1,3228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SIRIUS · GMAZ</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root {
+  --red: #E3000B;
+  --red-dark: #B8000A;
+  --red-light: rgba(227,0,11,0.08);
+  --red-mid: rgba(227,0,11,0.15);
+  --white: #FFFFFF;
+  --bg: #F7F7F7;
+  --bg2: #FFFFFF;
+  --card: #FFFFFF;
+  --brd: #E8E8E8;
+  --brd2: #D0D0D0;
+  --t1: #1A1A1A;
+  --t2: #525252;
+  --t3: #909090;
+  --green: #10B981;
+  --green-bg: rgba(16,185,129,0.1);
+  --yellow: #F59E0B;
+  --yellow-bg: rgba(245,158,11,0.1);
+  --blue: #3B82F6;
+  --blue-bg: rgba(59,130,246,0.1);
+  --r: 12px;
+  --rs: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--t1);
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mono { font-family: 'DM Mono', monospace; }
+
+/* ══════════════════════════════════
+   LOGIN
+══════════════════════════════════ */
+#loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+}
+
+.login-wrap { width: 100%; max-width: 400px; }
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo-icon {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(227,0,11,0.25);
+}
+
+.login-logo h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--t1);
+}
+
+.login-logo p {
+  font-size: 13px;
+  color: var(--t3);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.login-card {
+  background: var(--white);
+  border: 1px solid var(--brd);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+}
+
+.login-field { margin-bottom: 18px; }
+
+.login-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.login-field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  padding: 12px 16px;
+  color: var(--t1);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.login-field input:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(227,0,11,0.12);
+  background: var(--white);
+}
+
+.login-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  border: none;
+  border-radius: var(--rs);
+  padding: 14px;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 8px;
+}
+
+.login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(227,0,11,0.35);
+}
+
+.login-btn:active { transform: scale(0.99); }
+
+.login-error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--rs);
+  padding: 10px 14px;
+  color: #DC2626;
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: none;
+}
+
+.login-version {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 11px;
+  color: var(--t3);
+}
+
+/* ══════════════════════════════════
+   APP HEADER
+══════════════════════════════════ */
+#app { display: none; }
+
+.header {
+  background: var(--white);
+  border-bottom: 1px solid var(--brd);
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 60px;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.header-logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+}
+
+.header-logo-text h1 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--t1);
+  letter-spacing: -0.3px;
+}
+
+.header-logo-text span {
+  font-size: 10px;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  line-height: 1;
+}
+
+/* Semáforo operativo */
+.semaforo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t2);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.semaforo:hover { border-color: var(--red); }
+
+.semaforo-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sem-green { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+.sem-yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(245,158,11,0.5); animation: blink 1.5s infinite; }
+.sem-red { background: var(--red); box-shadow: 0 0 6px rgba(227,0,11,0.5); animation: blink 0.8s infinite; }
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.header-spacer { flex: 1; }
+
+.header-date {
+  font-size: 12px;
+  color: var(--t3);
+  display: none;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  background: var(--red);
+  flex-shrink: 0;
+}
+
+.user-info { line-height: 1.3; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--t1); }
+.user-role { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.logout-btn {
+  background: none;
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  color: var(--t3);
+  padding: 6px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ══════════════════════════════════
+   TABS
+══════════════════════════════════ */
+.tabs-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--brd);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs-bar::-webkit-scrollbar { display: none; }
+
+.tabs-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  padding: 0 20px;
+}
+
+.tab-btn {
+  padding: 14px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-btn:hover { color: var(--t2); }
+.tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+
+.tab-badge {
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ══════════════════════════════════
+   MAIN CONTENT
+══════════════════════════════════ */
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ══════════════════════════════════
+   CARDS Y COMPONENTES
+══════════════════════════════════ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--brd);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--red);
+  border-radius: 2px;
+}
+
+.card-body { padding: 20px; }
+
+/* Summary strip */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--r);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: 0.2s;
+}
+
+.summary-card:hover {
+  border-color: var(--red);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--red), var(--red-dark));
+}
+
+.summary-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--t1);
+  margin-bottom: 4px;
+}
+
+.summary-sub {
+  font-size: 12px;
+  color: var(--t2);
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--r);
+  padding: 20px;
+  transition: 0.2s;
+}
+
+.kpi-card:hover { border-color: var(--red); box-shadow: var(--shadow); }
+
+.kpi-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.kpi-name { font-size: 13px; font-weight: 600; color: var(--t2); }
+
+.kpi-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.kpi-meta { font-size: 12px; color: var(--t3); }
+
+.progress-bar {
+  height: 6px;
+  background: var(--brd);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-yellow { background: var(--yellow-bg); color: #D97706; }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+.badge-gray { background: var(--bg); color: var(--t3); border: 1px solid var(--brd); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+table { width: 100%; border-collapse: collapse; min-width: 600px; }
+
+thead th {
+  background: var(--bg);
+  padding: 11px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--t3);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--brd);
+}
+
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  font-size: 13px;
+  color: var(--t1);
+  white-space: nowrap;
+}
+
+tbody tr:hover td { background: var(--bg); }
+tbody tr:last-child td { border-bottom: none; }
+
+.row-total td {
+  background: var(--bg) !important;
+  font-weight: 700;
+  border-top: 2px solid var(--brd);
+}
+
+.rank-num {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.rank-1 { background: linear-gradient(135deg,#F59E0B,#FBBF24); color: #000; }
+.rank-2 { background: linear-gradient(135deg,#94A3B8,#CBD5E1); color: #000; }
+.rank-3 { background: linear-gradient(135deg,#B45309,#D97706); color: #fff; }
+.rank-other { background: var(--bg); color: var(--t3); border: 1px solid var(--brd); }
+
+.mini-bar {
+  width: 80px; height: 5px;
+  background: var(--brd);
+  border-radius: 3px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.mini-fill { height: 100%; border-radius: 3px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--rs);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s;
+}
+
+.btn-primary {
+  background: var(--red);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--red-dark);
+  box-shadow: 0 4px 16px rgba(227,0,11,0.3);
+}
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--t2);
+  border: 1px solid var(--brd);
+}
+
+.btn-secondary:hover { border-color: var(--red); color: var(--red); }
+
+.btn-success { background: var(--green); color: white; }
+.btn-danger { background: #EF4444; color: white; }
+.btn-warning { background: var(--yellow); color: white; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* Forms */
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  padding: 10px 14px;
+  color: var(--t1);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.form-control:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(227,0,11,0.1);
+  background: var(--white);
+}
+
+select.form-control { cursor: pointer; }
+
+/* Grids */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+/* Alerts */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--rs);
+  font-size: 13px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.alert-red { background: rgba(227,0,11,0.08); border: 1px solid rgba(227,0,11,0.2); color: #B91C1C; border-left: 3px solid var(--red); }
+.alert-yellow { background: var(--yellow-bg); border: 1px solid rgba(245,158,11,0.3); color: #92400E; border-left: 3px solid var(--yellow); }
+.alert-green { background: var(--green-bg); border: 1px solid rgba(16,185,129,0.3); color: #065F46; border-left: 3px solid var(--green); }
+.alert-blue { background: var(--blue-bg); border: 1px solid rgba(59,130,246,0.3); color: #1E40AF; border-left: 3px solid var(--blue); }
+
+/* Section */
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::before {
+  content: '';
+  width: 3px; height: 16px;
+  background: var(--red);
+  border-radius: 2px;
+}
+
+/* Upload area */
+.upload-area {
+  border: 2px dashed var(--brd2);
+  border-radius: var(--r);
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+  background: var(--bg);
+}
+
+.upload-area:hover { border-color: var(--red); background: var(--red-light); }
+.upload-area.loaded { border-color: var(--green); border-style: solid; background: var(--green-bg); }
+
+.upload-area input { display: none; }
+
+.upload-icon { font-size: 32px; margin-bottom: 12px; }
+.upload-title { font-size: 14px; font-weight: 600; color: var(--t1); margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--t3); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--white);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--brd);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title { font-size: 16px; font-weight: 700; }
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--t3);
+  line-height: 1;
+  padding: 4px;
+}
+
+.modal-body { padding: 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--brd); display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--t1);
+  color: white;
+  padding: 12px 20px;
+  border-radius: var(--rs);
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 2000;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: 0.3s;
+  max-width: 300px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* Ruta card */
+.ruta-card {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--r);
+  padding: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+
+.ruta-card:hover { border-color: var(--red); box-shadow: var(--shadow); transform: translateY(-1px); }
+.ruta-card.asignada { border-left: 3px solid var(--green); }
+.ruta-card.pendiente { border-left: 3px solid var(--yellow); }
+.ruta-card.bloqueada { border-left: 3px solid var(--red); }
+
+.ruta-codigo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+.ruta-tipo { font-size: 11px; color: var(--t3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.ruta-tripulacion { font-size: 12px; color: var(--t2); line-height: 1.8; }
+
+.rutas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* Charts */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--r);
+  padding: 20px;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.chart-container { position: relative; height: 220px; }
+
+/* Rechazo card */
+.rechazo-item {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: 0.2s;
+}
+
+.rechazo-item:hover { box-shadow: var(--shadow); }
+.rechazo-item.pendiente { border-left: 3px solid var(--red); }
+.rechazo-item.respondido { border-left: 3px solid var(--yellow); }
+.rechazo-item.aprobado { border-left: 3px solid var(--green); }
+.rechazo-item.rechazado { border-left: 3px solid var(--t3); }
+
+.rechazo-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.rechazo-ruta { font-size: 14px; font-weight: 700; }
+.rechazo-cliente { font-size: 13px; color: var(--t2); flex: 1; }
+.rechazo-sku { font-size: 11px; color: var(--t3); }
+
+.rechazo-body { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.rechazo-dato { text-align: center; }
+.rechazo-dato-val { font-size: 16px; font-weight: 700; }
+.rechazo-dato-lab { font-size: 10px; color: var(--t3); text-transform: uppercase; }
+
+.countdown {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--red);
+  background: var(--red-light);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Comisión bar */
+.comision-bar {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.comision-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+.comision-title { font-size: 12px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; }
+.comision-pct { font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-date { display: none; }
+  .main { padding: 16px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-value { font-size: 20px; }
+  .summary-value { font-size: 22px; }
+  .user-info { display: none; }
+  .header-logo-text span { display: none; }
+}
+
+@media (max-width: 480px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr; }
+  .rutas-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--brd2); border-radius: 3px; }
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--t3);
+  gap: 12px;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--brd);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--t3);
+}
+
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-size: 16px; font-weight: 600; color: var(--t2); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; }
+
+/* Share buttons */
+.share-btns { display: flex; gap: 6px; }
+.share-btn {
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.share-btn:hover { border-color: var(--red); }
+
+/* Screenshot mode */
+.screenshot-mode {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 3000;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.ss-header { text-align: center; padding: 20px 0; border-bottom: 2px solid var(--red); margin-bottom: 20px; }
+.ss-header h2 { font-size: 22px; font-weight: 700; color: var(--red); }
+.ss-header p { font-size: 13px; color: var(--t3); margin-top: 4px; }
+.ss-footer { text-align: center; padding: 16px 0; border-top: 1px solid var(--brd); margin-top: 20px; font-size: 12px; color: var(--t3); }
+.ss-close { position: fixed; top: 16px; right: 16px; background: var(--red); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     LOGIN
+════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-logo-icon">🚛</div>
+      <h1>SIRIUS</h1>
+      <p>Sistema Integral de Reparto Inteligente · GMAZ</p>
+    </div>
+    <div class="login-card">
+      <div class="login-error" id="loginError"></div>
+      <div class="login-field">
+        <label>Correo electrónico</label>
+        <input type="email" id="loginEmail" placeholder="usuario@gmaz.co" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Ingresar a SIRIUS →</button>
+    </div>
+    <div class="login-version">SIRIUS v1.0 · GMAZ Pasto · 2026</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     APP
+════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <div class="header-logo-icon">🚛</div>
+        <div class="header-logo-text">
+          <h1>SIRIUS</h1>
+          <span>GMAZ · Pasto</span>
+        </div>
+      </div>
+
+      <div class="semaforo" id="semaforo" onclick="showSemaforoDetail()" title="Estado operativo">
+        <div class="semaforo-dot sem-green" id="semaforoDot"></div>
+        <span id="semaforoText">Verificando...</span>
+      </div>
+
+      <div class="header-spacer"></div>
+
+      <div class="header-date" id="headerDate"></div>
+
+      <div class="user-badge">
+        <div class="user-avatar" id="userAvatar">--</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">--</div>
+          <div class="user-role" id="userRole">--</div>
+        </div>
+      </div>
+
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <div class="tabs-inner" id="tabsInner"></div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main" id="mainContent"></div>
+
+</div>
+
+<!-- Modal genérico -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">—</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONFIGURACIÓN SUPABASE
+// ════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://arcymdurfmlubtgfyawn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Li-TF25-1ymiAJJ8ava4YA_5M0FTIUv';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════════════════
+let currentUser = null;
+let currentUserData = null;
+let currentTab = null;
+let dataCargue = [];
+let dataLiquidacion = [];
+let semaforoInterval = null;
+let realtimeChannels = [];
+
+// Definición de tabs por rol
+const TABS_CONFIG = {
+  coordinador: [
+    { id: 'resumen',    label: '📊 Resumen',       fn: renderResumen },
+    { id: 'asignacion', label: '🚛 Asignación',    fn: renderAsignacion },
+    { id: 'cargue',     label: '📂 Cargue SAP',    fn: renderCargue },
+    { id: 'rechazos',   label: '⚠️ Rechazos',      fn: renderRechazos },
+    { id: 'ranking',    label: '🏆 Ranking',        fn: renderRanking },
+    { id: 'cartera',    label: '💰 Cartera',        fn: renderCartera },
+    { id: 'comisiones', label: '💵 Comisiones',     fn: renderComisiones },
+    { id: 'personal',   label: '👥 Personal',       fn: renderPersonal },
+    { id: 'flota',      label: '🚗 Flota',          fn: renderFlota },
+    { id: 'admin',      label: '⚙️ Admin',          fn: renderAdmin },
+  ],
+  gerencia: [
+    { id: 'resumen',    label: '📊 Resumen',        fn: renderResumen },
+    { id: 'rechazos',   label: '⚠️ Rechazos',       fn: renderRechazos },
+    { id: 'ranking',    label: '🏆 Ranking',         fn: renderRanking },
+    { id: 'cartera',    label: '💰 Cartera',         fn: renderCartera },
+    { id: 'comisiones', label: '💵 Comisiones',      fn: renderComisiones },
+  ],
+  liquidadora: [
+    { id: 'cartera',    label: '💰 Cartera',         fn: renderCartera },
+    { id: 'rechazos',   label: '⚠️ Rechazos',        fn: renderRechazos },
+  ],
+  tesorero: [
+    { id: 'cartera',    label: '💰 Cartera',         fn: renderCartera },
+  ],
+  conductor: [
+    { id: 'ranking',    label: '🏆 Ranking',         fn: renderRanking },
+    { id: 'rechazos',   label: '⚠️ Mis Rechazos',    fn: renderRechazos },
+    { id: 'comisiones', label: '💵 Mi Comisión',     fn: renderComisiones },
+  ],
+};
+
+const TIPO_LABELS = {
+  reparto: 'Reparto', mayorista: 'Mayorista Lista T', autoventa: 'Autoventa'
+};
+
+const CAUSA_LABELS = {
+  CLIENTE_CERRADO: 'Cliente cerrado / no encontrado',
+  PEDIDO_ERRONEO_VENDEDOR: 'Pedido erróneo por vendedor',
+  PRODUCTO_DANADO: 'Producto dañado o en mal estado',
+  CLIENTE_SIN_DINERO: 'Cliente sin dinero en el momento',
+  CARTERA_VENCIDA: 'Cartera vencida del cliente',
+  OTRO: 'Otro motivo',
+};
+
+const ESTADO_CONFIG = {
+  PENDIENTE:       { label: 'Pendiente respuesta', color: 'red', icon: '🔴' },
+  RESPONDIDO:      { label: 'Respondido',           color: 'yellow', icon: '🟡' },
+  VENCIDO:         { label: 'Vencido (48h)',         color: 'red', icon: '⏰' },
+  EN_REVISION:     { label: 'En revisión',           color: 'blue', icon: '🔵' },
+  APROBADO_COORD:  { label: 'Aprobado coordinador',  color: 'green', icon: '✅' },
+  PEND_GERENCIA:   { label: 'Pend. gerencia',        color: 'yellow', icon: '⏳' },
+  APROBADO_TOTAL:  { label: 'Aprobado',              color: 'green', icon: '✅' },
+  RECHAZADO:       { label: 'Rechazado',             color: 'gray', icon: '❌' },
+  RE_ESCALADO:     { label: 'Re-escalado',           color: 'blue', icon: '🔄' },
+};
+
+// ════════════════════════════════════════════════════════
+// UTILIDADES
+// ════════════════════════════════════════════════════════
+const fmtCOP = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n||0);
+const fmtN = n => (parseFloat(n)||0).toFixed(1);
+const fmtPct = n => (parseFloat(n)||0).toFixed(1)+'%';
+const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+
+function colorPct(p) {
+  if(p>=97) return 'var(--green)';
+  if(p>=85) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+function diasParaVencer(fecha) {
+  if(!fecha) return null;
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const venc = new Date(fecha+'T00:00:00');
+  return Math.floor((venc-hoy)/(1000*60*60*24));
+}
+
+function estadoDocumento(fecha) {
+  if(!fecha) return { tipo: 'sin_fecha', label: 'Sin fecha', color: 'gray' };
+  const dias = diasParaVencer(fecha);
+  if(dias < 0) return { tipo: 'vencido', label: `Vencido hace ${Math.abs(dias)} días`, color: 'red' };
+  if(dias <= 7) return { tipo: 'critico', label: `Vence en ${dias} días`, color: 'red' };
+  if(dias <= 30) return { tipo: 'alerta', label: `Vence en ${dias} días`, color: 'yellow' };
+  return { tipo: 'ok', label: `Vigente (${dias} días)`, color: 'green' };
+}
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  const colors = { info:'#1A1A1A', success:'#065F46', error:'#B91C1C', warning:'#92400E' };
+  t.style.background = colors[type]||colors.info;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function openModal(title, body, footer='') {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFooter').innerHTML = footer;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+async function auditLog(accion, tabla, registro_id, detalle) {
+  try {
+    await sb.from('auditoria').insert({
+      usuario_email: currentUser.email,
+      accion,
+      tabla_afectada: tabla,
+      registro_id,
+      detalle,
+    });
+  } catch(e) { console.warn('Audit log error:', e); }
+}
+
+// ════════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if(!email || !pass) {
+    errEl.textContent = 'Ingresa tu correo y contraseña.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error) throw error;
+    currentUser = data.user;
+    await loadUserData();
+    launchApp();
+  } catch(e) {
+    errEl.textContent = 'Correo o contraseña incorrectos. Intenta de nuevo.';
+    errEl.style.display = 'block';
+    document.getElementById('loginPass').value = '';
+  }
+}
+
+async function loadUserData() {
+  const { data } = await sb.from('usuarios').select('*').eq('email', currentUser.email).single();
+  currentUserData = data;
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentUserData = null;
+  realtimeChannels.forEach(c => sb.removeChannel(c));
+  realtimeChannels = [];
+  if(semaforoInterval) clearInterval(semaforoInterval);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+    doLogin();
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// LAUNCH APP
+// ════════════════════════════════════════════════════════
+async function launchApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Header
+  const rol = currentUserData?.rol || 'conductor';
+  const nombre = currentUserData?.nombre_completo || currentUser.email;
+  const ini = nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+
+  document.getElementById('userAvatar').textContent = ini;
+  document.getElementById('userName').textContent = nombre;
+  document.getElementById('userRole').textContent = {
+    coordinador: 'Coordinador', gerencia: 'Gerencia',
+    liquidadora: 'Liquidadora', tesorero: 'Tesorero', conductor: 'Conductor'
+  }[rol] || rol;
+
+  document.getElementById('headerDate').textContent =
+    new Date().toLocaleDateString('es-CO',{weekday:'long',day:'2-digit',month:'long'}).toUpperCase();
+  document.getElementById('headerDate').style.display = 'block';
+
+  // Tabs
+  buildTabs();
+
+  // Semáforo
+  await updateSemaforo();
+  semaforoInterval = setInterval(updateSemaforo, 60000);
+
+  // Realtime subscriptions
+  setupRealtime();
+
+  // Render first tab
+  const tabs = TABS_CONFIG[rol] || TABS_CONFIG.conductor;
+  if(tabs.length) switchTab(tabs[0].id);
+
+  // Audit
+  await auditLog('LOGIN', 'usuarios', null, { rol });
+}
+
+function buildTabs() {
+  const rol = currentUserData?.rol || 'conductor';
+  const tabs = TABS_CONFIG[rol] || [];
+  const inner = document.getElementById('tabsInner');
+  inner.innerHTML = '';
+  tabs.forEach((t,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i===0?' active':'');
+    btn.id = 'tab-' + t.id;
+    btn.innerHTML = t.label;
+    btn.onclick = () => switchTab(t.id);
+    inner.appendChild(btn);
+  });
+  currentTab = tabs[0]?.id;
+}
+
+function switchTab(id) {
+  const rol = currentUserData?.rol || 'conductor';
+  const tabs = TABS_CONFIG[rol] || [];
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('tab-' + id);
+  if(btn) btn.classList.add('active');
+  currentTab = id;
+  const def = tabs.find(t => t.id === id);
+  if(def) def.fn();
+}
+
+function setupRealtime() {
+  const ch = sb.channel('sirius-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'rechazos' }, () => {
+      updateBadge('rechazos');
+      if(currentTab === 'rechazos') renderRechazos();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'asignacion_diaria' }, () => {
+      if(currentTab === 'asignacion') renderAsignacion();
+    })
+    .subscribe();
+  realtimeChannels.push(ch);
+}
+
+// ════════════════════════════════════════════════════════
+// SEMÁFORO
+// ════════════════════════════════════════════════════════
+async function updateSemaforo() {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    const alertas = [];
+
+    // Licencias vencidas o próximas
+    const { data: personal } = await sb.from('personal')
+      .select('nombre_completo,fecha_vencimiento_licencia')
+      .eq('activo', true);
+
+    if(personal) {
+      personal.forEach(p => {
+        const est = estadoDocumento(p.fecha_vencimiento_licencia);
+        if(est.tipo === 'vencido') alertas.push({ nivel: 'rojo', msg: `Licencia vencida: ${p.nombre_completo}` });
+        else if(est.tipo === 'critico' || est.tipo === 'alerta') alertas.push({ nivel: 'amarillo', msg: `Licencia próxima: ${p.nombre_completo}` });
+      });
+    }
+
+    // Vehículos
+    const { data: vehiculos } = await sb.from('vehiculos').select('placa,soat_vencimiento,revision_tecnica_vencimiento').eq('activo', true);
+    if(vehiculos) {
+      vehiculos.forEach(v => {
+        ['soat_vencimiento','revision_tecnica_vencimiento'].forEach(campo => {
+          const est = estadoDocumento(v[campo]);
+          const label = campo === 'soat_vencimiento' ? 'SOAT' : 'Rev. técnica';
+          if(est.tipo === 'vencido') alertas.push({ nivel: 'rojo', msg: `${label} vencido: ${v.placa}` });
+          else if(est.tipo === 'critico' || est.tipo === 'alerta') alertas.push({ nivel: 'amarillo', msg: `${label} próximo: ${v.placa}` });
+        });
+      });
+    }
+
+    // Rechazos pendientes
+    const { count } = await sb.from('rechazos').select('*', {count:'exact',head:true}).eq('estado','PENDIENTE');
+    if(count > 0) alertas.push({ nivel: 'amarillo', msg: `${count} rechazos pendientes de respuesta` });
+
+    const dot = document.getElementById('semaforoDot');
+    const txt = document.getElementById('semaforoText');
+    dot.className = 'semaforo-dot';
+
+    const hayRojo = alertas.some(a => a.nivel === 'rojo');
+    const hayAmarillo = alertas.some(a => a.nivel === 'amarillo');
+
+    if(hayRojo) {
+      dot.classList.add('sem-red');
+      txt.textContent = `${alertas.filter(a=>a.nivel==='rojo').length} bloqueo(s)`;
+    } else if(hayAmarillo) {
+      dot.classList.add('sem-yellow');
+      txt.textContent = `${alertas.length} alerta(s)`;
+    } else {
+      dot.classList.add('sem-green');
+      txt.textContent = 'Operación OK';
+    }
+
+    window._semaforoAlertas = alertas;
+  } catch(e) { console.warn('Semáforo error:', e); }
+}
+
+function showSemaforoDetail() {
+  const alertas = window._semaforoAlertas || [];
+  if(!alertas.length) {
+    showToast('✅ Todo en orden — Sin alertas activas', 'success');
+    return;
+  }
+  const html = alertas.map(a => `
+    <div class="alert alert-${a.nivel==='rojo'?'red':'yellow'}" style="margin-bottom:8px">
+      ${a.nivel==='rojo'?'🔴':'🟡'} ${a.msg}
+    </div>`).join('');
+  openModal('Estado Operativo SIRIUS', html, '<button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>');
+}
+
+async function updateBadge(tabId) {
+  try {
+    const btn = document.getElementById('tab-' + tabId);
+    if(!btn) return;
+    if(tabId === 'rechazos') {
+      const rol = currentUserData?.rol;
+      let q = sb.from('rechazos').select('*',{count:'exact',head:true}).in('estado',['PENDIENTE','RESPONDIDO','PEND_GERENCIA']);
+      if(rol === 'conductor') q = q.eq('ruta', currentUserData.ruta_codigo);
+      const { count } = await q;
+      const existing = btn.querySelector('.tab-badge');
+      if(existing) existing.remove();
+      if(count > 0) btn.innerHTML = btn.innerHTML + `<span class="tab-badge">${count}</span>`;
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════
+// CARGUE SAP
+// ════════════════════════════════════════════════════════
+function renderCargue() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="section-title">Cargue de Archivos SAP</div>
+    <div class="alert alert-blue" style="margin-bottom:20px">
+      📌 Sube siempre el <strong>mes completo</strong> de cada archivo. El sistema detecta automáticamente los rechazos al procesar ambos archivos.
+    </div>
+    <div class="grid-2" style="margin-bottom:24px">
+      <div>
+        <div class="section-title" style="font-size:11px;margin-bottom:12px">Archivo 1 — Cargue Diario SAP</div>
+        <div class="upload-area" id="areaCargue" onclick="document.getElementById('fileCargue').click()">
+          <input type="file" id="fileCargue" accept=".xlsm,.xlsx" onchange="loadSAPFile(this,'cargue')">
+          <div class="upload-icon">📊</div>
+          <div class="upload-title">CARGUE_DIARIO_GMAZ.xlsm</div>
+          <div class="upload-sub">Haz clic o arrastra el archivo aquí</div>
+        </div>
+        <div id="statusCargue" style="margin-top:8px;font-size:12px;color:var(--t3)"></div>
+      </div>
+      <div>
+        <div class="section-title" style="font-size:11px;margin-bottom:12px">Archivo 2 — Liquidación SAP</div>
+        <div class="upload-area" id="areaLiq" onclick="document.getElementById('fileLiq').click()">
+          <input type="file" id="fileLiq" accept=".xlsm,.xlsx" onchange="loadSAPFile(this,'liquidacion')">
+          <div class="upload-icon">💰</div>
+          <div class="upload-title">CONSULTA_LIQUIDACION_GMAZ.xlsm</div>
+          <div class="upload-sub">Haz clic o arrastra el archivo aquí</div>
+        </div>
+        <div id="statusLiq" style="margin-top:8px;font-size:12px;color:var(--t3)"></div>
+      </div>
+    </div>
+    <div id="processingLog"></div>`;
+}
+
+async function loadSAPFile(input, tipo) {
+  const file = input.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById(tipo === 'cargue' ? 'statusCargue' : 'statusLiq');
+  const areaEl = document.getElementById(tipo === 'cargue' ? 'areaCargue' : 'areaLiq');
+  statusEl.textContent = '⏳ Leyendo archivo...';
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets['Table'] || wb.Sheets[wb.SheetNames.find(s => s !== 'BExRepositorySheet') || wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+      const registros = parseSAPFile(raw, tipo);
+
+      if(tipo === 'cargue') {
+        dataCargue = registros;
+        statusEl.textContent = `✅ ${registros.length} registros cargados`;
+        areaEl.classList.add('loaded');
+      } else {
+        dataLiquidacion = registros;
+        statusEl.textContent = `✅ ${registros.length} registros cargados`;
+        areaEl.classList.add('loaded');
+      }
+
+      if(dataCargue.length && dataLiquidacion.length) {
+        await procesarDatos();
+      }
+    } catch(err) {
+      statusEl.textContent = `❌ Error: ${err.message}`;
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function parseSAPFile(raw, tipo) {
+  let headerRow = -1;
+  for(let i=0;i<raw.length;i++) {
+    if(raw[i] && raw[i].some(c => c && c.toString().includes('Jefatura'))) {
+      headerRow = i; break;
+    }
+  }
+  if(headerRow < 0) return [];
+
+  const data = [];
+  if(tipo === 'cargue') {
+    // Col: 6=jefatura, 7=fecha, 8=cliente_cod, 9=cliente_nom, 10=sku_cod, 11=sku_nom, 12=cfc, 13=cu
+    for(let i=headerRow+1;i<raw.length;i++) {
+      const r = raw[i];
+      if(!r || !r[8]) continue;
+      data.push({
+        fecha: r[7] ? String(r[7]).trim() : '',
+        clienteCod: String(r[8]).trim(),
+        clienteNom: r[9] ? String(r[9]).trim() : '',
+        skuCod: r[10] ? String(r[10]).trim() : '',
+        skuNom: r[11] ? String(r[11]).trim() : '',
+        cfcCargue: parseFloat(r[12]) || 0,
+        cuCargue: parseFloat(r[13]) || 0,
+      });
+    }
+  } else {
+    // Col: 7=fecha, 8=rutaVisita, 9=rutaEntrega, 11=cliente_cod, 12=cliente_nom, 13=marca, 14=sku_cod, 15=sku_nom, 17=ventaCU, 18=ventaCF, 19=ingresoNeto, 20=montoRecibido
+    for(let i=headerRow+1;i<raw.length;i++) {
+      const r = raw[i];
+      if(!r || !r[9]) continue;
+      data.push({
+        fecha: r[7] ? String(r[7]).trim() : '',
+        rutaVisita: r[8] ? String(r[8]).trim() : '',
+        rutaEntrega: r[9] ? String(r[9]).trim() : '',
+        clienteCod: r[11] ? String(r[11]).trim() : '',
+        clienteNom: r[12] ? String(r[12]).trim() : '',
+        marca: r[13] ? String(r[13]).trim() : '',
+        skuCod: r[14] ? String(r[14]).trim() : '',
+        skuNom: r[15] ? String(r[15]).trim() : '',
+        ventaCU: parseFloat(r[17]) || 0,
+        ventaCF: parseFloat(r[18]) || 0,
+        ingresoNeto: parseFloat(r[19]) || 0,
+        montoRecibido: parseFloat(r[20]) || 0,
+      });
+    }
+  }
+  return data;
+}
+
+async function procesarDatos() {
+  const logEl = document.getElementById('processingLog');
+  logEl.innerHTML = '<div class="loading"><div class="spinner"></div> Procesando datos y detectando rechazos...</div>';
+
+  try {
+    // Get fechas únicas del cargue
+    const fechas = [...new Set(dataCargue.map(r => r.fecha))].filter(Boolean);
+
+    // Limpiar datos anteriores de esas fechas
+    for(const fecha of fechas) {
+      const fechaISO = convertirFecha(fecha);
+      if(!fechaISO) continue;
+      await sb.from('cargue_diario').delete().eq('fecha', fechaISO);
+    }
+
+    // Insertar cargue en Supabase (lotes de 500)
+    const cargueRows = dataCargue.map(r => ({
+      fecha: convertirFecha(r.fecha),
+      cliente_cod: r.clienteCod,
+      cliente_nom: r.clienteNom,
+      sku_cod: r.skuCod,
+      sku_nom: r.skuNom,
+      cfc_cargue: r.cfcCargue,
+      cu_cargue: r.cuCargue,
+    })).filter(r => r.fecha);
+
+    for(let i=0;i<cargueRows.length;i+=500) {
+      await sb.from('cargue_diario').insert(cargueRows.slice(i,i+500));
+    }
+
+    // Limpiar liquidación de esas fechas
+    const fechasLiq = [...new Set(dataLiquidacion.map(r => r.fecha))].filter(Boolean);
+    for(const fecha of fechasLiq) {
+      const fechaISO = convertirFecha(fecha);
+      if(!fechaISO) continue;
+      await sb.from('liquidacion').delete().eq('fecha', fechaISO);
+    }
+
+    // Insertar liquidación
+    const liqRows = dataLiquidacion.map(r => ({
+      fecha: convertirFecha(r.fecha),
+      ruta_entrega: r.rutaEntrega,
+      cliente_cod: r.clienteCod,
+      cliente_nom: r.clienteNom,
+      sku_cod: r.skuCod,
+      sku_nom: r.skuNom,
+      marca: r.marca,
+      venta_cu: r.ventaCU,
+      venta_cf: r.ventaCF,
+      ingreso_neto: r.ingresoNeto,
+      monto_recibido: r.montoRecibido,
+    })).filter(r => r.fecha && r.ruta_entrega);
+
+    for(let i=0;i<liqRows.length;i+=500) {
+      await sb.from('liquidacion').insert(liqRows.slice(i,i+500));
+    }
+
+    // Detectar rechazos
+    const rechazos = detectarRechazos();
+
+    // Obtener rutas autoventa
+    const { data: rutasAV } = await sb.from('rutas').select('codigo').eq('tipo','autoventa');
+    const autoventaSet = new Set((rutasAV||[]).map(r=>r.codigo));
+
+    // Insertar rechazos nuevos
+    let insertados = 0;
+    for(const r of rechazos) {
+      // Skip autoventas legítimas
+      if(r.tipo === 'NO_AUTORIZADO' && autoventaSet.has(r.ruta)) continue;
+
+      const fechaISO = convertirFecha(r.fecha);
+      if(!fechaISO) continue;
+
+      // Check if already exists
+      const { data: existing } = await sb.from('rechazos')
+        .select('id').eq('fecha', fechaISO)
+        .eq('cliente_cod', r.clienteCod).eq('sku_cod', r.skuCod)
+        .eq('tipo', r.tipo).limit(1);
+
+      if(existing && existing.length) continue;
+
+      const fechaLimite = new Date();
+      fechaLimite.setHours(fechaLimite.getHours() + 48);
+
+      await sb.from('rechazos').insert({
+        fecha: fechaISO,
+        ruta: r.ruta,
+        cliente_cod: r.clienteCod,
+        cliente_nom: r.clienteNom,
+        sku_cod: r.skuCod,
+        sku_nom: r.skuNom,
+        tipo: r.tipo,
+        cu_cargue: r.cuCargue,
+        cu_liquidado: r.cuLiq,
+        dif_cu: r.difCU,
+        cf_cargue: r.cfCargue,
+        cf_liquidado: r.cfLiq,
+        dif_cf: r.difCF,
+        estado: 'PENDIENTE',
+        afecta_comision: true,
+        fecha_limite_respuesta: fechaLimite.toISOString(),
+      });
+      insertados++;
+    }
+
+    // Verificar rechazos vencidos
+    await verificarVencidos();
+
+    logEl.innerHTML = `
+      <div class="alert alert-green">
+        ✅ Procesamiento completado exitosamente.
+        <br>• ${cargueRows.length} registros de cargue guardados
+        <br>• ${liqRows.length} registros de liquidación guardados
+        <br>• ${rechazos.length} diferencias detectadas · ${insertados} rechazos nuevos creados
+      </div>`;
+
+    await auditLog('CARGA_SAP', 'cargue_diario', null, { fechas, cargue: cargueRows.length, liq: liqRows.length, rechazos: insertados });
+    await updateSemaforo();
+    showToast(`✅ ${insertados} rechazos detectados y guardados`, 'success');
+
+  } catch(err) {
+    logEl.innerHTML = `<div class="alert alert-red">❌ Error al procesar: ${err.message}</div>`;
+    console.error(err);
+  }
+}
+
+function convertirFecha(f) {
+  if(!f) return null;
+  // DD/MM/YYYY → YYYY-MM-DD
+  const partes = String(f).split('/');
+  if(partes.length === 3) return `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
+  // Already ISO
+  if(String(f).includes('-')) return f;
+  return null;
+}
+
+function detectarRechazos() {
+  const rechazos = [];
+  const AUTOVENTAS = ['KA4V03','KA4V04'];
+
+  // Build maps
+  const cargueMap = {};
+  dataCargue.forEach(c => {
+    const key = `${c.clienteCod}||${c.skuCod}`;
+    if(!cargueMap[key]) cargueMap[key] = [];
+    cargueMap[key].push(c);
+  });
+
+  const liqMap = {};
+  dataLiquidacion.forEach(l => {
+    const key = `${l.clienteCod}||${l.skuCod}`;
+    if(!liqMap[key]) liqMap[key] = [];
+    liqMap[key].push(l);
+  });
+
+  // CASO 1: En liquidación pero NO en cargue → NO AUTORIZADO
+  const cargueClientes = new Set(dataCargue.map(c => c.clienteCod));
+  dataLiquidacion.forEach(l => {
+    const key = `${l.clienteCod}||${l.skuCod}`;
+    if(!cargueMap[key] && !AUTOVENTAS.includes(l.rutaEntrega)) {
+      rechazos.push({
+        tipo: 'NO_AUTORIZADO',
+        fecha: l.fecha,
+        ruta: l.rutaEntrega,
+        clienteCod: l.clienteCod,
+        clienteNom: l.clienteNom,
+        skuCod: l.skuCod,
+        skuNom: l.skuNom,
+        cuCargue: 0,
+        cuLiq: l.ventaCU,
+        difCU: l.ventaCU,
+        cfCargue: 0,
+        cfLiq: l.ventaCF,
+        difCF: l.ventaCF,
+      });
+    }
+  });
+
+  // CASOS 2 y 3: En cargue → comparar con liquidación
+  dataCargue.forEach(c => {
+    const key = `${c.clienteCod}||${c.skuCod}`;
+    const liqEntries = liqMap[key] || [];
+    const totalCU = liqEntries.reduce((s,l) => s+l.ventaCU, 0);
+    const totalCF = liqEntries.reduce((s,l) => s+l.ventaCF, 0);
+    const liqEntry = liqEntries[0] || {};
+
+    if(liqEntries.length === 0) {
+      // RECHAZO TOTAL
+      rechazos.push({
+        tipo: 'RECHAZO_TOTAL',
+        fecha: c.fecha,
+        ruta: liqEntry.rutaEntrega || '—',
+        clienteCod: c.clienteCod,
+        clienteNom: c.clienteNom,
+        skuCod: c.skuCod,
+        skuNom: c.skuNom,
+        cuCargue: c.cuCargue,
+        cuLiq: 0,
+        difCU: -c.cuCargue,
+        cfCargue: c.cfcCargue,
+        cfLiq: 0,
+        difCF: -c.cfcCargue,
+      });
+    } else if(Math.abs(totalCU - c.cuCargue) > 0.01) {
+      // RECHAZO PARCIAL
+      rechazos.push({
+        tipo: 'RECHAZO_PARCIAL',
+        fecha: c.fecha,
+        ruta: liqEntry.rutaEntrega || '—',
+        clienteCod: c.clienteCod,
+        clienteNom: c.clienteNom || liqEntry.clienteNom || '',
+        skuCod: c.skuCod,
+        skuNom: c.skuNom || liqEntry.skuNom || '',
+        cuCargue: c.cuCargue,
+        cuLiq: totalCU,
+        difCU: totalCU - c.cuCargue,
+        cfCargue: c.cfcCargue,
+        cfLiq: totalCF,
+        difCF: totalCF - c.cfcCargue,
+      });
+    }
+  });
+
+  return rechazos;
+}
+
+async function verificarVencidos() {
+  const ahora = new Date().toISOString();
+  await sb.from('rechazos')
+    .update({ estado: 'VENCIDO' })
+    .eq('estado', 'PENDIENTE')
+    .lt('fecha_limite_respuesta', ahora);
+}
+
+// ════════════════════════════════════════════════════════
+// RESUMEN
+// ════════════════════════════════════════════════════════
+async function renderResumen() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando resumen...</div>';
+
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+
+    const [{ data: liq }, { data: rechazos }, { data: alertasSem }] = await Promise.all([
+      sb.from('liquidacion').select('ruta_entrega,venta_cu,venta_cf,ingreso_neto,monto_recibido').order('fecha', {ascending:false}),
+      sb.from('rechazos').select('tipo,estado,afecta_comision,ruta').order('created_at',{ascending:false}),
+      Promise.resolve({ data: window._semaforoAlertas || [] }),
+    ]);
+
+    const totalIN = (liq||[]).reduce((s,r)=>s+r.ingreso_neto,0);
+    const totalMR = (liq||[]).reduce((s,r)=>s+r.monto_recibido,0);
+    const totalCU = (liq||[]).reduce((s,r)=>s+r.venta_cu,0);
+    const totalCF = (liq||[]).reduce((s,r)=>s+r.venta_cf,0);
+    const alertasActivas = (rechazos||[]).filter(r=>['PENDIENTE','RESPONDIDO','PEND_GERENCIA'].includes(r.estado)).length;
+    const rutasActivas = [...new Set((liq||[]).map(r=>r.ruta_entrega))].length;
+
+    main.innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Ingreso Neto SAP</div>
+          <div class="summary-value" style="font-size:22px">${fmtCOP(totalIN)}</div>
+          <div class="summary-sub">Acumulado período</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Monto Recibido</div>
+          <div class="summary-value" style="font-size:22px">${fmtCOP(totalMR)}</div>
+          <div class="summary-sub">Diferencia: ${fmtCOP(totalIN-totalMR)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Cajas Unitarias (CU)</div>
+          <div class="summary-value">${fmtN(totalCU)}</div>
+          <div class="summary-sub">CF: ${fmtN(totalCF)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Rutas Activas</div>
+          <div class="summary-value">${rutasActivas}</div>
+          <div class="summary-sub">Con liquidación</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Alertas Activas</div>
+          <div class="summary-value" style="color:${alertasActivas>0?'var(--red)':'var(--green)'}">${alertasActivas}</div>
+          <div class="summary-sub">Rechazos pendientes</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Bloqueos PESV</div>
+          <div class="summary-value" style="color:${(alertasSem||[]).filter(a=>a.nivel==='rojo').length>0?'var(--red)':'var(--green)'}">
+            ${(alertasSem||[]).filter(a=>a.nivel==='rojo').length}
+          </div>
+          <div class="summary-sub">Documentos vencidos</div>
+        </div>
+      </div>
+
+      ${alertasActivas > 0 ? `
+      <div class="alert alert-red" style="margin-bottom:20px">
+        🚨 Hay <strong>${alertasActivas} rechazos</strong> pendientes de atención. 
+        <a href="#" onclick="switchTab('rechazos');return false;" style="color:inherit;font-weight:700">Ver rechazos →</a>
+      </div>` : ''}
+
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="chart-card">
+          <div class="chart-title">Ingreso Neto vs Monto Recibido por Ruta</div>
+          <div class="chart-container"><canvas id="chartResumen1"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Rechazos por Tipo</div>
+          <div class="chart-container"><canvas id="chartResumen2"></canvas></div>
+        </div>
+      </div>`;
+
+    // Charts
+    setTimeout(() => {
+      const byRuta = {};
+      (liq||[]).forEach(l => {
+        if(!byRuta[l.ruta_entrega]) byRuta[l.ruta_entrega] = {in:0,mr:0};
+        byRuta[l.ruta_entrega].in += l.ingreso_neto;
+        byRuta[l.ruta_entrega].mr += l.monto_recibido;
+      });
+      const labels = Object.keys(byRuta).sort();
+
+      new Chart(document.getElementById('chartResumen1'), {
+        type:'bar',
+        data:{
+          labels,
+          datasets:[
+            {label:'Ingreso Neto',data:labels.map(l=>byRuta[l].in),backgroundColor:'rgba(227,0,11,0.7)'},
+            {label:'Monto Recibido',data:labels.map(l=>byRuta[l].mr),backgroundColor:'rgba(59,130,246,0.6)'},
+          ]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'DM Sans'}}}},scales:{x:{ticks:{color:'#909090'}},y:{ticks:{color:'#909090',callback:v=>fmtCOP(v)}}}}
+      });
+
+      const tiposCount = { NO_AUTORIZADO:0, RECHAZO_PARCIAL:0, RECHAZO_TOTAL:0 };
+      (rechazos||[]).forEach(r => { if(tiposCount[r.tipo]!==undefined) tiposCount[r.tipo]++; });
+
+      new Chart(document.getElementById('chartResumen2'), {
+        type:'doughnut',
+        data:{
+          labels:['No Autorizado','Rechazo Parcial','Rechazo Total'],
+          datasets:[{data:Object.values(tiposCount),backgroundColor:['#E3000B','#F59E0B','#991B1B']}]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'DM Sans'}}}}}
+      });
+    }, 100);
+
+  } catch(e) {
+    document.getElementById('mainContent').innerHTML = `<div class="alert alert-red">Error: ${e.message}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ASIGNACIÓN DIARIA
+// ════════════════════════════════════════════════════════
+async function renderAsignacion() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando rutas...</div>';
+
+  const hoy = new Date().toISOString().split('T')[0];
+
+  const [{ data: rutas }, { data: asignaciones }, { data: personal }, { data: vehiculos }] = await Promise.all([
+    sb.from('rutas').select('*').in('tipo',['reparto','autoventa']).eq('activo',true).order('codigo'),
+    sb.from('asignacion_diaria').select(`*,conductor:personal!conductor_id(nombre_completo),auxiliar1:personal!auxiliar1_id(nombre_completo),auxiliar2:personal!auxiliar2_id(nombre_completo),vehiculo:vehiculos!vehiculo_id(placa)`).eq('fecha',hoy),
+    sb.from('personal').select('id,nombre_completo,tipo,fecha_vencimiento_licencia').eq('activo',true).order('nombre_completo'),
+    sb.from('vehiculos').select('id,placa,tipo,soat_vencimiento,revision_tecnica_vencimiento').eq('activo',true).order('placa'),
+  ]);
+
+  const asigMap = {};
+  (asignaciones||[]).forEach(a => { asigMap[a.ruta_codigo] = a; });
+
+  main.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div class="section-title">Asignación del Día — ${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'2-digit',month:'long'})}</div>
+      <div style="font-size:13px;color:var(--t3)">${Object.keys(asigMap).length} de ${(rutas||[]).length} rutas asignadas</div>
+    </div>
+    <div class="rutas-grid" id="rutasGrid">
+      ${(rutas||[]).map(ruta => {
+        const asig = asigMap[ruta.codigo];
+        const clase = asig ? 'asignada' : 'pendiente';
+        return `
+        <div class="ruta-card ${clase}" onclick="abrirAsignacion('${ruta.codigo}','${ruta.tipo}')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <div class="ruta-codigo">${ruta.codigo}</div>
+            ${asig ? '<span class="badge badge-green">✓ Asignada</span>' : '<span class="badge badge-yellow">Pendiente</span>'}
+          </div>
+          <div class="ruta-tipo">${TIPO_LABELS[ruta.tipo]||ruta.tipo}</div>
+          ${asig ? `
+          <div class="ruta-tripulacion">
+            🧑‍✈️ ${asig.conductor?.nombre_completo||'—'}<br>
+            ${asig.auxiliar1?.nombre_completo ? '👤 '+asig.auxiliar1.nombre_completo+'<br>' : ''}
+            ${asig.auxiliar2?.nombre_completo ? '👤 '+asig.auxiliar2.nombre_completo+'<br>' : ''}
+            🚗 ${asig.vehiculo?.placa||'—'}
+            ${asig.hora_salida ? '· 🕐 '+asig.hora_salida : ''}
+          </div>` : '<div class="ruta-tripulacion" style="color:var(--t3)">Sin asignar</div>'}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // Store for modal
+  window._personalList = personal || [];
+  window._vehiculosList = vehiculos || [];
+  window._asigMap = asigMap;
+  window._asigFecha = hoy;
+}
+
+async function abrirAsignacion(rutaCodigo, rutaTipo) {
+  const personal = window._personalList || [];
+  const vehiculos = window._vehiculosList || [];
+  const asig = window._asigMap?.[rutaCodigo];
+
+  const conductores = personal.filter(p => p.tipo === 'conductor');
+  const auxiliares = personal.filter(p => p.tipo === 'auxiliar');
+
+  const opsConductor = conductores.map(p => {
+    const est = estadoDocumento(p.fecha_vencimiento_licencia);
+    const bloqueado = est.tipo === 'vencido';
+    return `<option value="${p.id}" ${asig?.conductor_id===p.id?'selected':''} ${bloqueado?'disabled':''}>
+      ${p.nombre_completo} ${bloqueado?'🔴 LICENCIA VENCIDA':''}
+    </option>`;
+  }).join('');
+
+  const opsAux = (persona, selectedId) => ['<option value="">-- Sin asignar --</option>',
+    ...auxiliares.map(p => `<option value="${p.id}" ${selectedId===p.id?'selected':''}>${p.nombre_completo}</option>`)
+  ].join('');
+
+  const opsVeh = vehiculos.map(v => {
+    const soat = estadoDocumento(v.soat_vencimiento);
+    const rev = estadoDocumento(v.revision_tecnica_vencimiento);
+    const bloqueado = soat.tipo==='vencido' || rev.tipo==='vencido';
+    return `<option value="${v.id}" ${asig?.vehiculo_id===v.id?'selected':''} ${bloqueado?'disabled':''}>
+      ${v.placa} (${v.tipo}) ${bloqueado?'🔴':''}
+    </option>`;
+  }).join('');
+
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Conductor Principal *</label>
+      <select class="form-control" id="asigConductor">
+        <option value="">-- Seleccionar --</option>
+        ${opsConductor}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Auxiliar 1</label>
+      <select class="form-control" id="asigAux1">
+        ${opsAux(null, asig?.auxiliar1_id)}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Auxiliar 2</label>
+      <select class="form-control" id="asigAux2">
+        ${opsAux(null, asig?.auxiliar2_id)}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vehículo</label>
+      <select class="form-control" id="asigVehiculo">
+        <option value="">-- Seleccionar --</option>
+        ${opsVeh}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hora de salida</label>
+      <input type="time" class="form-control" id="asigHora" value="${asig?.hora_salida||''}">
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarAsignacion('${rutaCodigo}')">Guardar asignación</button>`;
+
+  openModal(`Asignación — Ruta ${rutaCodigo}`, body, footer);
+}
+
+async function guardarAsignacion(rutaCodigo) {
+  const conductorId = document.getElementById('asigConductor').value;
+  if(!conductorId) { showToast('Selecciona un conductor', 'warning'); return; }
+
+  const aux1 = document.getElementById('asigAux1').value || null;
+  const aux2 = document.getElementById('asigAux2').value || null;
+  const vehiculoId = document.getElementById('asigVehiculo').value || null;
+  const hora = document.getElementById('asigHora').value || null;
+
+  const row = {
+    fecha: window._asigFecha,
+    ruta_codigo: rutaCodigo,
+    conductor_id: conductorId,
+    auxiliar1_id: aux1,
+    auxiliar2_id: aux2,
+    vehiculo_id: vehiculoId,
+    hora_salida: hora,
+    modificado_en: new Date().toISOString(),
+  };
+
+  const { error } = await sb.from('asignacion_diaria').upsert(row, { onConflict: 'fecha,ruta_codigo' });
+  if(error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+
+  closeModal();
+  showToast(`✅ Asignación guardada para ${rutaCodigo}`, 'success');
+  await auditLog('ASIGNACION', 'asignacion_diaria', null, row);
+  renderAsignacion();
+}
+
+// ════════════════════════════════════════════════════════
+// RECHAZOS
+// ════════════════════════════════════════════════════════
+async function renderRechazos() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando rechazos...</div>';
+
+  const rol = currentUserData?.rol;
+
+  let query = sb.from('rechazos').select(`*,respuestas_rechazo(*),excepciones(*)`).order('created_at',{ascending:false});
+  if(rol === 'conductor') query = query.eq('ruta', currentUserData.ruta_codigo);
+  if(rol === 'gerencia') query = query.eq('estado','PEND_GERENCIA');
+
+  const { data: rechazos } = await query;
+
+  const pendientes = (rechazos||[]).filter(r=>r.estado==='PENDIENTE').length;
+  const respondidos = (rechazos||[]).filter(r=>r.estado==='RESPONDIDO').length;
+  const resueltos = (rechazos||[]).filter(r=>['APROBADO_TOTAL','RECHAZADO','APROBADO_COORD'].includes(r.estado)).length;
+
+  let filtros = '';
+  if(rol === 'coordinador' || rol === 'gerencia') {
+    filtros = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="btn btn-sm btn-secondary filtro-btn active" data-f="todos" onclick="filtrarRechazos('todos',this)">Todos (${(rechazos||[]).length})</button>
+        <button class="btn btn-sm btn-secondary filtro-btn" data-f="PENDIENTE" onclick="filtrarRechazos('PENDIENTE',this)">🔴 Pendientes (${pendientes})</button>
+        <button class="btn btn-sm btn-secondary filtro-btn" data-f="RESPONDIDO" onclick="filtrarRechazos('RESPONDIDO',this)">🟡 Respondidos (${respondidos})</button>
+        <button class="btn btn-sm btn-secondary filtro-btn" data-f="resuelto" onclick="filtrarRechazos('resuelto',this)">✅ Resueltos (${resueltos})</button>
+      </div>`;
+  }
+
+  if(!(rechazos||[]).length) {
+    main.innerHTML = filtros + `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Sin rechazos</div><div class="empty-sub">No hay diferencias detectadas en el período</div></div>`;
+    return;
+  }
+
+  window._rechazosData = rechazos || [];
+  main.innerHTML = filtros + `<div id="rechazosContainer">${buildRechazosHTML(rechazos||[])}</div>`;
+}
+
+function filtrarRechazos(filtro, btn) {
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const todos = window._rechazosData || [];
+  let filtrados;
+  if(filtro === 'todos') filtrados = todos;
+  else if(filtro === 'resuelto') filtrados = todos.filter(r=>['APROBADO_TOTAL','RECHAZADO','APROBADO_COORD'].includes(r.estado));
+  else filtrados = todos.filter(r=>r.estado===filtro);
+  document.getElementById('rechazosContainer').innerHTML = buildRechazosHTML(filtrados);
+}
+
+function buildRechazosHTML(rechazos) {
+  if(!rechazos.length) return '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sin resultados</div></div>';
+  const rol = currentUserData?.rol;
+
+  return rechazos.map(r => {
+    const est = ESTADO_CONFIG[r.estado] || {};
+    const tipoCls = { NO_AUTORIZADO:'red', RECHAZO_PARCIAL:'yellow', RECHAZO_TOTAL:'red' }[r.tipo] || 'gray';
+    const tipoLab = { NO_AUTORIZADO:'Venta no autorizada', RECHAZO_PARCIAL:'Rechazo parcial', RECHAZO_TOTAL:'Rechazo total' }[r.tipo] || r.tipo;
+
+    let countdown = '';
+    if(r.estado === 'PENDIENTE' && r.fecha_limite_respuesta) {
+      const restMs = new Date(r.fecha_limite_respuesta) - new Date();
+      if(restMs > 0) {
+        const hrs = Math.floor(restMs/3600000);
+        const mins = Math.floor((restMs%3600000)/60000);
+        countdown = `<span class="countdown">⏰ ${hrs}h ${mins}m restantes</span>`;
+      } else {
+        countdown = '<span class="countdown" style="background:rgba(239,68,68,0.1)">⏰ VENCIDO</span>';
+      }
+    }
+
+    let acciones = '';
+    if(rol === 'conductor' && r.estado === 'PENDIENTE') {
+      acciones = `<button class="btn btn-sm btn-primary" onclick="responderRechazo('${r.id}')">Responder</button>`;
+    } else if(rol === 'coordinador' && r.estado === 'RESPONDIDO') {
+      acciones = `
+        <button class="btn btn-sm btn-success" onclick="aprobarExcepcion('${r.id}',${r.dif_cf||0})">Aprobar excepción</button>
+        <button class="btn btn-sm btn-danger" onclick="rechazarExcepcion('${r.id}')">Rechazar</button>`;
+    } else if(rol === 'gerencia' && r.estado === 'PEND_GERENCIA') {
+      acciones = `
+        <button class="btn btn-sm btn-success" onclick="aprobarGerencia('${r.id}')">Aprobar</button>
+        <button class="btn btn-sm btn-danger" onclick="rechazarGerencia('${r.id}')">Rechazar</button>`;
+    } else if(rol === 'coordinador' && r.estado === 'RECHAZADO') {
+      acciones = `<button class="btn btn-sm btn-secondary" onclick="reescalarRechazo('${r.id}')">Re-escalar</button>`;
+    }
+
+    const respuesta = (r.respuestas_rechazo||[])[0];
+
+    return `
+      <div class="rechazo-item ${r.estado.toLowerCase()}" data-estado="${r.estado}">
+        <div class="rechazo-header">
+          <span class="badge badge-${tipoCls === 'red' ? 'red' : tipoCls === 'yellow' ? 'yellow' : 'gray'}">${tipoLab}</span>
+          <span class="rechazo-ruta">${r.ruta||'—'}</span>
+          <span class="rechazo-cliente">${r.cliente_nom||r.cliente_cod||'—'}</span>
+          <span class="badge badge-${est.color||'gray'}">${est.icon||''} ${est.label||r.estado}</span>
+          ${countdown}
+        </div>
+        <div class="rechazo-body" style="margin-bottom:${acciones?'12px':'0'}">
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val mono">${r.sku_cod||'—'}</div>
+            <div class="rechazo-dato-lab">SKU</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val">${fmtN(r.cu_cargue)}</div>
+            <div class="rechazo-dato-lab">CU Cargue</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val">${fmtN(r.cu_liquidado)}</div>
+            <div class="rechazo-dato-lab">CU Liquidado</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val" style="color:${r.dif_cu<0?'var(--red)':r.dif_cu>0?'var(--yellow)':'var(--green)'}">${fmtN(r.dif_cu)}</div>
+            <div class="rechazo-dato-lab">Diferencia CU</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val">${fmtN(r.cf_cargue)}</div>
+            <div class="rechazo-dato-lab">CF Cargue</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val">${fmtN(r.cf_liquidado)}</div>
+            <div class="rechazo-dato-lab">CF Liquidado</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val" style="color:${r.dif_cf<0?'var(--red)':r.dif_cf>0?'var(--yellow)':'var(--green)'}">${fmtN(r.dif_cf)}</div>
+            <div class="rechazo-dato-lab">Diferencia CF</div>
+          </div>
+          <div class="rechazo-dato">
+            <div class="rechazo-dato-val">${fmtDate(r.fecha)}</div>
+            <div class="rechazo-dato-lab">Fecha</div>
+          </div>
+        </div>
+        ${respuesta ? `
+        <div style="background:var(--bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;font-size:12px">
+          <strong>Respuesta conductor:</strong> ${CAUSA_LABELS[respuesta.causa]||respuesta.causa}
+          ${respuesta.observacion ? `<br><span style="color:var(--t3)">${respuesta.observacion}</span>` : ''}
+        </div>` : ''}
+        ${acciones ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${acciones}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+async function responderRechazo(rechazoCod) {
+  const causas = Object.entries(CAUSA_LABELS).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+  const body = `
+    <div class="form-group">
+      <label class="form-label">¿Por qué no se entregó este pedido? *</label>
+      <select class="form-control" id="causaRechazo">
+        <option value="">-- Selecciona la causa --</option>
+        ${causas}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observación adicional (opcional)</label>
+      <textarea class="form-control" id="obsRechazo" rows="3" placeholder="Describe lo que ocurrió en detalle..."></textarea>
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarRespuesta('${rechazoCod}')">Enviar respuesta</button>`;
+
+  openModal('Responder Rechazo', body, footer);
+}
+
+async function guardarRespuesta(rechazoCod) {
+  const causa = document.getElementById('causaRechazo').value;
+  if(!causa) { showToast('Selecciona la causa del rechazo', 'warning'); return; }
+  const obs = document.getElementById('obsRechazo').value;
+
+  const { error: e1 } = await sb.from('respuestas_rechazo').insert({
+    rechazo_id: rechazoCod,
+    conductor_ruta: currentUserData.ruta_codigo,
+    causa,
+    observacion: obs,
+  });
+
+  if(e1) { showToast('Error: ' + e1.message, 'error'); return; }
+
+  await sb.from('rechazos').update({ estado: 'RESPONDIDO' }).eq('id', rechazoCod);
+  closeModal();
+  showToast('✅ Respuesta enviada correctamente', 'success');
+  await auditLog('RESPUESTA_RECHAZO', 'rechazos', rechazoCod, { causa, obs });
+  renderRechazos();
+}
+
+async function aprobarExcepcion(rechazoCod, difCF) {
+  const UMBRAL = 5;
+  const body = `
+    <div class="alert alert-${Math.abs(difCF)>=UMBRAL?'yellow':'blue'}" style="margin-bottom:16px">
+      ${Math.abs(difCF)>=UMBRAL ? `⚠️ Esta excepción supera ${UMBRAL} CF — será escalada a Gerencia para aprobación final.` : '✅ Esta excepción está dentro del umbral del coordinador.'}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motivo de la excepción *</label>
+      <textarea class="form-control" id="motivoExc" rows="3" placeholder="Justifica por qué este rechazo no debe afectar la comisión..."></textarea>
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-success" onclick="confirmarExcepcion('${rechazoCod}',${Math.abs(difCF)>=UMBRAL})">Aprobar excepción</button>`;
+
+  openModal('Aprobar Excepción', body, footer);
+}
+
+async function confirmarExcepcion(rechazoCod, escalarGerencia) {
+  const motivo = document.getElementById('motivoExc').value;
+  if(!motivo) { showToast('Ingresa el motivo', 'warning'); return; }
+
+  const nuevoEstado = escalarGerencia ? 'PEND_GERENCIA' : 'APROBADO_COORD';
+
+  await sb.from('excepciones').insert({
+    rechazo_id: rechazoCod,
+    usuario_email: currentUser.email,
+    rol_usuario: 'coordinador',
+    decision: 'APROBADA',
+    motivo,
+  });
+
+  await sb.from('rechazos').update({ estado: nuevoEstado, afecta_comision: !escalarGerencia }).eq('id', rechazoCod);
+  closeModal();
+  showToast(escalarGerencia ? '⏳ Escalado a Gerencia para aprobación final' : '✅ Excepción aprobada — no afecta comisión', 'success');
+  await auditLog('EXCEPCION_COORD', 'rechazos', rechazoCod, { decision:'APROBADA', motivo, escalarGerencia });
+  renderRechazos();
+}
+
+async function rechazarExcepcion(rechazoCod) {
+  await sb.from('rechazos').update({ estado: 'RECHAZADO', afecta_comision: true }).eq('id', rechazoCod);
+  showToast('❌ Excepción rechazada — afecta comisión', 'error');
+  await auditLog('EXCEPCION_RECHAZADA', 'rechazos', rechazoCod, {});
+  renderRechazos();
+}
+
+async function aprobarGerencia(rechazoCod) {
+  await sb.from('excepciones').insert({ rechazo_id: rechazoCod, usuario_email: currentUser.email, rol_usuario: 'gerencia', decision: 'APROBADA', motivo: 'Aprobado por gerencia' });
+  await sb.from('rechazos').update({ estado: 'APROBADO_TOTAL', afecta_comision: false }).eq('id', rechazoCod);
+  showToast('✅ Excepción aprobada por Gerencia', 'success');
+  renderRechazos();
+}
+
+async function rechazarGerencia(rechazoCod) {
+  await sb.from('excepciones').insert({ rechazo_id: rechazoCod, usuario_email: currentUser.email, rol_usuario: 'gerencia', decision: 'RECHAZADA', motivo: 'Rechazado por gerencia' });
+  await sb.from('rechazos').update({ estado: 'RECHAZADO', afecta_comision: true }).eq('id', rechazoCod);
+  showToast('❌ Rechazado por Gerencia — afecta comisión', 'error');
+  renderRechazos();
+}
+
+async function reescalarRechazo(rechazoCod) {
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Nueva justificación para re-escalar *</label>
+      <textarea class="form-control" id="motivoReescalar" rows="3" placeholder="Explica por qué se debe reconsiderar esta excepción..."></textarea>
+    </div>`;
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="confirmarReescalar('${rechazoCod}')">Re-escalar a Gerencia</button>`;
+  openModal('Re-escalar a Gerencia', body, footer);
+}
+
+async function confirmarReescalar(rechazoCod) {
+  const motivo = document.getElementById('motivoReescalar').value;
+  if(!motivo) { showToast('Ingresa la justificación', 'warning'); return; }
+  await sb.from('rechazos').update({ estado: 'PEND_GERENCIA' }).eq('id', rechazoCod);
+  await sb.from('excepciones').insert({ rechazo_id: rechazoCod, usuario_email: currentUser.email, rol_usuario: 'coordinador', decision: 'RE_ESCALADA', motivo });
+  closeModal();
+  showToast('🔄 Re-escalado a Gerencia', 'success');
+  renderRechazos();
+}
+
+// ════════════════════════════════════════════════════════
+// RANKING
+// ════════════════════════════════════════════════════════
+async function renderRanking() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Calculando ranking...</div>';
+
+  const [{ data: liq }, { data: rechazos }, { data: rutas }] = await Promise.all([
+    sb.from('liquidacion').select('ruta_entrega,venta_cu,venta_cf,ingreso_neto,monto_recibido,cliente_cod'),
+    sb.from('rechazos').select('ruta,tipo,estado,afecta_comision,dif_cu,dif_cf'),
+    sb.from('rutas').select('codigo,tipo,meta_efectividad').in('tipo',['reparto','autoventa','mayorista']),
+  ]);
+
+  const { data: cargue } = await sb.from('cargue_diario').select('cliente_cod,cu_cargue,cfc_cargue');
+
+  const rutasMeta = {};
+  (rutas||[]).forEach(r => { rutasMeta[r.codigo] = r.meta_efectividad || 97; });
+
+  // Build stats by route
+  const byRuta = {};
+  (liq||[]).forEach(l => {
+    if(!byRuta[l.ruta_entrega]) byRuta[l.ruta_entrega] = { clientes: new Set(), cu: 0, cf: 0, ingresos: 0, recibido: 0, rechazos: 0, noAut: 0 };
+    byRuta[l.ruta_entrega].clientes.add(l.cliente_cod);
+    byRuta[l.ruta_entrega].cu += l.venta_cu;
+    byRuta[l.ruta_entrega].cf += l.venta_cf;
+    byRuta[l.ruta_entrega].ingresos += l.ingreso_neto;
+    byRuta[l.ruta_entrega].recibido += l.monto_recibido;
+  });
+
+  (rechazos||[]).forEach(r => {
+    if(!byRuta[r.ruta]) return;
+    if(r.tipo === 'NO_AUTORIZADO') byRuta[r.ruta].noAut++;
+    else if(r.afecta_comision) byRuta[r.ruta].rechazos++;
+  });
+
+  const rutasOrdenadas = Object.keys(byRuta).sort((a,b) => {
+    const meta = rutasMeta[a] || 97;
+    const pctA = byRuta[a].clientes.size > 0 ? (byRuta[a].clientes.size / (byRuta[a].clientes.size + byRuta[a].rechazos)) * 100 : 0;
+    const pctB = byRuta[b].clientes.size > 0 ? (byRuta[b].clientes.size / (byRuta[b].clientes.size + byRuta[b].rechazos)) * 100 : 0;
+    return pctB - pctA;
+  });
+
+  const myRuta = currentUserData?.ruta_codigo;
+
+  main.innerHTML = `
+    <div class="section-title">Ranking de Rutas de Entrega</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="badge badge-green">✅ ≥ 97% Meta</div>
+      <div class="badge badge-yellow">⚠️ 85-96%</div>
+      <div class="badge badge-red">🔴 < 85%</div>
+    </div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <div class="card-title">Ranking por Efectividad</div>
+        <div style="display:flex;gap:6px">
+          <button class="share-btn" onclick="copiarRankingWA()">📋 WhatsApp</button>
+          <button class="share-btn" onclick="screenshotRanking()">📸 Captura</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ruta</th>
+              <th>Clientes</th>
+              <th>CU</th>
+              <th>CF</th>
+              <th>Rechazos</th>
+              <th>No Autorizadas</th>
+              <th>Ingreso Neto</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="rankingBody">
+            ${rutasOrdenadas.map((ruta, i) => {
+              const d = byRuta[ruta];
+              const meta = rutasMeta[ruta] || 97;
+              const efect = d.clientes.size > 0 ? Math.min(100, (d.clientes.size / (d.clientes.size + d.rechazos)) * 100) : 100;
+              const rc = i<3 ? `rank-${i+1}` : 'rank-other';
+              const isMe = ruta === myRuta;
+              return `<tr style="${isMe?'background:rgba(227,0,11,0.05);font-weight:600':''}" ${isMe?'id="myRutaRow"':''}>
+                <td><span class="rank-num ${rc}">${i+1}</span></td>
+                <td>${ruta}${isMe?' ◀':''}</td>
+                <td class="mono">${d.clientes.size}</td>
+                <td class="mono">${fmtN(d.cu)}</td>
+                <td class="mono">${fmtN(d.cf)}</td>
+                <td class="mono" style="color:${d.rechazos>0?'var(--red)':'var(--green)'}">${d.rechazos}</td>
+                <td class="mono" style="color:${d.noAut>0?'var(--red)':'var(--green)'}">${d.noAut}</td>
+                <td class="mono">${fmtCOP(d.ingresos)}</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="mini-bar"><div class="mini-fill" style="width:${Math.min(efect,100)}%;background:${colorPct(efect)}"></div></div>
+                    <span class="mono" style="color:${colorPct(efect)};font-weight:700">${fmtPct(efect)}</span>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  window._rankingData = { rutasOrdenadas, byRuta, rutasMeta };
+}
+
+function copiarRankingWA() {
+  const { rutasOrdenadas, byRuta, rutasMeta } = window._rankingData || {};
+  if(!rutasOrdenadas) return;
+  const fecha = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+  const medals = ['🥇','🥈','🥉'];
+  let txt = `🏆 *RANKING SIRIUS — Reparto GMAZ*\n📅 ${fecha}\n\n`;
+  rutasOrdenadas.forEach((ruta,i) => {
+    const d = byRuta[ruta];
+    const efect = d.clientes.size > 0 ? Math.min(100,(d.clientes.size/(d.clientes.size+d.rechazos))*100) : 100;
+    const med = i<3 ? medals[i] : (i+1)+'.';
+    txt += `${med} *${ruta}* · ${fmtPct(efect)} · ${fmtCOP(d.ingresos)}\n`;
+  });
+  txt += '\n_SIRIUS · GMAZ Pasto_';
+  navigator.clipboard.writeText(txt).then(() => showToast('📋 Copiado para WhatsApp', 'success'));
+}
+
+function screenshotRanking() {
+  const tbody = document.getElementById('rankingBody');
+  if(!tbody) return;
+  const fecha = new Date().toLocaleDateString('es-CO',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const overlay = document.createElement('div');
+  overlay.className = 'screenshot-mode';
+  overlay.innerHTML = `
+    <button class="ss-close" onclick="this.parentElement.remove()">✕</button>
+    <div class="ss-header"><h2>🏆 Ranking de Reparto</h2><p>GMAZ · Pasto · ${fecha}</p></div>
+    <table>${tbody.closest('table').querySelector('thead').outerHTML}<tbody>${tbody.innerHTML}</tbody></table>
+    <div class="ss-footer">SIRIUS · Sistema Integral de Reparto Inteligente GMAZ</div>`;
+  document.body.appendChild(overlay);
+}
+
+// ════════════════════════════════════════════════════════
+// CARTERA
+// ════════════════════════════════════════════════════════
+async function renderCartera() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando cartera...</div>';
+
+  const { data: liq } = await sb.from('liquidacion').select('ruta_entrega,cliente_cod,cliente_nom,ingreso_neto,monto_recibido').order('ruta_entrega');
+
+  const byRuta = {};
+  (liq||[]).forEach(l => {
+    if(!byRuta[l.ruta_entrega]) byRuta[l.ruta_entrega] = { in:0, mr:0 };
+    byRuta[l.ruta_entrega].in += l.ingreso_neto;
+    byRuta[l.ruta_entrega].mr += l.monto_recibido;
+  });
+
+  const totalIN = (liq||[]).reduce((s,r)=>s+r.ingreso_neto,0);
+  const totalMR = (liq||[]).reduce((s,r)=>s+r.monto_recibido,0);
+  const difTotal = totalIN - totalMR;
+
+  main.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:24px">
+      <div class="kpi-card">
+        <div class="kpi-head"><div class="kpi-name">Ingreso Neto SAP</div><div class="kpi-icon" style="background:var(--green-bg);color:var(--green)">💰</div></div>
+        <div class="kpi-value">${fmtCOP(totalIN)}</div>
+        <div class="kpi-meta">Acumulado período</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-head"><div class="kpi-name">Monto Recibido</div><div class="kpi-icon" style="background:var(--blue-bg);color:var(--blue)">💵</div></div>
+        <div class="kpi-value">${fmtCOP(totalMR)}</div>
+        <div class="kpi-meta">Acumulado período</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-head"><div class="kpi-name">Diferencia (Cartera)</div><div class="kpi-icon" style="background:${difTotal>0?'var(--red-light)':'var(--green-bg)'};color:${difTotal>0?'var(--red)':'var(--green)'}">⚠️</div></div>
+        <div class="kpi-value" style="color:${difTotal>0?'var(--red)':'var(--green)'}">${fmtCOP(difTotal)}</div>
+        <div class="kpi-meta">${difTotal>0?'Pendiente de recaudo':'Sin diferencia'}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Ingreso Neto vs Monto Recibido por Ruta</div>
+        <button class="share-btn" onclick="copiarCarteraWA()">📋 WhatsApp</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ruta</th><th>Ingreso Neto SAP</th><th>Monto Recibido</th><th>Diferencia</th><th>Estado</th></tr></thead>
+          <tbody>
+            ${Object.entries(byRuta).map(([ruta,d]) => {
+              const dif = d.in - d.mr;
+              return `<tr>
+                <td class="mono" style="font-weight:700">${ruta}</td>
+                <td class="mono">${fmtCOP(d.in)}</td>
+                <td class="mono">${fmtCOP(d.mr)}</td>
+                <td class="mono" style="font-weight:700;color:${dif>0?'var(--red)':dif<0?'var(--yellow)':'var(--green)'}">${fmtCOP(dif)}</td>
+                <td>${dif>0?'<span class="badge badge-red">Pendiente</span>':dif<0?'<span class="badge badge-yellow">Exceso</span>':'<span class="badge badge-green">OK</span>'}</td>
+              </tr>`;
+            }).join('')}
+            <tr class="row-total">
+              <td>TOTAL</td>
+              <td class="mono">${fmtCOP(totalIN)}</td>
+              <td class="mono">${fmtCOP(totalMR)}</td>
+              <td class="mono" style="color:${difTotal>0?'var(--red)':'var(--green)'}">${fmtCOP(difTotal)}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  window._carteraData = { byRuta, totalIN, totalMR };
+}
+
+function copiarCarteraWA() {
+  const { byRuta, totalIN, totalMR } = window._carteraData || {};
+  if(!byRuta) return;
+  const fecha = new Date().toLocaleDateString('es-CO');
+  let txt = `💰 *CARTERA SIRIUS — GMAZ*\n📅 ${fecha}\n\n`;
+  Object.entries(byRuta).forEach(([ruta,d]) => {
+    const dif = d.in - d.mr;
+    txt += `${ruta}: ${fmtCOP(d.in)} / Recibido: ${fmtCOP(d.mr)}${dif>0?' ⚠️ Dif: '+fmtCOP(dif):' ✅'}\n`;
+  });
+  txt += `\n📊 *TOTAL Ingreso:* ${fmtCOP(totalIN)}\n📊 *TOTAL Recibido:* ${fmtCOP(totalMR)}\n\n_SIRIUS · GMAZ_`;
+  navigator.clipboard.writeText(txt).then(() => showToast('📋 Copiado para WhatsApp', 'success'));
+}
+
+// ════════════════════════════════════════════════════════
+// COMISIONES
+// ════════════════════════════════════════════════════════
+async function renderComisiones() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Calculando comisiones...</div>';
+
+  const rol = currentUserData?.rol;
+  const miRuta = currentUserData?.ruta_codigo;
+
+  const [{ data: liq }, { data: cargue }, { data: rechazos }, { data: rutas }, { data: asignaciones }] = await Promise.all([
+    sb.from('liquidacion').select('ruta_entrega,cliente_cod,venta_cu,venta_cf'),
+    sb.from('cargue_diario').select('cliente_cod,cu_cargue,cfc_cargue'),
+    sb.from('rechazos').select('ruta,tipo,estado,afecta_comision,cu_cargue,cu_liquidado'),
+    sb.from('rutas').select('codigo,meta_efectividad'),
+    sb.from('asignacion_diaria').select(`*,conductor:personal!conductor_id(nombre_completo,numero_cedula),auxiliar1:personal!auxiliar1_id(nombre_completo),auxiliar2:personal!auxiliar2_id(nombre_completo)`),
+  ]);
+
+  const metaMap = {};
+  (rutas||[]).forEach(r => { metaMap[r.codigo] = r.meta_efectividad || 97; });
+
+  // Build cargue totals
+  const cargueTotals = { clientes: new Set(), cuTotal: 0, cfTotal: 0 };
+  (cargue||[]).forEach(c => { cargueTotals.clientes.add(c.cliente_cod); cargueTotals.cuTotal += c.cu_cargue; cargueTotals.cfTotal += c.cfc_cargue; });
+
+  // Build by route
+  const byRuta = {};
+  (liq||[]).forEach(l => {
+    if(!byRuta[l.ruta_entrega]) byRuta[l.ruta_entrega] = { clientes: new Set(), cu: 0, cf: 0 };
+    byRuta[l.ruta_entrega].clientes.add(l.cliente_cod);
+    byRuta[l.ruta_entrega].cu += l.venta_cu;
+    byRuta[l.ruta_entrega].cf += l.venta_cf;
+  });
+
+  // Cargue clientes count
+  const cargueClientes = cargueTotals.clientes.size;
+  const carguecu = cargueTotals.cuTotal;
+
+  const asigMap = {};
+  (asignaciones||[]).forEach(a => { asigMap[a.ruta_codigo] = a; });
+
+  const calcComision = (ruta) => {
+    const d = byRuta[ruta] || { clientes: new Set(), cu: 0 };
+    const rechazosRuta = (rechazos||[]).filter(r => r.ruta===ruta && r.afecta_comision && r.tipo !== 'NO_AUTORIZADO');
+    const cuRechazado = rechazosRuta.reduce((s,r) => s+Math.abs(r.cu_cargue-r.cu_liquidado), 0);
+    const clientesEntregados = d.clientes.size;
+    const clientesAsignados = Math.max(clientesEntregados, clientesEntregados + rechazosRuta.filter(r=>r.tipo==='RECHAZO_TOTAL').length);
+    const cuEntregado = d.cu;
+    const cuAsignado = cuEntregado + cuRechazado;
+    const efClientes = clientesAsignados > 0 ? (clientesEntregados/clientesAsignados*100) : 100;
+    const efCajas = cuAsignado > 0 ? (cuEntregado/cuAsignado*100) : 100;
+    const promedio = (efClientes + efCajas) / 2;
+    const meta = metaMap[ruta] || 97;
+    return { efClientes, efCajas, promedio, meta, comisionActiva: promedio >= meta, clientesEntregados, clientesAsignados, cuEntregado, cuAsignado };
+  };
+
+  const rutasAMostrar = rol === 'conductor' ? [miRuta] : Object.keys(byRuta).sort();
+
+  let html = '';
+
+  if(rol === 'conductor' && miRuta) {
+    const com = calcComision(miRuta);
+    html = `
+      <div class="comision-bar" style="border-left:4px solid ${colorPct(com.promedio)}">
+        <div class="comision-header">
+          <div>
+            <div class="comision-title">Tu Comisión — Ruta ${miRuta}</div>
+            <div style="font-size:12px;color:var(--t3);margin-top:4px">
+              Clientes: ${com.clientesEntregados}/${com.clientesAsignados} · CU: ${fmtN(com.cuEntregado)}/${fmtN(com.cuAsignado)}
+            </div>
+          </div>
+          <div class="comision-pct" style="color:${colorPct(com.promedio)}">${fmtPct(com.promedio)}</div>
+        </div>
+        <div class="progress-bar" style="height:10px">
+          <div class="progress-fill" style="width:${Math.min(com.promedio,100)}%;background:${colorPct(com.promedio)}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:6px">
+          <span>0%</span>
+          <span style="color:var(--yellow);font-weight:700">▲ Meta ${com.meta}%</span>
+          <span>100%</span>
+        </div>
+        <div style="margin-top:16px;text-align:center">
+          <span class="badge ${com.comisionActiva?'badge-green':'badge-red'}" style="font-size:14px;padding:8px 20px">
+            ${com.comisionActiva ? '✅ COMISIÓN ACTIVA' : '❌ SIN COMISIÓN — Por debajo de meta'}
+          </span>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-name">Efectividad Clientes</div></div>
+          <div class="kpi-value" style="color:${colorPct(com.efClientes)}">${fmtPct(com.efClientes)}</div>
+          <div class="kpi-meta">${com.clientesEntregados} de ${com.clientesAsignados} clientes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-name">Efectividad Cajas (CU)</div></div>
+          <div class="kpi-value" style="color:${colorPct(com.efCajas)}">${fmtPct(com.efCajas)}</div>
+          <div class="kpi-meta">${fmtN(com.cuEntregado)} de ${fmtN(com.cuAsignado)} CU</div>
+        </div>
+      </div>`;
+  } else {
+    html = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Comisiones por Ruta</div>
+          <button class="share-btn" onclick="copiarComisionesWA()">📋 WhatsApp</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ruta</th><th>Conductor</th><th>Clientes Entregados</th><th>CU Entregadas</th><th>Ef. Clientes</th><th>Ef. Cajas</th><th>Promedio</th><th>Meta</th><th>Comisión</th></tr></thead>
+            <tbody id="comisionesBody">
+              ${rutasAMostrar.map(ruta => {
+                const com = calcComision(ruta);
+                const asig = asigMap[ruta];
+                const conductor = asig?.conductor?.nombre_completo || '—';
+                return `<tr>
+                  <td class="mono" style="font-weight:700">${ruta}</td>
+                  <td>${conductor}</td>
+                  <td class="mono">${com.clientesEntregados}/${com.clientesAsignados}</td>
+                  <td class="mono">${fmtN(com.cuEntregado)}/${fmtN(com.cuAsignado)}</td>
+                  <td class="mono" style="color:${colorPct(com.efClientes)}">${fmtPct(com.efClientes)}</td>
+                  <td class="mono" style="color:${colorPct(com.efCajas)}">${fmtPct(com.efCajas)}</td>
+                  <td class="mono" style="font-weight:700;color:${colorPct(com.promedio)}">${fmtPct(com.promedio)}</td>
+                  <td class="mono">${com.meta}%</td>
+                  <td><span class="badge ${com.comisionActiva?'badge-green':'badge-red'}">${com.comisionActiva?'✅ Activa':'❌ No'}</span></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    window._comisionesData = { rutasAMostrar, byRuta, calcComision, asigMap };
+  }
+
+  main.innerHTML = html;
+}
+
+function copiarComisionesWA() {
+  const { rutasAMostrar, calcComision, asigMap } = window._comisionesData || {};
+  if(!rutasAMostrar) return;
+  const fecha = new Date().toLocaleDateString('es-CO');
+  let txt = `💵 *COMISIONES SIRIUS — GMAZ*\n📅 ${fecha}\n\n`;
+  rutasAMostrar.forEach(ruta => {
+    const com = calcComision(ruta);
+    const asig = asigMap[ruta];
+    const conductor = asig?.conductor?.nombre_completo || '—';
+    txt += `${com.comisionActiva?'✅':'❌'} *${ruta}* · ${conductor} · ${fmtPct(com.promedio)}\n`;
+  });
+  txt += '\n_SIRIUS · GMAZ_';
+  navigator.clipboard.writeText(txt).then(() => showToast('📋 Copiado para WhatsApp', 'success'));
+}
+
+// ════════════════════════════════════════════════════════
+// PERSONAL
+// ════════════════════════════════════════════════════════
+async function renderPersonal() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando personal...</div>';
+
+  const { data: personal } = await sb.from('personal').select('*').order('nombre_completo');
+
+  main.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div class="section-title">Personal Operativo</div>
+      <button class="btn btn-primary" onclick="modalPersonal()">+ Agregar persona</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Cédula</th><th>Tipo</th><th>Licencia</th><th>Vencimiento</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            ${(personal||[]).map(p => {
+              const est = estadoDocumento(p.fecha_vencimiento_licencia);
+              const badgeCls = { ok:'badge-green', alerta:'badge-yellow', critico:'badge-red', vencido:'badge-red', sin_fecha:'badge-gray' }[est.tipo];
+              return `<tr>
+                <td style="font-weight:600">${p.nombre_completo}</td>
+                <td class="mono">${p.numero_cedula}</td>
+                <td><span class="badge badge-blue">${p.tipo}</span></td>
+                <td class="mono">${p.tipo_licencia||'—'}</td>
+                <td>${fmtDate(p.fecha_vencimiento_licencia)}</td>
+                <td><span class="badge ${badgeCls}">${est.label}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="editPersonal('${p.id}')">Editar</button>
+                  <button class="btn btn-sm ${p.activo?'btn-danger':'btn-success'}" onclick="togglePersonal('${p.id}',${p.activo})">${p.activo?'Desactivar':'Activar'}</button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function modalPersonal(id) {
+  let p = null;
+  if(id) {
+    const { data } = await sb.from('personal').select('*').eq('id',id).single();
+    p = data;
+  }
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Nombre completo *</label>
+      <input type="text" class="form-control" id="pNombre" value="${p?.nombre_completo||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Número de cédula *</label>
+      <input type="text" class="form-control" id="pCedula" value="${p?.numero_cedula||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo *</label>
+      <select class="form-control" id="pTipo">
+        <option value="conductor" ${p?.tipo==='conductor'?'selected':''}>Conductor</option>
+        <option value="auxiliar" ${p?.tipo==='auxiliar'?'selected':''}>Auxiliar</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de licencia</label>
+      <select class="form-control" id="pLicencia">
+        <option value="">-- Sin licencia --</option>
+        ${['B1','B2','C1','C2','C3'].map(l=>`<option value="${l}" ${p?.tipo_licencia===l?'selected':''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vencimiento licencia</label>
+      <input type="date" class="form-control" id="pVencLic" value="${p?.fecha_vencimiento_licencia||''}">
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarPersonal(${id?`'${id}'`:null})">Guardar</button>`;
+
+  openModal(id ? 'Editar Persona' : 'Agregar Persona', body, footer);
+}
+
+function editPersonal(id) { modalPersonal(id); }
+
+async function guardarPersonal(id) {
+  const nombre = document.getElementById('pNombre').value.trim();
+  const cedula = document.getElementById('pCedula').value.trim();
+  const tipo = document.getElementById('pTipo').value;
+  const licencia = document.getElementById('pLicencia').value || null;
+  const vencLic = document.getElementById('pVencLic').value || null;
+
+  if(!nombre || !cedula) { showToast('Nombre y cédula son obligatorios', 'warning'); return; }
+
+  const row = { nombre_completo: nombre, numero_cedula: cedula, tipo, tipo_licencia: licencia, fecha_vencimiento_licencia: vencLic, updated_at: new Date().toISOString() };
+
+  if(id) {
+    await sb.from('personal').update(row).eq('id', id);
+    showToast('✅ Persona actualizada', 'success');
+  } else {
+    await sb.from('personal').insert({ ...row, activo: true });
+    showToast('✅ Persona agregada', 'success');
+  }
+
+  closeModal();
+  await auditLog(id?'UPDATE_PERSONAL':'INSERT_PERSONAL', 'personal', id, row);
+  await updateSemaforo();
+  renderPersonal();
+}
+
+async function togglePersonal(id, activo) {
+  await sb.from('personal').update({ activo: !activo }).eq('id', id);
+  showToast(`${!activo?'✅ Activado':'⛔ Desactivado'}`, 'success');
+  renderPersonal();
+}
+
+// ════════════════════════════════════════════════════════
+// FLOTA
+// ════════════════════════════════════════════════════════
+async function renderFlota() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando flota...</div>';
+
+  const { data: vehiculos } = await sb.from('vehiculos').select('*').order('placa');
+
+  main.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div class="section-title">Flota de Vehículos</div>
+      <button class="btn btn-primary" onclick="modalVehiculo()">+ Agregar vehículo</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Placa</th><th>Tipo</th><th>SOAT</th><th>Revisión Técnica</th><th>Estado SOAT</th><th>Estado Rev.</th><th>Acciones</th></tr></thead>
+          <tbody>
+            ${(vehiculos||[]).map(v => {
+              const soat = estadoDocumento(v.soat_vencimiento);
+              const rev = estadoDocumento(v.revision_tecnica_vencimiento);
+              const badgeSoat = { ok:'badge-green', alerta:'badge-yellow', critico:'badge-red', vencido:'badge-red', sin_fecha:'badge-gray' }[soat.tipo];
+              const badgeRev = { ok:'badge-green', alerta:'badge-yellow', critico:'badge-red', vencido:'badge-red', sin_fecha:'badge-gray' }[rev.tipo];
+              return `<tr>
+                <td class="mono" style="font-weight:700">${v.placa}</td>
+                <td><span class="badge badge-blue">${v.tipo}</span></td>
+                <td>${fmtDate(v.soat_vencimiento)}</td>
+                <td>${fmtDate(v.revision_tecnica_vencimiento)}</td>
+                <td><span class="badge ${badgeSoat}">${soat.label}</span></td>
+                <td><span class="badge ${badgeRev}">${rev.label}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="editVehiculo('${v.id}')">Editar</button>
+                  <button class="btn btn-sm ${v.activo?'btn-danger':'btn-success'}" onclick="toggleVehiculo('${v.id}',${v.activo})">${v.activo?'Desactivar':'Activar'}</button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function modalVehiculo(id) {
+  let v = null;
+  if(id) {
+    const { data } = await sb.from('vehiculos').select('*').eq('id',id).single();
+    v = data;
+  }
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Placa *</label>
+      <input type="text" class="form-control" id="vPlaca" value="${v?.placa||''}" placeholder="ABC-123" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo *</label>
+      <select class="form-control" id="vTipo">
+        <option value="camion" ${v?.tipo==='camion'?'selected':''}>Camión</option>
+        <option value="furgon" ${v?.tipo==='furgon'?'selected':''}>Furgón</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vencimiento SOAT</label>
+      <input type="date" class="form-control" id="vSoat" value="${v?.soat_vencimiento||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vencimiento Revisión Técnico-mecánica</label>
+      <input type="date" class="form-control" id="vRev" value="${v?.revision_tecnica_vencimiento||''}">
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarVehiculo(${id?`'${id}'`:null})">Guardar</button>`;
+
+  openModal(id ? 'Editar Vehículo' : 'Agregar Vehículo', body, footer);
+}
+
+function editVehiculo(id) { modalVehiculo(id); }
+
+async function guardarVehiculo(id) {
+  const placa = document.getElementById('vPlaca').value.trim().toUpperCase();
+  const tipo = document.getElementById('vTipo').value;
+  const soat = document.getElementById('vSoat').value || null;
+  const rev = document.getElementById('vRev').value || null;
+
+  if(!placa) { showToast('La placa es obligatoria', 'warning'); return; }
+
+  const row = { placa, tipo, soat_vencimiento: soat, revision_tecnica_vencimiento: rev, updated_at: new Date().toISOString() };
+
+  if(id) {
+    await sb.from('vehiculos').update(row).eq('id', id);
+    showToast('✅ Vehículo actualizado', 'success');
+  } else {
+    await sb.from('vehiculos').insert({ ...row, activo: true });
+    showToast('✅ Vehículo agregado', 'success');
+  }
+
+  closeModal();
+  await auditLog(id?'UPDATE_VEHICULO':'INSERT_VEHICULO', 'vehiculos', id, row);
+  await updateSemaforo();
+  renderFlota();
+}
+
+async function toggleVehiculo(id, activo) {
+  await sb.from('vehiculos').update({ activo: !activo }).eq('id', id);
+  showToast(`${!activo?'✅ Activado':'⛔ Desactivado'}`, 'success');
+  renderFlota();
+}
+
+// ════════════════════════════════════════════════════════
+// ADMIN
+// ════════════════════════════════════════════════════════
+async function renderAdmin() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando panel admin...</div>';
+
+  const [{ data: usuarios }, { data: rutas }, { data: config }] = await Promise.all([
+    sb.from('usuarios').select('*').order('rol').order('nombre_completo'),
+    sb.from('rutas').select('*').order('tipo').order('codigo'),
+    sb.from('configuracion').select('*').order('clave'),
+  ]);
+
+  main.innerHTML = `
+    <!-- USUARIOS -->
+    <div class="section-title">Gestión de Usuarios</div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <div class="card-title">Usuarios del Sistema</div>
+        <button class="btn btn-primary btn-sm" onclick="modalUsuario()">+ Agregar usuario</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Ruta</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            ${(usuarios||[]).map(u => `<tr>
+              <td class="mono" style="font-size:12px">${u.email}</td>
+              <td style="font-weight:600">${u.nombre_completo||'—'}</td>
+              <td><span class="badge badge-blue">${u.rol}</span></td>
+              <td class="mono">${u.ruta_codigo||'—'}</td>
+              <td><span class="badge ${u.activo?'badge-green':'badge-gray'}">${u.activo?'Activo':'Inactivo'}</span></td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="editUsuario('${u.id}')">Editar</button>
+                <button class="btn btn-sm ${u.activo?'btn-danger':'btn-success'}" onclick="toggleUsuario('${u.id}',${u.activo})">${u.activo?'Desactivar':'Activar'}</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RUTAS -->
+    <div class="section-title">Gestión de Rutas</div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <div class="card-title">Rutas Configuradas</div>
+        <button class="btn btn-primary btn-sm" onclick="modalRuta()">+ Agregar ruta</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Meta Efect.</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            ${(rutas||[]).map(r => `<tr>
+              <td class="mono" style="font-weight:700">${r.codigo}</td>
+              <td>${r.nombre||'—'}</td>
+              <td><span class="badge badge-blue">${TIPO_LABELS[r.tipo]||r.tipo}</span></td>
+              <td class="mono" style="color:${colorPct(r.meta_efectividad||97)}">${r.meta_efectividad||97}%</td>
+              <td><span class="badge ${r.activo?'badge-green':'badge-gray'}">${r.activo?'Activa':'Inactiva'}</span></td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="editRuta('${r.id}','${r.codigo}','${r.nombre||''}','${r.tipo}',${r.meta_efectividad||97})">Editar</button>
+                <button class="btn btn-sm ${r.activo?'btn-danger':'btn-success'}" onclick="toggleRuta('${r.id}',${r.activo})">${r.activo?'Desactivar':'Activar'}</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="section-title">Configuración del Sistema</div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header"><div class="card-title">Parámetros SIRIUS</div></div>
+      <div class="card-body">
+        ${(config||[]).map(c => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd)">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${c.descripcion||c.clave}</div>
+            <div class="mono" style="font-size:11px;color:var(--t3)">${c.clave}</div>
+          </div>
+          <input type="text" value="${c.valor}" id="cfg_${c.id}" class="form-control" style="width:120px;text-align:center">
+          <button class="btn btn-sm btn-primary" onclick="guardarConfig('${c.id}','${c.clave}')">Guardar</button>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- AUDITORÍA -->
+    <div class="section-title">Log de Auditoría</div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Últimas 50 acciones</div>
+        <button class="btn btn-sm btn-secondary" onclick="exportarAuditoria()">📥 Exportar PDF</button>
+      </div>
+      <div id="auditoriaContainer"><div class="loading"><div class="spinner"></div></div></div>
+    </div>`;
+
+  // Load audit
+  const { data: audit } = await sb.from('auditoria').select('*').order('fecha',{ascending:false}).limit(50);
+  document.getElementById('auditoriaContainer').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Tabla</th></tr></thead>
+        <tbody>
+          ${(audit||[]).map(a => `<tr>
+            <td class="mono" style="font-size:11px">${new Date(a.fecha).toLocaleString('es-CO')}</td>
+            <td style="font-size:12px">${a.usuario_email}</td>
+            <td><span class="badge badge-blue">${a.accion}</span></td>
+            <td class="mono" style="font-size:11px">${a.tabla_afectada||'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function modalUsuario(id) {
+  const { data: rutas } = await sb.from('rutas').select('codigo').eq('activo',true).order('codigo');
+  let u = null;
+  if(id) { const { data } = await sb.from('usuarios').select('*').eq('id',id).single(); u = data; }
+
+  const opsRuta = ['<option value="">-- Sin ruta --</option>',
+    ...(rutas||[]).map(r=>`<option value="${r.codigo}" ${u?.ruta_codigo===r.codigo?'selected':''}>${r.codigo}</option>`)
+  ].join('');
+
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Email (usuario de acceso) *</label>
+      <input type="email" class="form-control" id="uEmail" value="${u?.email||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo *</label>
+      <input type="text" class="form-control" id="uNombre" value="${u?.nombre_completo||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rol *</label>
+      <select class="form-control" id="uRol">
+        ${['coordinador','gerencia','liquidadora','tesorero','conductor'].map(r=>`<option value="${r}" ${u?.rol===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ruta asignada (solo conductores)</label>
+      <select class="form-control" id="uRuta">${opsRuta}</select>
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarUsuario(${id?`'${id}'`:null})">Guardar</button>`;
+
+  openModal(id?'Editar Usuario':'Agregar Usuario', body, footer);
+}
+
+function editUsuario(id) { modalUsuario(id); }
+
+async function guardarUsuario(id) {
+  const email = document.getElementById('uEmail').value.trim().toLowerCase();
+  const nombre = document.getElementById('uNombre').value.trim();
+  const rol = document.getElementById('uRol').value;
+  const ruta = document.getElementById('uRuta').value || null;
+
+  if(!email || !nombre) { showToast('Email y nombre son obligatorios', 'warning'); return; }
+
+  const row = { email, nombre_completo: nombre, rol, ruta_codigo: ruta };
+
+  if(id) {
+    await sb.from('usuarios').update(row).eq('id', id);
+    showToast('✅ Usuario actualizado', 'success');
+  } else {
+    await sb.from('usuarios').insert({ ...row, activo: true });
+    showToast('✅ Usuario agregado en la tabla. Recuerda crear su cuenta en Supabase Auth.', 'success');
+  }
+
+  closeModal();
+  await auditLog(id?'UPDATE_USUARIO':'INSERT_USUARIO', 'usuarios', id, row);
+  renderAdmin();
+}
+
+async function toggleUsuario(id, activo) {
+  await sb.from('usuarios').update({ activo: !activo }).eq('id', id);
+  showToast(`${!activo?'✅ Activado':'⛔ Desactivado'}`, 'success');
+  renderAdmin();
+}
+
+function modalRuta() {
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Código de ruta *</label>
+      <input type="text" class="form-control" id="rCodigo" placeholder="KA4V99" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input type="text" class="form-control" id="rNombre" placeholder="Descripción de la ruta">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo *</label>
+      <select class="form-control" id="rTipo">
+        <option value="reparto">Reparto</option>
+        <option value="mayorista">Mayorista Lista T</option>
+        <option value="autoventa">Autoventa</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Meta de efectividad (%)</label>
+      <input type="number" class="form-control" id="rMeta" value="97" min="50" max="100">
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarRuta()">Guardar</button>`;
+
+  openModal('Agregar Ruta', body, footer);
+}
+
+function editRuta(id, codigo, nombre, tipo, meta) {
+  const body = `
+    <div class="form-group">
+      <label class="form-label">Código</label>
+      <input type="text" class="form-control" id="rCodigo" value="${codigo}" readonly style="background:var(--bg);color:var(--t3)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input type="text" class="form-control" id="rNombre" value="${nombre}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select class="form-control" id="rTipo">
+        ${['reparto','mayorista','autoventa'].map(t=>`<option value="${t}" ${tipo===t?'selected':''}>${TIPO_LABELS[t]}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Meta de efectividad (%)</label>
+      <input type="number" class="form-control" id="rMeta" value="${meta}" min="50" max="100">
+    </div>`;
+
+  const footer = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarRutaEdit('${id}')">Guardar</button>`;
+
+  openModal(`Editar Ruta ${codigo}`, body, footer);
+}
+
+async function guardarRuta() {
+  const codigo = document.getElementById('rCodigo').value.trim().toUpperCase();
+  const nombre = document.getElementById('rNombre').value.trim();
+  const tipo = document.getElementById('rTipo').value;
+  const meta = parseFloat(document.getElementById('rMeta').value) || 97;
+
+  if(!codigo) { showToast('El código es obligatorio', 'warning'); return; }
+
+  await sb.from('rutas').insert({ codigo, nombre: nombre||codigo, tipo, meta_efectividad: meta, activo: true });
+  closeModal();
+  showToast('✅ Ruta agregada', 'success');
+  renderAdmin();
+}
+
+async function guardarRutaEdit(id) {
+  const nombre = document.getElementById('rNombre').value.trim();
+  const tipo = document.getElementById('rTipo').value;
+  const meta = parseFloat(document.getElementById('rMeta').value) || 97;
+  await sb.from('rutas').update({ nombre, tipo, meta_efectividad: meta }).eq('id', id);
+  closeModal();
+  showToast('✅ Ruta actualizada', 'success');
+  renderAdmin();
+}
+
+async function toggleRuta(id, activo) {
+  await sb.from('rutas').update({ activo: !activo }).eq('id', id);
+  showToast(`${!activo?'✅ Activada':'⛔ Desactivada'}`, 'success');
+  renderAdmin();
+}
+
+async function guardarConfig(id, clave) {
+  const valor = document.getElementById(`cfg_${id}`).value.trim();
+  await sb.from('configuracion').update({ valor, updated_at: new Date().toISOString() }).eq('id', id);
+  showToast('✅ Configuración guardada', 'success');
+  await auditLog('UPDATE_CONFIG', 'configuracion', id, { clave, valor });
+}
+
+async function exportarAuditoria() {
+  const element = document.getElementById('auditoriaContainer');
+  const opt = {
+    margin: 8,
+    filename: `SIRIUS_Auditoria_${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { type:'jpeg', quality:0.95 },
+    html2canvas: { scale: 2, backgroundColor: '#fff' },
+    jsPDF: { unit:'mm', format:'a4', orientation:'landscape' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+
+// ════════════════════════════════════════════════════════
+// CHECK AUTH ON LOAD
+// ════════════════════════════════════════════════════════
+window.addEventListener('load', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if(session) {
+    currentUser = session.user;
+    await loadUserData();
+    if(currentUserData) launchApp();
+  }
+});
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if(e.target === document.getElementById('modalOverlay')) closeModal();
+});
+</script>
+</body>
+</html>
