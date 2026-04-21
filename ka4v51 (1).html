@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>KA4V51 · 21-04-2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--c:#f72585;--ink:#1a1814;--bg:#f5f2eb;--surface:#fff;--border:#e2ddd5;--muted:#8c8680}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.bar{background:var(--ink);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:3px solid var(--c)}
+.badge{background:var(--c);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:2px;white-space:nowrap}
+.bi{flex:1;min-width:0}.bi h1{font-size:13px;color:#fff;font-weight:700}.bi p{font-size:9px;color:#888;margin-top:2px}
+.ctr{font-size:11px;color:var(--c);text-align:right;white-space:nowrap}.ctr span{display:block;font-size:9px;color:#666}
+.tabs{display:flex;background:var(--ink);flex-shrink:0;border-bottom:1px solid #333}
+.tab{flex:1;padding:8px;text-align:center;font-size:11px;font-weight:600;color:#666;cursor:pointer;border-bottom:2px solid transparent;user-select:none}
+.tab.on{color:var(--c);border-bottom-color:var(--c)}
+#pmap{flex:1;display:block}
+#plv{flex:1;overflow-y:auto;display:none;flex-direction:column}
+#prv{display:none;flex:1;flex-direction:column;overflow-y:auto;background:var(--bg)}
+.sw{padding:10px 16px;background:#fff;border-bottom:1px solid var(--border)}
+#sb{width:100%;border:1px solid var(--border);border-radius:4px;padding:8px 12px;font-size:14px;outline:none;background:var(--bg)}
+#sb:focus{border-color:var(--c)}
+.ci{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.ci:active{background:#ece9e0}
+.cn{width:28px;height:28px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-family:monospace}
+.nm{font-size:14px;font-weight:600;line-height:1.3;margin-bottom:2px}
+.ad{font-size:12px;color:var(--muted);line-height:1.4}
+.ca{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.bn{display:inline-flex;align-items:center;gap:4px;background:var(--c);color:#fff;border:none;border-radius:3px;padding:5px 10px;font-size:11px;font-weight:600;text-decoration:none}
+.bc{background:var(--ink);color:#fff;display:inline-flex;align-items:center;gap:4px;border:none;border-radius:3px;padding:5px 10px;font-size:11px;font-weight:600;text-decoration:none}
+.nt{font-size:11px;color:#c05000;background:#fff8f5;border-left:3px solid var(--c);padding:4px 8px;margin-top:6px;border-radius:0 3px 3px 0}
+.stbadge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px}
+.stbadge.e{background:#dcfce7;color:#15803d}.stbadge.rt{background:#fee2e2;color:#b91c1c}.stbadge.rp{background:#fef3c7;color:#b45309}
+.pi{padding:14px;min-width:200px;max-width:290px}
+.pb{display:inline-block;background:var(--c);color:#fff;font-size:9px;font-family:monospace;padding:2px 6px;border-radius:2px;margin-bottom:6px}
+.pc{display:inline-block;background:#f0f0f0;color:#555;font-size:9px;font-family:monospace;padding:2px 6px;border-radius:2px;margin-bottom:6px;margin-left:4px}
+.pn{font-size:15px;font-weight:700;margin-bottom:3px}.pa{font-size:12px;color:var(--muted);margin-bottom:8px}
+.ph{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#1a6640;background:#e8f7ee;border-radius:3px;padding:3px 8px;margin-bottom:8px}
+.pax{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pbt{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:3px;font-size:12px;font-weight:600;border:none;cursor:pointer;text-decoration:none}
+.pbtn{background:#f72585;color:#fff}.pbc{background:#1a1814;color:#fff}
+.pno{font-size:11px;color:#c05000;background:#fff8f5;border-left:3px solid #f72585;padding:5px 8px;margin-bottom:8px;border-radius:0 3px 3px 0}
+.px{border-top:1px solid #eee;padding-top:8px;margin-top:4px}
+.pxr{display:flex;gap:6px;font-size:11px;margin-bottom:3px}
+.pxl{font-size:9px;color:#888;min-width:70px;text-transform:uppercase;font-family:monospace}.pxv{font-weight:600;flex:1}
+.est{border-top:1px solid #eee;padding-top:10px;margin-top:8px}
+.estt{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:monospace}
+.pst{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:4px}
+.pst.e{background:#dcfce7;color:#15803d}.pst.rt{background:#fee2e2;color:#b91c1c}.pst.rp{background:#fef3c7;color:#b45309}
+.pmot{font-size:10px;color:#888;margin-bottom:6px}
+.estb{display:flex;gap:6px;flex-wrap:wrap}
+.eb{flex:1;padding:8px 4px;border:2px solid #eee;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;background:#fff;white-space:nowrap;min-width:70px}
+.eb.e{border-color:#22c55e;background:#f0fdf4;color:#15803d}
+.eb.rt{border-color:#ef4444;background:#fef2f2;color:#b91c1c}
+.eb.rp{border-color:#f59e0b;background:#fffbeb;color:#b45309}
+.movl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;justify-content:center}
+.movl.open{display:flex}
+.mbox{background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 20px 36px}
+.mbox h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.mbox p{font-size:12px;color:#888;margin-bottom:14px}
+.mopt{display:flex;align-items:center;gap:12px;padding:13px 14px;border:2px solid #eee;border-radius:10px;cursor:pointer;margin-bottom:8px;font-size:13px;font-weight:600;transition:border-color .15s,background .15s}
+.mopt.rt-c:hover,.mopt.rt-c:active{border-color:#ef4444;background:#fef2f2;color:#b91c1c}
+.mopt.rp-c:hover,.mopt.rp-c:active{border-color:#f59e0b;background:#fffbeb;color:#b45309}
+.mico{font-size:20px;flex-shrink:0}
+.mcanc{width:100%;margin-top:6px;padding:12px;background:#f5f2eb;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#888}
+.leaflet-popup-content-wrapper{background:#fff!important;border:none!important;border-radius:8px!important;box-shadow:0 8px 32px rgba(0,0,0,.2)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important}.leaflet-popup-tip-container{display:none}
+.leaflet-control-zoom a{background:#1a1814!important;color:#fff!important;border:none!important;border-radius:4px!important;margin-bottom:4px!important}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="badge">KA4V51</div>
+  <div class="bi"><h1>Mapa del día</h1><p>MARTES, 21 DE ABRIL DE 2026</p></div>
+  <div class="ctr">88<span>clientes</span></div>
+</div>
+<div class="tabs">
+  <div class="tab on" id="tM" onclick="sw('m')">&#x1F5FA; Mapa</div>
+  <div class="tab" id="tL" onclick="sw('l')">&#x1F4CB; Lista</div>
+  <div class="tab" id="tR" onclick="sw('r')">&#x1F4CA; Reporte</div>
+</div>
+<div id="pmap"></div>
+<div id="plv">
+  <div class="sw"><input type="text" id="sb" placeholder="&#x1F50D; Buscar..." oninput="fl(this.value)"></div>
+  <div id="cl"></div>
+</div>
+<div id="prv">
+  <div style="padding:16px">
+    <div id="rs"></div>
+    <div id="rd"></div>
+    <button onclick="dlr()" style="width:100%;margin-top:16px;padding:13px;background:#1a1814;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#x2B07; Descargar Reporte CSV</button>
+  </div>
+</div>
+<div class="movl" id="movl">
+  <div class="mbox">
+    <h2 id="mtit">Motivo de rechazo</h2>
+    <p>Selecciona el motivo:</p>
+    <div id="mopts"></div>
+    <button class="mcanc" onclick="cmot()">Cancelar</button>
+  </div>
+</div>
+<script>
+var C="#f72585";
+var D=[{"lat":1.1999,"lng":-77.2952,"name":"TIENDA MARIA PAULA","addr":"CR 23 11 SUR 30 AP 1401","order":"1","tel":"","notas":"","horario":"","codigo":"1224817618","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"9"}},{"lat":1.19923,"lng":-77.29525,"name":"TIENDA MARIA PAULA","addr":"CR 23 11 SUR 30 TO 2 AP 1401","order":"2","tel":"","notas":"","horario":"","codigo":"1224816777","extras":{"Ciudad":"PASTO","Municipio":"ALTAMIRA","Cajas":"1"}},{"lat":1.202875,"lng":-77.291691,"name":"TIENDA Y LICORES JUANJO","addr":"MZ 13 CA 10 TAMASAGRA 2","order":"3","tel":"","notas":"","horario":"","codigo":"1224145368","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"2"}},{"lat":1.2034,"lng":-77.2921,"name":"TIENDA EL BUEN PAN","addr":"MZ 29 CA 29","order":"4","tel":"","notas":"","horario":"","codigo":"1224669162","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"1"}},{"lat":1.2037,"lng":-77.2922,"name":"PICO NIDO","addr":"MZ 38 CA 9 BRR TAMASAGRA I","order":"5","tel":"","notas":"","horario":"","codigo":"1224650226","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"9"}},{"lat":1.2036,"lng":-77.2926,"name":"FRUVER YAMEL","addr":"MZ 21 CA 15","order":"6","tel":"","notas":"","horario":"","codigo":"1224545559","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"1,5"}},{"lat":1.203369,"lng":-77.292466,"name":"CAFETERIA DOÑA LIGIA","addr":"MZ 39 CA 1 ESTAPA 1 ARRIBA DE","order":"7","tel":"","notas":"","horario":"","codigo":"1224786726","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"2"}},{"lat":1.2034,"lng":-77.2928,"name":"ANDRES ASADOS","addr":"CL 6 SUR 23B 52","order":"8","tel":"","notas":"","horario":"","codigo":"1224568642","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"1"}},{"lat":1.2045,"lng":-77.2923,"name":"PANADERIA LA GITANA","addr":"KR 24 5 SUR - 51","order":"9","tel":"","notas":"","horario":"","codigo":"1205247993","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"7"}},{"lat":1.204511,"lng":-77.29206,"name":"DONDE DE JUANCHOS","addr":"CL 24 N 5 SUR 15","order":"10","tel":"","notas":"","horario":"","codigo":"1224858656","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"2,5"}},{"lat":1.20468,"lng":-77.29203,"name":"BROSTER CORRAL 1","addr":"CR 24 5 SUR 06","order":"11","tel":"","notas":"","horario":"","codigo":"1224682784","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"8,5"}},{"lat":1.2047,"lng":-77.292,"name":"PIMIENTOS","addr":"CR 24 5 SUR 43","order":"12","tel":"","notas":"","horario":"","codigo":"1224337576","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"2"}},{"lat":1.2047,"lng":-77.292,"name":"GRANERO AZUR","addr":"CR 24 5 SUR 6 MIJITAYO","order":"13","tel":"","notas":"","horario":"","codigo":"1224370656","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"3"}},{"lat":1.2048,"lng":-77.2915,"name":"AUTOSERVICIO EL HOGAR","addr":"CR 24 4 SUR 22 MIJITAYO","order":"14","tel":"","notas":"","horario":"","codigo":"1224317468","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"5,42"}},{"lat":1.2055,"lng":-77.2928,"name":"PUNTO DE ENCUENTRO","addr":"CR 25 5 SUR 05","order":"15","tel":"","notas":"","horario":"","codigo":"1210649742","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"3"}},{"lat":1.206015,"lng":-77.292208,"name":"MINITIEND LEITO","addr":"CR 25 4 SUR 12","order":"16","tel":"","notas":"","horario":"","codigo":"1224115157","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"3,25"}},{"lat":1.2061,"lng":-77.29223,"name":"MULTIVARIEDADES DEL SUR","addr":"CL 4 SUR 25 44","order":"17","tel":"","notas":"","horario":"","codigo":"1224759079","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"13,5"}},{"lat":1.20571,"lng":-77.29188,"name":"TIENDA JUANJO","addr":"CR 24A 4 SUR 26","order":"18","tel":"","notas":"","horario":"","codigo":"1224756935","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"2"}},{"lat":1.2054,"lng":-77.2915,"name":"DISTRIHUEVOS","addr":"CL 4 SUR 24 - 04","order":"19","tel":"","notas":"","horario":"","codigo":"1205248063","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"3"}},{"lat":1.206609,"lng":-77.28738,"name":"CLUB HOUSE","addr":"CR 33 NO 7-55 LOCAL 2","order":"20","tel":"","notas":"","horario":"","codigo":"1224857638","extras":{"Ciudad":"PASTO","Municipio":"LAS ACACIAS","Cajas":"8"}},{"lat":1.20254,"lng":-77.2833,"name":"TIENDA MARY","addr":"CR 17 3 21","order":"21","tel":"","notas":"","horario":"","codigo":"1224740687","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"0,5"}},{"lat":1.2021,"lng":-77.2833,"name":"TIENDA SARITA","addr":"CL 5A 16 04","order":"22","tel":"","notas":"","horario":"","codigo":"1224080476","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO","Cajas":"1"}},{"lat":1.20285,"lng":-77.28369,"name":"TIENDA ALICIA","addr":"CR 17 3 51A","order":"23","tel":"","notas":"","horario":"","codigo":"1224798910","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"2"}},{"lat":1.2016,"lng":-77.2838,"name":"TIENDA GENIT ESPANA","addr":"CL 4 15 - 57","order":"24","tel":"","notas":"","horario":"","codigo":"1205248503","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"1,25"}},{"lat":1.2016,"lng":-77.2837,"name":"TIENDA ROSARIO MURILLO","addr":"CL 4 15 - 52","order":"25","tel":"","notas":"","horario":"","codigo":"1205248499","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"0,5"}},{"lat":1.2012,"lng":-77.2836,"name":"TIENDA STEFY","addr":"CL 4 15 75","order":"26","tel":"","notas":"","horario":"","codigo":"1224326810","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"1"}},{"lat":1.2013,"lng":-77.284,"name":"TIENDA SURTI VANESSA","addr":"CL 3 15 - 58","order":"27","tel":"","notas":"","horario":"","codigo":"1205248488","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"1"}},{"lat":1.2016,"lng":-77.2833,"name":"MERCA PREMIUM","addr":"CL 5 15 31","order":"28","tel":"","notas":"","horario":"","codigo":"1224633563","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"3"}},{"lat":1.201423,"lng":-77.28319,"name":"DONDE PATYS","addr":"CL 5 N 15 07","order":"29","tel":"","notas":"","horario":"","codigo":"1224856233","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"4,5"}},{"lat":1.201076,"lng":-77.28263,"name":"TIENDA LA SEXTA","addr":"CL 6 15 - 15","order":"30","tel":"","notas":"","horario":"","codigo":"1205248308","extras":{"Ciudad":"PASTO","Municipio":"CAICEDO ALTO","Cajas":"2"}},{"lat":1.20186,"lng":-77.28157,"name":"LAVAUTOS NIZA","addr":"CL 9 14A 17 AV PANAMERICANA","order":"31","tel":"","notas":"","horario":"","codigo":"1224807717","extras":{"Ciudad":"PASTO","Municipio":"OTROS","Cajas":"1"}},{"lat":1.2026,"lng":-77.2824,"name":"CAFE Y RES NIZA","addr":"CL 9 16 58 LAVAUTOS NIZA","order":"32","tel":"","notas":"","horario":"","codigo":"1224399771","extras":{"Ciudad":"PASTO","Municipio":"NIZA I","Cajas":"3"}},{"lat":1.2024,"lng":-77.2824,"name":"TIENDA LA ESQUINA","addr":"MANZANA C CASA 14","order":"33","tel":"","notas":"","horario":"","codigo":"1205248298","extras":{"Ciudad":"PASTO","Municipio":"NIZA 1","Cajas":"4,5"}},{"lat":1.20185,"lng":-77.28123,"name":"MINIMARKET 24 HR","addr":"CL 9 N 14 A 17","order":"34","tel":"","notas":"","horario":"","codigo":"1224857672","extras":{"Ciudad":"PASTO","Municipio":"NIZA 1","Cajas":"4"}},{"lat":1.202008,"lng":-77.281203,"name":"LAVAUTOS NIZA","addr":"CL 9 14A 17","order":"35","tel":"","notas":"","horario":"","codigo":"1200937507","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA PANAMERICA","Cajas":"1"}},{"lat":1.20108,"lng":-77.27988,"name":"DEPOSITO Y DISTRIBUCIONES SEBA","addr":"CR 7 18B 36","order":"36","tel":"","notas":"","horario":"","codigo":"1210625546","extras":{"Ciudad":"PASTO","Municipio":"CHILE","Cajas":"1"}},{"lat":1.19794,"lng":-77.280924,"name":"FRUTAS Y VERDURAS","addr":"CR 7 CON CL 7 ESQ","order":"37","tel":"","notas":"","horario":"","codigo":"1210732622","extras":{"Ciudad":"PASTO","Municipio":"MARIA ISABEL","Cajas":"16,5"}},{"lat":1.198275,"lng":-77.281571,"name":"MAXITIENDA DISTRIBUCIONES","addr":"CL 6A 10A 89","order":"38","tel":"","notas":"","horario":"","codigo":"1224796675","extras":{"Ciudad":"PASTO","Municipio":"GRANADA","Cajas":"3,5"}},{"lat":1.19382,"lng":-77.28944,"name":"MERCAMAX AYB","addr":"CA 1 SAN FRANCISCO DE JONGOVIT","order":"39","tel":"","notas":"","horario":"","codigo":"1224694451","extras":{"Ciudad":"PASTO","Municipio":"OTROS","Cajas":"8,5"}},{"lat":1.198665,"lng":-77.2816,"name":"TIENDA ORLANDO","addr":"MZ A CA 1","order":"40","tel":"","notas":"","horario":"","codigo":"1224128387","extras":{"Ciudad":"PASTO","Municipio":"NIZA 2","Cajas":"1"}},{"lat":1.19949,"lng":-77.281548,"name":"TIENDA LIBIA","addr":"CR 13 6 01","order":"41","tel":"","notas":"","horario":"","codigo":"1224268839","extras":{"Ciudad":"PASTO","Municipio":"NUEVA COLOMBIA","Cajas":"4"}},{"lat":1.2004,"lng":-77.2809,"name":"EL PUNTO DEL PESCADO","addr":"MZ D CA 8","order":"42","tel":"","notas":"","horario":"","codigo":"1224126116","extras":{"Ciudad":"PASTO","Municipio":"NIZA","Cajas":"2"}},{"lat":1.2006,"lng":-77.2808,"name":"KIOSCO AZUL COLEGIO LIBERTAD","addr":"CR 13 8 12","order":"43","tel":"","notas":"","horario":"","codigo":"1224572973","extras":{"Ciudad":"PASTO","Municipio":"MIRADOR DE NIZA","Cajas":"6"}},{"lat":1.2008,"lng":-77.2811,"name":"HELADERIA DE LA CREM","addr":"MZ D CA 7","order":"44","tel":"","notas":"","horario":"","codigo":"1224337324","extras":{"Ciudad":"PASTO","Municipio":"NIZA 1","Cajas":"7"}},{"lat":1.20088,"lng":-77.28118,"name":"MERKATODO NIZAN","addr":"MZ B CA 11 BRR NIZAN I","order":"45","tel":"","notas":"","horario":"","codigo":"1224807917","extras":{"Ciudad":"PASTO","Municipio":"NIZA 1","Cajas":"5"}},{"lat":1.201,"lng":-77.2812,"name":"LA TIENDA DE LORENA","addr":"MZ A CA 13","order":"46","tel":"","notas":"","horario":"","codigo":"1224663186","extras":{"Ciudad":"PASTO","Municipio":"NIZA 1","Cajas":"8,83"}},{"lat":1.200825,"lng":-77.280547,"name":"TIENDA FROVER","addr":"MZ C CA 16","order":"47","tel":"","notas":"","horario":"","codigo":"1224541584","extras":{"Ciudad":"PASTO","Municipio":"NIZA 1","Cajas":"5,25"}},{"lat":1.20089,"lng":-77.28033,"name":"COMIDAS RAPIDAS CIUDAD JARDIN","addr":"MZ C CS 14 CONDOMINIO CIUDAD J","order":"48","tel":"","notas":"","horario":"","codigo":"1224795874","extras":{"Ciudad":"PASTO","Municipio":"CIUDAD JARDIN","Cajas":"1"}},{"lat":1.2001,"lng":-77.2804,"name":"COMIDAS RAPIDAS","addr":"MZ C CA 14 CIUDAD JARDIN","order":"49","tel":"","notas":"","horario":"","codigo":"1224795230","extras":{"Ciudad":"PASTO","Municipio":"CIUDAD JARDIN","Cajas":"1"}},{"lat":1.20001,"lng":-77.280436,"name":"TIENDA CIUDAD JARDIN","addr":"MANZANA B CASA 6","order":"50","tel":"","notas":"","horario":"","codigo":"1205248182","extras":{"Ciudad":"PASTO","Municipio":"CIUDAD JARDIN","Cajas":"4"}},{"lat":1.20108,"lng":-77.28037,"name":"COMIDAS RAPIDAS CIUDAD JARDIN","addr":"MZ C CS 14 CONDOMINIO CIUDAD J","order":"51","tel":"","notas":"","horario":"","codigo":"1224796649","extras":{"Ciudad":"PASTO","Municipio":"CIUDAD JARDIN","Cajas":"1"}},{"lat":1.20061,"lng":-77.2797,"name":"CAFETERIA LIBERTAD","addr":"COLEGIO LIBERDAD","order":"52","tel":"","notas":"","horario":"","codigo":"1224542843","extras":{"Ciudad":"PASTO","Municipio":"NIZA","Cajas":"9"}},{"lat":1.2016,"lng":-77.2784,"name":"HOTEL NAPOLES","addr":"CR 13 12 38","order":"53","tel":"","notas":"","horario":"","codigo":"1200930203","extras":{"Ciudad":"PASTO","Municipio":"JULIAN BUCHELI","Cajas":"3"}},{"lat":1.2031,"lng":-77.2786,"name":"HOTEL FANTASIA","addr":"CR 14 12 48","order":"54","tel":"","notas":"","horario":"","codigo":"1200930702","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA CHAMPAGNAT","Cajas":"7"}},{"lat":1.203207,"lng":-77.27828,"name":"LUBRIPOINT","addr":"CL 12 N 13 A -27","order":"55","tel":"","notas":"","horario":"","codigo":"1224850493","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"10,5"}},{"lat":1.20176,"lng":-77.27529,"name":"SURTIECONOMICO LAS VIOLETAS","addr":"CL 15 12 13","order":"56","tel":"","notas":"","horario":"","codigo":"1224814490","extras":{"Ciudad":"PASTO","Municipio":"LAS VIOLETAS","Cajas":"4"}},{"lat":1.202146,"lng":-77.27628,"name":"BODEGA LAS VIOLETAS","addr":"CR 13 13B 87","order":"57","tel":"","notas":"","horario":"","codigo":"1224385932","extras":{"Ciudad":"PASTO","Municipio":"LAS VIOLETAS 3","Cajas":"39"}},{"lat":1.2025,"lng":-77.2803,"name":"TDA GLORIA DE BOLANOS","addr":"CR 14 10 35","order":"58","tel":"","notas":"","horario":"","codigo":"1200930976","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"3"}},{"lat":1.202055,"lng":-77.280629,"name":"HOTEL BELLO AMANECER STAR","addr":"CR 14 9 18","order":"59","tel":"","notas":"","horario":"","codigo":"1210296728","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"3"}},{"lat":1.201994,"lng":-77.280495,"name":"HOTEL SHARON","addr":"CL 10 13 15","order":"60","tel":"","notas":"","horario":"","codigo":"1224318942","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"3"}},{"lat":1.20182,"lng":-77.28035,"name":"TIENDA SAN MIGUEL GRADITA","addr":"CL 10 13A 01","order":"61","tel":"","notas":"","horario":"","codigo":"1224795224","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"2"}},{"lat":1.2028,"lng":-77.2804,"name":"PUNTO RICO","addr":"CR 14 10 35","order":"62","tel":"","notas":"","horario":"","codigo":"1224326888","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"1"}},{"lat":1.2045,"lng":-77.281,"name":"TIENDA LA ESQUINA DE MIGUEL","addr":"CL 11 16 45","order":"63","tel":"","notas":"","horario":"","codigo":"1224296318","extras":{"Ciudad":"PASTO","Municipio":"SAN MIGUEL","Cajas":"2"}},{"lat":1.204511,"lng":-77.280986,"name":"LA GRAN PARRILLA BOYACA","addr":"CL 12 16A 39","order":"64","tel":"","notas":"","horario":"","codigo":"1224773369","extras":{"Ciudad":"PASTO","Municipio":"BOYACA","Cajas":"5"}},{"lat":1.2041,"lng":-77.2799,"name":"CHANCHOLANDIA-AV. BOYACA","addr":"CL 12 16 39","order":"65","tel":"","notas":"","horario":"","codigo":"1210702890","extras":{"Ciudad":"PASTO","Municipio":"BOYACA","Cajas":"2,5"}},{"lat":1.202645,"lng":-77.281635,"name":"KIOSCO PANAMERICANO","addr":"CL 19 16 12","order":"66","tel":"","notas":"","horario":"","codigo":"1224702637","extras":{"Ciudad":"PASTO","Municipio":"OTROS","Cajas":"1"}},{"lat":1.2031,"lng":-77.2823,"name":"CASSETA LA PANAMERICANA","addr":"CL 9 16 12 LC 2","order":"67","tel":"","notas":"","horario":"","codigo":"1205248345","extras":{"Ciudad":"PASTO","Municipio":"ATAHUALPA","Cajas":"4"}},{"lat":1.206241,"lng":-77.286077,"name":"BODYTECH PASTO","addr":"ÉXITO PANAMERICANA","order":"68","tel":"","notas":"","horario":"","codigo":"1210471313","extras":{"Ciudad":"PASTO","Municipio":"EL RECUERDO","Cajas":"13"}},{"lat":1.20662,"lng":-77.28639,"name":"TIENDA SUMATAMBO 2000","addr":"BLQ 5 APT 101","order":"69","tel":"","notas":"","horario":"","codigo":"1224538564","extras":{"Ciudad":"PASTO","Municipio":"SUMATAMBO","Cajas":"1"}},{"lat":1.2062,"lng":-77.2859,"name":"CAFETERIA EXITO PASTO PANAMERI","addr":"CR 22B 2 57","order":"70","tel":"","notas":"","horario":"","codigo":"1203704384","extras":{"Ciudad":"PASTO","Municipio":"CAPUSIGRA","Cajas":"26"}},{"lat":1.201727,"lng":-77.289452,"name":"MERCA FAMILIA","addr":"CR 22B 5 SUR 21 BALCONES DE SA","order":"71","tel":"","notas":"","horario":"","codigo":"1224679154","extras":{"Ciudad":"PASTO","Municipio":"AGUALONGO","Cajas":"5"}},{"lat":1.2038,"lng":-77.2895,"name":"PORTAL DE MIJITAYO","addr":"CR 22E 3 SUR 10","order":"72","tel":"","notas":"","horario":"","codigo":"1224501721","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"4,17"}},{"lat":1.205945,"lng":-77.291645,"name":"TIENDA PATY","addr":"CR 24A 3 SUR 51","order":"73","tel":"","notas":"","horario":"","codigo":"1224796648","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"2"}},{"lat":1.205465,"lng":-77.292083,"name":"MOVIES BURGUER","addr":"CR 24A 4 SUR 29","order":"74","tel":"","notas":"","horario":"","codigo":"1224580574","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"3"}},{"lat":1.2052,"lng":-77.2924,"name":"TIENDA TATIS","addr":"CL 5SUR 24A 26","order":"75","tel":"","notas":"","horario":"","codigo":"1200931186","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"1"}},{"lat":1.20513,"lng":-77.29345,"name":"SUPER MERCADO EL GIGANTE 1","addr":"CL 6 SUR 25 12","order":"76","tel":"","notas":"","horario":"","codigo":"1224814491","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"1,16"}},{"lat":1.20532,"lng":-77.29367,"name":"SUPER MERCADO GIGANTE","addr":"CL 6 SUR   25 12","order":"77","tel":"","notas":"","horario":"","codigo":"1224692587","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"1"}},{"lat":1.20545,"lng":-77.29345,"name":"RICO POLLO","addr":"CL 6 SUR 25A 22","order":"78","tel":"","notas":"","horario":"","codigo":"1224759893","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"7"}},{"lat":1.2055,"lng":-77.2937,"name":"BRAZAS BURGUER","addr":"CL 6 SUR 25A 16","order":"79","tel":"","notas":"","horario":"","codigo":"1224796646","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"1,75"}},{"lat":1.2056,"lng":-77.2938,"name":"TIENDA CRIS","addr":"CL 6 SUR 26 04","order":"80","tel":"","notas":"","horario":"","codigo":"1224619963","extras":{"Ciudad":"PASTO","Municipio":"SANTA ISABEL","Cajas":"2,5"}},{"lat":1.2054,"lng":-77.294,"name":"FRUTTY PARK","addr":"MZ 10 CA 14 TAMASAGRA 1","order":"81","tel":"","notas":"","horario":"","codigo":"1224321901","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"2"}},{"lat":1.205753,"lng":-77.29372,"name":"PIZZA 400 GRADOS DOS SAS","addr":"CR 26 5 SUR 53","order":"82","tel":"","notas":"","horario":"","codigo":"1224845966","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"4"}},{"lat":1.20656,"lng":-77.29264,"name":"FRUTI VERDURAS SANTA ISABEL","addr":"CR 26 4 SUR 77","order":"83","tel":"","notas":"","horario":"","codigo":"1224773174","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"4,16"}},{"lat":1.2065,"lng":-77.2931,"name":"CASTILLO LICORES 1","addr":"CR 26 4 23 AV MIJITAYO","order":"84","tel":"","notas":"","horario":"","codigo":"1224398901","extras":{"Ciudad":"PASTO","Municipio":"AV. MIJITAYO","Cajas":"0,5"}},{"lat":1.2064,"lng":-77.2932,"name":"BRAZERO PARRILLA","addr":"CR 26 4 SUR 44","order":"85","tel":"","notas":"","horario":"","codigo":"1224270450","extras":{"Ciudad":"PASTO","Municipio":"MIJITAYO","Cajas":"2"}},{"lat":1.2059,"lng":-77.2938,"name":"CHANCHO RANCHO","addr":"CR 26 5 SUR 52","order":"86","tel":"","notas":"","horario":"","codigo":"1224506981","extras":{"Ciudad":"PASTO","Municipio":"TAMASAGRA","Cajas":"2"}},{"lat":1.205536,"lng":-77.29535,"name":"BARBER SAN PEDRO","addr":"CL 16A 43-87","order":"87","tel":"","notas":"","horario":"","codigo":"1224860846","extras":{"Ciudad":"PASTO","Municipio":"PANAMERICANA","Cajas":"1,08"}},{"lat":1.20553,"lng":-77.29535,"name":"LA TAQUIZA DE GABY","addr":"CR 36 15-55","order":"88","tel":"","notas":"","horario":"","codigo":"1224858819","extras":{"Ciudad":"PASTO","Municipio":"SANTA ANA","Cajas":"35"}}];
+var TS="1776770966769";
+var SK="st_ka4v51";
+var SG="ka4v51";
+var SB_URL="https://nhaidtonhejdpyyeqakb.supabase.co";
+var SB_KEY="sb_publishable_3ZHsAmIjlAUrJD152-h3Ow_atnXStwh";
+var TODAY="2026-04-21";
+var MOTS=["Cliente Cerrado","Cliente Sin Dinero","No hizo pedido","Desabasto Producto"];
+var MICO=["\uD83D\uDD12","\uD83D\uDCB0","\uD83D\uDCCB","\uD83D\uDCE6"];
+var SC={e:"#22c55e",rt:"#ef4444",rp:"#f59e0b"};
+var E={};
+try{E=JSON.parse(localStorage.getItem(SK)||"{}");} catch(x){E={};}
+function sv(){try{localStorage.setItem(SK,JSON.stringify(E));}catch(x){}}
+function ck(c){return c.lat+"_"+c.lng+"_"+(c.order||"");}
+var _t=sessionStorage.getItem("ts_"+SG);
+if(_t&&_t!==TS){sessionStorage.setItem("ts_"+SG,TS);location.reload(true);}
+else{sessionStorage.setItem("ts_"+SG,TS);}
+var map=L.map("pmap",{zoomControl:false}).setView([D[0].lat,D[0].lng],13);
+L.control.zoom({position:"bottomright"}).addTo(map);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(map);
+function mkIcon(order,st){
+  var n=order||"",fs=String(n).length>2?8:10;
+  var col=(st&&SC[st])?SC[st]:C;
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 42">'
+    +'<path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 26 16 26S32 28 32 16C32 7.163 24.837 0 16 0z" fill="'+col+'"/>'
+    +'<circle cx="16" cy="16" r="9" fill="rgba(0,0,0,.2)"/>'
+    +'<text x="16" y="20.5" text-anchor="middle" font-size="'+fs+'" font-family="monospace" font-weight="700" fill="#fff">'+n+'</text>'
+    +'</svg>';
+  return L.divIcon({html:svg,iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-44],className:""});
+}
+var MK=[];
+D.forEach(function(c){
+  var k=ck(c),st=(E[k]&&E[k].s)?E[k].s:null;
+  var m=L.marker([c.lat,c.lng],{icon:mkIcon(c.order,st)});
+  m.bindPopup(function(){return buildPopup(c);},{maxWidth:300});
+  m.addTo(map);
+  MK.push({m:m,d:c,k:k});
+});
+if(D.length>0){
+  var lts=D.map(function(c){return c.lat;}),lns=D.map(function(c){return c.lng;});
+  map.fitBounds([[Math.min.apply(null,lts),Math.min.apply(null,lns)],[Math.max.apply(null,lts),Math.max.apply(null,lns)]],{padding:[40,40]});
+}
+function buildPopup(c){
+  var k=ck(c),ed=E[k]||{},st=ed.s||null;
+  var stLbl=st==="e"?"\u2713 Entregado":st==="rt"?"\u2717 Rechazo Total":st==="rp"?"\u26A0 Parcial":"";
+  var stH=st?('<div class="pst '+st+'">'+stLbl+'</div>'+(ed.m?'<div class="pmot">\uD83D\uDCCC '+ed.m+'</div>':'')):'';
+  var exH='';
+  if(c.extras&&Object.keys(c.extras).length){
+    exH='<div class="px">';
+    Object.keys(c.extras).forEach(function(ek){exH+='<div class="pxr"><span class="pxl">'+ek+'</span><span class="pxv">'+c.extras[ek]+'</span></div>';});
+    exH+='</div>';
+  }
+  var h='<div class="pi">';
+  h+='<div><span class="pb">Parada '+(c.order||'-')+'</span>'+(c.codigo?'<span class="pc">COD: '+c.codigo+'</span>':'')+'</div>';
+  h+='<div class="pn">'+c.name+'</div>';
+  h+='<div class="pa">'+(c.addr||'')+'</div>';
+  if(c.horario)h+='<div class="ph">\uD83D\uDD50 '+c.horario+'</div>';
+  h+='<div class="pax">';
+  h+='<a class="pbt pbtn" href="https://maps.google.com/?q='+c.lat+','+c.lng+'" target="_blank">\uD83E\uDDED Navegar</a>';
+  if(c.tel)h+='<a class="pbt pbc" href="tel:'+c.tel+'">\uD83D\uDCDE Llamar</a>';
+  h+='</div>';
+  if(c.notas)h+='<div class="pno">\uD83D\uDCDD '+c.notas+'</div>';
+  h+=exH;
+  h+='<div class="est"><div class="estt">Resultado de entrega</div>';
+  h+=stH;
+  h+='<div class="estb">';
+  h+='<button class="eb e" onclick="sest(\''+k+'\',\'e\');">\u2713 Entregado</button>';
+  h+='<button class="eb rt" onclick="pmot(\''+k+'\',\'rt\');">\u2717 Rechazo</button>';
+  h+='<button class="eb rp" onclick="pmot(\''+k+'\',\'rp\');">\u26A0 Parcial</button>';
+  h+='</div></div></div>';
+  return h;
+}
+var _mk=null,_ms=null;
+function pmot(k,s){
+  _mk=k;_ms=s;
+  var isTot=s==="rt";
+  document.getElementById("mtit").textContent=isTot?"Motivo: Rechazo Total":"Motivo: Rechazo Parcial";
+  var cls=isTot?"rt-c":"rp-c";
+  var html='';
+  MOTS.forEach(function(m,i){html+='<div class="mopt '+cls+'" onclick="selm('+i+')"><span class="mico">'+MICO[i]+'</span>'+m+'</div>';});
+  document.getElementById("mopts").innerHTML=html;
+  document.getElementById("movl").classList.add("open");
+}
+function selm(i){
+  document.getElementById("movl").classList.remove("open");
+  if(_mk!==null)sest(_mk,_ms,MOTS[i]);
+  _mk=null;_ms=null;
+}
+function cmot(){
+  document.getElementById("movl").classList.remove("open");
+  _mk=null;_ms=null;
+}
+document.getElementById("movl").addEventListener("click",function(e){if(e.target===this)cmot();});
+function sest(k,s,mot){
+  var now=new Date().toLocaleTimeString("es-CL");
+  E[k]={s:s,h:now,m:mot||""};
+  sv();
+  var f=MK.find(function(x){return x.k===k;});
+  if(f){f.m.setIcon(mkIcon(f.d.order,s));f.m.closePopup();setTimeout(function(){f.m.openPopup();},80);}
+  if(document.getElementById("plv").style.display!=="none")rl(D);
+  // Publicar gestion en Supabase
+  var cd=D.find(function(x){return ck(x)===k;});
+  if(cd&&SB_URL&&SB_KEY){
+    var payload={fecha:TODAY,ruta:SG,cliente_codigo:cd.codigo||k,cliente_nombre:cd.name,estado:s,motivo:mot||"",hora:now};
+    fetch(SB_URL+"/rest/v1/gestiones",{
+      method:"POST",
+      headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},
+      body:JSON.stringify(payload)
+    }).catch(function(){});
+  }
+}
+function sw(tab){
+  document.getElementById("pmap").style.display=tab==="m"?"block":"none";
+  document.getElementById("plv").style.display =tab==="l"?"flex" :"none";
+  document.getElementById("prv").style.display =tab==="r"?"flex" :"none";
+  document.getElementById("tM").className="tab"+(tab==="m"?" on":"");
+  document.getElementById("tL").className="tab"+(tab==="l"?" on":"");
+  document.getElementById("tR").className="tab"+(tab==="r"?" on":"");
+  if(tab==="m")setTimeout(function(){map.invalidateSize();},50);
+  if(tab==="r")rpt();
+}
+function rl(items){
+  document.getElementById("cl").innerHTML=items.map(function(c){
+    var k=ck(c),ed=E[k]||{},st=ed.s||null;
+    var col=(st&&SC[st])?SC[st]:C;
+    var stLbl=st==="e"?"\u2713 Entregado":st==="rt"?"\u2717 Rechazo":st==="rp"?"\u26A0 Parcial":"";
+    var stFull=stLbl+(ed.m?" \u00b7 "+ed.m:"");
+    var h='<div class="ci" onclick="fm('+c.lat+','+c.lng+')">';
+    h+='<div class="cn" style="background:'+col+'">'+(c.order||'?')+'</div>';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div class="nm">'+c.name+(stFull?'<span class="stbadge '+st+'">'+stFull+'</span>':'')+'</div>';
+    h+='<div class="ad">'+(c.addr||'')+'</div>';
+    if(c.codigo)h+='<div style="font-family:monospace;font-size:10px;color:#888;margin-top:2px">COD: '+c.codigo+'</div>';
+    h+='<div class="ca">';
+    h+='<a class="bn" href="https://maps.google.com/?q='+c.lat+','+c.lng+'" target="_blank">\uD83E\uDDED Navegar</a>';
+    if(c.tel)h+='<a class="bc" href="tel:'+c.tel+'">\uD83D\uDCDE '+c.tel+'</a>';
+    h+='</div>';
+    if(c.notas)h+='<div class="nt">\uD83D\uDCDD '+c.notas+'</div>';
+    h+='</div></div>';
+    return h;
+  }).join('');
+}
+rl(D);
+function fl(q){
+  var f=q.toLowerCase().trim();
+  if(!f){rl(D);return;}
+  rl(D.filter(function(c){
+    var t=[c.name,c.addr,c.order,c.codigo,c.horario,c.tel,c.notas].map(function(v){return(v||"").toLowerCase();}).join(" ");
+    var x=Object.values(c.extras||{}).map(function(v){return(v||"").toLowerCase();}).join(" ");
+    return(t+" "+x).indexOf(f)>=0;
+  }));
+}
+function fm(lat,lng){
+  sw("m");map.setView([lat,lng],17);
+  var f=MK.find(function(x){return x.d.lat===lat&&x.d.lng===lng;});
+  if(f)f.m.openPopup();
+}
+function rpt(){
+  var tot=D.length;
+  var ne =D.filter(function(c){var e=E[ck(c)];return e&&e.s==="e"; }).length;
+  var nrt=D.filter(function(c){var e=E[ck(c)];return e&&e.s==="rt";}).length;
+  var nrp=D.filter(function(c){var e=E[ck(c)];return e&&e.s==="rp";}).length;
+  var np=tot-ne-nrt-nrp,pct=tot>0?Math.round((ne/tot)*100):0;
+  var rs='<div style="background:#fff;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #e2ddd5">';
+  rs+='<div style="font-size:13px;font-weight:700;margin-bottom:12px">Resumen del d\u00eda</div>';
+  rs+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  rs+='<div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#15803d">'+ne+'</div><div style="font-size:10px;color:#15803d;font-weight:600">ENTREGADOS</div></div>';
+  rs+='<div style="background:#fef2f2;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#b91c1c">'+nrt+'</div><div style="font-size:10px;color:#b91c1c;font-weight:600">RECHAZO TOTAL</div></div>';
+  rs+='<div style="background:#fffbeb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#b45309">'+nrp+'</div><div style="font-size:10px;color:#b45309;font-weight:600">RECHAZO PARCIAL</div></div>';
+  rs+='<div style="background:#f9fafb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#6b7280">'+np+'</div><div style="font-size:10px;color:#6b7280;font-weight:600">PENDIENTES</div></div>';
+  rs+='</div>';
+  rs+='<div style="margin-top:12px;background:#f0f0f0;border-radius:20px;height:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#22c55e;border-radius:20px"></div></div>';
+  rs+='<div style="font-size:11px;color:#888;text-align:center;margin-top:4px">'+pct+'% ('+tot+' clientes)</div>';
+  rs+='</div>';
+  document.getElementById("rs").innerHTML=rs;
+  var rows=D.map(function(c){
+    var k=ck(c),ed=E[k]||{},st=ed.s||"p";
+    var sl=st==="e"?"Entregado":st==="rt"?"Rechazo Total":st==="rp"?"Rechazo Parcial":"Pendiente";
+    var bg=st==="e"?"#f0fdf4":st==="rt"?"#fef2f2":st==="rp"?"#fffbeb":"#fff";
+    var col=st==="e"?"#15803d":st==="rt"?"#b91c1c":st==="rp"?"#b45309":"#9ca3af";
+    var h='<div style="background:'+bg+';border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">';
+    h+='<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0"></div>';
+    h+='<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.name+'</div>';
+    if(c.codigo)h+='<div style="font-size:10px;color:#888;font-family:monospace">COD: '+c.codigo+'</div>';
+    if(ed.m)h+='<div style="font-size:10px;color:#999;font-style:italic">\uD83D\uDCCC '+ed.m+'</div>';
+    h+='</div>';
+    h+='<div style="font-size:11px;font-weight:700;color:'+col+';text-align:right;flex-shrink:0">'+sl;
+    if(ed.h)h+='<div style="font-size:9px;font-weight:400;color:#aaa">'+ed.h+'</div>';
+    h+='</div></div>';
+    return h;
+  }).join('');
+  document.getElementById("rd").innerHTML='<div style="font-size:11px;font-weight:700;color:#8c8680;margin-bottom:8px">DETALLE</div>'+rows;
+}
+function dlr(){
+  var lines=["Cliente,Codigo,Direccion,Orden,Estado,Motivo,Hora"];
+  D.forEach(function(c){
+    var ed=E[ck(c)]||{};
+    var st=ed.s||"";
+    var sl=st==="e"?"Entregado":st==="rt"?"Rechazo Total":st==="rp"?"Rechazo Parcial":"Pendiente";
+    function q(v){return '"'+String(v||"").replace(/"/g,'""')+'"';}
+    lines.push([q(c.name),q(c.codigo),q(c.addr),q(c.order),q(sl),q(ed.m),q(ed.h)].join(","));
+  });
+  var a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,\uFEFF"+encodeURIComponent(lines.join("\n"));
+  a.download="reporte_"+SG+".csv";
+  a.click();
+}
+</script>
+</body>
+</html>

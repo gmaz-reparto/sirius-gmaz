@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>KA4V54 · 21-04-2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--c:#fb8500;--ink:#1a1814;--bg:#f5f2eb;--surface:#fff;--border:#e2ddd5;--muted:#8c8680}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.bar{background:var(--ink);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:3px solid var(--c)}
+.badge{background:var(--c);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:2px;white-space:nowrap}
+.bi{flex:1;min-width:0}.bi h1{font-size:13px;color:#fff;font-weight:700}.bi p{font-size:9px;color:#888;margin-top:2px}
+.ctr{font-size:11px;color:var(--c);text-align:right;white-space:nowrap}.ctr span{display:block;font-size:9px;color:#666}
+.tabs{display:flex;background:var(--ink);flex-shrink:0;border-bottom:1px solid #333}
+.tab{flex:1;padding:8px;text-align:center;font-size:11px;font-weight:600;color:#666;cursor:pointer;border-bottom:2px solid transparent;user-select:none}
+.tab.on{color:var(--c);border-bottom-color:var(--c)}
+#pmap{flex:1;display:block}
+#plv{flex:1;overflow-y:auto;display:none;flex-direction:column}
+#prv{display:none;flex:1;flex-direction:column;overflow-y:auto;background:var(--bg)}
+.sw{padding:10px 16px;background:#fff;border-bottom:1px solid var(--border)}
+#sb{width:100%;border:1px solid var(--border);border-radius:4px;padding:8px 12px;font-size:14px;outline:none;background:var(--bg)}
+#sb:focus{border-color:var(--c)}
+.ci{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.ci:active{background:#ece9e0}
+.cn{width:28px;height:28px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-family:monospace}
+.nm{font-size:14px;font-weight:600;line-height:1.3;margin-bottom:2px}
+.ad{font-size:12px;color:var(--muted);line-height:1.4}
+.ca{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.bn{display:inline-flex;align-items:center;gap:4px;background:var(--c);color:#fff;border:none;border-radius:3px;padding:5px 10px;font-size:11px;font-weight:600;text-decoration:none}
+.bc{background:var(--ink);color:#fff;display:inline-flex;align-items:center;gap:4px;border:none;border-radius:3px;padding:5px 10px;font-size:11px;font-weight:600;text-decoration:none}
+.nt{font-size:11px;color:#c05000;background:#fff8f5;border-left:3px solid var(--c);padding:4px 8px;margin-top:6px;border-radius:0 3px 3px 0}
+.stbadge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px}
+.stbadge.e{background:#dcfce7;color:#15803d}.stbadge.rt{background:#fee2e2;color:#b91c1c}.stbadge.rp{background:#fef3c7;color:#b45309}
+.pi{padding:14px;min-width:200px;max-width:290px}
+.pb{display:inline-block;background:var(--c);color:#fff;font-size:9px;font-family:monospace;padding:2px 6px;border-radius:2px;margin-bottom:6px}
+.pc{display:inline-block;background:#f0f0f0;color:#555;font-size:9px;font-family:monospace;padding:2px 6px;border-radius:2px;margin-bottom:6px;margin-left:4px}
+.pn{font-size:15px;font-weight:700;margin-bottom:3px}.pa{font-size:12px;color:var(--muted);margin-bottom:8px}
+.ph{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#1a6640;background:#e8f7ee;border-radius:3px;padding:3px 8px;margin-bottom:8px}
+.pax{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pbt{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:3px;font-size:12px;font-weight:600;border:none;cursor:pointer;text-decoration:none}
+.pbtn{background:#fb8500;color:#fff}.pbc{background:#1a1814;color:#fff}
+.pno{font-size:11px;color:#c05000;background:#fff8f5;border-left:3px solid #fb8500;padding:5px 8px;margin-bottom:8px;border-radius:0 3px 3px 0}
+.px{border-top:1px solid #eee;padding-top:8px;margin-top:4px}
+.pxr{display:flex;gap:6px;font-size:11px;margin-bottom:3px}
+.pxl{font-size:9px;color:#888;min-width:70px;text-transform:uppercase;font-family:monospace}.pxv{font-weight:600;flex:1}
+.est{border-top:1px solid #eee;padding-top:10px;margin-top:8px}
+.estt{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:monospace}
+.pst{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:4px}
+.pst.e{background:#dcfce7;color:#15803d}.pst.rt{background:#fee2e2;color:#b91c1c}.pst.rp{background:#fef3c7;color:#b45309}
+.pmot{font-size:10px;color:#888;margin-bottom:6px}
+.estb{display:flex;gap:6px;flex-wrap:wrap}
+.eb{flex:1;padding:8px 4px;border:2px solid #eee;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;background:#fff;white-space:nowrap;min-width:70px}
+.eb.e{border-color:#22c55e;background:#f0fdf4;color:#15803d}
+.eb.rt{border-color:#ef4444;background:#fef2f2;color:#b91c1c}
+.eb.rp{border-color:#f59e0b;background:#fffbeb;color:#b45309}
+.movl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;justify-content:center}
+.movl.open{display:flex}
+.mbox{background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 20px 36px}
+.mbox h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.mbox p{font-size:12px;color:#888;margin-bottom:14px}
+.mopt{display:flex;align-items:center;gap:12px;padding:13px 14px;border:2px solid #eee;border-radius:10px;cursor:pointer;margin-bottom:8px;font-size:13px;font-weight:600;transition:border-color .15s,background .15s}
+.mopt.rt-c:hover,.mopt.rt-c:active{border-color:#ef4444;background:#fef2f2;color:#b91c1c}
+.mopt.rp-c:hover,.mopt.rp-c:active{border-color:#f59e0b;background:#fffbeb;color:#b45309}
+.mico{font-size:20px;flex-shrink:0}
+.mcanc{width:100%;margin-top:6px;padding:12px;background:#f5f2eb;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#888}
+.leaflet-popup-content-wrapper{background:#fff!important;border:none!important;border-radius:8px!important;box-shadow:0 8px 32px rgba(0,0,0,.2)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important}.leaflet-popup-tip-container{display:none}
+.leaflet-control-zoom a{background:#1a1814!important;color:#fff!important;border:none!important;border-radius:4px!important;margin-bottom:4px!important}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="badge">KA4V54</div>
+  <div class="bi"><h1>Mapa del día</h1><p>MARTES, 21 DE ABRIL DE 2026</p></div>
+  <div class="ctr">89<span>clientes</span></div>
+</div>
+<div class="tabs">
+  <div class="tab on" id="tM" onclick="sw('m')">&#x1F5FA; Mapa</div>
+  <div class="tab" id="tL" onclick="sw('l')">&#x1F4CB; Lista</div>
+  <div class="tab" id="tR" onclick="sw('r')">&#x1F4CA; Reporte</div>
+</div>
+<div id="pmap"></div>
+<div id="plv">
+  <div class="sw"><input type="text" id="sb" placeholder="&#x1F50D; Buscar..." oninput="fl(this.value)"></div>
+  <div id="cl"></div>
+</div>
+<div id="prv">
+  <div style="padding:16px">
+    <div id="rs"></div>
+    <div id="rd"></div>
+    <button onclick="dlr()" style="width:100%;margin-top:16px;padding:13px;background:#1a1814;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#x2B07; Descargar Reporte CSV</button>
+  </div>
+</div>
+<div class="movl" id="movl">
+  <div class="mbox">
+    <h2 id="mtit">Motivo de rechazo</h2>
+    <p>Selecciona el motivo:</p>
+    <div id="mopts"></div>
+    <button class="mcanc" onclick="cmot()">Cancelar</button>
+  </div>
+</div>
+<script>
+var C="#fb8500";
+var D=[{"lat":1.20154,"lng":-77.2705,"name":"TIENDA BENAVIDES","addr":"AC CL 18A 9 13 LOC 3","order":"1","tel":"","notas":"","horario":"","codigo":"1224855682","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"1"}},{"lat":1.198424,"lng":-77.2724,"name":"DEPOSITO PEDRO","addr":"CL 16 8 12","order":"2","tel":"","notas":"","horario":"","codigo":"1224423088","extras":{"Ciudad":"PASTO","Municipio":"POTRERILLO","Cajas":"18"}},{"lat":1.2,"lng":-77.2685,"name":"HOYEL GALERAS STARS","addr":"CR 6 18 39","order":"3","tel":"","notas":"","horario":"","codigo":"1224464645","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"1"}},{"lat":1.2015,"lng":-77.2692,"name":"TIENDA JESICA","addr":"CR 7 18A 57","order":"4","tel":"","notas":"","horario":"","codigo":"1224336589","extras":{"Ciudad":"PASTO","Municipio":"CHILE","Cajas":"2"}},{"lat":1.2007,"lng":-77.2683,"name":"CAFETERIA RESTAURANTE YENY","addr":"CL 18B 6 12","order":"5","tel":"","notas":"","horario":"","codigo":"1224217209","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"0,5"}},{"lat":1.2003,"lng":-77.2684,"name":"PUNTO DE VENTA WILLIAMS","addr":"CR 6 18A 07","order":"6","tel":"","notas":"","horario":"","codigo":"1224260340","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"3,5"}},{"lat":1.201623,"lng":-77.26867,"name":"LAVADERO LA 7","addr":"CR 7 18B 54","order":"7","tel":"","notas":"","horario":"","codigo":"1224831391","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"2"}},{"lat":1.2018,"lng":-77.2673,"name":"TIENDA JB","addr":"CR 6 19 13 SENDOYA","order":"8","tel":"","notas":"","horario":"","codigo":"1224453668","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"2,33"}},{"lat":1.2015,"lng":-77.2674,"name":"MINI MARKET EL BARATON","addr":"CL 19A 6A 04","order":"9","tel":"","notas":"","horario":"","codigo":"1224216076","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"4"}},{"lat":1.2014,"lng":-77.2672,"name":"TIENDA EL BERNAL","addr":"CR 4A 20 24","order":"10","tel":"","notas":"","horario":"","codigo":"1224275677","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"2"}},{"lat":1.203893,"lng":-77.267229,"name":"SUPERTIENDA AHORRAMAS","addr":"CL 21 6 113","order":"11","tel":"","notas":"","horario":"","codigo":"1224830771","extras":{"Ciudad":"PASTO","Municipio":"PARQUE BOLIVAR","Cajas":"1,5"}},{"lat":1.19969,"lng":-77.26761,"name":"TIENDA DAVID 2","addr":"MZ G CA 1 CONDOMINIO LOS ELISE","order":"12","tel":"","notas":"","horario":"","codigo":"1224809612","extras":{"Ciudad":"PASTO","Municipio":"OTROS","Cajas":"2"}},{"lat":1.1997,"lng":-77.2689,"name":"PANAD LA SULTANA","addr":"I31","order":"13","tel":"","notas":"","horario":"","codigo":"1200935795","extras":{"Ciudad":"PASTO","Municipio":"TERMINAL DE TRANSP","Cajas":"2"}},{"lat":1.2003,"lng":-77.2692,"name":"HOTEL HILTON","addr":"CL 18 6A 27","order":"14","tel":"","notas":"","horario":"","codigo":"1224517489","extras":{"Ciudad":"PASTO","Municipio":"VENECIA","Cajas":"1,33"}},{"lat":1.200469,"lng":-77.268413,"name":"RESTAURANTE EL BUEN SABOR","addr":"CR 6 18A 33","order":"15","tel":"","notas":"","horario":"","codigo":"1224357238","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"1,13"}},{"lat":1.2004,"lng":-77.2683,"name":"MONACO SUR HOTEL","addr":"CR 6 18A 25","order":"16","tel":"","notas":"","horario":"","codigo":"1203703558","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"1"}},{"lat":1.20019,"lng":-77.2684,"name":"CAFE BURGUER","addr":"CL 18A 6 58","order":"17","tel":"","notas":"","horario":"","codigo":"1224690524","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"2"}},{"lat":1.200168,"lng":-77.26843,"name":"SABORES QUE ENCANTAN","addr":"CL 18A 6 7","order":"18","tel":"","notas":"","horario":"","codigo":"1224850399","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"2"}},{"lat":1.20047,"lng":-77.26861,"name":"SURTI HOGAR JOSE ANGEL","addr":"CL 18A 6 36 AV IDEMA","order":"19","tel":"","notas":"","horario":"","codigo":"1224791277","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"2,5"}},{"lat":1.2006,"lng":-77.2687,"name":"PARRILLA PASTUSA","addr":"CL 18A 6 36","order":"20","tel":"","notas":"","horario":"","codigo":"1224439146","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"1"}},{"lat":1.2005,"lng":-77.2688,"name":"HOTEL MELOSUR","addr":"CL 18 6-49","order":"21","tel":"","notas":"","horario":"","codigo":"1210457605","extras":{"Ciudad":"PASTO","Municipio":"FLORALIA","Cajas":"2"}},{"lat":1.2007,"lng":-77.269,"name":"PANADERIA GOURMET","addr":"CL 18A 6 86","order":"22","tel":"","notas":"","horario":"","codigo":"1224110820","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"1,5"}},{"lat":1.2004,"lng":-77.2698,"name":"RESTAURANTE MORELIA","addr":"CR 7 18 13","order":"23","tel":"","notas":"","horario":"","codigo":"1224138221","extras":{"Ciudad":"PASTO","Municipio":"VENECIA","Cajas":"1,33"}},{"lat":1.200744,"lng":-77.269451,"name":"PANADERIA LEMAN","addr":"CL 18A 7 6 AV IDEMA","order":"24","tel":"","notas":"","horario":"","codigo":"1224401748","extras":{"Ciudad":"PASTO","Municipio":"OTROS","Cajas":"3"}},{"lat":1.2007,"lng":-77.2694,"name":"LICORES CAMILO","addr":"CALLE 18A 6A - 05","order":"25","tel":"","notas":"","horario":"","codigo":"1210483076","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"2"}},{"lat":1.200712,"lng":-77.26934,"name":"EL SUPER ARROZ","addr":"CR 7 18 40 DIV 1","order":"26","tel":"","notas":"","horario":"","codigo":"1224835822","extras":{"Ciudad":"PASTO","Municipio":"VENECIA","Cajas":"1"}},{"lat":1.200711,"lng":-77.269343,"name":"LICORES LA VENIDA","addr":"CL 18A 6A 40","order":"27","tel":"","notas":"","horario":"","codigo":"1224161353","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"4"}},{"lat":1.2007,"lng":-77.2693,"name":"FRUVER AV IDEMA","addr":"CL 18A 6A 40","order":"28","tel":"","notas":"","horario":"","codigo":"1224360264","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"6"}},{"lat":1.200644,"lng":-77.269174,"name":"EL RINCON DE JUANCHO G","addr":"CL 18A 6A 5","order":"29","tel":"","notas":"","horario":"","codigo":"1224827948","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"1"}},{"lat":1.2004,"lng":-77.269,"name":"HOTEL CAPRICHOS","addr":"CL 18A 6 67","order":"30","tel":"","notas":"","horario":"","codigo":"1200937197","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"1,33"}},{"lat":1.2001,"lng":-77.2686,"name":"SURTIMERCAR","addr":"CL 18A 6 23","order":"31","tel":"","notas":"","horario":"","codigo":"1210122811","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"1,5"}},{"lat":1.200986,"lng":-77.267855,"name":"VVERES SHEKINAH","addr":"CR 6 18B 31","order":"32","tel":"","notas":"","horario":"","codigo":"1224830528","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"10,5"}},{"lat":1.201144,"lng":-77.269537,"name":"DISTRIBUCIONES LA PRINCIPAL","addr":"CL 18 7 27","order":"33","tel":"","notas":"","horario":"","codigo":"1224782106","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"1"}},{"lat":1.202,"lng":-77.271,"name":"MINIMARKET EL AHORRO DE LA AVE","addr":"CL 18A 10 28","order":"34","tel":"","notas":"","horario":"","codigo":"1224350199","extras":{"Ciudad":"PASTO","Municipio":"AVENIDA IDEMA","Cajas":"12"}},{"lat":1.2009,"lng":-77.2682,"name":"CASA DEL PAN","addr":"CR 6 18B 19 LC 1 BR SENDOYA","order":"35","tel":"","notas":"","horario":"","codigo":"1224299600","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"1,5"}},{"lat":1.2012,"lng":-77.269,"name":"TIENDA ESQUINA PAOLA","addr":"CR 7 18A 40","order":"36","tel":"","notas":"","horario":"","codigo":"1224288632","extras":{"Ciudad":"PASTO","Municipio":"SENDOYA","Cajas":"2"}},{"lat":1.20212,"lng":-77.2665,"name":"TIENDA DE TOÑO","addr":"CR 5A 19A 49","order":"37","tel":"","notas":"","horario":"","codigo":"1224702635","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"3"}},{"lat":1.2006,"lng":-77.2654,"name":"COLEGIO JOSE FELIX JIMENEZ","addr":"CED JOSE FELIX JIMENES","order":"38","tel":"","notas":"","horario":"","codigo":"1224352905","extras":{"Ciudad":"PASTO","Municipio":"EL TEJAR","Cajas":"8"}},{"lat":1.200662,"lng":-77.265425,"name":"CAFETERIA COLEGIO JOSE FELIX J","addr":"CR 4 19 ESQ BARR EL TEJAR","order":"39","tel":"","notas":"","horario":"","codigo":"1224349785","extras":{"Ciudad":"PASTO","Municipio":"EL TEJAR","Cajas":"3,5"}},{"lat":1.2013,"lng":-77.2654,"name":"TIENDA GABY","addr":"CL 20 4 37","order":"40","tel":"","notas":"","horario":"","codigo":"1205248397","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"5"}},{"lat":1.2015,"lng":-77.2656,"name":"VARIEDADES SOFI","addr":"CR 4A 19 111","order":"41","tel":"","notas":"","horario":"","codigo":"1224275685","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"1,5"}},{"lat":1.201652,"lng":-77.265821,"name":"TIENDA ANGEL Y FELIPE","addr":"CL 20 4A 14","order":"42","tel":"","notas":"","horario":"","codigo":"1224705621","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"0,5"}},{"lat":1.2019,"lng":-77.2658,"name":"TIENDA BORINQUEN","addr":"CL 20 4A 36 BERNAL","order":"43","tel":"","notas":"","horario":"","codigo":"1224366017","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"1,5"}},{"lat":1.20185,"lng":-77.26607,"name":"RESTAURANTE LA SAZON DE LA TIA","addr":"CL 20 5 19","order":"44","tel":"","notas":"","horario":"","codigo":"1224812783","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"2"}},{"lat":1.2021,"lng":-77.2659,"name":"TIENDA LILIANA","addr":"CL 21 5 109","order":"45","tel":"","notas":"","horario":"","codigo":"1224724996","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"4,5"}},{"lat":1.2018,"lng":-77.2648,"name":"TIENDA GENY","addr":"CL 21 4 15","order":"46","tel":"","notas":"","horario":"","codigo":"1224724999","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"2"}},{"lat":1.201917,"lng":-77.264662,"name":"MAXI PAPAS","addr":"CL 21 4 26","order":"47","tel":"","notas":"","horario":"","codigo":"1224791292","extras":{"Ciudad":"PASTO","Municipio":"BERNAL","Cajas":"4"}},{"lat":1.202185,"lng":-77.264529,"name":"AMERICAN CLASS","addr":"CRA 4A NO 21B 06","order":"48","tel":"","notas":"","horario":"","codigo":"1210673178","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"3"}},{"lat":1.2022,"lng":-77.2636,"name":"TIENDA LA MERCED","addr":"CL 21B 3 03","order":"49","tel":"","notas":"","horario":"","codigo":"1210741970","extras":{"Ciudad":"PASTO","Municipio":"LAS MERCEDES","Cajas":"15,5"}},{"lat":1.2017,"lng":-77.2639,"name":"HELADOS LILY","addr":"CL 21B 2A 75","order":"50","tel":"","notas":"","horario":"","codigo":"1224645249","extras":{"Ciudad":"PASTO","Municipio":"LAS MERCEDES","Cajas":"2"}},{"lat":1.201749,"lng":-77.263887,"name":"VARIEDADES MECHAS","addr":"CL 21 3 27","order":"51","tel":"","notas":"","horario":"","codigo":"1224483432","extras":{"Ciudad":"PASTO","Municipio":"LAS MERCEDES","Cajas":"1,5"}},{"lat":1.2015,"lng":-77.2637,"name":"MARIANITA","addr":"CR 3 20A 27","order":"52","tel":"","notas":"","horario":"","codigo":"1224293629","extras":{"Ciudad":"PASTO","Municipio":"LAS MERCEDES","Cajas":"2"}},{"lat":1.202,"lng":-77.2635,"name":"PUNTO CLAVE SUPERTIENDA","addr":"CR 3 20A 56","order":"53","tel":"","notas":"","horario":"","codigo":"1203704376","extras":{"Ciudad":"PASTO","Municipio":"LAS MERCEDES","Cajas":"6"}},{"lat":1.202332,"lng":-77.26246,"name":"EL PALACIO DEL PESCADO SAS","addr":"CR 2A 21B 07","order":"54","tel":"","notas":"","horario":"","codigo":"1224815936","extras":{"Ciudad":"PASTO","Municipio":"LAS MERCEDES","Cajas":"4"}},{"lat":1.2026,"lng":-77.2591,"name":"RUTA 47 PS","addr":"CR 4E 21B 06","order":"55","tel":"","notas":"","horario":"","codigo":"1224728036","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"4"}},{"lat":1.203875,"lng":-77.26223,"name":"TIENDA NURY","addr":"CR 2A 21C 09","order":"56","tel":"","notas":"","horario":"","codigo":"1224834896","extras":{"Ciudad":"PASTO","Municipio":"MERCEDARIO","Cajas":"1"}},{"lat":1.203653,"lng":-77.26246,"name":"TIENDA BAHIA 2","addr":"CL 21C 2A 22","order":"57","tel":"","notas":"","horario":"","codigo":"1224839882","extras":{"Ciudad":"PASTO","Municipio":"MERCEDARIO","Cajas":"4"}},{"lat":1.2036,"lng":-77.2634,"name":"SPR EXPRESS STA BARBARA","addr":"CLL 21 C 3-13","order":"58","tel":"","notas":"","horario":"","codigo":"1210715286","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"9,99"}},{"lat":1.2031,"lng":-77.2641,"name":"TIENDA AMPARITO","addr":"CR 38 21B 73","order":"59","tel":"","notas":"","horario":"","codigo":"1224260339","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"1"}},{"lat":1.2031,"lng":-77.2641,"name":"TIENDA OLGA MORENO","addr":"KR 3 B 21 B - 07","order":"60","tel":"","notas":"","horario":"","codigo":"1205249872","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"1,33"}},{"lat":1.2035,"lng":-77.2635,"name":"TIENDA MARTHA BUESAQUILLO","addr":"CR 3 A 21 B - 114","order":"61","tel":"","notas":"","horario":"","codigo":"1205249890","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"1"}},{"lat":1.203653,"lng":-77.26361,"name":"CAFETERIA PUNTO DEPORTES","addr":"CR 3A 21B 120","order":"62","tel":"","notas":"","horario":"","codigo":"1224357188","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"1"}},{"lat":1.2036,"lng":-77.2639,"name":"MINIMARKET CENTRAL","addr":"CL 21C 3A 37 SANTA BARBARA","order":"63","tel":"","notas":"","horario":"","codigo":"1224489873","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"8,5"}},{"lat":1.203732,"lng":-77.264229,"name":"TIENDA DONA ANITA","addr":"CL 21 C 3 B - 21","order":"64","tel":"","notas":"","horario":"","codigo":"1205249881","extras":{"Ciudad":"PASTO","Municipio":"SANTA BARBARA","Cajas":"9"}},{"lat":1.2038,"lng":-77.2645,"name":"TIENDA BUCHE","addr":"MZ 9 CA 13","order":"65","tel":"","notas":"","horario":"","codigo":"1224292946","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1"}},{"lat":1.2038,"lng":-77.2649,"name":"MEGA AHORRO","addr":"MZ 9 CA 21 ESMERALDA","order":"66","tel":"","notas":"","horario":"","codigo":"1224344649","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1,5"}},{"lat":1.2038,"lng":-77.2657,"name":"CASA BROASTER","addr":"MZ 15 CA  7","order":"67","tel":"","notas":"","horario":"","codigo":"1224576929","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1"}},{"lat":1.203291,"lng":-77.266051,"name":"VNET GAMES","addr":"MZ 19 CA 14","order":"68","tel":"","notas":"","horario":"","codigo":"1224763578","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1"}},{"lat":1.203836,"lng":-77.26611,"name":"IMPERIO BURGUER","addr":"MZ 15 CS 1","order":"69","tel":"","notas":"","horario":"","codigo":"1224849398","extras":{"Ciudad":"PASTO","Municipio":"LA ESMERALDA","Cajas":"16"}},{"lat":1.2041,"lng":-77.2654,"name":"DYLAN ANDRES ROSERO ACOSTA","addr":"MZ 9 CA 1","order":"70","tel":"","notas":"","horario":"","codigo":"1224497918","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1"}},{"lat":1.2034,"lng":-77.2665,"name":"TIENDA LA 14","addr":"MZ 14 CS 12","order":"71","tel":"","notas":"","horario":"","codigo":"1224352974","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1"}},{"lat":1.2002,"lng":-77.2607,"name":"TIENDA MARIA","addr":"CR 2 ESTE 19B 58","order":"72","tel":"","notas":"","horario":"","codigo":"1210095315","extras":{"Ciudad":"PASTO","Municipio":"BETANIA","Cajas":"1"}},{"lat":1.2053,"lng":-77.2658,"name":"LA CASITA DEL CUY","addr":"CL 21A 4 79","order":"73","tel":"","notas":"","horario":"","codigo":"1224162061","extras":{"Ciudad":"PASTO","Municipio":"EL EJIDO","Cajas":"7"}},{"lat":1.2053,"lng":-77.2657,"name":"SU CASA DEL MAR RESTAURANTE","addr":"CL 21 4 65","order":"74","tel":"","notas":"","horario":"","codigo":"1200932462","extras":{"Ciudad":"PASTO","Municipio":"EL EJIDO","Cajas":"1"}},{"lat":1.2054,"lng":-77.2653,"name":"RESTAURANTE JESUS","addr":"CL 22 3 67","order":"75","tel":"","notas":"","horario":"","codigo":"1224336143","extras":{"Ciudad":"PASTO","Municipio":"EL EJIDO","Cajas":"1"}},{"lat":1.2046,"lng":-77.2655,"name":"TIENDA SANTI","addr":"MZ 6 CA 10A ESMERALDA","order":"76","tel":"","notas":"","horario":"","codigo":"1224347092","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"1"}},{"lat":1.2046,"lng":-77.2655,"name":"TNDA DON LUCHITO","addr":"MZ 6 CA 1","order":"77","tel":"","notas":"","horario":"","codigo":"1203703158","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"2"}},{"lat":1.2043,"lng":-77.2646,"name":"TDA LUZ MARIA","addr":"MZ 7 CA 10","order":"78","tel":"","notas":"","horario":"","codigo":"1200931997","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"2"}},{"lat":1.2045,"lng":-77.2665,"name":"TIENDA KAMY","addr":"CL 21A MZ 5 CA 4","order":"79","tel":"","notas":"","horario":"","codigo":"1224332984","extras":{"Ciudad":"PASTO","Municipio":"ESMERALDA","Cajas":"4"}},{"lat":1.2064,"lng":-77.2629,"name":"LA TIENDA DE DIOS","addr":"CL 22 1A 49","order":"80","tel":"","notas":"","horario":"","codigo":"1200938910","extras":{"Ciudad":"PASTO","Municipio":"BAVIERA","Cajas":"2"}},{"lat":1.2058,"lng":-77.2589,"name":"QBANO UNICO PASTO","addr":"CC UNICO PASTO LC K10","order":"81","tel":"","notas":"","horario":"","codigo":"1224646831","extras":{"Ciudad":"PASTO","Municipio":"PUCALPA","Cajas":"2"}},{"lat":1.209377,"lng":-77.260546,"name":"TIENDA LUCIANA","addr":"CR 1C 23A 88","order":"82","tel":"","notas":"","horario":"","codigo":"1224831335","extras":{"Ciudad":"PASTO","Municipio":"GUALCALA","Cajas":"15"}},{"lat":1.21021,"lng":-77.26249,"name":"DISTRIBUCIONES OBED EDON","addr":"CR 2 22B 106 LC 3","order":"83","tel":"","notas":"","horario":"","codigo":"1224826033","extras":{"Ciudad":"PASTO","Municipio":"LOS SAUCES","Cajas":"4,83"}},{"lat":1.2079,"lng":-77.261,"name":"SAN SEBASTIAN","addr":"CONJ LOS SAUCES LC 3","order":"84","tel":"","notas":"","horario":"","codigo":"1224490658","extras":{"Ciudad":"PASTO","Municipio":"LOS SAUCES","Cajas":"1"}},{"lat":1.206593,"lng":-77.26327,"name":"MERCA VARIEDADES LOS PINOS 2","addr":"CL 22 130 LOS PINOS","order":"85","tel":"","notas":"","horario":"","codigo":"1224839417","extras":{"Ciudad":"PASTO","Municipio":"LOS PINOS","Cajas":"16,5"}},{"lat":1.2063,"lng":-77.264,"name":"SUPER TIENDA EXPRESS","addr":"CL 22 1 -30 CONJ RESIDENCIAL L","order":"86","tel":"","notas":"","horario":"","codigo":"1210276576","extras":{"Ciudad":"PASTO","Municipio":"LOS PINOS","Cajas":"2,83"}},{"lat":1.2037,"lng":-77.2558,"name":"SANTA MONICA NUTRIPAN","addr":"MZ B CS 13 SANTA MONICA POR LA","order":"87","tel":"","notas":"","horario":"","codigo":"1224800178","extras":{"Ciudad":"PASTO","Municipio":"SANTA MONICA","Cajas":"0,75"}},{"lat":1.2034,"lng":-77.2563,"name":"AUTOSERVICIO A MERCAR J Y J","addr":"CL 21B MZ D CA 28","order":"88","tel":"","notas":"","horario":"","codigo":"1224817403","extras":{"Ciudad":"PASTO","Municipio":"PASTO","Cajas":"4"}},{"lat":1.2032,"lng":-77.2566,"name":"RAPITIENDA AURA","addr":"MZ G CASA 9","order":"89","tel":"","notas":"","horario":"","codigo":"1200941931","extras":{"Ciudad":"PASTO","Municipio":"SANTA MONICA","Cajas":"2"}}];
+var TS="1776770966773";
+var SK="st_ka4v54";
+var SG="ka4v54";
+var SB_URL="https://nhaidtonhejdpyyeqakb.supabase.co";
+var SB_KEY="sb_publishable_3ZHsAmIjlAUrJD152-h3Ow_atnXStwh";
+var TODAY="2026-04-21";
+var MOTS=["Cliente Cerrado","Cliente Sin Dinero","No hizo pedido","Desabasto Producto"];
+var MICO=["\uD83D\uDD12","\uD83D\uDCB0","\uD83D\uDCCB","\uD83D\uDCE6"];
+var SC={e:"#22c55e",rt:"#ef4444",rp:"#f59e0b"};
+var E={};
+try{E=JSON.parse(localStorage.getItem(SK)||"{}");} catch(x){E={};}
+function sv(){try{localStorage.setItem(SK,JSON.stringify(E));}catch(x){}}
+function ck(c){return c.lat+"_"+c.lng+"_"+(c.order||"");}
+var _t=sessionStorage.getItem("ts_"+SG);
+if(_t&&_t!==TS){sessionStorage.setItem("ts_"+SG,TS);location.reload(true);}
+else{sessionStorage.setItem("ts_"+SG,TS);}
+var map=L.map("pmap",{zoomControl:false}).setView([D[0].lat,D[0].lng],13);
+L.control.zoom({position:"bottomright"}).addTo(map);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(map);
+function mkIcon(order,st){
+  var n=order||"",fs=String(n).length>2?8:10;
+  var col=(st&&SC[st])?SC[st]:C;
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 42">'
+    +'<path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 26 16 26S32 28 32 16C32 7.163 24.837 0 16 0z" fill="'+col+'"/>'
+    +'<circle cx="16" cy="16" r="9" fill="rgba(0,0,0,.2)"/>'
+    +'<text x="16" y="20.5" text-anchor="middle" font-size="'+fs+'" font-family="monospace" font-weight="700" fill="#fff">'+n+'</text>'
+    +'</svg>';
+  return L.divIcon({html:svg,iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-44],className:""});
+}
+var MK=[];
+D.forEach(function(c){
+  var k=ck(c),st=(E[k]&&E[k].s)?E[k].s:null;
+  var m=L.marker([c.lat,c.lng],{icon:mkIcon(c.order,st)});
+  m.bindPopup(function(){return buildPopup(c);},{maxWidth:300});
+  m.addTo(map);
+  MK.push({m:m,d:c,k:k});
+});
+if(D.length>0){
+  var lts=D.map(function(c){return c.lat;}),lns=D.map(function(c){return c.lng;});
+  map.fitBounds([[Math.min.apply(null,lts),Math.min.apply(null,lns)],[Math.max.apply(null,lts),Math.max.apply(null,lns)]],{padding:[40,40]});
+}
+function buildPopup(c){
+  var k=ck(c),ed=E[k]||{},st=ed.s||null;
+  var stLbl=st==="e"?"\u2713 Entregado":st==="rt"?"\u2717 Rechazo Total":st==="rp"?"\u26A0 Parcial":"";
+  var stH=st?('<div class="pst '+st+'">'+stLbl+'</div>'+(ed.m?'<div class="pmot">\uD83D\uDCCC '+ed.m+'</div>':'')):'';
+  var exH='';
+  if(c.extras&&Object.keys(c.extras).length){
+    exH='<div class="px">';
+    Object.keys(c.extras).forEach(function(ek){exH+='<div class="pxr"><span class="pxl">'+ek+'</span><span class="pxv">'+c.extras[ek]+'</span></div>';});
+    exH+='</div>';
+  }
+  var h='<div class="pi">';
+  h+='<div><span class="pb">Parada '+(c.order||'-')+'</span>'+(c.codigo?'<span class="pc">COD: '+c.codigo+'</span>':'')+'</div>';
+  h+='<div class="pn">'+c.name+'</div>';
+  h+='<div class="pa">'+(c.addr||'')+'</div>';
+  if(c.horario)h+='<div class="ph">\uD83D\uDD50 '+c.horario+'</div>';
+  h+='<div class="pax">';
+  h+='<a class="pbt pbtn" href="https://maps.google.com/?q='+c.lat+','+c.lng+'" target="_blank">\uD83E\uDDED Navegar</a>';
+  if(c.tel)h+='<a class="pbt pbc" href="tel:'+c.tel+'">\uD83D\uDCDE Llamar</a>';
+  h+='</div>';
+  if(c.notas)h+='<div class="pno">\uD83D\uDCDD '+c.notas+'</div>';
+  h+=exH;
+  h+='<div class="est"><div class="estt">Resultado de entrega</div>';
+  h+=stH;
+  h+='<div class="estb">';
+  h+='<button class="eb e" onclick="sest(\''+k+'\',\'e\');">\u2713 Entregado</button>';
+  h+='<button class="eb rt" onclick="pmot(\''+k+'\',\'rt\');">\u2717 Rechazo</button>';
+  h+='<button class="eb rp" onclick="pmot(\''+k+'\',\'rp\');">\u26A0 Parcial</button>';
+  h+='</div></div></div>';
+  return h;
+}
+var _mk=null,_ms=null;
+function pmot(k,s){
+  _mk=k;_ms=s;
+  var isTot=s==="rt";
+  document.getElementById("mtit").textContent=isTot?"Motivo: Rechazo Total":"Motivo: Rechazo Parcial";
+  var cls=isTot?"rt-c":"rp-c";
+  var html='';
+  MOTS.forEach(function(m,i){html+='<div class="mopt '+cls+'" onclick="selm('+i+')"><span class="mico">'+MICO[i]+'</span>'+m+'</div>';});
+  document.getElementById("mopts").innerHTML=html;
+  document.getElementById("movl").classList.add("open");
+}
+function selm(i){
+  document.getElementById("movl").classList.remove("open");
+  if(_mk!==null)sest(_mk,_ms,MOTS[i]);
+  _mk=null;_ms=null;
+}
+function cmot(){
+  document.getElementById("movl").classList.remove("open");
+  _mk=null;_ms=null;
+}
+document.getElementById("movl").addEventListener("click",function(e){if(e.target===this)cmot();});
+function sest(k,s,mot){
+  var now=new Date().toLocaleTimeString("es-CL");
+  E[k]={s:s,h:now,m:mot||""};
+  sv();
+  var f=MK.find(function(x){return x.k===k;});
+  if(f){f.m.setIcon(mkIcon(f.d.order,s));f.m.closePopup();setTimeout(function(){f.m.openPopup();},80);}
+  if(document.getElementById("plv").style.display!=="none")rl(D);
+  // Publicar gestion en Supabase
+  var cd=D.find(function(x){return ck(x)===k;});
+  if(cd&&SB_URL&&SB_KEY){
+    var payload={fecha:TODAY,ruta:SG,cliente_codigo:cd.codigo||k,cliente_nombre:cd.name,estado:s,motivo:mot||"",hora:now};
+    fetch(SB_URL+"/rest/v1/gestiones",{
+      method:"POST",
+      headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},
+      body:JSON.stringify(payload)
+    }).catch(function(){});
+  }
+}
+function sw(tab){
+  document.getElementById("pmap").style.display=tab==="m"?"block":"none";
+  document.getElementById("plv").style.display =tab==="l"?"flex" :"none";
+  document.getElementById("prv").style.display =tab==="r"?"flex" :"none";
+  document.getElementById("tM").className="tab"+(tab==="m"?" on":"");
+  document.getElementById("tL").className="tab"+(tab==="l"?" on":"");
+  document.getElementById("tR").className="tab"+(tab==="r"?" on":"");
+  if(tab==="m")setTimeout(function(){map.invalidateSize();},50);
+  if(tab==="r")rpt();
+}
+function rl(items){
+  document.getElementById("cl").innerHTML=items.map(function(c){
+    var k=ck(c),ed=E[k]||{},st=ed.s||null;
+    var col=(st&&SC[st])?SC[st]:C;
+    var stLbl=st==="e"?"\u2713 Entregado":st==="rt"?"\u2717 Rechazo":st==="rp"?"\u26A0 Parcial":"";
+    var stFull=stLbl+(ed.m?" \u00b7 "+ed.m:"");
+    var h='<div class="ci" onclick="fm('+c.lat+','+c.lng+')">';
+    h+='<div class="cn" style="background:'+col+'">'+(c.order||'?')+'</div>';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div class="nm">'+c.name+(stFull?'<span class="stbadge '+st+'">'+stFull+'</span>':'')+'</div>';
+    h+='<div class="ad">'+(c.addr||'')+'</div>';
+    if(c.codigo)h+='<div style="font-family:monospace;font-size:10px;color:#888;margin-top:2px">COD: '+c.codigo+'</div>';
+    h+='<div class="ca">';
+    h+='<a class="bn" href="https://maps.google.com/?q='+c.lat+','+c.lng+'" target="_blank">\uD83E\uDDED Navegar</a>';
+    if(c.tel)h+='<a class="bc" href="tel:'+c.tel+'">\uD83D\uDCDE '+c.tel+'</a>';
+    h+='</div>';
+    if(c.notas)h+='<div class="nt">\uD83D\uDCDD '+c.notas+'</div>';
+    h+='</div></div>';
+    return h;
+  }).join('');
+}
+rl(D);
+function fl(q){
+  var f=q.toLowerCase().trim();
+  if(!f){rl(D);return;}
+  rl(D.filter(function(c){
+    var t=[c.name,c.addr,c.order,c.codigo,c.horario,c.tel,c.notas].map(function(v){return(v||"").toLowerCase();}).join(" ");
+    var x=Object.values(c.extras||{}).map(function(v){return(v||"").toLowerCase();}).join(" ");
+    return(t+" "+x).indexOf(f)>=0;
+  }));
+}
+function fm(lat,lng){
+  sw("m");map.setView([lat,lng],17);
+  var f=MK.find(function(x){return x.d.lat===lat&&x.d.lng===lng;});
+  if(f)f.m.openPopup();
+}
+function rpt(){
+  var tot=D.length;
+  var ne =D.filter(function(c){var e=E[ck(c)];return e&&e.s==="e"; }).length;
+  var nrt=D.filter(function(c){var e=E[ck(c)];return e&&e.s==="rt";}).length;
+  var nrp=D.filter(function(c){var e=E[ck(c)];return e&&e.s==="rp";}).length;
+  var np=tot-ne-nrt-nrp,pct=tot>0?Math.round((ne/tot)*100):0;
+  var rs='<div style="background:#fff;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #e2ddd5">';
+  rs+='<div style="font-size:13px;font-weight:700;margin-bottom:12px">Resumen del d\u00eda</div>';
+  rs+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  rs+='<div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#15803d">'+ne+'</div><div style="font-size:10px;color:#15803d;font-weight:600">ENTREGADOS</div></div>';
+  rs+='<div style="background:#fef2f2;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#b91c1c">'+nrt+'</div><div style="font-size:10px;color:#b91c1c;font-weight:600">RECHAZO TOTAL</div></div>';
+  rs+='<div style="background:#fffbeb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#b45309">'+nrp+'</div><div style="font-size:10px;color:#b45309;font-weight:600">RECHAZO PARCIAL</div></div>';
+  rs+='<div style="background:#f9fafb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#6b7280">'+np+'</div><div style="font-size:10px;color:#6b7280;font-weight:600">PENDIENTES</div></div>';
+  rs+='</div>';
+  rs+='<div style="margin-top:12px;background:#f0f0f0;border-radius:20px;height:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#22c55e;border-radius:20px"></div></div>';
+  rs+='<div style="font-size:11px;color:#888;text-align:center;margin-top:4px">'+pct+'% ('+tot+' clientes)</div>';
+  rs+='</div>';
+  document.getElementById("rs").innerHTML=rs;
+  var rows=D.map(function(c){
+    var k=ck(c),ed=E[k]||{},st=ed.s||"p";
+    var sl=st==="e"?"Entregado":st==="rt"?"Rechazo Total":st==="rp"?"Rechazo Parcial":"Pendiente";
+    var bg=st==="e"?"#f0fdf4":st==="rt"?"#fef2f2":st==="rp"?"#fffbeb":"#fff";
+    var col=st==="e"?"#15803d":st==="rt"?"#b91c1c":st==="rp"?"#b45309":"#9ca3af";
+    var h='<div style="background:'+bg+';border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">';
+    h+='<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0"></div>';
+    h+='<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.name+'</div>';
+    if(c.codigo)h+='<div style="font-size:10px;color:#888;font-family:monospace">COD: '+c.codigo+'</div>';
+    if(ed.m)h+='<div style="font-size:10px;color:#999;font-style:italic">\uD83D\uDCCC '+ed.m+'</div>';
+    h+='</div>';
+    h+='<div style="font-size:11px;font-weight:700;color:'+col+';text-align:right;flex-shrink:0">'+sl;
+    if(ed.h)h+='<div style="font-size:9px;font-weight:400;color:#aaa">'+ed.h+'</div>';
+    h+='</div></div>';
+    return h;
+  }).join('');
+  document.getElementById("rd").innerHTML='<div style="font-size:11px;font-weight:700;color:#8c8680;margin-bottom:8px">DETALLE</div>'+rows;
+}
+function dlr(){
+  var lines=["Cliente,Codigo,Direccion,Orden,Estado,Motivo,Hora"];
+  D.forEach(function(c){
+    var ed=E[ck(c)]||{};
+    var st=ed.s||"";
+    var sl=st==="e"?"Entregado":st==="rt"?"Rechazo Total":st==="rp"?"Rechazo Parcial":"Pendiente";
+    function q(v){return '"'+String(v||"").replace(/"/g,'""')+'"';}
+    lines.push([q(c.name),q(c.codigo),q(c.addr),q(c.order),q(sl),q(ed.m),q(ed.h)].join(","));
+  });
+  var a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,\uFEFF"+encodeURIComponent(lines.join("\n"));
+  a.download="reporte_"+SG+".csv";
+  a.click();
+}
+</script>
+</body>
+</html>
