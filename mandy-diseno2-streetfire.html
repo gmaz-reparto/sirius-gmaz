@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mandy Burger — Diseño Street Fire</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Barlow:ital,wght@0,400;0,700;0,900;1,900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --fire: #FF2200;
+  --yellow: #FFD600;
+  --dark: #0F0800;
+  --brown: #1A0F00;
+  --orange: #FF6B00;
+  --white: #FFFEF5;
+  --smoke: #1E1200;
+}
+
+body {
+  background: var(--dark);
+  font-family: 'Barlow', sans-serif;
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+/* ── DESIGN LABEL ── */
+.design-label {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  background: var(--fire);
+  color: var(--white);
+  font-family: 'Teko', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  padding: 6px 14px;
+  z-index: 999;
+  text-transform: uppercase;
+}
+
+/* ── FLOAT BTN ── */
+.float-wa {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  background: #25D366;
+  color: white;
+  font-family: 'Teko', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  padding: 14px 22px;
+  text-decoration: none;
+  z-index: 999;
+  box-shadow: 0 0 30px rgba(37,211,102,0.5);
+  animation: wa-pulse 2s ease infinite;
+  text-transform: uppercase;
+}
+
+@keyframes wa-pulse {
+  0%,100% { box-shadow: 0 0 30px rgba(37,211,102,0.4); }
+  50% { box-shadow: 0 0 50px rgba(37,211,102,0.7); }
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  background: var(--dark);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Diagonal slabs */
+.hero-slab {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 55%;
+  bottom: 0;
+  background: var(--fire);
+  transform: skewY(-6deg);
+  transform-origin: bottom left;
+}
+
+.hero-slab-2 {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 52%;
+  bottom: 0;
+  background: var(--orange);
+  transform: skewY(-6deg);
+  transform-origin: bottom left;
+  opacity: 0.3;
+}
+
+/* Dot pattern */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,214,0,0.15) 1px, transparent 1px);
+  background-size: 28px 28px;
+  z-index: 1;
+}
+
+.hero-top {
+  position: relative;
+  z-index: 3;
+  padding: 28px 24px 0;
+  text-align: center;
+}
+
+.hero-tag {
+  display: inline-block;
+  background: var(--yellow);
+  color: var(--dark);
+  font-family: 'Teko', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  padding: 5px 20px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  transform: skewX(-8deg);
+}
+
+.hero-name {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(88px, 24vw, 180px);
+  line-height: 0.82;
+  color: var(--white);
+  text-align: center;
+  -webkit-text-stroke: 2px rgba(255,255,255,0.1);
+  animation: heroReveal 0.7s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes heroReveal {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.hero-name-2 {
+  font-family: 'Teko', sans-serif;
+  font-size: clamp(40px, 10vw, 80px);
+  font-weight: 400;
+  color: var(--yellow);
+  letter-spacing: 12px;
+  text-align: center;
+  margin-top: -8px;
+}
+
+/* HERO CENTER CARD */
+.hero-card {
+  position: relative;
+  z-index: 3;
+  margin: 20px 24px 0;
+  background: var(--dark);
+  border: 3px solid var(--yellow);
+  padding: 24px 20px;
+  text-align: center;
+  transform: rotate(-1deg);
+  box-shadow: 8px 8px 0 var(--fire);
+}
+
+.hero-card-label {
+  font-family: 'Teko', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  color: var(--yellow);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.hero-emoji {
+  font-size: 90px;
+  display: block;
+  line-height: 1;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 20px rgba(255,34,0,0.6));
+  animation: heroFloat 3s ease-in-out infinite;
+}
+
+@keyframes heroFloat {
+  0%,100% { transform: translateY(0) rotate(1deg); }
+  50% { transform: translateY(-8px) rotate(-1deg); }
+}
+
+.hero-card-name {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(32px, 9vw, 56px);
+  color: var(--white);
+  line-height: 0.9;
+  margin-bottom: 8px;
+}
+
+.hero-card-desc {
+  font-size: 13px;
+  color: rgba(255,254,245,0.6);
+  margin-bottom: 16px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.hero-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.price-bg {
+  background: var(--yellow);
+  padding: 8px 20px;
+  transform: skewX(-6deg);
+}
+
+.price-num {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(60px, 16vw, 100px);
+  color: var(--dark);
+  line-height: 1;
+  display: block;
+  transform: skewX(6deg);
+}
+
+.price-detail {
+  padding: 0 16px;
+  text-align: left;
+}
+
+.price-cop {
+  font-family: 'Teko', sans-serif;
+  font-size: 14px;
+  color: var(--yellow);
+  letter-spacing: 2px;
+}
+
+.price-free {
+  font-size: 12px;
+  color: rgba(255,254,245,0.7);
+  line-height: 1.6;
+}
+
+.hero-card-cta {
+  display: block;
+  margin-top: 18px;
+  background: var(--fire);
+  color: var(--white);
+  font-family: 'Teko', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  padding: 14px;
+  text-decoration: none;
+  text-transform: uppercase;
+  border: 2px solid var(--fire);
+  transition: background 0.2s;
+}
+
+.hero-card-cta:hover { background: #dd1a00; }
+
+/* HERO BOTTOM */
+.hero-bottom-bar {
+  position: relative;
+  z-index: 3;
+  background: var(--yellow);
+  margin-top: 24px;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.hero-phone-item {
+  font-family: 'Teko', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dark);
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+/* ── STRIPE DIVIDER ── */
+.stripe-div {
+  height: 12px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--fire),
+    var(--fire) 10px,
+    var(--yellow) 10px,
+    var(--yellow) 20px
+  );
+}
+
+/* ── SECTIONS ── */
+.section {
+  padding: 40px 24px;
+  background: var(--dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--fire), var(--yellow), var(--fire));
+}
+
+.section.alt { background: var(--brown); }
+.section.smoke-bg { background: var(--smoke); }
+
+/* section header */
+.sec-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.sec-icon {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(255,34,0,0.4));
+}
+
+.sec-titles { flex: 1; }
+
+.sec-cat {
+  font-family: 'Teko', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: var(--fire);
+  text-transform: uppercase;
+}
+
+.sec-name {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(44px, 12vw, 80px);
+  line-height: 0.85;
+  color: var(--white);
+}
+
+/* CARDS GRID */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.card {
+  background: #1A1000;
+  border-left: 4px solid var(--fire);
+  padding: 14px 12px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 40px; height: 40px;
+  background: radial-gradient(circle at top right, rgba(255,214,0,0.08), transparent);
+}
+
+.card.star {
+  grid-column: span 2;
+  background: linear-gradient(135deg, #2A0500, #180300);
+  border-left: 5px solid var(--yellow);
+  border-bottom: 2px solid rgba(255,214,0,0.3);
+}
+
+.card-badge {
+  display: inline-block;
+  background: var(--fire);
+  color: var(--white);
+  font-family: 'Teko', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 2px 10px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  transform: skewX(-6deg);
+}
+
+.card.star .card-badge { background: var(--yellow); color: var(--dark); }
+
+.card-name {
+  font-family: 'Teko', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.card.star .card-name { font-size: 26px; color: var(--yellow); }
+
+.card-desc {
+  font-size: 11px;
+  color: rgba(255,254,245,0.5);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.card-price {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 28px;
+  color: var(--yellow);
+  line-height: 1;
+}
+
+.card.star .card-price { font-size: 40px; }
+
+/* SINGLE ROW ITEMS */
+.row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,214,0,0.08);
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.row-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.row-item:last-child { border-bottom: none; }
+
+.row-left { flex: 1; }
+
+.row-name {
+  font-family: 'Teko', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1;
+}
+
+.row-desc {
+  font-size: 11px;
+  color: rgba(255,254,245,0.4);
+  font-style: italic;
+}
+
+.row-price {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 28px;
+  color: var(--yellow);
+  white-space: nowrap;
+}
+
+/* BEBIDAS */
+.beb-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.beb-item {
+  background: #1A1000;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 3px solid var(--fire);
+}
+
+.beb-item.big {
+  grid-column: span 2;
+  border-top-color: var(--yellow);
+  background: linear-gradient(135deg, #2A1500, #1A0800);
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.beb-name {
+  font-family: 'Teko', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.beb-item.big .beb-name { font-size: 20px; color: var(--yellow); }
+
+.beb-price {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 22px;
+  color: var(--fire);
+}
+
+.beb-item.big .beb-price { font-size: 32px; color: var(--yellow); }
+
+/* FOOTER */
+.footer {
+  background: var(--fire);
+  padding: 36px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer::before {
+  content: 'MANDY MANDY MANDY MANDY MANDY';
+  position: absolute;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 60px;
+  color: rgba(0,0,0,0.08);
+  white-space: nowrap;
+  top: 50%;
+  left: -20px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.footer-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 52px;
+  color: var(--white);
+  line-height: 0.9;
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.footer-subtitle {
+  font-family: 'Teko', sans-serif;
+  font-size: 16px;
+  letter-spacing: 6px;
+  color: rgba(255,254,245,0.7);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-phones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-phone {
+  background: rgba(0,0,0,0.25);
+  color: var(--yellow);
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 30px;
+  text-decoration: none;
+  padding: 8px 0;
+  display: block;
+  transition: background 0.2s;
+}
+
+.footer-phone:hover { background: rgba(0,0,0,0.4); }
+
+.footer-addr {
+  font-size: 12px;
+  color: rgba(255,254,245,0.7);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 16px;
+}
+
+.footer-carry {
+  display: inline-block;
+  background: var(--yellow);
+  color: var(--dark);
+  font-family: 'Teko', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 10px 28px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+  transform: skewX(-6deg);
+}
+
+@media (max-width: 360px) {
+  .cards-grid { grid-template-columns: 1fr; }
+  .card.star { grid-column: span 1; }
+  .beb-item.big { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="design-label">Diseño 2 — Street Fire</div>
+<a href="https://wa.me/573234621534" class="float-wa" target="_blank">📱 PEDIR YA</a>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-slab-2"></div>
+  <div class="hero-slab"></div>
+
+  <div class="hero-top">
+    <div class="hero-tag">🔥 Pasto · Nariño · Domicilios</div>
+    <div class="hero-name">MANDY</div>
+    <div class="hero-name-2">BURGER</div>
+  </div>
+
+  <div style="padding: 0 24px; position:relative; z-index:3; flex:1; display:flex; flex-direction:column; justify-content:flex-end; padding-bottom: 0;">
+    <div class="hero-card">
+      <div class="hero-card-label">⭐ Producto Estrella — La más pedida</div>
+      <span class="hero-emoji">🍔</span>
+      <div class="hero-card-name">HAMBURGUESA<br>CLÁSICA</div>
+      <div class="hero-card-desc">150g carne · Tomate · Lechuga · Cebolla caramelizada<br>+ Papa GRATIS + Bebida GRATIS</div>
+      <div class="hero-price-row">
+        <div class="price-bg">
+          <span class="price-num">10K</span>
+        </div>
+        <div class="price-detail">
+          <div class="price-cop">COP PESOS</div>
+          <div class="price-free">✅ Papa incluida<br>✅ Bebida incluida</div>
+        </div>
+      </div>
+      <a href="https://wa.me/573234621534?text=Quiero%20una%20Cl%C3%A1sica" class="hero-card-cta" target="_blank">
+        🛵 PEDIR DOMICILIO AHORA
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-bottom-bar">
+    <a href="tel:3234621534" class="hero-phone-item">📞 323 462 1534</a>
+    <a href="tel:3156860563" class="hero-phone-item">📞 315 686 0563</a>
+  </div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- HAMBURGUESAS -->
+<section class="section" id="burgers">
+  <div class="sec-header">
+    <div class="sec-icon">🍔</div>
+    <div class="sec-titles">
+      <div class="sec-cat">Nuestro fuerte</div>
+      <div class="sec-name">HAMBUR-<br>GUESAS</div>
+    </div>
+  </div>
+  <div class="cards-grid">
+    <div class="card star">
+      <div class="card-badge">⭐ PRODUCTO ESTRELLA</div>
+      <div class="card-name">Hamburguesa Clásica</div>
+      <div class="card-desc">150g carne · Tomate · Lechuga · Cebolla caramelizada · Papa gratis · Bebida gratis</div>
+      <div class="card-price">$10.000</div>
+    </div>
+    <div class="card">
+      <div class="card-name">Especial</div>
+      <div class="card-desc">150g · Jamón · Tocineta · Papa · Bebida</div>
+      <div class="card-price">$14.000</div>
+    </div>
+    <div class="card">
+      <div class="card-name">Ranchera</div>
+      <div class="card-desc">Carne · Jamón · Tocineta · Chorizo · Huevo</div>
+      <div class="card-price">$16.000</div>
+    </div>
+    <div class="card star">
+      <div class="card-badge" style="background:var(--fire);">🏆 LA FIRMA</div>
+      <div class="card-name" style="color:var(--white);">Mandy Burger</div>
+      <div class="card-desc">Doble carne · Jamón · Tocineta · Huevo · Papa · Bebida</div>
+      <div class="card-price">$18.000</div>
+    </div>
+  </div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- CARNES -->
+<section class="section alt" id="carnes">
+  <div class="sec-header">
+    <div class="sec-icon">🥩</div>
+    <div class="sec-titles">
+      <div class="sec-cat">A la parrilla</div>
+      <div class="sec-name">CARNES</div>
+    </div>
+  </div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Parrilla Cerdo</div><div class="row-desc">250g · Papa · Arepa</div></div><div class="row-price">$15K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Parrilla Res</div><div class="row-desc">250g · Papa · Arepa</div></div><div class="row-price">$15K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Parrilla Mixta</div><div class="row-desc">Res + Cerdo · Papa · Arepa</div></div><div class="row-price">$16K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Chuleta</div><div class="row-desc">250g cerdo · Papa · Arepa</div></div><div class="row-price">$16K</div></div>
+  <div class="row-item" style="border-left: 3px solid var(--yellow); padding-left:12px;"><div class="row-left"><div class="row-name" style="color:var(--yellow)">Costilla 🔥</div><div class="row-desc">250g · Papa · Arepa</div></div><div class="row-price">$16K</div></div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- ALITAS -->
+<section class="section smoke-bg" id="alitas">
+  <div class="sec-header">
+    <div class="sec-icon">🍗</div>
+    <div class="sec-titles">
+      <div class="sec-cat">BBQ</div>
+      <div class="sec-name">ALITAS</div>
+    </div>
+  </div>
+  <div class="cards-grid">
+    <div class="card"><div class="card-name">Alitas ×4</div><div class="card-desc">+ Porción de papa</div><div class="card-price">$12.000</div></div>
+    <div class="card"><div class="card-name">Alitas ×8</div><div class="card-desc">+ Porción de papa</div><div class="card-price">$17.000</div></div>
+    <div class="card"><div class="card-name">Alitas ×10</div><div class="card-desc">+ Porción de papa</div><div class="card-price">$22.000</div></div>
+    <div class="card star"><div class="card-badge">👥 Para compartir</div><div class="card-name" style="color:var(--white);">Picada</div><div class="card-desc">Variedad de carnes y acompañamientos</div><div class="card-price">$25.000</div></div>
+  </div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- AREPAS -->
+<section class="section alt" id="arepas">
+  <div class="sec-header">
+    <div class="sec-icon">🫓</div>
+    <div class="sec-titles">
+      <div class="sec-cat">Caseras</div>
+      <div class="sec-name">AREPAS<br>RELLENAS</div>
+    </div>
+  </div>
+  <div class="cards-grid">
+    <div class="card"><div class="card-name">Clásica</div><div class="card-desc">Queso + Jamón</div><div class="card-price">$10.000</div></div>
+    <div class="card"><div class="card-name">Pollo</div><div class="card-desc">Queso + Pollo</div><div class="card-price">$12.000</div></div>
+    <div class="card"><div class="card-name">Carne</div><div class="card-desc">Queso + Carne</div><div class="card-price">$12.000</div></div>
+    <div class="card"><div class="card-name">Mixta</div><div class="card-desc">Queso + Carne + Pollo</div><div class="card-price">$15.000</div></div>
+    <div class="card star"><div class="card-badge">⭐ Especial de la casa</div><div class="card-name" style="color:var(--white);">Arepa Mandy</div><div class="card-desc">Queso · Pollo · Carne · Costilla · Maduritos · Maicitos</div><div class="card-price">$18.000</div></div>
+  </div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- SALCHIPAPAS & PERROS -->
+<section class="section" id="salchi">
+  <div class="sec-header">
+    <div class="sec-icon">🍟</div>
+    <div class="sec-titles">
+      <div class="sec-cat">Clásicos</div>
+      <div class="sec-name">SALCHI-<br>PAPAS &<br>PERROS</div>
+    </div>
+  </div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Gratinada</div><div class="row-desc">Papa · Salchicha · Queso fundido · Ripio</div></div><div class="row-price">$10K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Salchipapa Mandy</div><div class="row-desc">Papa · Salchicha · Jamón · Tocineta · Queso</div></div><div class="row-price">$13K</div></div>
+  <div class="row-item" style="border-left:3px solid var(--yellow);padding-left:12px;"><div class="row-left"><div class="row-name" style="color:var(--yellow);">Mandy Mixta 🔥</div><div class="row-desc">Papa · Salchicha · Jamón · Tocineta · Carne o Pollo</div></div><div class="row-price">$15K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Perro Sencillo</div><div class="row-desc">Salchicha · Ripio · Cebolla · Queso · Papa</div></div><div class="row-price">$10K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Perro Doble</div><div class="row-desc">Salchicha · Jamón · Tocineta · Ripio · Queso</div></div><div class="row-price">$13K</div></div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- CHORIZOS -->
+<section class="section alt" id="chorizos">
+  <div class="sec-header">
+    <div class="sec-icon">🌭</div>
+    <div class="sec-titles">
+      <div class="sec-cat">Santarosanos</div>
+      <div class="sec-name">CHORIZOS</div>
+    </div>
+  </div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Chorizo + Papa</div><div class="row-desc">Clásico con porción de papa</div></div><div class="row-price">$7K</div></div>
+  <div class="row-item"><div class="row-left"><div class="row-name">Choripapa</div><div class="row-desc">Chorizo Santarosano · Papa · Arepa</div></div><div class="row-price">$9K</div></div>
+</section>
+
+<div class="stripe-div"></div>
+
+<!-- BEBIDAS -->
+<section class="section smoke-bg" id="bebidas">
+  <div class="sec-header">
+    <div class="sec-icon">🥤</div>
+    <div class="sec-titles">
+      <div class="sec-cat">Para acompañar</div>
+      <div class="sec-name">BEBIDAS</div>
+    </div>
+  </div>
+  <div class="beb-wrap">
+    <div class="beb-item big"><span class="beb-name">🥤 Gaseosa 1.5L</span><span class="beb-price">$7.000</span></div>
+    <div class="beb-item big"><span class="beb-name">🍹 Jugo Hit 1.5L</span><span class="beb-price">$7.000</span></div>
+    <div class="beb-item"><span class="beb-name">Jugo Hit 1L</span><span class="beb-price">$6K</span></div>
+    <div class="beb-item"><span class="beb-name">Del Valle 1.5L</span><span class="beb-price">$6K</span></div>
+    <div class="beb-item"><span class="beb-name">Hit Personal</span><span class="beb-price">$5K</span></div>
+    <div class="beb-item"><span class="beb-name">Gaseosa Personal</span><span class="beb-price">$3.5K</span></div>
+    <div class="beb-item"><span class="beb-name">Gaseosa Mini</span><span class="beb-price">$2K</span></div>
+    <div class="beb-item"><span class="beb-name">Agua Natural</span><span class="beb-price">$3K</span></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="stripe-div"></div>
+<footer class="footer">
+  <div class="footer-title">MANDY<br>BURGER</div>
+  <div class="footer-subtitle">La mejor burger de Pasto</div>
+  <div class="footer-phones">
+    <a href="tel:3234621534" class="footer-phone">323 462 1534</a>
+    <a href="tel:3156860563" class="footer-phone">315 686 0563</a>
+  </div>
+  <div class="footer-addr">📍 Mz 11 Casa 1 · Barrio Nuevo Sol · Pasto · Nariño</div>
+  <div class="footer-carry">Recipiente para llevar: $1.000</div>
+</footer>
+
+<script>
+  const allReveal = document.querySelectorAll('.card, .row-item');
+  const ro = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 70);
+        ro.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  allReveal.forEach(el => ro.observe(el));
+</script>
+</body>
+</html>

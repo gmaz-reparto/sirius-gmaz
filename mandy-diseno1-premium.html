@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mandy Burger — Diseño Premium</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:wght@900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --black: #080808;
+  --gold: #C9A84C;
+  --gold-light: #F0D080;
+  --gold-dark: #8B6914;
+  --white: #F5F0E8;
+  --gray: #6B6560;
+  --red: #C0392B;
+  --cream: #EDE0C4;
+}
+
+body {
+  background: var(--black);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+/* GRAIN OVERLAY */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.35;
+}
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  position: relative;
+  overflow: hidden;
+  background: var(--black);
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 80%, rgba(201,168,76,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 20%, rgba(201,168,76,0.06) 0%, transparent 60%);
+}
+
+/* Gold line top */
+.hero-line-top {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* HEADER */
+.hero-header {
+  position: relative;
+  z-index: 2;
+  padding: 32px 28px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: revealDown 0.9s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes revealDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-eyebrow {
+  font-size: 10px;
+  letter-spacing: 6px;
+  color: var(--gold);
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+.hero-brand {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(80px, 22vw, 160px);
+  line-height: 0.88;
+  color: var(--white);
+  text-align: center;
+  text-shadow: 0 0 80px rgba(201,168,76,0.2);
+  letter-spacing: -2px;
+}
+
+.hero-brand span {
+  color: var(--gold);
+  display: block;
+  font-size: 0.45em;
+  letter-spacing: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  text-shadow: none;
+}
+
+/* HERO CENTER */
+.hero-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 28px;
+}
+
+.hero-star-product {
+  text-align: center;
+}
+
+.star-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.star-label::before,
+.star-label::after {
+  content: '';
+  width: 30px;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.5;
+}
+
+.burger-display {
+  font-size: 110px;
+  line-height: 1;
+  display: block;
+  filter: drop-shadow(0 0 40px rgba(201,168,76,0.3)) drop-shadow(0 20px 40px rgba(0,0,0,0.8));
+  animation: slowFloat 4s ease-in-out infinite;
+}
+
+@keyframes slowFloat {
+  0%,100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.02); }
+}
+
+.hero-product-name {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 9vw, 64px);
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1;
+  margin: 12px 0 4px;
+  font-style: italic;
+}
+
+.hero-product-name em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+.hero-includes {
+  font-size: 12px;
+  color: var(--gray);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.hero-price-block {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.price-currency {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px;
+  color: var(--gold);
+  font-weight: 300;
+}
+
+.price-amount {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(72px, 18vw, 120px);
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(201,168,76,0.3);
+}
+
+.price-suffix {
+  font-size: 14px;
+  color: var(--gray);
+  letter-spacing: 2px;
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+
+.hero-free-tags {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.free-tag {
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.3);
+  color: var(--gold-light);
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  text-transform: uppercase;
+}
+
+/* HERO BOTTOM */
+.hero-bottom {
+  position: relative;
+  z-index: 2;
+  padding: 20px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero-cta {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  background: var(--gold);
+  color: var(--black);
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  padding: 16px 32px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.hero-cta:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+.hero-phone {
+  font-size: 11px;
+  color: var(--gray);
+  letter-spacing: 3px;
+  text-align: center;
+}
+
+.hero-phone strong { color: var(--white); }
+
+/* GOLD DIVIDER */
+.gold-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 28px;
+  margin: 8px 0;
+}
+
+.gold-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4));
+}
+
+.gold-divider-line.r {
+  background: linear-gradient(90deg, rgba(201,168,76,0.4), transparent);
+}
+
+.gold-divider-icon {
+  font-size: 18px;
+  color: var(--gold);
+  opacity: 0.6;
+}
+
+/* ─── SECTIONS ─── */
+.section {
+  padding: 48px 28px;
+  position: relative;
+}
+
+.section-number {
+  font-family: 'Anton', sans-serif;
+  font-size: 80px;
+  color: rgba(201,168,76,0.06);
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.section-eyebrow {
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 300;
+}
+
+.section-title {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(42px, 10vw, 70px);
+  line-height: 0.9;
+  margin-bottom: 28px;
+  color: var(--white);
+}
+
+/* MENU ITEMS LIST STYLE */
+.menu-list { display: flex; flex-direction: column; gap: 0; }
+
+.menu-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: border-color 0.2s;
+  opacity: 0;
+  transform: translateX(-16px);
+  transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s;
+}
+
+.menu-list-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.menu-list-item:last-child { border-bottom: none; }
+
+.menu-list-item.hero-item {
+  background: rgba(201,168,76,0.05);
+  border: 1px solid rgba(201,168,76,0.2);
+  padding: 20px 16px;
+  margin-bottom: 8px;
+}
+
+.item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.hero-item .item-dot { width: 8px; height: 8px; background: var(--gold-light); }
+
+.item-body { flex: 1; }
+
+.item-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.item-name {
+  font-family: 'Anton', sans-serif;
+  font-size: 20px;
+  color: var(--white);
+  letter-spacing: 0.5px;
+}
+
+.hero-item .item-name { font-size: 24px; color: var(--gold-light); }
+
+.item-price {
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  color: var(--gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hero-item .item-price { font-size: 28px; }
+
+.item-desc {
+  font-size: 12px;
+  color: var(--gray);
+  line-height: 1.6;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.item-badge {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--black);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* BEBIDAS GRID */
+.bebidas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.1);
+}
+
+.bebida-cell {
+  background: var(--black);
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bebida-name { font-size: 13px; color: var(--white); font-weight: 300; }
+.bebida-price { font-family: 'Anton', sans-serif; font-size: 18px; color: var(--gold); }
+
+/* FEATURED BEBIDA */
+.bebida-featured {
+  grid-column: span 2;
+  background: rgba(201,168,76,0.08);
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+
+.bebida-featured .bebida-name { font-size: 15px; color: var(--gold-light); }
+.bebida-featured .bebida-price { font-size: 22px; }
+
+/* CONTACT SECTION */
+.contact-section {
+  background: var(--white);
+  color: var(--black);
+  padding: 48px 28px;
+  text-align: center;
+  position: relative;
+}
+
+.contact-brand {
+  font-family: 'Anton', sans-serif;
+  font-size: 56px;
+  line-height: 0.9;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.contact-sub {
+  font-size: 10px;
+  letter-spacing: 6px;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.contact-phones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.contact-phone {
+  font-family: 'Anton', sans-serif;
+  font-size: 32px;
+  color: var(--black);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.contact-phone:hover { color: var(--gold-dark); }
+
+.contact-address {
+  font-size: 12px;
+  color: #666;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.contact-carry {
+  display: inline-block;
+  background: var(--black);
+  color: var(--gold);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  padding: 10px 24px;
+  text-transform: uppercase;
+}
+
+/* SECTION BG VARIANTS */
+.section.alt { background: #0E0E0E; }
+
+/* FLOAT BUTTON */
+.float-wa {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  background: #25D366;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  text-decoration: none;
+  z-index: 999;
+  box-shadow: 0 8px 32px rgba(37,211,102,0.35);
+  animation: floatUp 2s ease infinite;
+}
+
+@keyframes floatUp {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* DESIGN LABEL */
+.design-label {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  background: rgba(201,168,76,0.9);
+  color: var(--black);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  padding: 6px 12px;
+  text-transform: uppercase;
+  z-index: 999;
+}
+</style>
+</head>
+<body>
+
+<div class="design-label">Diseño 1 — Premium</div>
+
+<a href="https://wa.me/573234621534" class="float-wa" target="_blank">📱 Pedir Ya</a>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-line-top"></div>
+
+  <header class="hero-header">
+    <div class="hero-eyebrow">Pasto · Nariño · Colombia</div>
+    <div class="hero-brand">
+      MANDY
+      <span>Burger</span>
+    </div>
+  </header>
+
+  <div class="hero-center">
+    <div class="hero-star-product">
+      <div class="star-label">★ Producto estrella</div>
+      <span class="burger-display">🍔</span>
+      <div class="hero-product-name">Hamburguesa <em>Clásica</em></div>
+      <div class="hero-includes">150g carne · Papa gratis · Bebida gratis</div>
+      <div class="hero-price-block">
+        <span class="price-currency">$</span>
+        <span class="price-amount">10</span>
+        <span class="price-suffix">.000 COP</span>
+      </div>
+      <div class="hero-free-tags">
+        <span class="free-tag">✓ Papa incluida</span>
+        <span class="free-tag">✓ Bebida incluida</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-bottom">
+    <a href="https://wa.me/573234621534?text=Quiero%20una%20Cl%C3%A1sica" class="hero-cta" target="_blank">
+      Ordenar ahora
+    </a>
+    <div class="hero-phone">
+      Domicilios <strong>323 462 1534</strong> · <strong>315 686 0563</strong>
+    </div>
+  </div>
+</section>
+
+<!-- HAMBURGUESAS -->
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<section class="section" id="burgers">
+  <div class="section-number">01</div>
+  <div class="section-eyebrow">Nuestro fuerte</div>
+  <div class="section-title">HAMBUR-<br>GUESAS</div>
+  <div class="menu-list">
+    <div class="menu-list-item hero-item">
+      <div class="item-dot"></div>
+      <div class="item-body">
+        <div class="item-name-row">
+          <span class="item-name">Clásica</span>
+          <span class="item-price">$10.000</span>
+        </div>
+        <div class="item-desc">150g de carne · Tomate · Lechuga · Cebolla caramelizada · Papa + Bebida gratis</div>
+        <span class="item-badge">⭐ La más pedida</span>
+      </div>
+    </div>
+    <div class="menu-list-item">
+      <div class="item-dot"></div>
+      <div class="item-body">
+        <div class="item-name-row">
+          <span class="item-name">Especial</span>
+          <span class="item-price">$14.000</span>
+        </div>
+        <div class="item-desc">150g carne · Jamón · Tocineta · Papa + Bebida</div>
+      </div>
+    </div>
+    <div class="menu-list-item">
+      <div class="item-dot"></div>
+      <div class="item-body">
+        <div class="item-name-row">
+          <span class="item-name">Ranchera</span>
+          <span class="item-price">$16.000</span>
+        </div>
+        <div class="item-desc">150g carne · Jamón · Tocineta · Chorizo · Huevo · Papa · Bebida</div>
+      </div>
+    </div>
+    <div class="menu-list-item">
+      <div class="item-dot"></div>
+      <div class="item-body">
+        <div class="item-name-row">
+          <span class="item-name">Mandy Burger</span>
+          <span class="item-price">$18.000</span>
+        </div>
+        <div class="item-desc">Doble carne · Jamón · Tocineta · Huevo · Papa · Bebida</div>
+        <span class="item-badge" style="background:#C0392B;color:white;">🏆 La firma</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<!-- CARNES -->
+<section class="section alt" id="carnes">
+  <div class="section-number">02</div>
+  <div class="section-eyebrow">A la parrilla</div>
+  <div class="section-title">CARNES</div>
+  <div class="menu-list">
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Parrilla Cerdo</span><span class="item-price">$15.000</span></div><div class="item-desc">250g · Papa · Arepa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Parrilla Res</span><span class="item-price">$15.000</span></div><div class="item-desc">250g · Papa · Arepa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Parrilla Mixta</span><span class="item-price">$16.000</span></div><div class="item-desc">250g res + cerdo · Papa · Arepa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Chuleta</span><span class="item-price">$16.000</span></div><div class="item-desc">250g chuleta cerdo · Papa · Arepa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Costilla</span><span class="item-price">$16.000</span></div><div class="item-desc">250g · Papa · Arepa</div><span class="item-badge">🔥 Premium</span></div></div>
+  </div>
+</section>
+
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<!-- ALITAS -->
+<section class="section" id="alitas">
+  <div class="section-number">03</div>
+  <div class="section-eyebrow">BBQ</div>
+  <div class="section-title">ALITAS</div>
+  <div class="menu-list">
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Alitas × 4</span><span class="item-price">$12.000</span></div><div class="item-desc">+ Porción de papa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Alitas × 8</span><span class="item-price">$17.000</span></div><div class="item-desc">+ Porción de papa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Alitas × 10</span><span class="item-price">$22.000</span></div><div class="item-desc">+ Porción de papa</div></div></div>
+    <div class="menu-list-item hero-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Picada</span><span class="item-price">$25.000</span></div><div class="item-desc">Variedad de carnes y acompañamientos — ideal para compartir</div><span class="item-badge">👥 Para 2+</span></div></div>
+  </div>
+</section>
+
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<!-- AREPAS -->
+<section class="section alt" id="arepas">
+  <div class="section-number">04</div>
+  <div class="section-eyebrow">Caseras</div>
+  <div class="section-title">AREPAS<br>RELLENAS</div>
+  <div class="menu-list">
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Clásica</span><span class="item-price">$10.000</span></div><div class="item-desc">Queso + Jamón</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Pollo</span><span class="item-price">$12.000</span></div><div class="item-desc">Queso + Pollo</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Carne</span><span class="item-price">$12.000</span></div><div class="item-desc">Queso + Carne</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Mixta</span><span class="item-price">$15.000</span></div><div class="item-desc">Queso + Carne + Pollo</div></div></div>
+    <div class="menu-list-item hero-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Arepa Mandy</span><span class="item-price">$18.000</span></div><div class="item-desc">Queso · Pollo · Carne · Costilla · Maduritos · Maicitos</div><span class="item-badge">⭐ Especial de la casa</span></div></div>
+  </div>
+</section>
+
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<!-- SALCHIPAPAS & PERROS -->
+<section class="section" id="salchi">
+  <div class="section-number">05</div>
+  <div class="section-eyebrow">Clásicos</div>
+  <div class="section-title">SALCHI-<br>PAPAS &<br>PERROS</div>
+  <div class="menu-list">
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Gratinada</span><span class="item-price">$10.000</span></div><div class="item-desc">Papa · Salchicha · Queso fundido · Ripio</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Salchipapa Mandy</span><span class="item-price">$13.000</span></div><div class="item-desc">Papa · Salchicha · Jamón · Tocineta · Ripio · Queso</div></div></div>
+    <div class="menu-list-item hero-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Mandy Mixta</span><span class="item-price">$15.000</span></div><div class="item-desc">Papa · Salchicha · Jamón · Tocineta · Carne o Pollo · Ripio · Queso</div><span class="item-badge">🔥 Top ventas</span></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Perro Sencillo</span><span class="item-price">$10.000</span></div><div class="item-desc">Salchicha · Ripio · Cebolla · Queso · Papa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Perro Doble</span><span class="item-price">$13.000</span></div><div class="item-desc">Salchicha · Jamón · Tocineta · Cebolla · Ripio · Queso · Papa</div></div></div>
+  </div>
+</section>
+
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<!-- CHORIZOS -->
+<section class="section alt" id="chorizos">
+  <div class="section-number">06</div>
+  <div class="section-eyebrow">Santarosanos</div>
+  <div class="section-title">CHORIZOS</div>
+  <div class="menu-list">
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Chorizo + Papa</span><span class="item-price">$7.000</span></div><div class="item-desc">Clásico con porción de papa</div></div></div>
+    <div class="menu-list-item"><div class="item-dot"></div><div class="item-body"><div class="item-name-row"><span class="item-name">Choripapa</span><span class="item-price">$9.000</span></div><div class="item-desc">Chorizo Santarosano · Papa · Arepa</div></div></div>
+  </div>
+</section>
+
+<div class="gold-divider"><div class="gold-divider-line"></div><span class="gold-divider-icon">◆</span><div class="gold-divider-line r"></div></div>
+
+<!-- BEBIDAS -->
+<section class="section" id="bebidas">
+  <div class="section-number">07</div>
+  <div class="section-eyebrow">Para acompañar</div>
+  <div class="section-title">BEBIDAS</div>
+  <div class="bebidas-grid">
+    <div class="bebida-cell bebida-featured"><span class="bebida-name">🥤 Gaseosa 1.5L</span><span class="bebida-price">$7.000</span></div>
+    <div class="bebida-cell bebida-featured"><span class="bebida-name">🍹 Jugo Hit 1.5L</span><span class="bebida-price">$7.000</span></div>
+    <div class="bebida-cell"><span class="bebida-name">Jugo Hit 1L</span><span class="bebida-price">$6K</span></div>
+    <div class="bebida-cell"><span class="bebida-name">Del Valle 1.5L</span><span class="bebida-price">$6K</span></div>
+    <div class="bebida-cell"><span class="bebida-name">Hit Personal</span><span class="bebida-price">$5K</span></div>
+    <div class="bebida-cell"><span class="bebida-name">Gaseosa Personal</span><span class="bebida-price">$3.5K</span></div>
+    <div class="bebida-cell"><span class="bebida-name">Gaseosa Mini</span><span class="bebida-price">$2K</span></div>
+    <div class="bebida-cell"><span class="bebida-name">Agua Natural</span><span class="bebida-price">$3K</span></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section">
+  <div class="contact-brand">MANDY<br>BURGER</div>
+  <div class="contact-sub">La mejor burger de Pasto</div>
+  <div class="contact-phones">
+    <a href="tel:3234621534" class="contact-phone">323 462 1534</a>
+    <a href="tel:3156860563" class="contact-phone">315 686 0563</a>
+  </div>
+  <div class="contact-address">📍 Manzana 11 Casa 1 · Barrio Nuevo Sol · Pasto</div>
+  <div class="contact-carry">Recipiente para llevar: <strong>$1.000</strong></div>
+</section>
+
+<script>
+  // Scroll reveal
+  const items = document.querySelectorAll('.menu-list-item');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  items.forEach(i => obs.observe(i));
+</script>
+</body>
+</html>
