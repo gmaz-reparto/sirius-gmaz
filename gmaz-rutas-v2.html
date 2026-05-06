@@ -537,14 +537,7 @@ html, body {
 </div>
 
 <!-- PERMISO GPS -->
-<div id="permiso-overlay" style="display:none">
-  <div class="permiso-card">
-    <div class="permiso-icono">📍</div>
-    <div class="permiso-titulo">Ubicación necesaria</div>
-    <div class="permiso-texto">Para calcular el orden óptimo de entrega desde tu posición actual, necesitamos acceso a tu ubicación GPS.</div>
-    <button class="btn-permiso" onclick="solicitarGPS()">Permitir ubicación</button>
-  </div>
-</div>
+<div id="permiso-overlay" style="display:none"></div>
 
 <!-- PANTALLA SELECCIÓN DE RUTA -->
 <div id="pantalla-rutas" class="oculto">
@@ -774,25 +767,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function verificarGPS() {
-  if (!navigator.geolocation) {
-    cargarDatos();
-    return;
+  // Cargar datos inmediatamente sin bloquear por GPS
+  cargarDatos();
+  
+  // Pedir GPS en paralelo sin bloquear la app
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        iniciarWatchGPS();
+        // Si ya hay mapa activo, actualizar marcador GPS
+        if (mapGoogle && markerUser) {
+          markerUser.setPosition({ lat: userLat, lng: userLng });
+        }
+      },
+      () => {}, // Silencioso si no hay GPS
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
-  document.getElementById('permiso-overlay').style.display = 'flex';
 }
 
 function solicitarGPS() {
   document.getElementById('permiso-overlay').style.display = 'none';
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      iniciarWatchGPS();
-      cargarDatos();
-    },
-    () => cargarDatos(),
-    { enableHighAccuracy: true, timeout: 8000 }
-  );
 }
 
 function iniciarWatchGPS() {
