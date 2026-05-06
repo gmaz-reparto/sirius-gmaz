@@ -812,50 +812,106 @@ function iniciarWatchGPS() {
 async function cargarDatos() {
   document.getElementById('splash-estado').textContent = 'Conectando con Google Sheets...';
   try {
-    const res = await fetch(CONFIG.CSV_URL + '&t=' + Date.now());
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    
+    const res = await fetch(CONFIG.CSV_URL + '&t=' + Date.now(), {
+      signal: controller.signal,
+      cache: 'no-store'
+    });
+    clearTimeout(timeout);
+    
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    
     const texto = await res.text();
     CLIENTES = parsearCSV(texto);
-    document.getElementById('splash-estado').textContent = CLIENTES.length + ' clientes cargados ✓';
-    setTimeout(mostrarPantallaRutas, 800);
+    
+    if (CLIENTES.length === 0) {
+      throw new Error('Sin datos');
+    }
+    
+    document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes cargados';
+    setTimeout(mostrarPantallaRutas, 600);
+    
   } catch (e) {
-    document.getElementById('splash-estado').textContent = 'Error de conexión. Usando datos en caché...';
+    console.log('Error cargando Sheets:', e.message);
     CLIENTES = cargarCache();
-    setTimeout(mostrarPantallaRutas, 1200);
+    
+    if (CLIENTES.length > 0) {
+      document.getElementById('splash-estado').textContent = '⚠ Usando datos en caché (' + CLIENTES.length + ')';
+    } else {
+      document.getElementById('splash-estado').textContent = '⚠ Sin conexión — verifica internet';
+    }
+    setTimeout(mostrarPantallaRutas, 1000);
   }
 }
 
 function parsearCSV(texto) {
   const lineas = texto.trim().split('\n');
   if (lineas.length < 2) return [];
-  const headers = lineas[0].split(',').map(h => h.trim().replace(/"/g, ''));
-  const idxCodigo = headers.findIndex(h => h.includes('CODIGO'));
-  const idxNombre = headers.findIndex(h => h.includes('NOMBRE'));
-  const idxRuta = headers.findIndex(h => h.includes('RUTA'));
-  const idxLng = headers.findIndex(h => h.includes('Geocaptura 1'));
-  const idxLat = headers.findIndex(h => h.includes('Geocaptura 2'));
-  const idxDir = headers.findIndex(h => h.includes('DIRECCION'));
-  const idxBarrio = headers.findIndex(h => h.includes('BARRIO'));
-  const idxCel = headers.findIndex(h => h.includes('CELULAR'));
+
+  // Parser robusto que maneja campos con comas entre comillas
+  function parsearLinea(linea) {
+    const cols = [];
+    let campo = '';
+    let enComillas = false;
+    for (let i = 0; i < linea.length; i++) {
+      const c = linea[i];
+      if (c === '"') { enComillas = !enComillas; }
+      else if (c === ',' && !enComillas) { cols.push(campo.trim()); campo = ''; }
+      else { campo += c; }
+    }
+    cols.push(campo.trim());
+    return cols;
+  }
+
+  const headers = parsearLinea(lineas[0]).map(h => h.replace(/"/g, '').trim().toUpperCase());
+
+  // Buscar columnas de forma flexible
+  const find = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k.toUpperCase())));
+
+  const idxCodigo = find(['CODIGO', 'CLIENTE_COD', 'COD']);
+  const idxNombre = find(['NOMBRE']);
+  const idxRuta   = find(['RUTA']);
+  const idxLng    = find(['GEOCAPTURA 1', 'GEOCAPTURA1', 'LNG', 'LONGITUD', 'COORD. GEOCAPTURA 1']);
+  const idxLat    = find(['GEOCAPTURA 2', 'GEOCAPTURA2', 'LAT', 'LATITUD', 'COORD. GEOCAPTURA 2']);
+  const idxDir    = find(['DIRECCION', 'DIRECCIÓN']);
+  const idxBarrio = find(['BARRIO']);
+  const idxCel    = find(['CELULAR', 'TELEFONO', 'TELÉFONO']);
+
+  console.log('Columnas detectadas:', {idxCodigo, idxNombre, idxRuta, idxLng, idxLat, idxDir, idxBarrio, idxCel});
 
   const clientes = [];
   for (let i = 1; i < lineas.length; i++) {
-    const cols = lineas[i].split(',').map(c => c.trim().replace(/"/g, ''));
-    const lat = parseFloat(cols[idxLat]);
-    const lng = parseFloat(cols[idxLng]);
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) continue;
+    if (!lineas[i].trim()) continue;
+    const cols = parsearLinea(lineas[i]);
+
+    const latRaw = idxLat >= 0 ? cols[idxLat] : '';
+    const lngRaw = idxLng >= 0 ? cols[idxLng] : '';
+    const lat = parseFloat(latRaw);
+    const lng = parseFloat(lngRaw);
+
+    if (isNaN(lat) || isNaN(lng)) continue;
     if (Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
+    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
+
+    const ruta = idxRuta >= 0 ? (cols[idxRuta] || '').trim() : '';
+    if (!ruta) continue;
+
     clientes.push({
-      id: cols[idxCodigo] || '',
-      nombre: cols[idxNombre] || '',
-      ruta: cols[idxRuta] || '',
-      lat: lat,
-      lng: lng,
-      direccion: cols[idxDir] || '',
-      barrio: cols[idxBarrio] || '',
-      celular: cols[idxCel] || ''
+      id:        idxCodigo >= 0 ? (cols[idxCodigo] || '').trim() : '',
+      nombre:    idxNombre >= 0 ? (cols[idxNombre] || '').trim() : '',
+      ruta:      ruta,
+      lat:       lat,
+      lng:       lng,
+      direccion: idxDir    >= 0 ? (cols[idxDir]    || '').trim() : '',
+      barrio:    idxBarrio >= 0 ? (cols[idxBarrio]  || '').trim() : '',
+      celular:   idxCel    >= 0 ? (cols[idxCel]     || '').trim() : ''
     });
   }
-  guardarCache(clientes);
+
+  console.log('Clientes parseados:', clientes.length);
+  if (clientes.length > 0) guardarCache(clientes);
   return clientes;
 }
 
