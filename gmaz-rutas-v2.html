@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#E30613">
+<title>GMAZ Rutas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rojo: #E30613;
+  --rojo-oscuro: #B5000F;
+  --rojo-suave: #FFF0F1;
+  --negro: #0F1117;
+  --gris-oscuro: #1C1F2A;
+  --blanco: #FFFFFF;
+  --gris1: #F7F8FA;
+  --gris2: #EEF0F4;
+  --gris3: #D1D5DE;
+  --gris4: #8A90A0;
+  --gris5: #4A5060;
+  --verde: #059669;
+  --verde-suave: #ECFDF5;
+  --azul: #1A56DB;
+  --azul-suave: #EFF6FF;
+  --amarillo: #D97706;
+  --sombra-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --sombra-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --sombra-lg: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.08);
+  --radio-sm: 8px;
+  --radio-md: 12px;
+  --radio-lg: 16px;
+  --radio-xl: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--gris1);
+  color: var(--negro);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===================== PANTALLA SPLASH ===================== */
+#splash {
+  position: fixed; inset: 0;
+  background: var(--rojo);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+#splash.oculto { opacity: 0; transform: scale(1.05); pointer-events: none; }
+.splash-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.splash-barra { width: 5px; height: 52px; background: rgba(255,255,255,0.6); border-radius: 3px; }
+.splash-texto { display: flex; flex-direction: column; }
+.splash-gmaz { font-size: 42px; font-weight: 900; color: #fff; letter-spacing: -1px; line-height: 1; }
+.splash-rutas { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); letter-spacing: 4px; text-transform: uppercase; }
+.splash-sub { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 8px; }
+.splash-loader { margin-top: 40px; display: flex; gap: 6px; }
+.splash-dot { width: 8px; height: 8px; background: rgba(255,255,255,0.4); border-radius: 50%; animation: pulse 1.2s ease infinite; }
+.splash-dot:nth-child(2) { animation-delay: 0.2s; }
+.splash-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.4;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+
+/* ===================== PANTALLA SELECCIÓN DE RUTA ===================== */
+#pantalla-rutas {
+  position: fixed; inset: 0;
+  background: var(--gris1);
+  display: flex; flex-direction: column;
+  z-index: 100;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#pantalla-rutas.oculto { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+
+.header-rutas {
+  background: var(--blanco);
+  padding: 16px 20px 14px;
+  border-bottom: 2px solid var(--rojo);
+  box-shadow: var(--sombra-sm);
+  flex-shrink: 0;
+}
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-acento { width: 4px; height: 28px; background: var(--rojo); border-radius: 2px; }
+.header-titulo { display: flex; flex-direction: column; }
+.header-gmaz { font-size: 20px; font-weight: 900; color: var(--negro); letter-spacing: -0.5px; line-height: 1; }
+.header-subtitulo { font-size: 9px; font-weight: 700; color: var(--rojo); letter-spacing: 3px; text-transform: uppercase; line-height: 1; margin-top: 2px; }
+
+.rutas-info {
+  padding: 14px 20px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
+}
+.rutas-titulo { font-size: 16px; font-weight: 700; color: var(--negro); }
+.rutas-badge {
+  background: var(--rojo-suave);
+  color: var(--rojo);
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(227,6,19,0.15);
+}
+
+.rutas-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-content: start;
+  -webkit-overflow-scrolling: touch;
+}
+.rutas-grid::-webkit-scrollbar { display: none; }
+
+.ruta-card {
+  background: var(--blanco);
+  border-radius: var(--radio-lg);
+  padding: 16px 14px;
+  border: 1.5px solid var(--gris2);
+  box-shadow: var(--sombra-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex; flex-direction: column; gap: 10px;
+  min-height: 110px;
+}
+.ruta-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--rojo);
+  border-radius: 0 2px 2px 0;
+}
+.ruta-card:active { transform: scale(0.97); box-shadow: none; }
+.ruta-card-codigo {
+  font-size: 18px; font-weight: 900;
+  color: var(--rojo);
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.ruta-card-info { display: flex; flex-direction: column; gap: 3px; }
+.ruta-card-clientes { font-size: 22px; font-weight: 900; color: var(--negro); line-height: 1; }
+.ruta-card-label { font-size: 10px; font-weight: 500; color: var(--gris4); text-transform: uppercase; letter-spacing: 0.5px; }
+.ruta-card-chevron {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--gris3);
+}
+.ruta-card-estados {
+  display: flex; gap: 6px; align-items: center;
+}
+.estado-dot { width: 7px; height: 7px; border-radius: 50%; }
+.estado-count { font-size: 10px; font-weight: 600; color: var(--gris4); }
+
+/* ===================== PANTALLA MAPA ===================== */
+#pantalla-mapa {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  z-index: 50;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#pantalla-mapa.oculto { opacity: 0; transform: translateY(20px); pointer-events: none; }
+
+.mapa-header {
+  background: var(--blanco);
+  padding: 10px 14px 8px;
+  border-bottom: 2px solid var(--rojo);
+  box-shadow: var(--sombra-sm);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 10;
+}
+.mapa-header-izq { display: flex; align-items: center; gap: 10px; }
+.btn-volver {
+  width: 36px; height: 36px;
+  background: var(--gris1);
+  border: 1.5px solid var(--gris2);
+  border-radius: var(--radio-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.mapa-ruta-nombre { font-size: 16px; font-weight: 900; color: var(--negro); letter-spacing: -0.3px; }
+.mapa-ruta-sub { font-size: 10px; color: var(--gris4); font-weight: 500; }
+.mapa-header-der { display: flex; gap: 6px; }
+
+.stat-pill {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--gris1);
+  border: 1px solid var(--gris2);
+  border-radius: var(--radio-sm);
+  padding: 4px 8px;
+  min-width: 44px;
+}
+.stat-pill-num { font-size: 14px; font-weight: 900; line-height: 1; }
+.stat-pill-label { font-size: 8px; font-weight: 600; color: var(--gris4); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+
+/* MAPA CONTENEDOR */
+#mapa-google {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* BARRA PROGRESO */
+.progreso-barra {
+  height: 3px;
+  background: var(--gris2);
+  flex-shrink: 0;
+  position: relative;
+}
+.progreso-fill {
+  height: 100%;
+  background: var(--verde);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.5s ease;
+}
+
+/* PANEL INFERIOR */
+#panel-inferior {
+  background: var(--blanco);
+  flex-shrink: 0;
+  border-top: 1px solid var(--gris2);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  display: flex; flex-direction: column;
+  max-height: 45dvh;
+  transition: max-height 0.3s ease;
+}
+
+.panel-handle-wrap {
+  padding: 8px 0 4px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.panel-handle { width: 36px; height: 3px; background: var(--gris3); border-radius: 2px; margin: 0 auto; }
+.panel-toggle-btn {
+  background: none; border: none;
+  color: var(--gris4); font-size: 13px; cursor: pointer;
+  padding: 2px 6px;
+}
+
+.panel-lista-header {
+  padding: 2px 16px 6px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
+}
+.panel-lista-titulo { font-size: 11px; font-weight: 700; color: var(--rojo); letter-spacing: 1px; text-transform: uppercase; }
+.panel-lista-count { font-size: 10px; color: var(--gris4); }
+
+.busqueda-wrap {
+  padding: 0 12px 8px;
+  flex-shrink: 0;
+}
+.busqueda-input {
+  width: 100%;
+  background: var(--gris1);
+  border: 1.5px solid var(--gris2);
+  border-radius: var(--radio-md);
+  padding: 8px 12px 8px 34px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--negro);
+  outline: none;
+}
+.busqueda-input::placeholder { color: var(--gris4); }
+.busqueda-wrap { position: relative; padding: 0 12px 8px; flex-shrink: 0; }
+.busqueda-icon { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--gris4); pointer-events: none; }
+
+#lista-clientes {
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+#lista-clientes::-webkit-scrollbar { display: none; }
+
+.cliente-item {
+  display: flex; align-items: center;
+  padding: 10px 14px;
+  gap: 10px;
+  border-bottom: 1px solid var(--gris2);
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+.cliente-item:active { background: var(--gris1); }
+.cliente-item.activo { background: var(--rojo-suave); border-left: 3px solid var(--rojo); }
+.cliente-item.entregado { opacity: 0.65; }
+
+.cliente-numero {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: var(--sombra-sm);
+}
+.num-pendiente { background: var(--rojo); color: #fff; }
+.num-entregado { background: var(--verde-suave); border: 1.5px solid var(--verde); color: var(--verde); }
+.num-no-entregado { background: var(--gris2); color: var(--gris4); }
+
+.cliente-datos { flex: 1; min-width: 0; }
+.cliente-nombre { font-size: 12px; font-weight: 700; color: var(--negro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.cliente-nombre.tachado { text-decoration: line-through; color: var(--gris4); }
+.cliente-direccion { font-size: 10px; color: var(--gris4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.cliente-badge-reintento {
+  background: #FFF8E6; border: 1px solid var(--amarillo);
+  border-radius: 5px; padding: 2px 6px;
+  font-size: 8px; font-weight: 700; color: var(--amarillo);
+  flex-shrink: 0;
+}
+.cliente-badge-ok {
+  background: var(--verde-suave); border: 1px solid var(--verde);
+  border-radius: 5px; padding: 2px 6px;
+  font-size: 8px; font-weight: 700; color: var(--verde);
+  flex-shrink: 0;
+}
+
+/* ===================== MODAL CLIENTE ===================== */
+#modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,17,23,0.6);
+  z-index: 500;
+  display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+  backdrop-filter: blur(2px);
+}
+#modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+#modal {
+  background: var(--blanco);
+  width: 100%;
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 92dvh;
+  display: flex; flex-direction: column;
+}
+#modal-overlay.visible #modal { transform: translateY(0); }
+
+/* STREET VIEW */
+#streetview-container {
+  height: 200px;
+  background: var(--gris-oscuro);
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+#streetview-map { width: 100%; height: 100%; }
+.streetview-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 8px;
+}
+.streetview-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.streetview-label {
+  font-size: 11px; color: rgba(255,255,255,0.6);
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* BADGE NAVEGACIÓN EN MAPA */
+#nav-badge {
+  position: absolute;
+  bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--negro);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  box-shadow: var(--sombra-lg);
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+#nav-badge.visible { opacity: 1; }
+
+/* MODAL BODY */
+.modal-drag { padding: 10px; display: flex; justify-content: center; flex-shrink: 0; }
+.modal-drag-bar { width: 40px; height: 4px; background: var(--gris3); border-radius: 2px; }
+
+.modal-header { padding: 0 18px 12px; border-bottom: 1px solid var(--gris2); flex-shrink: 0; }
+.modal-badges { display: flex; gap: 6px; margin-bottom: 6px; }
+.badge {
+  border-radius: 6px; padding: 3px 9px;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+}
+.badge-ruta { background: var(--rojo-suave); color: var(--rojo); border: 1px solid rgba(227,6,19,0.15); }
+.badge-orden { background: var(--gris1); color: var(--gris5); border: 1px solid var(--gris2); }
+.modal-nombre { font-size: 19px; font-weight: 900; color: var(--negro); letter-spacing: -0.4px; line-height: 1.1; }
+.modal-codigo { font-size: 10px; color: var(--gris4); margin-top: 3px; letter-spacing: 0.5px; }
+
+.modal-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
+.modal-campo { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.modal-icono {
+  width: 32px; height: 32px;
+  background: var(--gris1);
+  border: 1px solid var(--gris2);
+  border-radius: var(--radio-sm);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.modal-campo-info {}
+.modal-campo-label { font-size: 9px; color: var(--gris4); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+.modal-campo-valor { font-size: 13px; font-weight: 600; color: var(--negro); }
+
+/* BOTONES MODAL */
+.modal-acciones { padding: 12px 18px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex-shrink: 0; border-top: 1px solid var(--gris2); }
+
+.btn-accion {
+  border: none; border-radius: var(--radio-md);
+  padding: 12px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: transform 0.1s, opacity 0.1s;
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.btn-accion:active { transform: scale(0.96); opacity: 0.85; }
+.btn-accion svg { flex-shrink: 0; }
+
+.btn-navegar { background: var(--azul); color: #fff; grid-column: 1 / -1; flex-direction: row; gap: 8px; padding: 13px 16px; font-size: 12px; box-shadow: 0 3px 10px rgba(26,86,219,0.3); }
+.btn-llamar { background: var(--verde-suave); color: var(--verde); border: 1.5px solid var(--verde); }
+.btn-entregado { background: var(--verde); color: #fff; box-shadow: 0 2px 8px rgba(5,150,105,0.25); }
+.btn-entregado.activo { background: var(--verde-suave); color: var(--verde); border: 2px solid var(--verde); box-shadow: none; }
+.btn-no-entregado { background: var(--gris1); color: var(--gris5); border: 1.5px solid var(--gris3); }
+.btn-no-entregado.activo { background: #FFF8E6; color: var(--amarillo); border: 1.5px solid var(--amarillo); }
+
+/* TOAST */
+#toast {
+  position: fixed;
+  bottom: 100px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--negro);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  z-index: 9000;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: var(--sombra-lg);
+}
+#toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* PERMISO GPS */
+#permiso-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,17,23,0.75);
+  z-index: 8000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.permiso-card {
+  background: var(--blanco);
+  border-radius: var(--radio-xl);
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--sombra-lg);
+}
+.permiso-icono { font-size: 40px; margin-bottom: 14px; }
+.permiso-titulo { font-size: 18px; font-weight: 900; color: var(--negro); margin-bottom: 8px; }
+.permiso-texto { font-size: 13px; color: var(--gris4); line-height: 1.6; margin-bottom: 20px; }
+.btn-permiso {
+  background: var(--rojo); color: #fff;
+  border: none; border-radius: var(--radio-md);
+  padding: 13px 24px; width: 100%;
+  font-size: 14px; font-weight: 800;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 3px 10px rgba(227,6,19,0.35);
+}
+
+/* NAVEGACIÓN EN MAPA */
+#panel-nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  background: var(--blanco);
+  border-bottom: 1px solid var(--gris2);
+  padding: 10px 14px;
+  z-index: 20;
+  display: none;
+  box-shadow: var(--sombra-md);
+}
+#panel-nav.visible { display: flex; align-items: center; gap: 10px; }
+.nav-instruccion { flex: 1; }
+.nav-accion { font-size: 16px; font-weight: 900; color: var(--negro); line-height: 1.2; }
+.nav-calle { font-size: 12px; color: var(--gris4); margin-top: 2px; }
+.nav-distancia { font-size: 22px; font-weight: 900; color: var(--rojo); text-align: right; flex-shrink: 0; }
+.nav-unidad { font-size: 10px; color: var(--gris4); }
+.btn-cerrar-nav {
+  width: 32px; height: 32px;
+  background: var(--gris1); border: 1px solid var(--gris2);
+  border-radius: var(--radio-sm); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">
+    <div class="splash-barra"></div>
+    <div class="splash-texto">
+      <div class="splash-gmaz">GMAZ</div>
+      <div class="splash-rutas">Rutas</div>
+    </div>
+  </div>
+  <div class="splash-sub" id="splash-estado">Cargando rutas del día...</div>
+  <div class="splash-loader">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
+</div>
+
+<!-- PERMISO GPS -->
+<div id="permiso-overlay" style="display:none">
+  <div class="permiso-card">
+    <div class="permiso-icono">📍</div>
+    <div class="permiso-titulo">Ubicación necesaria</div>
+    <div class="permiso-texto">Para calcular el orden óptimo de entrega desde tu posición actual, necesitamos acceso a tu ubicación GPS.</div>
+    <button class="btn-permiso" onclick="solicitarGPS()">Permitir ubicación</button>
+  </div>
+</div>
+
+<!-- PANTALLA SELECCIÓN DE RUTA -->
+<div id="pantalla-rutas" class="oculto">
+  <div class="header-rutas">
+    <div class="header-logo">
+      <div class="header-acento"></div>
+      <div class="header-titulo">
+        <div class="header-gmaz">GMAZ</div>
+        <div class="header-subtitulo">Rutas de entrega</div>
+      </div>
+    </div>
+  </div>
+  <div class="rutas-info">
+    <div class="rutas-titulo">Selecciona tu ruta</div>
+    <div class="rutas-badge" id="badge-fecha"></div>
+  </div>
+  <div class="rutas-grid" id="rutas-grid"></div>
+</div>
+
+<!-- PANTALLA MAPA -->
+<div id="pantalla-mapa" class="oculto">
+  <div class="mapa-header">
+    <div class="mapa-header-izq">
+      <div class="btn-volver" onclick="volverARutas()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M10 3L5 8L10 13" stroke="#4A5060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="mapa-ruta-nombre" id="mapa-ruta-nombre">—</div>
+        <div class="mapa-ruta-sub" id="mapa-ruta-sub">Calculando ruta...</div>
+      </div>
+    </div>
+    <div class="mapa-header-der">
+      <div class="stat-pill">
+        <span class="stat-pill-num" id="stat-total" style="color:var(--negro)">0</span>
+        <span class="stat-pill-label">Total</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-num" id="stat-pend" style="color:var(--amarillo)">0</span>
+        <span class="stat-pill-label">Pend.</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-num" id="stat-ent" style="color:var(--verde)">0</span>
+        <span class="stat-pill-label">Entregado</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="mapa-google">
+  <div id="btn-gps" onclick="centrarGPS()" style="
+    position:absolute;bottom:220px;right:10px;z-index:20;
+    width:40px;height:40px;background:#fff;border-radius:10px;
+    border:1.5px solid #EEF0F4;box-shadow:0 2px 8px rgba(0,0,0,0.12);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="3" fill="none" stroke="#2563EB" stroke-width="1.5"/>
+      <line x1="8" y1="0" x2="8" y2="4" stroke="#2563EB" stroke-width="1.5"/>
+      <line x1="8" y1="12" x2="8" y2="16" stroke="#2563EB" stroke-width="1.5"/>
+      <line x1="0" y1="8" x2="4" y2="8" stroke="#2563EB" stroke-width="1.5"/>
+      <line x1="12" y1="8" x2="16" y2="8" stroke="#2563EB" stroke-width="1.5"/>
+    </svg>
+  </div>
+    <div id="panel-nav">
+      <div class="btn-cerrar-nav" onclick="cerrarNav()">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="#4A5060" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="nav-instruccion">
+        <div class="nav-accion" id="nav-accion">Iniciando...</div>
+        <div class="nav-calle" id="nav-calle">Calculando ruta</div>
+      </div>
+      <div>
+        <div class="nav-distancia" id="nav-dist">—</div>
+        <div class="nav-unidad" id="nav-unit">km</div>
+      </div>
+    </div>
+    <div id="nav-badge">Navegando hacia el cliente</div>
+  </div>
+
+  <div class="progreso-barra">
+    <div class="progreso-fill" id="progreso-fill" style="width:0%"></div>
+  </div>
+
+  <div id="panel-inferior">
+    <div class="panel-handle-wrap" onclick="togglePanel()">
+      <div style="flex:1"></div>
+      <div class="panel-handle"></div>
+      <div style="flex:1; display:flex; justify-content:flex-end;">
+        <button class="panel-toggle-btn" id="panel-toggle-btn">▲</button>
+      </div>
+    </div>
+    <div class="panel-lista-header">
+      <span class="panel-lista-titulo" id="panel-lista-titulo">Clientes</span>
+      <span class="panel-lista-count" id="panel-lista-count"></span>
+    </div>
+    <div class="busqueda-wrap">
+      <svg class="busqueda-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <circle cx="7" cy="7" r="5" stroke="#8A90A0" stroke-width="1.5"/>
+        <line x1="11" y1="11" x2="15" y2="15" stroke="#8A90A0" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <input class="busqueda-input" type="search" placeholder="Buscar cliente, barrio..." id="busqueda" autocomplete="off">
+    </div>
+    <div id="lista-clientes"></div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div id="modal-overlay" onclick="cerrarModalClick(event)">
+  <div id="modal">
+    <div class="modal-drag"><div class="modal-drag-bar"></div></div>
+
+    <!-- Street View -->
+    <div id="streetview-container">
+      <div id="streetview-map"></div>
+      <div class="streetview-overlay" id="sv-overlay">
+        <div class="streetview-spinner"></div>
+        <div class="streetview-label">Cargando Street View...</div>
+      </div>
+    </div>
+
+    <div class="modal-header">
+      <div class="modal-badges">
+        <span class="badge badge-orden" id="modal-orden">#1 de 71</span>
+        <span class="badge badge-ruta" id="modal-ruta">KA4V11</span>
+      </div>
+      <div class="modal-nombre" id="modal-nombre">—</div>
+      <div class="modal-codigo" id="modal-codigo">—</div>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-campo">
+        <div class="modal-icono">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.24 1 3 3.24 3 6c0 4.25 5 9 5 9s5-4.75 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 8 4a1.5 1.5 0 0 1 0 3.5z" fill="#8A90A0"/></svg>
+        </div>
+        <div class="modal-campo-info">
+          <div class="modal-campo-label">Dirección</div>
+          <div class="modal-campo-valor" id="modal-direccion">—</div>
+        </div>
+      </div>
+      <div class="modal-campo">
+        <div class="modal-icono">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="#8A90A0" stroke-width="1.5"/><path d="M1 6h14" stroke="#8A90A0" stroke-width="1.5"/></svg>
+        </div>
+        <div class="modal-campo-info">
+          <div class="modal-campo-label">Barrio</div>
+          <div class="modal-campo-valor" id="modal-barrio">—</div>
+        </div>
+      </div>
+      <div class="modal-campo">
+        <div class="modal-icono">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 1h3l1.5 3.5-1.75 1.75a9 9 0 0 0 4 4L11.5 8.5 15 10v3a1 1 0 0 1-1 1A13 13 0 0 1 2 2a1 1 0 0 1 1-1z" fill="#8A90A0"/></svg>
+        </div>
+        <div class="modal-campo-info">
+          <div class="modal-campo-label">Celular</div>
+          <div class="modal-campo-valor" id="modal-celular">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-acciones">
+      <button class="btn-accion btn-navegar" id="btn-navegar" onclick="iniciarNavegacion()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14L8 2l6 12-6-3-6 3z" fill="white"/></svg>
+        Navegar hasta aquí
+      </button>
+      <button class="btn-accion btn-llamar" id="btn-llamar" onclick="llamarCliente()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 1h3l1.5 3.5-1.75 1.75a9 9 0 0 0 4 4L11.5 8.5 15 10v3a1 1 0 0 1-1 1A13 13 0 0 1 2 2a1 1 0 0 1 1-1z" fill="#059669"/></svg>
+        Llamar
+      </button>
+      <button class="btn-accion btn-entregado" id="btn-entregado" onclick="marcarEstado('entregado')">
+        <svg width="16" height="14" viewBox="0 0 16 14" fill="none"><path d="M1 7l5 5L15 1" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Entregado
+      </button>
+      <button class="btn-accion btn-no-entregado" id="btn-no-entregado" onclick="marcarEstado('no-entregado')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="#4A5060" stroke-width="2" stroke-linecap="round"/></svg>
+        No entregado
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN — NO MODIFICAR
+// ============================================================
+const CONFIG = {
+  CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSbFZEtOf6cFK_jGPiyRjA2pIZ48ltMnvwHMGo7hRuINEEfk5xwE4iDO8Ebcy9AqEVbz8mrXC3a_dg7/pub?gid=0&single=true&output=csv',
+  API_KEY: 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
+  VERSION: '2.0'
+};
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let CLIENTES = [];
+let clientesRuta = [];
+let rutaActual = '';
+let clienteActual = null;
+let ordenActual = 0;
+let estados = {};
+let mapGoogle = null;
+let marcadores = {};
+let polylineRuta = null;
+let directionsService = null;
+let directionsRenderer = null;
+let streetViewService = null;
+let panorama = null;
+let userLat = null;
+let userLng = null;
+let watchId = null;
+let markerUser = null;
+let panelExpandido = true;
+let navegandoA = null;
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const hoy = new Date();
+  document.getElementById('badge-fecha').textContent =
+    hoy.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+
+  cargarEstados();
+  verificarGPS();
+});
+
+function verificarGPS() {
+  if (!navigator.geolocation) {
+    cargarDatos();
+    return;
+  }
+  document.getElementById('permiso-overlay').style.display = 'flex';
+}
+
+function solicitarGPS() {
+  document.getElementById('permiso-overlay').style.display = 'none';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      iniciarWatchGPS();
+      cargarDatos();
+    },
+    () => cargarDatos(),
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function iniciarWatchGPS() {
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      if (markerUser && mapGoogle) {
+        markerUser.setPosition({ lat: userLat, lng: userLng });
+      }
+    },
+    null,
+    { enableHighAccuracy: true }
+  );
+}
+
+// ============================================================
+// CARGA DE DATOS DESDE GOOGLE SHEETS
+// ============================================================
+async function cargarDatos() {
+  document.getElementById('splash-estado').textContent = 'Conectando con Google Sheets...';
+  try {
+    const res = await fetch(CONFIG.CSV_URL + '&t=' + Date.now());
+    const texto = await res.text();
+    CLIENTES = parsearCSV(texto);
+    document.getElementById('splash-estado').textContent = CLIENTES.length + ' clientes cargados ✓';
+    setTimeout(mostrarPantallaRutas, 800);
+  } catch (e) {
+    document.getElementById('splash-estado').textContent = 'Error de conexión. Usando datos en caché...';
+    CLIENTES = cargarCache();
+    setTimeout(mostrarPantallaRutas, 1200);
+  }
+}
+
+function parsearCSV(texto) {
+  const lineas = texto.trim().split('\n');
+  if (lineas.length < 2) return [];
+  const headers = lineas[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  const idxCodigo = headers.findIndex(h => h.includes('CODIGO'));
+  const idxNombre = headers.findIndex(h => h.includes('NOMBRE'));
+  const idxRuta = headers.findIndex(h => h.includes('RUTA'));
+  const idxLng = headers.findIndex(h => h.includes('Geocaptura 1'));
+  const idxLat = headers.findIndex(h => h.includes('Geocaptura 2'));
+  const idxDir = headers.findIndex(h => h.includes('DIRECCION'));
+  const idxBarrio = headers.findIndex(h => h.includes('BARRIO'));
+  const idxCel = headers.findIndex(h => h.includes('CELULAR'));
+
+  const clientes = [];
+  for (let i = 1; i < lineas.length; i++) {
+    const cols = lineas[i].split(',').map(c => c.trim().replace(/"/g, ''));
+    const lat = parseFloat(cols[idxLat]);
+    const lng = parseFloat(cols[idxLng]);
+    if (!lat || !lng || isNaN(lat) || isNaN(lng)) continue;
+    if (Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
+    clientes.push({
+      id: cols[idxCodigo] || '',
+      nombre: cols[idxNombre] || '',
+      ruta: cols[idxRuta] || '',
+      lat: lat,
+      lng: lng,
+      direccion: cols[idxDir] || '',
+      barrio: cols[idxBarrio] || '',
+      celular: cols[idxCel] || ''
+    });
+  }
+  guardarCache(clientes);
+  return clientes;
+}
+
+function guardarCache(data) {
+  try { localStorage.setItem('gmaz_clientes', JSON.stringify(data)); } catch(e){}
+}
+function cargarCache() {
+  try {
+    const d = localStorage.getItem('gmaz_clientes');
+    return d ? JSON.parse(d) : [];
+  } catch(e) { return []; }
+}
+
+// ============================================================
+// ESTADOS
+// ============================================================
+function guardarEstados() {
+  try { localStorage.setItem('gmaz_estados', JSON.stringify(estados)); } catch(e){}
+}
+function cargarEstados() {
+  try {
+    const d = localStorage.getItem('gmaz_estados');
+    if (d) estados = JSON.parse(d);
+  } catch(e) { estados = {}; }
+}
+
+// ============================================================
+// PANTALLA DE RUTAS
+// ============================================================
+function mostrarPantallaRutas() {
+  document.getElementById('splash').classList.add('oculto');
+  const rutas = {};
+  CLIENTES.forEach(c => {
+    if (!rutas[c.ruta]) rutas[c.ruta] = [];
+    rutas[c.ruta].push(c);
+  });
+
+  const grid = document.getElementById('rutas-grid');
+  grid.innerHTML = '';
+
+  Object.keys(rutas).sort().forEach(ruta => {
+    const clientes = rutas[ruta];
+    const total = clientes.length;
+    const entregados = clientes.filter(c => estados[c.id] === 'entregado').length;
+    const noEntregados = clientes.filter(c => estados[c.id] === 'no-entregado').length;
+    const pendientes = total - entregados - noEntregados;
+
+    const card = document.createElement('div');
+    card.className = 'ruta-card';
+    card.innerHTML = `
+      <div class="ruta-card-codigo">${ruta}</div>
+      <div class="ruta-card-info">
+        <div class="ruta-card-clientes">${total}</div>
+        <div class="ruta-card-label">clientes</div>
+      </div>
+      <div class="ruta-card-estados">
+        <div class="estado-dot" style="background:var(--rojo)"></div>
+        <span class="estado-count">${pendientes}</span>
+        <div class="estado-dot" style="background:var(--verde);margin-left:4px"></div>
+        <span class="estado-count">${entregados}</span>
+      </div>
+      <svg class="ruta-card-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M1 1l5 5-5 5" stroke="#D1D5DE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+    card.addEventListener('click', () => seleccionarRuta(ruta));
+    grid.appendChild(card);
+  });
+
+  setTimeout(() => {
+    document.getElementById('pantalla-rutas').classList.remove('oculto');
+  }, 50);
+}
+
+// ============================================================
+// SELECCIONAR RUTA → MAPA
+// ============================================================
+function seleccionarRuta(ruta) {
+  rutaActual = ruta;
+  document.getElementById('pantalla-rutas').classList.add('oculto');
+
+  const raw = CLIENTES.filter(c => c.ruta === ruta);
+  clientesRuta = ordenarClientes(raw);
+
+  document.getElementById('mapa-ruta-nombre').textContent = ruta;
+  document.getElementById('mapa-ruta-sub').textContent = clientesRuta.length + ' clientes · Orden optimizado';
+
+  actualizarStats();
+
+  setTimeout(() => {
+    document.getElementById('pantalla-mapa').classList.remove('oculto');
+    inicializarMapa();
+    actualizarLista(clientesRuta);
+  }, 50);
+}
+
+// ============================================================
+// ORDEN ÓPTIMO (Nearest Neighbor desde GPS)
+// ============================================================
+function ordenarClientes(clientes) {
+  if (clientes.length <= 1) return clientes;
+  const arr = [...clientes];
+  let startLat = userLat || arr.reduce((s, c) => s + c.lat, 0) / arr.length;
+  let startLng = userLng || arr.reduce((s, c) => s + c.lng, 0) / arr.length;
+
+  let actual = { lat: startLat, lng: startLng };
+  const visitados = new Set();
+  const resultado = [];
+
+  while (resultado.length < arr.length) {
+    let minDist = Infinity, siguiente = null;
+    for (const c of arr) {
+      if (!visitados.has(c.id)) {
+        const d = dist(actual.lat, actual.lng, c.lat, c.lng);
+        if (d < minDist) { minDist = d; siguiente = c; }
+      }
+    }
+    if (siguiente) {
+      resultado.push(siguiente);
+      visitados.add(siguiente.id);
+      actual = siguiente;
+    }
+  }
+
+  // No entregados al final
+  const noEnt = resultado.filter(c => estados[c.id] === 'no-entregado');
+  const resto = resultado.filter(c => estados[c.id] !== 'no-entregado');
+  return [...resto, ...noEnt];
+}
+
+function dist(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ============================================================
+// GOOGLE MAPS
+// ============================================================
+function inicializarMapa() {
+  if (mapGoogle) {
+    actualizarMarcadores();
+    return;
+  }
+
+  const centro = clientesRuta.length > 0
+    ? { lat: clientesRuta[0].lat, lng: clientesRuta[0].lng }
+    : { lat: 1.2136, lng: -77.2811 };
+
+  mapGoogle = new google.maps.Map(document.getElementById('mapa-google'), {
+    center: centro,
+    zoom: 13,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    zoomControl: true,
+    zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+    styles: [
+      { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit', stylers: [{ visibility: 'off' }] }
+    ]
+  });
+
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers: true,
+    polylineOptions: {
+      strokeColor: '#E30613',
+      strokeWeight: 4,
+      strokeOpacity: 0.8
+    }
+  });
+  directionsRenderer.setMap(mapGoogle);
+  streetViewService = new google.maps.StreetViewService();
+
+  // Marcador GPS usuario
+  if (userLat && userLng) {
+    markerUser = new google.maps.Marker({
+      position: { lat: userLat, lng: userLng },
+      map: mapGoogle,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: '#2563EB',
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 3,
+        scale: 9
+      },
+      zIndex: 1000,
+      title: 'Mi ubicación'
+    });
+  }
+
+  actualizarMarcadores();
+  trazarRuta();
+  actualizarLista(clientesRuta);
+}
+
+function crearIconoMarcador(numero, estado) {
+  const colores = {
+    pendiente: { bg: '#E30613', text: '#fff' },
+    entregado: { bg: '#059669', text: '#fff' },
+    'no-entregado': { bg: '#8A90A0', text: '#fff' }
+  };
+  const c = colores[estado] || colores.pendiente;
+  const label = estado === 'entregado' ? '✓' : String(numero);
+
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="${c.bg}" stroke="white" stroke-width="2.5"/>
+        <text x="16" y="21" text-anchor="middle" font-family="DM Sans, sans-serif"
+          font-size="${label.length > 1 ? '10' : '12'}" font-weight="900" fill="${c.text}">${label}</text>
+      </svg>`),
+    scaledSize: new google.maps.Size(32, 32),
+    anchor: new google.maps.Point(16, 16)
+  };
+}
+
+function actualizarMarcadores() {
+  Object.values(marcadores).forEach(m => m.setMap(null));
+  marcadores = {};
+
+  clientesRuta.forEach((c, i) => {
+    const estado = estados[c.id] || 'pendiente';
+    const marker = new google.maps.Marker({
+      position: { lat: c.lat, lng: c.lng },
+      map: mapGoogle,
+      icon: crearIconoMarcador(i + 1, estado),
+      title: c.nombre,
+      zIndex: estado === 'pendiente' ? 100 - i : 10
+    });
+    marker.addListener('click', () => {
+      ordenActual = i + 1;
+      abrirModal(c, i + 1);
+    });
+    marcadores[c.id] = marker;
+  });
+
+  if (clientesRuta.length > 0) {
+    const bounds = new google.maps.LatLngBounds();
+    clientesRuta.forEach(c => bounds.extend({ lat: c.lat, lng: c.lng }));
+    if (userLat && userLng) bounds.extend({ lat: userLat, lng: userLng });
+    mapGoogle.fitBounds(bounds, { top: 60, bottom: 200, left: 20, right: 20 });
+  }
+}
+
+function trazarRuta() {
+  if (clientesRuta.length < 2) return;
+  const pendientes = clientesRuta.filter(c => (estados[c.id] || 'pendiente') === 'pendiente');
+  if (pendientes.length < 2) return;
+
+  const waypoints = pendientes.slice(1, pendientes.length - 1).map(c => ({
+    location: { lat: c.lat, lng: c.lng },
+    stopover: true
+  }));
+
+  directionsService.route({
+    origin: { lat: pendientes[0].lat, lng: pendientes[0].lng },
+    destination: { lat: pendientes[pendientes.length-1].lat, lng: pendientes[pendientes.length-1].lng },
+    waypoints: waypoints.slice(0, 23),
+    optimizeWaypoints: false,
+    travelMode: google.maps.TravelMode.DRIVING
+  }, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+    }
+  });
+}
+
+// ============================================================
+// MODAL CLIENTE
+// ============================================================
+function abrirModal(cliente, orden) {
+  clienteActual = cliente;
+
+  document.getElementById('modal-orden').textContent = '#' + orden + ' de ' + clientesRuta.length;
+  document.getElementById('modal-ruta').textContent = cliente.ruta;
+  document.getElementById('modal-nombre').textContent = cliente.nombre;
+  document.getElementById('modal-codigo').textContent = 'Cód. ' + cliente.id;
+  document.getElementById('modal-direccion').textContent = cliente.direccion || '—';
+  document.getElementById('modal-barrio').textContent = cliente.barrio || '—';
+  document.getElementById('modal-celular').textContent = cliente.celular || 'Sin número';
+
+  const btnLlamar = document.getElementById('btn-llamar');
+  btnLlamar.style.opacity = cliente.celular ? '1' : '0.4';
+  btnLlamar.style.pointerEvents = cliente.celular ? 'all' : 'none';
+
+  const estado = estados[cliente.id] || 'pendiente';
+  actualizarBotonesEstado(estado);
+
+  // Cargar Street View
+  cargarStreetView(cliente.lat, cliente.lng);
+
+  // Centrar mapa
+  mapGoogle.panTo({ lat: cliente.lat, lng: cliente.lng });
+
+  // Mostrar modal
+  document.getElementById('modal-overlay').classList.add('visible');
+
+  // Marcar activo en lista
+  document.querySelectorAll('.cliente-item').forEach(el => el.classList.remove('activo'));
+  const el = document.getElementById('item-' + cliente.id);
+  if (el) el.classList.add('activo');
+}
+
+function cargarStreetView(lat, lng) {
+  document.getElementById('sv-overlay').style.display = 'flex';
+  document.getElementById('streetview-map').innerHTML = '';
+
+  if (!streetViewService) {
+    document.getElementById('sv-overlay').innerHTML = '<div class="streetview-label">Street View no disponible</div>';
+    return;
+  }
+
+  streetViewService.getPanorama({
+    location: { lat, lng },
+    radius: 80,
+    preference: google.maps.StreetViewPreference.NEAREST
+  }, (data, status) => {
+    if (status === 'OK') {
+      document.getElementById('sv-overlay').style.display = 'none';
+      panorama = new google.maps.StreetViewPanorama(
+        document.getElementById('streetview-map'), {
+          position: { lat, lng },
+          pov: { heading: 34, pitch: 0 },
+          zoom: 1,
+          addressControl: false,
+          fullscreenControl: false,
+          motionTracking: false,
+          motionTrackingControl: false,
+          showRoadLabels: false,
+          panControl: true,
+          zoomControl: false,
+          enableCloseButton: false
+        }
+      );
+    } else {
+      document.getElementById('sv-overlay').innerHTML =
+        '<div class="streetview-label" style="color:rgba(255,255,255,0.5)">Street View no disponible en esta ubicación</div>';
+    }
+  });
+}
+
+function cerrarModalClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) cerrarModal();
+}
+
+function cerrarModal() {
+  document.getElementById('modal-overlay').classList.remove('visible');
+  document.querySelectorAll('.cliente-item').forEach(el => el.classList.remove('activo'));
+  clienteActual = null;
+  panorama = null;
+}
+
+function actualizarBotonesEstado(estado) {
+  const btnE = document.getElementById('btn-entregado');
+  const btnN = document.getElementById('btn-no-entregado');
+  btnE.classList.toggle('activo', estado === 'entregado');
+  btnN.classList.toggle('activo', estado === 'no-entregado');
+}
+
+// ============================================================
+// NAVEGACIÓN DENTRO DEL MAPA
+// ============================================================
+function iniciarNavegacion() {
+  if (!clienteActual) return;
+  cerrarModal();
+
+  navegandoA = clienteActual;
+  const destino = { lat: clienteActual.lat, lng: clienteActual.lng };
+  const origen = userLat ? { lat: userLat, lng: userLng } : destino;
+
+  document.getElementById('panel-nav').classList.add('visible');
+  document.getElementById('nav-accion').textContent = 'Calculando ruta...';
+  document.getElementById('nav-calle').textContent = clienteActual.direccion;
+  document.getElementById('nav-badge').classList.add('visible');
+  setTimeout(() => document.getElementById('nav-badge').classList.remove('visible'), 3000);
+
+  directionsService.route({
+    origin: origen,
+    destination: destino,
+    travelMode: google.maps.TravelMode.DRIVING
+  }, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+      mapGoogle.panTo(destino);
+
+      const leg = result.routes[0].legs[0];
+      const step = leg.steps[0];
+      const instruccion = step.instructions.replace(/<[^>]+>/g, '');
+      const distancia = leg.distance.text;
+      const duracion = leg.duration.text;
+
+      document.getElementById('nav-accion').textContent = instruccion.substring(0, 40);
+      document.getElementById('nav-calle').textContent = duracion + ' · ' + distancia;
+      document.getElementById('nav-dist').textContent = leg.distance.value > 1000
+        ? (leg.distance.value / 1000).toFixed(1)
+        : leg.distance.value;
+      document.getElementById('nav-unit').textContent = leg.distance.value > 1000 ? 'km' : 'm';
+
+      mostrarToast('🗺 Ruta trazada · ' + duracion);
+    } else {
+      document.getElementById('nav-accion').textContent = 'No se pudo calcular la ruta';
+      mapGoogle.panTo(destino);
+    }
+  });
+}
+
+function cerrarNav() {
+  document.getElementById('panel-nav').classList.remove('visible');
+  navegandoA = null;
+  trazarRuta();
+}
+
+// ============================================================
+// LLAMAR
+// ============================================================
+function llamarCliente() {
+  if (!clienteActual || !clienteActual.celular) return;
+  window.location.href = 'tel:+57' + clienteActual.celular;
+}
+
+// ============================================================
+// ESTADOS DE ENTREGA
+// ============================================================
+function marcarEstado(nuevoEstado) {
+  if (!clienteActual) return;
+  const id = clienteActual.id;
+  const actual = estados[id] || 'pendiente';
+  estados[id] = actual === nuevoEstado ? 'pendiente' : nuevoEstado;
+
+  guardarEstados();
+  actualizarMarcadorEstado(id);
+  actualizarItemLista(id);
+  actualizarBotonesEstado(estados[id]);
+  actualizarStats();
+
+  if (estados[id] === 'no-entregado') {
+    reinsertar(id);
+  }
+
+  const msg = estados[id] === 'entregado' ? '✅ Marcado como entregado'
+    : estados[id] === 'no-entregado' ? '↩ Movido al final para reintento'
+    : '🔄 Vuelto a pendiente';
+  mostrarToast(msg);
+
+  if (estados[id] === 'entregado') {
+    setTimeout(cerrarModal, 600);
+  }
+}
+
+function reinsertar(id) {
+  const idx = clientesRuta.findIndex(c => c.id === id);
+  if (idx < 0) return;
+  const cliente = clientesRuta.splice(idx, 1)[0];
+  clientesRuta.push(cliente);
+  actualizarLista(clientesRuta);
+  actualizarMarcadores();
+}
+
+function actualizarMarcadorEstado(id) {
+  const idx = clientesRuta.findIndex(c => c.id === id);
+  if (idx < 0 || !marcadores[id]) return;
+  const estado = estados[id] || 'pendiente';
+  marcadores[id].setIcon(crearIconoMarcador(idx + 1, estado));
+}
+
+function actualizarItemLista(id) {
+  const el = document.getElementById('item-' + id);
+  if (!el) return;
+  const estado = estados[id] || 'pendiente';
+  const dot = el.querySelector('.cliente-numero');
+  const nombre = el.querySelector('.cliente-nombre');
+  const badge = el.querySelector('.cliente-badge');
+
+  if (dot) {
+    dot.className = 'cliente-numero num-' + estado;
+    dot.textContent = estado === 'entregado' ? '✓' : estado === 'no-entregado' ? '×' :
+      String(clientesRuta.findIndex(c => c.id === id) + 1);
+  }
+  if (nombre) nombre.classList.toggle('tachado', estado === 'entregado');
+  el.classList.toggle('entregado', estado === 'entregado');
+}
+
+// ============================================================
+// ESTADÍSTICAS
+// ============================================================
+function actualizarStats() {
+  const total = clientesRuta.length;
+  const ent = clientesRuta.filter(c => (estados[c.id] || 'pendiente') === 'entregado').length;
+  const noEnt = clientesRuta.filter(c => (estados[c.id] || 'pendiente') === 'no-entregado').length;
+  const pend = total - ent - noEnt;
+  const pct = total > 0 ? Math.round(ent / total * 100) : 0;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pend').textContent = pend;
+  document.getElementById('stat-ent').textContent = ent;
+  document.getElementById('progreso-fill').style.width = pct + '%';
+}
+
+// ============================================================
+// LISTA DE CLIENTES
+// ============================================================
+function actualizarLista(clientes) {
+  const lista = document.getElementById('lista-clientes');
+  lista.innerHTML = '';
+  document.getElementById('panel-lista-titulo').textContent = 'Ruta ' + rutaActual;
+  document.getElementById('panel-lista-count').textContent = clientes.length + ' clientes';
+
+  if (!clientes.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gris4);font-size:13px;">Sin resultados</div>';
+    return;
+  }
+
+  clientes.forEach((c, i) => {
+    const estado = estados[c.id] || 'pendiente';
+    const esReintento = estado === 'no-entregado';
+    const item = document.createElement('div');
+    item.className = 'cliente-item' + (estado === 'entregado' ? ' entregado' : '');
+    item.id = 'item-' + c.id;
+
+    item.innerHTML = `
+      <div class="cliente-numero num-${estado}">
+        ${estado === 'entregado' ? '✓' : estado === 'no-entregado' ? '×' : (i+1)}
+      </div>
+      <div class="cliente-datos">
+        <div class="cliente-nombre${estado === 'entregado' ? ' tachado' : ''}">${c.nombre}</div>
+        <div class="cliente-direccion">${c.barrio}${c.barrio && c.direccion ? ' · ' : ''}${c.direccion}</div>
+      </div>
+      ${esReintento ? '<div class="cliente-badge-reintento">↩ Reintento</div>' : ''}
+      ${estado === 'entregado' ? '<div class="cliente-badge-ok">OK</div>' : ''}
+      ${estado === 'pendiente' ? `<svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="var(--gris3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
+    `;
+
+    item.addEventListener('click', () => {
+      abrirModal(c, i + 1);
+      if (mapGoogle) mapGoogle.panTo({ lat: c.lat, lng: c.lng });
+    });
+    lista.appendChild(item);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const busqueda = document.getElementById('busqueda');
+  if (busqueda) {
+    busqueda.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtrados = q
+        ? clientesRuta.filter(c =>
+            c.nombre.toLowerCase().includes(q) ||
+            c.barrio.toLowerCase().includes(q) ||
+            c.direccion.toLowerCase().includes(q) ||
+            c.id.includes(q))
+        : clientesRuta;
+      actualizarLista(filtrados);
+    });
+  }
+});
+
+// ============================================================
+// PANEL TOGGLE
+// ============================================================
+function togglePanel() {
+  const panel = document.getElementById('panel-inferior');
+  const btn = document.getElementById('panel-toggle-btn');
+  panelExpandido = !panelExpandido;
+  panel.style.maxHeight = panelExpandido ? '45dvh' : '52px';
+  btn.textContent = panelExpandido ? '▲' : '▼';
+}
+
+// ============================================================
+// VOLVER A RUTAS
+// ============================================================
+function volverARutas() {
+  document.getElementById('pantalla-mapa').classList.add('oculto');
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+  setTimeout(() => {
+    mostrarPantallaRutas();
+  }, 100);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+// ============================================================
+// CENTRAR EN GPS
+// ============================================================
+function centrarGPS() {
+  if (userLat && userLng && mapGoogle) {
+    mapGoogle.panTo({ lat: userLat, lng: userLng });
+    mapGoogle.setZoom(16);
+    mostrarToast('📍 Centrado en tu ubicación');
+  } else {
+    mostrarToast('GPS no disponible');
+  }
+}
+
+// ============================================================
+// GOOGLE MAPS API CALLBACK
+// ============================================================
+window.initMap = function() {
+  console.log('Google Maps API lista');
+};
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=places,geometry&callback=initMap&language=es&region=CO">
+</script>
+
+</body>
+</html>
