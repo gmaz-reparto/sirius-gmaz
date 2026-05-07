@@ -698,9 +698,9 @@ html, body {
     </div>
 
     <div class="modal-acciones">
-      <button class="btn-accion btn-navegar" id="btn-navegar" onclick="iniciarNavegacion()">
+      <button class="btn-accion btn-navegar" id="btn-navegar" onclick="abrirNavegacion()">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14L8 2l6 12-6-3-6 3z" fill="white"/></svg>
-        Navegar hasta aquí
+        Navegar en Google Maps
       </button>
       <button class="btn-accion btn-llamar" id="btn-llamar" onclick="llamarCliente()">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 1h3l1.5 3.5-1.75 1.75a9 9 0 0 0 4 4L11.5 8.5 15 10v3a1 1 0 0 1-1 1A13 13 0 0 1 2 2a1 1 0 0 1 1-1z" fill="#059669"/></svg>
@@ -837,31 +837,40 @@ const DATOS_BASE = [{"id": "1224423095", "nombre": "DISTRIBUCIONES ANDRADE", "ru
 
 async function cargarDatos() {
   document.getElementById('splash-estado').textContent = 'Cargando rutas del día...';
-  
-  // 1. Intentar cargar desde Google Sheets (datos más frescos)
+
+  // SIEMPRE intentar Sheets primero — tiene los datos más frescos con barrio y celular
   try {
-    const res = await Promise.race([
-      fetch(CONFIG.CSV_URL + '&t=' + Date.now(), { cache: 'no-store' }),
-      new Promise((_,reject) => setTimeout(() => reject('timeout'), 8000))
-    ]);
-    
-    if (res && res.ok) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    const res = await fetch(CONFIG.CSV_URL + '&nocache=' + Date.now(), {
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
       const texto = await res.text();
-      const parsed = parsearCSV(texto);
-      if (parsed.length > 0) {
-        CLIENTES = parsed;
-        document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes (Sheets)';
-        setTimeout(mostrarPantallaRutas, 500);
-        return;
+      console.log('CSV recibido, longitud:', texto.length);
+      if (texto && texto.length > 100 && texto.includes('CODIGO')) {
+        const parsed = parsearCSV(texto);
+        if (parsed.length > 0) {
+          CLIENTES = parsed;
+          document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes';
+          setTimeout(mostrarPantallaRutas, 500);
+          return;
+        }
       }
     }
   } catch(e) {
-    console.log('Sheets no disponible, usando datos embebidos');
+    console.log('Error Sheets:', e.message);
   }
-  
-  // 2. Usar datos embebidos directamente en el HTML
+
+  // Fallback: datos embebidos en el HTML
+  console.log('Usando datos embebidos');
   CLIENTES = DATOS_BASE;
-  document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes';
+  document.getElementById('splash-estado').textContent = '⚠ ' + CLIENTES.length + ' clientes (sin conexión)';
   setTimeout(mostrarPantallaRutas, 500);
 }
 
@@ -869,7 +878,6 @@ function parsearCSV(texto) {
   const lineas = texto.trim().split('\n');
   if (lineas.length < 2) return [];
 
-  // Parser robusto que maneja campos con comas entre comillas
   function parsearLinea(linea) {
     const cols = [];
     let campo = '';
@@ -885,51 +893,57 @@ function parsearCSV(texto) {
   }
 
   const headers = parsearLinea(lineas[0]).map(h => h.replace(/"/g, '').trim().toUpperCase());
+  console.log('Headers CSV:', headers);
 
-  // Buscar columnas de forma flexible
-  const find = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k.toUpperCase())));
+  // Mapeo flexible de columnas
+  const find = (...keywords) => headers.findIndex(h => keywords.some(k => h.includes(k.toUpperCase())));
 
-  const idxCodigo = find(['CODIGO', 'CLIENTE_COD', 'COD']);
-  const idxNombre = find(['NOMBRE']);
-  const idxRuta   = find(['RUTA']);
-  const idxLng    = find(['GEOCAPTURA 1', 'GEOCAPTURA1', 'LNG', 'LONGITUD', 'COORD. GEOCAPTURA 1']);
-  const idxLat    = find(['GEOCAPTURA 2', 'GEOCAPTURA2', 'LAT', 'LATITUD', 'COORD. GEOCAPTURA 2']);
-  const idxDir    = find(['DIRECCION', 'DIRECCIÓN']);
-  const idxBarrio = find(['BARRIO']);
-  const idxCel    = find(['CELULAR', 'TELEFONO', 'TELÉFONO']);
+  const idx = {
+    codigo:   find('CODIGO'),
+    nombre:   find('NOMBRE'),
+    ruta:     find('RUTA'),
+    lng:      find('GEOCAPTURA 1', 'GEOCAPTURA1', 'LNG', 'LONGITUD'),
+    lat:      find('GEOCAPTURA 2', 'GEOCAPTURA2', 'LAT', 'LATITUD'),
+    dir:      find('DIRECCION', 'DIRECCIÓN', 'DIRECTION'),
+    barrio:   find('BARRIO'),
+    celular:  find('CELULAR', 'TELEFONO', 'TEL', 'MOVIL')
+  };
 
-  console.log('Columnas detectadas:', {idxCodigo, idxNombre, idxRuta, idxLng, idxLat, idxDir, idxBarrio, idxCel});
+  console.log('Índices detectados:', idx);
 
   const clientes = [];
   for (let i = 1; i < lineas.length; i++) {
     if (!lineas[i].trim()) continue;
     const cols = parsearLinea(lineas[i]);
 
-    const latRaw = idxLat >= 0 ? cols[idxLat] : '';
-    const lngRaw = idxLng >= 0 ? cols[idxLng] : '';
-    const lat = parseFloat(latRaw);
-    const lng = parseFloat(lngRaw);
-
-    if (isNaN(lat) || isNaN(lng)) continue;
-    if (Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
+    const lat = idx.lat >= 0 ? parseFloat(cols[idx.lat]) : NaN;
+    const lng = idx.lng >= 0 ? parseFloat(cols[idx.lng]) : NaN;
+    if (isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
     if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
 
-    const ruta = idxRuta >= 0 ? (cols[idxRuta] || '').trim() : '';
+    const ruta = idx.ruta >= 0 ? (cols[idx.ruta] || '').trim() : '';
     if (!ruta) continue;
 
+    // Limpiar celular — quitar ceros y texto no numérico
+    let celular = idx.celular >= 0 ? (cols[idx.celular] || '').trim() : '';
+    celular = celular.replace(/[^0-9]/g, '');
+    if (celular === '0' || celular.length < 7) celular = '';
+
+    const barrio = idx.barrio >= 0 ? (cols[idx.barrio] || '').trim() : '';
+
     clientes.push({
-      id:        idxCodigo >= 0 ? (cols[idxCodigo] || '').trim() : '',
-      nombre:    idxNombre >= 0 ? (cols[idxNombre] || '').trim() : '',
+      id:        idx.codigo >= 0 ? (cols[idx.codigo] || '').trim() : '',
+      nombre:    idx.nombre >= 0 ? (cols[idx.nombre] || '').trim() : '',
       ruta:      ruta,
       lat:       lat,
       lng:       lng,
-      direccion: idxDir    >= 0 ? (cols[idxDir]    || '').trim() : '',
-      barrio:    idxBarrio >= 0 ? (cols[idxBarrio]  || '').trim() : '',
-      celular:   idxCel    >= 0 ? (cols[idxCel]     || '').trim() : ''
+      direccion: idx.dir >= 0 ? (cols[idx.dir] || '').trim() : '',
+      barrio:    barrio,
+      celular:   celular
     });
   }
 
-  console.log('Clientes parseados:', clientes.length);
+  console.log(`✅ Parseados: ${clientes.length} clientes`);
   if (clientes.length > 0) guardarCache(clientes);
   return clientes;
 }
@@ -1214,8 +1228,8 @@ function abrirModal(cliente, orden) {
   document.getElementById('modal-nombre').textContent = cliente.nombre;
   document.getElementById('modal-codigo').textContent = 'Cód. ' + cliente.id;
   document.getElementById('modal-direccion').textContent = cliente.direccion || '—';
-  document.getElementById('modal-barrio').textContent = cliente.barrio || '—';
-  document.getElementById('modal-celular').textContent = cliente.celular || 'Sin número';
+  document.getElementById('modal-barrio').textContent = (cliente.barrio && cliente.barrio.trim()) ? cliente.barrio : 'Sin barrio registrado';
+  document.getElementById('modal-celular').textContent = (cliente.celular && cliente.celular.trim()) ? cliente.celular : 'Sin número registrado';
 
   const btnLlamar = document.getElementById('btn-llamar');
   btnLlamar.style.opacity = cliente.celular ? '1' : '0.4';
@@ -1336,7 +1350,39 @@ function actualizarBotonesEstado(estado) {
 // ============================================================
 // NAVEGACIÓN DENTRO DEL MAPA
 // ============================================================
-function iniciarNavegacion() {
+// ============================================================
+// NAVEGACIÓN — Abre Google Maps app directamente
+// Funciona desde WhatsApp, Chrome, cualquier navegador
+// ============================================================
+function abrirNavegacion() {
+  if (!clienteActual) return;
+  const lat = clienteActual.lat;
+  const lng = clienteActual.lng;
+  const nombre = encodeURIComponent(clienteActual.nombre);
+  const dir = encodeURIComponent(clienteActual.direccion);
+  
+  // URL que abre Google Maps app en Android directamente
+  // geo: abre la app nativa, fallback a web si no está instalada
+  const geoUrl = `geo:${lat},${lng}?q=${lat},${lng}(${nombre})`;
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+  
+  // Intentar abrir app nativa primero
+  const link = document.createElement('a');
+  link.href = geoUrl;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Fallback a web Maps después de 500ms si la app no abre
+  setTimeout(() => {
+    window.open(mapsUrl, '_blank');
+  }, 500);
+  
+  mostrarToast('🗺 Abriendo Google Maps...');
+  cerrarModal();
+}
   if (!clienteActual) return;
   cerrarModal();
 
@@ -1402,10 +1448,15 @@ function cerrarNav() {
 // ============================================================
 function llamarCliente() {
   if (!clienteActual || !clienteActual.celular) return;
-  // Limpiar el número y agregar prefijo Colombia
   const num = String(clienteActual.celular).replace(/\D/g, '');
   const tel = num.startsWith('57') ? '+' + num : '+57' + num;
-  window.open('tel:' + tel, '_self');
+  
+  // Crear enlace invisible y hacer click — funciona en WhatsApp browser
+  const link = document.createElement('a');
+  link.href = 'tel:' + tel;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // ============================================================
