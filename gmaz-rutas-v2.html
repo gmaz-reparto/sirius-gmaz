@@ -810,40 +810,38 @@ function iniciarWatchGPS() {
 // CARGA DE DATOS DESDE GOOGLE SHEETS
 // ============================================================
 async function cargarDatos() {
-  document.getElementById('splash-estado').textContent = 'Conectando con Google Sheets...';
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    
-    const res = await fetch(CONFIG.CSV_URL + '&t=' + Date.now(), {
-      signal: controller.signal,
-      cache: 'no-store'
-    });
-    clearTimeout(timeout);
-    
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    
-    const texto = await res.text();
-    CLIENTES = parsearCSV(texto);
-    
-    if (CLIENTES.length === 0) {
-      throw new Error('Sin datos');
+  document.getElementById('splash-estado').textContent = 'Cargando rutas del día...';
+  
+  // Limpiar caché anterior siempre para forzar datos frescos
+  try { localStorage.removeItem('gmaz_clientes'); } catch(e){}
+
+  const urls = [
+    CONFIG.CSV_URL + '&cachebust=' + Date.now(),
+    CONFIG.CSV_URL
+  ];
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: 'no-store', mode: 'cors' });
+      if (!res.ok) continue;
+      const texto = await res.text();
+      if (!texto || texto.length < 50) continue;
+      const parsed = parsearCSV(texto);
+      if (parsed.length === 0) continue;
+      CLIENTES = parsed;
+      document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes';
+      setTimeout(mostrarPantallaRutas, 500);
+      return;
+    } catch(e) {
+      console.log('Intento fallido:', url, e.message);
+      continue;
     }
-    
-    document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes cargados';
-    setTimeout(mostrarPantallaRutas, 600);
-    
-  } catch (e) {
-    console.log('Error cargando Sheets:', e.message);
-    CLIENTES = cargarCache();
-    
-    if (CLIENTES.length > 0) {
-      document.getElementById('splash-estado').textContent = '⚠ Usando datos en caché (' + CLIENTES.length + ')';
-    } else {
-      document.getElementById('splash-estado').textContent = '⚠ Sin conexión — verifica internet';
-    }
-    setTimeout(mostrarPantallaRutas, 1000);
   }
+
+  // Si todo falla mostrar rutas vacías igual
+  CLIENTES = [];
+  document.getElementById('splash-estado').textContent = 'Sin conexión al servidor';
+  setTimeout(mostrarPantallaRutas, 800);
 }
 
 function parsearCSV(texto) {
@@ -1221,41 +1219,79 @@ function abrirModal(cliente, orden) {
 }
 
 function cargarStreetView(lat, lng) {
-  document.getElementById('sv-overlay').style.display = 'flex';
-  document.getElementById('streetview-map').innerHTML = '';
+  const container = document.getElementById('streetview-container');
+  const mapDiv = document.getElementById('streetview-map');
+  const overlay = document.getElementById('sv-overlay');
 
-  if (!streetViewService) {
-    document.getElementById('sv-overlay').innerHTML = '<div class="streetview-label">Street View no disponible</div>';
-    return;
-  }
+  // Reset
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div class="streetview-spinner"></div><div class="streetview-label">Cargando Street View...</div>';
+  mapDiv.innerHTML = '';
 
-  streetViewService.getPanorama({
-    location: { lat, lng },
-    radius: 80,
-    preference: google.maps.StreetViewPreference.NEAREST
-  }, (data, status) => {
-    if (status === 'OK') {
-      document.getElementById('sv-overlay').style.display = 'none';
-      panorama = new google.maps.StreetViewPanorama(
-        document.getElementById('streetview-map'), {
-          position: { lat, lng },
-          pov: { heading: 34, pitch: 0 },
-          zoom: 1,
-          addressControl: false,
-          fullscreenControl: false,
-          motionTracking: false,
-          motionTrackingControl: false,
-          showRoadLabels: false,
-          panControl: true,
-          zoomControl: false,
-          enableCloseButton: false
+  // Primero intentar Street View interactivo
+  if (streetViewService) {
+    streetViewService.getPanorama({
+      location: { lat, lng },
+      radius: 150,
+      preference: google.maps.StreetViewPreference.NEAREST,
+      source: google.maps.StreetViewSource.OUTDOOR
+    }, (data, status) => {
+      if (status === google.maps.StreetViewStatus.OK) {
+        overlay.style.display = 'none';
+        try {
+          panorama = new google.maps.StreetViewPanorama(mapDiv, {
+            position: { lat, lng },
+            pov: { heading: 34, pitch: 0 },
+            zoom: 1,
+            addressControl: false,
+            fullscreenControl: false,
+            motionTracking: false,
+            motionTrackingControl: false,
+            showRoadLabels: false,
+            panControl: true,
+            zoomControl: false,
+            enableCloseButton: false,
+            linksControl: false
+          });
+        } catch(e) {
+          mostrarStreetViewEstatico(lat, lng);
         }
-      );
-    } else {
-      document.getElementById('sv-overlay').innerHTML =
-        '<div class="streetview-label" style="color:rgba(255,255,255,0.5)">Street View no disponible en esta ubicación</div>';
-    }
-  });
+      } else {
+        // Fallback: Street View estático
+        mostrarStreetViewEstatico(lat, lng);
+      }
+    });
+  } else {
+    mostrarStreetViewEstatico(lat, lng);
+  }
+}
+
+function mostrarStreetViewEstatico(lat, lng) {
+  const overlay = document.getElementById('sv-overlay');
+  const mapDiv = document.getElementById('streetview-map');
+  
+  // Usar Street View Static API como imagen
+  const w = document.getElementById('streetview-container').offsetWidth || 400;
+  const h = 200;
+  const url = `https://maps.googleapis.com/maps/api/streetview?size=${w}x${h}&location=${lat},${lng}&fov=90&heading=34&pitch=0&key=${CONFIG.API_KEY}&return_error_code=true`;
+  
+  const img = document.createElement('img');
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+  img.src = url;
+  
+  img.onload = () => {
+    overlay.style.display = 'none';
+    mapDiv.appendChild(img);
+  };
+  
+  img.onerror = () => {
+    overlay.innerHTML = `
+      <div style="text-align:center;padding:16px;">
+        <div style="font-size:28px;margin-bottom:8px;">📍</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);">Vista no disponible</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+      </div>`;
+  };
 }
 
 function cerrarModalClick(e) {
