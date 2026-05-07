@@ -1383,59 +1383,6 @@ function abrirNavegacion() {
   mostrarToast('🗺 Abriendo Google Maps...');
   cerrarModal();
 }
-  if (!clienteActual) return;
-  cerrarModal();
-
-  navegandoA = clienteActual;
-  const destino = { lat: clienteActual.lat, lng: clienteActual.lng };
-  const origen = userLat ? { lat: userLat, lng: userLng } : null;
-
-  document.getElementById('panel-nav').classList.add('visible');
-  document.getElementById('nav-accion').textContent = 'Calculando ruta a pie...';
-  document.getElementById('nav-calle').textContent = clienteActual.direccion;
-  document.getElementById('nav-badge').classList.add('visible');
-  setTimeout(() => document.getElementById('nav-badge').classList.remove('visible'), 3000);
-
-  // Trazar ruta a pie en el mapa
-  const request = {
-    destination: destino,
-    travelMode: google.maps.TravelMode.WALKING
-  };
-  
-  if (origen) {
-    request.origin = origen;
-  } else {
-    request.origin = destino; // fallback
-  }
-
-  directionsService.route(request, (result, status) => {
-    if (status === 'OK') {
-      directionsRenderer.setDirections(result);
-      mapGoogle.panTo(destino);
-      mapGoogle.setZoom(17);
-
-      const leg = result.routes[0].legs[0];
-      const step = leg.steps[0];
-      const instruccion = step.instructions.replace(/<[^>]+>/g, '');
-      const distancia = leg.distance.text;
-      const duracion = leg.duration.text;
-
-      document.getElementById('nav-accion').textContent = instruccion.substring(0, 50);
-      document.getElementById('nav-calle').textContent = '🚶 ' + duracion + ' · ' + distancia;
-      document.getElementById('nav-dist').textContent = leg.distance.value > 1000
-        ? (leg.distance.value / 1000).toFixed(1)
-        : leg.distance.value;
-      document.getElementById('nav-unit').textContent = leg.distance.value > 1000 ? 'km' : 'm';
-
-      mostrarToast('🚶 Ruta peatonal · ' + duracion);
-    } else {
-      // Si falla, abrir Google Maps como fallback
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${destino.lat},${destino.lng}&travelmode=walking`;
-      window.open(url, '_blank');
-      document.getElementById('nav-accion').textContent = 'Abriendo Google Maps...';
-    }
-  });
-}
 
 function cerrarNav() {
   document.getElementById('panel-nav').classList.remove('visible');
