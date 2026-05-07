@@ -797,12 +797,31 @@ function iniciarWatchGPS() {
     pos => {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
-      if (markerUser && mapGoogle) {
-        markerUser.setPosition({ lat: userLat, lng: userLng });
+      
+      if (mapGoogle) {
+        if (markerUser) {
+          markerUser.setPosition({ lat: userLat, lng: userLng });
+        } else {
+          // Crear marcador GPS si no existe aún
+          markerUser = new google.maps.Marker({
+            position: { lat: userLat, lng: userLng },
+            map: mapGoogle,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: '#2563EB',
+              fillOpacity: 1,
+              strokeColor: '#fff',
+              strokeWeight: 3,
+              scale: 9
+            },
+            zIndex: 1000,
+            title: 'Mi ubicación'
+          });
+        }
       }
     },
-    null,
-    { enableHighAccuracy: true }
+    err => console.log('GPS error:', err.message),
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
 }
 
@@ -1323,22 +1342,31 @@ function iniciarNavegacion() {
 
   navegandoA = clienteActual;
   const destino = { lat: clienteActual.lat, lng: clienteActual.lng };
-  const origen = userLat ? { lat: userLat, lng: userLng } : destino;
+  const origen = userLat ? { lat: userLat, lng: userLng } : null;
 
   document.getElementById('panel-nav').classList.add('visible');
-  document.getElementById('nav-accion').textContent = 'Calculando ruta...';
+  document.getElementById('nav-accion').textContent = 'Calculando ruta a pie...';
   document.getElementById('nav-calle').textContent = clienteActual.direccion;
   document.getElementById('nav-badge').classList.add('visible');
   setTimeout(() => document.getElementById('nav-badge').classList.remove('visible'), 3000);
 
-  directionsService.route({
-    origin: origen,
+  // Trazar ruta a pie en el mapa
+  const request = {
     destination: destino,
-    travelMode: google.maps.TravelMode.DRIVING
-  }, (result, status) => {
+    travelMode: google.maps.TravelMode.WALKING
+  };
+  
+  if (origen) {
+    request.origin = origen;
+  } else {
+    request.origin = destino; // fallback
+  }
+
+  directionsService.route(request, (result, status) => {
     if (status === 'OK') {
       directionsRenderer.setDirections(result);
       mapGoogle.panTo(destino);
+      mapGoogle.setZoom(17);
 
       const leg = result.routes[0].legs[0];
       const step = leg.steps[0];
@@ -1346,17 +1374,19 @@ function iniciarNavegacion() {
       const distancia = leg.distance.text;
       const duracion = leg.duration.text;
 
-      document.getElementById('nav-accion').textContent = instruccion.substring(0, 40);
-      document.getElementById('nav-calle').textContent = duracion + ' · ' + distancia;
+      document.getElementById('nav-accion').textContent = instruccion.substring(0, 50);
+      document.getElementById('nav-calle').textContent = '🚶 ' + duracion + ' · ' + distancia;
       document.getElementById('nav-dist').textContent = leg.distance.value > 1000
         ? (leg.distance.value / 1000).toFixed(1)
         : leg.distance.value;
       document.getElementById('nav-unit').textContent = leg.distance.value > 1000 ? 'km' : 'm';
 
-      mostrarToast('🗺 Ruta trazada · ' + duracion);
+      mostrarToast('🚶 Ruta peatonal · ' + duracion);
     } else {
-      document.getElementById('nav-accion').textContent = 'No se pudo calcular la ruta';
-      mapGoogle.panTo(destino);
+      // Si falla, abrir Google Maps como fallback
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${destino.lat},${destino.lng}&travelmode=walking`;
+      window.open(url, '_blank');
+      document.getElementById('nav-accion').textContent = 'Abriendo Google Maps...';
     }
   });
 }
@@ -1372,7 +1402,10 @@ function cerrarNav() {
 // ============================================================
 function llamarCliente() {
   if (!clienteActual || !clienteActual.celular) return;
-  window.location.href = 'tel:+57' + clienteActual.celular;
+  // Limpiar el número y agregar prefijo Colombia
+  const num = String(clienteActual.celular).replace(/\D/g, '');
+  const tel = num.startsWith('57') ? '+' + num : '+57' + num;
+  window.open('tel:' + tel, '_self');
 }
 
 // ============================================================
