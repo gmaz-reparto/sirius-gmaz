@@ -1314,16 +1314,12 @@ async function cargarDatos() {
   document.getElementById('splash-estado').textContent = 'Cargando rutas del día...';
 
   try {
-    // Cache busting: timestamp único cada llamada
-    const url = CONFIG.API_URL + '?t=' + Date.now() + '&n=' + Math.random();
+    // Timestamp en URL para evitar caché — sin headers personalizados (causan CORS)
+    const url = CONFIG.API_URL + '?t=' + Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
     
-    const res = await fetch(url, { 
-      signal: controller.signal,
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
-    });
+    const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
     
     if (!res.ok) throw new Error('HTTP ' + res.status);
