@@ -726,7 +726,7 @@ html, body {
 // CONFIGURACIÓN — NO MODIFICAR
 // ============================================================
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzgkvg4Yereku_FnHFVqiEkmr2LRBdrGkyqLh7QO8SCSFuauS03tltdccMiy_CRICu5OQ/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbxOkdNDEWSBEZ-u4cJTeb1JbXhZFuDals_3TnyKS-3PX7eyqbK5Ivlngm6fgFrRDN1fpg/exec',
   API_KEY: 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
   VERSION: '2.0'
 };
@@ -839,7 +839,15 @@ async function cargarDatos() {
   document.getElementById('splash-estado').textContent = 'Cargando rutas del día...';
 
   try {
-    const res = await fetch(CONFIG.API_URL);
+    // Timestamp para evitar caché del navegador
+    const url = CONFIG.API_URL + '?t=' + Date.now() + '&d=' + new Date().toDateString().replace(/ /g,'');
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     
     const json = await res.json();
@@ -851,7 +859,6 @@ async function cargarDatos() {
 
   } catch(e) {
     console.log('Error API:', e.message);
-    // Fallback datos embebidos
     CLIENTES = DATOS_BASE;
     document.getElementById('splash-estado').textContent = '⚠ ' + CLIENTES.length + ' clientes (sin conexión)';
     setTimeout(mostrarPantallaRutas, 500);
