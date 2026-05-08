@@ -886,23 +886,21 @@ function parsearJSON(json) {
     let coord1 = parseCoordenada(row[latKey]);
     let coord2 = parseCoordenada(row[lngKey]);
     
-    // Auto-detectar cuál es lat y cuál es lng para Colombia
-    // Latitud Colombia: 0.5 a 3, Longitud Colombia: -79 a -66
+    // Auto-detectar lat/lng: en Colombia lat ~1.2, lng ~-77
     let lat, lng;
     if (coord1 < 0 && coord2 > 0) {
-      // coord1 es longitud, coord2 es latitud
       lng = coord1; lat = coord2;
     } else if (coord2 < 0 && coord1 > 0) {
-      // coord2 es longitud, coord1 es latitud
       lat = coord1; lng = coord2;
     } else {
       lat = coord1; lng = coord2;
     }
 
-    if (isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
-    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
+    // Validar rango Colombia: lat 0-5, lng -82 a -60
+    if (isNaN(lat) || isNaN(lng)) continue;
+    if (lat < -5 || lat > 15) continue;
+    if (lng < -82 || lng > -60) continue;
 
-    const ruta = String(row[rutaKey] || '').trim();
     if (!ruta) continue;
 
     // Limpiar celular
