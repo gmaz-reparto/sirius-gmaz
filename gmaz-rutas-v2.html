@@ -880,14 +880,24 @@ function parsearJSON(json) {
       if (!str || str === '0') return NaN;
       const num = parseFloat(str);
       if (isNaN(num)) return NaN;
-      // Si el valor absoluto > 180, tiene punto decimal implícito
-      // Ej: -77272400 → -77.2724 (dividir por 1000000)
-      // Ej: 1198424 → 1.198424 (dividir por 1000000)
       if (Math.abs(num) > 180) return num / 1000000;
       return num;
     }
-    const lat = parseCoordenada(row[latKey]);
-    const lng = parseCoordenada(row[lngKey]);
+    let coord1 = parseCoordenada(row[latKey]);
+    let coord2 = parseCoordenada(row[lngKey]);
+    
+    // Auto-detectar cuál es lat y cuál es lng para Colombia
+    // Latitud Colombia: 0.5 a 3, Longitud Colombia: -79 a -66
+    let lat, lng;
+    if (coord1 < 0 && coord2 > 0) {
+      // coord1 es longitud, coord2 es latitud
+      lng = coord1; lat = coord2;
+    } else if (coord2 < 0 && coord1 > 0) {
+      // coord2 es longitud, coord1 es latitud
+      lat = coord1; lng = coord2;
+    } else {
+      lat = coord1; lng = coord2;
+    }
 
     if (isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
     if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
