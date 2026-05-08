@@ -726,7 +726,7 @@ html, body {
 // CONFIGURACIÓN — NO MODIFICAR
 // ============================================================
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbxOkdNDEWSBEZ-u4cJTeb1JbXhZFuDals_3TnyKS-3PX7eyqbK5Ivlngm6fgFrRDN1fpg/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbyrVqJFsaSeVMuMMfZBnAwglNRqgQ2-YydEkZVX5KZPDJUzNyNadC_hp-PUYUzHEc1_xA/exec',
   API_KEY: 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
   VERSION: '2.0'
 };
@@ -867,50 +867,62 @@ async function cargarDatos() {
 
 function parsearJSON(json) {
   const clientes = [];
+
+  function parseNum(val) {
+    const s = String(val || '').trim().replace(',', '.');
+    if (!s || s === '0') return null;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+
+  function corregirLng(v) {
+    if (v === null) return null;
+    if (Math.abs(v) > 1000000) return v / 1000000;
+    if (v < -100) return v / 10;          // -772.703 → -77.2703
+    if (v > -10 && v < 0) return v * 10;  // -7.728 → -77.28
+    return v;
+  }
+
+  function corregirLat(v) {
+    if (v === null) return null;
+    if (Math.abs(v) > 1000000) return v / 1000000;
+    if (v > 10 && v < 200) return v / 100;  // 119.4 → 1.194
+    if (v > 200) return v / 1000;
+    return v;
+  }
+
   for (const row of json) {
-    // Buscar columnas flexiblemente
     const keys = Object.keys(row);
     const find = (...words) => keys.find(k => words.some(w => k.toUpperCase().includes(w.toUpperCase()))) || '';
 
-    const codigoKey   = find('CODIGO');
-    const nombreKey   = find('NOMBRE');
-    const rutaKey     = find('RUTA');
-    const latKey      = find('LAT', 'GEOCAPTURA 2', 'GEOCAPTURA2');
-    const lngKey      = find('LNG', 'GEOCAPTURA 1', 'GEOCAPTURA1');
-    const dirKey      = find('DIRECCION', 'DIRECCIÓN');
-    const barrioKey   = find('BARRIO');
-    const celularKey  = find('CELULAR', 'TELEFONO');
+    const codigoKey  = find('CODIGO');
+    const nombreKey  = find('NOMBRE');
+    const rutaKey    = find('RUTA');
+    const latKey     = find('LAT', 'GEOCAPTURA 2', 'GEOCAPTURA2');
+    const lngKey     = find('LNG', 'GEOCAPTURA 1', 'GEOCAPTURA1');
+    const dirKey     = find('DIRECCION', 'DIRECCIÓN');
+    const barrioKey  = find('BARRIO');
+    const celularKey = find('CELULAR', 'TELEFONO');
 
-    // Coordenadas pueden venir como -77272400 (sin punto) o -77.2724 (con punto)
-    function parseCoordenada(val) {
-      const str = String(val || '').trim();
-      if (!str || str === '0') return NaN;
-      const num = parseFloat(str);
-      if (isNaN(num)) return NaN;
-      if (Math.abs(num) > 180) return num / 1000000;
-      return num;
-    }
-    let coord1 = parseCoordenada(row[latKey]);
-    let coord2 = parseCoordenada(row[lngKey]);
-    
-    // Auto-detectar lat/lng: en Colombia lat ~1.2, lng ~-77
+    const ruta = String(row[rutaKey] || '').trim();
+    if (!ruta || !ruta.startsWith('KA4V')) continue;
+
+    let c1 = parseNum(row[latKey]);
+    let c2 = parseNum(row[lngKey]);
+    if (c1 === null || c2 === null) continue;
+
     let lat, lng;
-    if (coord1 < 0 && coord2 > 0) {
-      lng = coord1; lat = coord2;
-    } else if (coord2 < 0 && coord1 > 0) {
-      lat = coord1; lng = coord2;
+    if (c1 < 0 && c2 >= 0) {
+      lng = corregirLng(c1); lat = corregirLat(c2);
+    } else if (c2 < 0 && c1 >= 0) {
+      lat = corregirLat(c1); lng = corregirLng(c2);
     } else {
-      lat = coord1; lng = coord2;
+      lat = corregirLat(c1); lng = corregirLng(c2);
     }
 
-    // Validar rango Colombia: lat 0-5, lng -82 a -60
-    if (isNaN(lat) || isNaN(lng)) continue;
-    if (lat < -5 || lat > 15) continue;
-    if (lng < -82 || lng > -60) continue;
+    if (!lat || !lng) continue;
+    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
 
-    if (!ruta) continue;
-
-    // Limpiar celular
     let celular = String(row[celularKey] || '').replace(/[^0-9]/g, '');
     if (celular === '0' || celular.length < 7) celular = '';
 
