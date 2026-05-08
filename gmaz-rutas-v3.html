@@ -861,7 +861,7 @@ html, body {
     <div class="header-logo">
       <div class="header-acento"></div>
       <div class="header-titulo">
-        <div class="header-gmaz">GMAZ</div>
+        <div class="header-gmaz" ondblclick="activarPanelCoordinador()" onclick="activarPanelCoordinador()">GMAZ</div>
         <div class="header-subtitulo">Rutas de entrega</div>
       </div>
     </div>
@@ -886,6 +886,18 @@ html, body {
     </svg>
     Ver Facturas del Día
   </button>
+
+  <!-- Botón coordinador — oculto, se activa con doble toque en el logo GMAZ -->
+  <div id="panel-coordinador" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.18); padding:20px; width:90%; max-width:400px; z-index:9999;">
+    <div style="font-weight:700; font-size:15px; color:#E30613; margin-bottom:12px;">📋 Cargar Datos del Día</div>
+    <div style="font-size:13px; color:#666; margin-bottom:12px;">Selecciona el archivo Excel convertido por Claude</div>
+    <input type="file" id="input-excel" accept=".xlsx,.xls,.csv" style="display:none" onchange="subirExcelASupabase(this)">
+    <button onclick="document.getElementById('input-excel').click()" style="width:100%; background:#E30613; color:#fff; border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:600; cursor:pointer;">
+      📂 Seleccionar Excel
+    </button>
+    <div id="upload-estado" style="margin-top:10px; font-size:13px; color:#333; text-align:center;"></div>
+    <button onclick="document.getElementById('panel-coordinador').style.display='none'" style="width:100%; background:#f5f5f5; color:#666; border:none; border-radius:10px; padding:10px; font-size:13px; margin-top:8px; cursor:pointer;">Cerrar</button>
+  </div>
 </div>
 
 <!-- PANTALLA MAPA -->
@@ -1201,10 +1213,16 @@ html, body {
 // CONFIGURACIÓN — NO MODIFICAR
 // ============================================================
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzv3hdoCEovA9McB8zbCYA1hY2f14bgbiqr2lWnXR5Id_-gFbO93aMY31z-Aw3xYC5GbQ/exec',
   API_KEY: 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
-  VERSION: '2.0'
+  VERSION: '3.0'
 };
+
+// ============================================================
+// SUPABASE — configuración
+// ============================================================
+const SUPABASE_URL  = 'https://arcymdurfmlubtgfyawn.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY3ltZHVyZm1sdWJ0Z2Z5YXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk1MDMsImV4cCI6MjA5MTUxNTUwM30.UpfEw5oZcntnyaS9F6om0dUwPjTvrEyTC4HVd1xYjv8';
+const SUPABASE_TABLE = 'clientes_rutas';
 
 // ============================================================
 // ESTADO GLOBAL
@@ -1314,28 +1332,39 @@ async function cargarDatos() {
   document.getElementById('splash-estado').textContent = 'Cargando rutas del día...';
 
   try {
-    // Timestamp en URL para evitar caché — sin headers personalizados (causan CORS)
-    const url = CONFIG.API_URL + '?t=' + Date.now();
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    // Leer desde Supabase — sin CORS, siempre fresco
+    const hoy = new Date().toISOString().split('T')[0];
+    const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&fecha=eq.${hoy}&limit=2000`;
     
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-    
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    });
+
     if (!res.ok) throw new Error('HTTP ' + res.status);
     
     const json = await res.json();
-    if (!Array.isArray(json) || json.length === 0) throw new Error('Sin datos');
-
-    const parsed = parsearJSON(json);
-    if (parsed.length === 0) throw new Error('No se pudieron parsear clientes');
     
-    CLIENTES = parsed;
+    if (!Array.isArray(json) || json.length === 0) {
+      // Si no hay datos de hoy, cargar los más recientes
+      const urlReciente = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=created_at.desc&limit=2000`;
+      const res2 = await fetch(urlReciente, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      const json2 = await res2.json();
+      if (!Array.isArray(json2) || json2.length === 0) throw new Error('Sin datos en Supabase');
+      CLIENTES = json2;
+    } else {
+      CLIENTES = json;
+    }
+
     document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes';
     setTimeout(mostrarPantallaRutas, 500);
 
   } catch(e) {
-    console.log('Error API:', e.message);
+    console.log('Error Supabase:', e.message);
     CLIENTES = DATOS_BASE;
     document.getElementById('splash-estado').textContent = '⚠ ' + CLIENTES.length + ' clientes (sin conexión)';
     setTimeout(mostrarPantallaRutas, 500);
@@ -1416,6 +1445,155 @@ function parsearJSON(json) {
   }
   console.log('✅ Clientes desde API:', clientes.length);
   return clientes;
+}
+
+// ============================================================
+// SUBIDA DE DATOS A SUPABASE (solo coordinador)
+// ============================================================
+// Activa el panel con doble clic en el logo GMAZ
+let logoClicks = 0;
+function activarPanelCoordinador() {
+  logoClicks++;
+  if (logoClicks >= 2) {
+    logoClicks = 0;
+    document.getElementById('panel-coordinador').style.display = 'block';
+  }
+  setTimeout(() => { logoClicks = 0; }, 800);
+}
+
+async function subirExcelASupabase(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const estado = document.getElementById('upload-estado');
+  estado.textContent = '⏳ Procesando archivo...';
+
+  try {
+    // Leer el archivo
+    const data = await file.arrayBuffer();
+    let clientes = [];
+
+    if (file.name.endsWith('.csv')) {
+      // Procesar CSV
+      const texto = new TextDecoder().decode(data);
+      clientes = parsearCSVParaSubabase(texto);
+    } else {
+      // Procesar Excel con SheetJS
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws);
+      clientes = procesarFilasExcel(rows);
+    }
+
+    if (clientes.length === 0) {
+      estado.textContent = '❌ No se encontraron clientes válidos';
+      return;
+    }
+
+    estado.textContent = `⏳ Subiendo ${clientes.length} clientes a Supabase...`;
+
+    // Borrar datos anteriores de hoy e insertar nuevos
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    // Borrar datos del día
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?fecha=eq.${hoy}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+
+    // Insertar en bloques de 500
+    const bloques = [];
+    for (let i = 0; i < clientes.length; i += 500) {
+      bloques.push(clientes.slice(i, i + 500));
+    }
+
+    for (const bloque of bloques) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(bloque)
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error('Supabase: ' + err);
+      }
+    }
+
+    estado.textContent = `✅ ${clientes.length} clientes cargados para hoy`;
+    
+    // Recargar datos en la app
+    setTimeout(() => {
+      document.getElementById('panel-coordinador').style.display = 'none';
+      cargarDatos();
+    }, 1500);
+
+  } catch(e) {
+    estado.textContent = '❌ Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+function procesarFilasExcel(rows) {
+  const hoy = new Date().toISOString().split('T')[0];
+  const clientes = [];
+
+  for (const row of rows) {
+    const keys = Object.keys(row);
+    const find = (...words) => keys.find(k => words.some(w => String(k).toUpperCase().includes(w.toUpperCase()))) || '';
+
+    const codigoKey  = find('CODIGO');
+    const nombreKey  = find('NOMBRE');
+    const rutaKey    = find('RUTA');
+    const latKey     = find('LAT', 'GEOCAPTURA 2', 'GEOCAPTURA2');
+    const lngKey     = find('LNG', 'GEOCAPTURA 1', 'GEOCAPTURA1');
+    const dirKey     = find('DIRECCION');
+    const barrioKey  = find('BARRIO');
+    const celularKey = find('CELULAR');
+
+    const ruta = String(row[rutaKey] || '').trim();
+    if (!ruta || !ruta.startsWith('KA4V')) continue;
+
+    const lat = parseFloat(String(row[latKey] || '').replace(',', '.'));
+    const lng = parseFloat(String(row[lngKey] || '').replace(',', '.'));
+    if (isNaN(lat) || isNaN(lng)) continue;
+    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
+
+    let celular = String(row[celularKey] || '').replace(/[^0-9]/g, '');
+    if (celular === '0' || celular.length < 7) celular = '';
+
+    clientes.push({
+      id:        String(row[codigoKey] || Date.now() + Math.random()).trim(),
+      nombre:    String(row[nombreKey] || '').trim(),
+      ruta:      ruta,
+      lat:       lat,
+      lng:       lng,
+      direccion: String(row[dirKey]    || '').trim(),
+      barrio:    String(row[barrioKey] || '').trim(),
+      celular:   celular,
+      fecha:     hoy
+    });
+  }
+  return clientes;
+}
+
+function parsearCSVParaSubabase(texto) {
+  const lineas = texto.trim().split('\n');
+  if (lineas.length < 2) return [];
+  const headers = lineas[0].split(',').map(h => h.replace(/"/g,'').trim());
+  const rows = [];
+  for (let i = 1; i < lineas.length; i++) {
+    const cols = lineas[i].split(',');
+    const row = {};
+    headers.forEach((h, j) => { row[h] = (cols[j] || '').replace(/"/g,'').trim(); });
+    rows.push(row);
+  }
+  return procesarFilasExcel(rows);
 }
 
 function parsearCSV(texto) {
