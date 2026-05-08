@@ -726,7 +726,7 @@ html, body {
 // CONFIGURACIÓN — NO MODIFICAR
 // ============================================================
 const CONFIG = {
-  CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSbFZEtOf6cFK_jGPiyRjA2pIZ48ltMnvwHMGo7hRuINEEfk5xwE4iDO8Ebcy9AqEVbz8mrXC3a_dg7/pub?gid=0&single=true&output=csv',
+  API_URL: 'https://script.google.com/macros/s/AKfycbx_b8eGnUooah6EnaJX-wTJThH9IwyKUDoms0WG4G9v5ol-usjAPBxOAAgRSFgdbSrYrg/exec',
   API_KEY: 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
   VERSION: '2.0'
 };
@@ -838,40 +838,68 @@ const DATOS_BASE = [{"id": "1224423095", "nombre": "DISTRIBUCIONES ANDRADE", "ru
 async function cargarDatos() {
   document.getElementById('splash-estado').textContent = 'Cargando rutas del día...';
 
-  // SIEMPRE intentar Sheets primero — tiene los datos más frescos con barrio y celular
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(CONFIG.API_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    
+    const json = await res.json();
+    if (!Array.isArray(json) || json.length === 0) throw new Error('Sin datos');
 
-    const res = await fetch(CONFIG.CSV_URL + '&nocache=' + Date.now(), {
-      signal: controller.signal,
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    clearTimeout(timeout);
+    CLIENTES = parsearJSON(json);
+    document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes';
+    setTimeout(mostrarPantallaRutas, 500);
 
-    if (res.ok) {
-      const texto = await res.text();
-      console.log('CSV recibido, longitud:', texto.length);
-      if (texto && texto.length > 100 && texto.includes('CODIGO')) {
-        const parsed = parsearCSV(texto);
-        if (parsed.length > 0) {
-          CLIENTES = parsed;
-          document.getElementById('splash-estado').textContent = '✓ ' + CLIENTES.length + ' clientes';
-          setTimeout(mostrarPantallaRutas, 500);
-          return;
-        }
-      }
-    }
   } catch(e) {
-    console.log('Error Sheets:', e.message);
+    console.log('Error API:', e.message);
+    // Fallback datos embebidos
+    CLIENTES = DATOS_BASE;
+    document.getElementById('splash-estado').textContent = '⚠ ' + CLIENTES.length + ' clientes (sin conexión)';
+    setTimeout(mostrarPantallaRutas, 500);
   }
+}
 
-  // Fallback: datos embebidos en el HTML
-  console.log('Usando datos embebidos');
-  CLIENTES = DATOS_BASE;
-  document.getElementById('splash-estado').textContent = '⚠ ' + CLIENTES.length + ' clientes (sin conexión)';
-  setTimeout(mostrarPantallaRutas, 500);
+function parsearJSON(json) {
+  const clientes = [];
+  for (const row of json) {
+    // Buscar columnas flexiblemente
+    const keys = Object.keys(row);
+    const find = (...words) => keys.find(k => words.some(w => k.toUpperCase().includes(w.toUpperCase()))) || '';
+
+    const codigoKey   = find('CODIGO');
+    const nombreKey   = find('NOMBRE');
+    const rutaKey     = find('RUTA');
+    const latKey      = find('LAT', 'GEOCAPTURA 2', 'GEOCAPTURA2');
+    const lngKey      = find('LNG', 'GEOCAPTURA 1', 'GEOCAPTURA1');
+    const dirKey      = find('DIRECCION', 'DIRECCIÓN');
+    const barrioKey   = find('BARRIO');
+    const celularKey  = find('CELULAR', 'TELEFONO');
+
+    const lat = parseFloat(String(row[latKey] || '').replace(',', '.'));
+    const lng = parseFloat(String(row[lngKey] || '').replace(',', '.'));
+
+    if (isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
+    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
+
+    const ruta = String(row[rutaKey] || '').trim();
+    if (!ruta) continue;
+
+    // Limpiar celular
+    let celular = String(row[celularKey] || '').replace(/[^0-9]/g, '');
+    if (celular === '0' || celular.length < 7) celular = '';
+
+    clientes.push({
+      id:        String(row[codigoKey] || '').trim(),
+      nombre:    String(row[nombreKey] || '').trim(),
+      ruta:      ruta,
+      lat:       lat,
+      lng:       lng,
+      direccion: String(row[dirKey]    || '').trim(),
+      barrio:    String(row[barrioKey] || '').trim(),
+      celular:   celular
+    });
+  }
+  console.log('✅ Clientes desde API:', clientes.length);
+  return clientes;
 }
 
 function parsearCSV(texto) {
