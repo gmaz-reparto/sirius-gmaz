@@ -874,8 +874,20 @@ function parsearJSON(json) {
     const barrioKey   = find('BARRIO');
     const celularKey  = find('CELULAR', 'TELEFONO');
 
-    const lat = parseFloat(String(row[latKey] || '').replace(',', '.'));
-    const lng = parseFloat(String(row[lngKey] || '').replace(',', '.'));
+    // Coordenadas pueden venir como -77272400 (sin punto) o -77.2724 (con punto)
+    function parseCoordenada(val) {
+      const str = String(val || '').trim();
+      if (!str || str === '0') return NaN;
+      const num = parseFloat(str);
+      if (isNaN(num)) return NaN;
+      // Si el valor absoluto > 180, tiene punto decimal implícito
+      // Ej: -77272400 → -77.2724 (dividir por 1000000)
+      // Ej: 1198424 → 1.198424 (dividir por 1000000)
+      if (Math.abs(num) > 180) return num / 1000000;
+      return num;
+    }
+    const lat = parseCoordenada(row[latKey]);
+    const lng = parseCoordenada(row[lngKey]);
 
     if (isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.1 || Math.abs(lng) < 0.1) continue;
     if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
