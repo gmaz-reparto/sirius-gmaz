@@ -1542,33 +1542,54 @@ async function subirExcelASupabase(input) {
 function procesarFilasExcel(rows) {
   const hoy = new Date().toISOString().split('T')[0];
   const clientes = [];
+  if (!rows || rows.length === 0) return clientes;
+
+  // Normaliza claves: quita tildes, guiones bajos → espacio, mayúsculas
+  const norm = s => String(s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[_\-]+/g,' ').trim().toUpperCase();
 
   for (const row of rows) {
-    const keys = Object.keys(row);
-    const find = (...words) => keys.find(k => words.some(w => String(k).toUpperCase().includes(w.toUpperCase()))) || '';
+    const keys    = Object.keys(row);
+    const normMap = {};
+    keys.forEach(k => { normMap[norm(k)] = k; });
 
-    const codigoKey  = find('CODIGO');
-    const nombreKey  = find('NOMBRE');
-    const rutaKey    = find('RUTA');
-    const latKey     = find('LAT', 'GEOCAPTURA 2', 'GEOCAPTURA2');
-    const lngKey     = find('LNG', 'GEOCAPTURA 1', 'GEOCAPTURA1');
-    const dirKey     = find('DIRECCION');
+    // Busca la clave real por palabras clave normalizadas
+    const find = (...words) => {
+      for (const w of words) {
+        const wu = w.toUpperCase();
+        for (const nk of Object.keys(normMap)) {
+          if (nk.includes(wu)) return normMap[nk];
+        }
+      }
+      return '';
+    };
+
+    // Compatible con archivo original del sistema Y con el Excel convertido
+    const codigoKey  = find('CODIGO','UBICACION','ID DE U');
+    const nombreKey  = find('NOMBRE','DESCRIPCION');
+    const rutaKey    = find('ID DE RUTA','ID RUTA','RUTA');
+    const latKey     = find('LATITUD','LAT','GEOCAPTURA 2','GEOCAPTURA2');
+    const lngKey     = find('LONGITUD','LNG','GEOCAPTURA 1','GEOCAPTURA1');
+    const dirKey     = find('DIRECCION','LINEA 1','DIRECTION');
     const barrioKey  = find('BARRIO');
-    const celularKey = find('CELULAR');
+    const celularKey = find('CELULAR','TELEFONO');
 
     const ruta = String(row[rutaKey] || '').trim();
     if (!ruta || !ruta.startsWith('KA4V')) continue;
 
-    const lat = parseFloat(String(row[latKey] || '').replace(',', '.'));
-    const lng = parseFloat(String(row[lngKey] || '').replace(',', '.'));
+    const latRaw = row[latKey];
+    const lngRaw = row[lngKey];
+    const lat = typeof latRaw === 'number' ? latRaw : parseFloat(String(latRaw||'').replace(',','.'));
+    const lng = typeof lngRaw === 'number' ? lngRaw : parseFloat(String(lngRaw||'').replace(',','.'));
     if (isNaN(lat) || isNaN(lng)) continue;
     if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
 
-    let celular = String(row[celularKey] || '').replace(/[^0-9]/g, '');
+    let celular = String(row[celularKey] || '').replace(/[^0-9]/g,'');
     if (celular === '0' || celular.length < 7) celular = '';
 
     clientes.push({
-      id:        String(row[codigoKey] || Date.now() + Math.random()).trim(),
+      id:        String(row[codigoKey] || Date.now()+Math.random()).trim(),
       nombre:    String(row[nombreKey] || '').trim(),
       ruta:      ruta,
       lat:       lat,
@@ -1579,6 +1600,7 @@ function procesarFilasExcel(rows) {
       fecha:     hoy
     });
   }
+  console.log('procesarFilasExcel → clientes válidos:', clientes.length);
   return clientes;
 }
 
