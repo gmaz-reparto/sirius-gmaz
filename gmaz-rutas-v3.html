@@ -2649,53 +2649,6 @@ async function cargarPdfJs() {
   });
 }
 
-      for (let p = 1; p <= total; p++) {
-        const page    = await pdf.getPage(p);
-        const content = await page.getTextContent();
-        const texto   = content.items.map(i => i.str).join(' ');
-
-        const codigos = texto.match(/\b12\d{8}\b/g);
-        if (!codigos) continue;
-
-        const datos = extraerDatosPagina(texto);
-
-        const codigoUnico = [...new Set(codigos)];
-        for (const codigo of codigoUnico) {
-          if (!factClientes[codigo]) {
-            factClientes[codigo] = {
-              codigo: codigo,
-              nombre: datos.nombre || '',
-              paginas: [],
-              datos: datos
-            };
-          }
-          const yaExiste = factClientes[codigo].paginas.some(
-            pg => pg.archivoId === archivo.id && pg.pagina === p
-          );
-          if (!yaExiste) {
-            factClientes[codigo].paginas.push({
-              archivoId: archivo.id,
-              archivoNombre: archivo.nombre,
-              archivoUrl: archivo.url,
-              pagina: p,
-              tipo: tipo,
-              pdfBuffer: buf
-            });
-          }
-          // Actualizar nombre si está vacío
-          if (!factClientes[codigo].nombre && datos.nombre) {
-            factClientes[codigo].nombre = datos.nombre;
-            factClientes[codigo].datos = datos;
-          }
-        }
-      }
-    } catch(e) {
-      console.log('Error indexando', archivo.nombre, e.message);
-    }
-  }
-  console.log('Clientes indexados:', Object.keys(factClientes).length);
-}
-
 // ============================================================
 // EXTRAER DATOS DE UNA PÁGINA PDF
 // ============================================================
