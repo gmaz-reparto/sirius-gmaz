@@ -910,6 +910,16 @@ html, body {
     </button>
     <div id="upload-pdf-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
 
+    <div style="border-top:1px solid #F0F0F0; margin:16px 0;"></div>
+
+    <div style="font-weight:600; font-size:13px; color:#333; margin-bottom:8px;">📋 3. Subir Índice de Facturas</div>
+    <div style="font-size:12px; color:#666; margin-bottom:10px;">FACTURAS_INDEX.json generado por el Conversor</div>
+    <input type="file" id="input-index" accept=".json" style="display:none" onchange="subirIndexASupabase(this)">
+    <button onclick="document.getElementById('input-index').click()" style="width:100%; background:#059669; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;">
+      📂 Seleccionar FACTURAS_INDEX.json
+    </button>
+    <div id="upload-index-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
+
     <button onclick="document.getElementById('panel-coordinador').style.display='none'" style="width:100%; background:#f5f5f5; color:#666; border:none; border-radius:10px; padding:10px; font-size:13px; margin-top:14px; cursor:pointer;">Cerrar</button>
   </div>
 </div>
@@ -2466,7 +2476,37 @@ async function subirPDFsASupabase(input) {
   }
 }
 
-// URL pública de un archivo en storage
+// Sube FACTURAS_INDEX.json al bucket
+async function subirIndexASupabase(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const estado = document.getElementById('upload-index-estado');
+  estado.textContent = '⏳ Subiendo índice...';
+  try {
+    const path = _hoy() + '/FACTURAS_INDEX.json';
+    const res = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'x-upsert': 'true'
+        },
+        body: file
+      }
+    );
+    if (res.ok) {
+      estado.textContent = '✅ Índice subido correctamente';
+    } else {
+      const err = await res.text();
+      estado.textContent = '❌ Error: ' + err;
+    }
+  } catch(e) {
+    estado.textContent = '❌ Error: ' + e.message;
+  }
+}
 function _pdfUrl(nombre) {
   return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${_hoy()}/${encodeURIComponent(nombre)}`;
 }
@@ -2499,16 +2539,29 @@ function abrirFacturas() {
 // Abrir facturas con el cliente actual pre-buscado
 function abrirFacturasCliente() {
   if (!clienteActual) return;
+  const codigo = clienteActual.id;
   cerrarModal();
+
+  // Si el índice ya está cargado y tiene el cliente, abrir directo
+  if (factClientes[codigo]) {
+    abrirDetalle(factClientes[codigo]);
+    return;
+  }
+
+  // Si no está listo el índice, abrir pantalla facturas y esperar
   abrirFacturas();
-  // Esperar a que cargue y luego pre-buscar
-  setTimeout(() => {
-    const input = document.getElementById('fact-search-input');
-    if (input) {
-      input.value = clienteActual.id;
-      input.dispatchEvent(new Event('input'));
+  const intentar = (intentos) => {
+    if (factClientes[codigo]) {
+      abrirDetalle(factClientes[codigo]);
+      return;
     }
-  }, 800);
+    if (intentos > 20) {
+      mostrarToast('⚠ Este cliente no tiene facturas hoy');
+      return;
+    }
+    setTimeout(() => intentar(intentos + 1), 500);
+  };
+  setTimeout(() => intentar(0), 600);
 }
 
 function cerrarFacturas() {
@@ -2522,7 +2575,7 @@ function cerrarDetalle() {
 }
 
 // ============================================================
-// CARGAR ARCHIVOS DESDE SUPABASE STORAGE
+// CARGAR ÍNDICE DESDE SUPABASE STORAGE
 // ============================================================
 async function cargarArchivosFacturas() {
   const dot = document.getElementById('fact-estado-dot');
@@ -2530,48 +2583,50 @@ async function cargarArchivosFacturas() {
   const cnt = document.getElementById('fact-archivos-count');
 
   dot.className = 'fact-estado-dot cargando';
-  txt.textContent = 'Buscando facturas del día...';
+  txt.textContent = 'Cargando índice de facturas...';
   cnt.textContent = '';
+  factClientes = {};
 
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/list/${STORAGE_BUCKET}`,
-      {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prefix: _hoy() + '/', limit: 20 })
-      }
-    );
+    // Leer FACTURAS_INDEX.json desde Supabase Storage
+    const indexUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${_hoy()}/FACTURAS_INDEX.json`;
+    const res = await fetch(indexUrl + '?t=' + Date.now());
 
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const archivos = await res.json();
+    if (!res.ok) throw new Error('Sin índice');
 
-    const pdfs = Array.isArray(archivos) ? archivos.filter(f => f.name.toLowerCase().endsWith('.pdf')) : [];
+    const index = await res.json();
+    const codigos = Object.keys(index);
 
-    if (pdfs.length === 0) {
-      dot.className = 'fact-estado-dot error';
-      txt.textContent = 'No hay PDFs subidos hoy';
-      cnt.textContent = '';
-      return;
+    if (codigos.length === 0) throw new Error('Índice vacío');
+
+    // Convertir índice a formato interno factClientes
+    for (const codigo of codigos) {
+      const paginas = index[codigo];
+      const clienteSumabase = CLIENTES.find(c => c.id === codigo);
+      factClientes[codigo] = {
+        codigo,
+        nombre: clienteSumabase ? clienteSumabase.nombre : '',
+        paginas: paginas.map(p => ({
+          archivoId:    p.archivo,
+          archivoNombre: p.archivo,
+          archivoUrl:   p.url,
+          pagina:       p.pagina,
+          tipo:         p.tipo
+        })),
+        datos: { direccion: clienteSumabase ? clienteSumabase.direccion : '' }
+      };
     }
 
-    factArchivos = pdfs.map(f => ({
-      nombre: f.name,
-      id: f.name,
-      url: _pdfUrl(f.name)
-    }));
-
     dot.className = 'fact-estado-dot';
-    txt.textContent = 'Archivos listos';
-    cnt.textContent = factArchivos.length + ' archivo' + (factArchivos.length > 1 ? 's' : '');
+    txt.textContent = 'Facturas listas';
+    cnt.textContent = codigos.length + ' clientes con facturas';
 
     await cargarPdfJs();
-    await indexarPDFs();
 
   } catch(e) {
     dot.className = 'fact-estado-dot error';
-    txt.textContent = 'Sin archivos — sube PDFs desde el panel';
-    console.log('Error storage:', e.message);
+    txt.textContent = 'Sube el FACTURAS_INDEX.json desde el panel';
+    console.log('Error índice:', e.message);
   }
 }
 
@@ -2593,21 +2648,6 @@ async function cargarPdfJs() {
     document.head.appendChild(s);
   });
 }
-
-// ============================================================
-// INDEXAR PDFs — extraer clientes por código
-// ============================================================
-async function indexarPDFs() {
-  factClientes = {};
-
-  for (const archivo of factArchivos) {
-    try {
-      const tipo = archivo.nombre.toLowerCase().includes('credit') ? 'credito' : 'soporte';
-      const res  = await fetch(archivo.url);
-      if (!res.ok) continue;
-      const buf  = await res.arrayBuffer();
-      const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
-      const total = pdf.numPages;
 
       for (let p = 1; p <= total; p++) {
         const page    = await pdf.getPage(p);
