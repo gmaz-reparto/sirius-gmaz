@@ -888,15 +888,29 @@ html, body {
   </button>
 
   <!-- Botón coordinador — oculto, se activa con doble toque en el logo GMAZ -->
-  <div id="panel-coordinador" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.18); padding:20px; width:90%; max-width:400px; z-index:9999;">
-    <div style="font-weight:700; font-size:15px; color:#E30613; margin-bottom:12px;">📋 Cargar Datos del Día</div>
-    <div style="font-size:13px; color:#666; margin-bottom:12px;">Selecciona el archivo GMAZ_HOY.json generado por Claude</div>
+  <div id="panel-coordinador" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.18); padding:20px; width:90%; max-width:400px; z-index:9999; max-height:80vh; overflow-y:auto;">
+    <div style="font-weight:700; font-size:15px; color:#E30613; margin-bottom:4px;">⚙️ Panel Coordinador</div>
+    <div style="font-size:11px; color:#999; margin-bottom:16px;">Solo visible para el coordinador</div>
+
+    <div style="font-weight:600; font-size:13px; color:#333; margin-bottom:8px;">📋 1. Cargar Clientes del Día</div>
+    <div style="font-size:12px; color:#666; margin-bottom:10px;">Archivo GMAZ_HOY.json generado por Claude</div>
     <input type="file" id="input-excel" accept=".json" style="display:none" onchange="subirExcelASupabase(this)">
-    <button onclick="document.getElementById('input-excel').click()" style="width:100%; background:#E30613; color:#fff; border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:600; cursor:pointer;">
-      📂 Seleccionar JSON
+    <button onclick="document.getElementById('input-excel').click()" style="width:100%; background:#E30613; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;">
+      📂 Seleccionar JSON de Clientes
     </button>
-    <div id="upload-estado" style="margin-top:10px; font-size:13px; color:#333; text-align:center;"></div>
-    <button onclick="document.getElementById('panel-coordinador').style.display='none'" style="width:100%; background:#f5f5f5; color:#666; border:none; border-radius:10px; padding:10px; font-size:13px; margin-top:8px; cursor:pointer;">Cerrar</button>
+    <div id="upload-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
+
+    <div style="border-top:1px solid #F0F0F0; margin:16px 0;"></div>
+
+    <div style="font-weight:600; font-size:13px; color:#333; margin-bottom:8px;">📄 2. Subir PDFs de Facturas</div>
+    <div style="font-size:12px; color:#666; margin-bottom:10px;">SOP_01, SOP_02, CREDITOS_PASTO — hasta 4 archivos. Los del día anterior se borran automáticamente.</div>
+    <input type="file" id="input-pdfs" accept=".pdf" multiple style="display:none" onchange="subirPDFsASupabase(this)">
+    <button onclick="document.getElementById('input-pdfs').click()" style="width:100%; background:#1A56DB; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;">
+      📂 Seleccionar PDFs (1-4 archivos)
+    </button>
+    <div id="upload-pdf-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
+
+    <button onclick="document.getElementById('panel-coordinador').style.display='none'" style="width:100%; background:#f5f5f5; color:#666; border:none; border-radius:10px; padding:10px; font-size:13px; margin-top:14px; cursor:pointer;">Cerrar</button>
   </div>
 </div>
 
@@ -1034,34 +1048,17 @@ html, body {
           <div class="modal-campo-valor" id="modal-direccion">—</div>
         </div>
       </div>
-      <div class="modal-campo">
-        <div class="modal-icono">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="#8A90A0" stroke-width="1.5"/><path d="M1 6h14" stroke="#8A90A0" stroke-width="1.5"/></svg>
-        </div>
-        <div class="modal-campo-info">
-          <div class="modal-campo-label">Barrio</div>
-          <div class="modal-campo-valor" id="modal-barrio">—</div>
-        </div>
-      </div>
-      <div class="modal-campo">
-        <div class="modal-icono">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 1h3l1.5 3.5-1.75 1.75a9 9 0 0 0 4 4L11.5 8.5 15 10v3a1 1 0 0 1-1 1A13 13 0 0 1 2 2a1 1 0 0 1 1-1z" fill="#8A90A0"/></svg>
-        </div>
-        <div class="modal-campo-info">
-          <div class="modal-campo-label">Celular</div>
-          <div class="modal-campo-valor" id="modal-celular">—</div>
-        </div>
-      </div>
+
     </div>
 
     <div class="modal-acciones">
       <button class="btn-accion btn-navegar" id="btn-navegar" onclick="abrirNavegacion()">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14L8 2l6 12-6-3-6 3z" fill="white"/></svg>
-        Navegar en Google Maps
+        Navegar
       </button>
-      <button class="btn-accion btn-llamar" id="btn-llamar" onclick="llamarCliente()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 1h3l1.5 3.5-1.75 1.75a9 9 0 0 0 4 4L11.5 8.5 15 10v3a1 1 0 0 1-1 1A13 13 0 0 1 2 2a1 1 0 0 1 1-1z" fill="#059669"/></svg>
-        Llamar
+      <button class="btn-accion" id="btn-facturas-modal" onclick="abrirFacturasCliente()" style="background:var(--rojo-suave);color:var(--rojo);border:1.5px solid rgba(227,6,19,0.2);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="10" height="13" rx="1.5" stroke="var(--rojo)" stroke-width="1.4"/><path d="M5 5h6M5 8h6M5 11h4" stroke="var(--rojo)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Ver Facturas
       </button>
       <button class="btn-accion btn-entregado" id="btn-entregado" onclick="marcarEstado('entregado')">
         <svg width="16" height="14" viewBox="0 0 16 14" fill="none"><path d="M1 7l5 5L15 1" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1498,7 +1495,7 @@ async function subirExcelASupabase(input) {
           'apikey': SUPABASE_KEY,
           'Authorization': 'Bearer ' + SUPABASE_KEY,
           'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
         },
         body: JSON.stringify(bloque)
       });
@@ -1950,12 +1947,6 @@ function abrirModal(cliente, orden) {
   document.getElementById('modal-nombre').textContent = cliente.nombre;
   document.getElementById('modal-codigo').textContent = 'Cód. ' + cliente.id;
   document.getElementById('modal-direccion').textContent = cliente.direccion || '—';
-  document.getElementById('modal-barrio').textContent = (cliente.barrio && cliente.barrio.trim()) ? cliente.barrio : 'Sin barrio registrado';
-  document.getElementById('modal-celular').textContent = (cliente.celular && cliente.celular.trim()) ? cliente.celular : 'Sin número registrado';
-
-  const btnLlamar = document.getElementById('btn-llamar');
-  btnLlamar.style.opacity = cliente.celular ? '1' : '0.4';
-  btnLlamar.style.pointerEvents = cliente.celular ? 'all' : 'none';
 
   const estado = estados[cliente.id] || 'pendiente';
   actualizarBotonesEstado(estado);
@@ -2080,30 +2071,49 @@ function abrirNavegacion() {
   if (!clienteActual) return;
   const lat = clienteActual.lat;
   const lng = clienteActual.lng;
-  const nombre = encodeURIComponent(clienteActual.nombre);
-  const dir = encodeURIComponent(clienteActual.direccion);
   
-  // URL que abre Google Maps app en Android directamente
-  // geo: abre la app nativa, fallback a web si no está instalada
-  const geoUrl = `geo:${lat},${lng}?q=${lat},${lng}(${nombre})`;
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
-  
-  // Intentar abrir app nativa primero
-  const link = document.createElement('a');
-  link.href = geoUrl;
-  link.target = '_blank';
-  link.rel = 'noopener';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  // Fallback a web Maps después de 500ms si la app no abre
-  setTimeout(() => {
-    window.open(mapsUrl, '_blank');
-  }, 500);
-  
-  mostrarToast('🗺 Abriendo Google Maps...');
   cerrarModal();
+
+  // Si no hay GPS del usuario, trazar desde el primer cliente pendiente
+  const origen = (userLat && userLng)
+    ? { lat: userLat, lng: userLng }
+    : { lat: clientesRuta[0]?.lat || lat, lng: clientesRuta[0]?.lng || lng };
+
+  const destino = { lat, lng };
+
+  // Mostrar panel de navegación
+  const panelNav = document.getElementById('panel-nav');
+  const navBadge = document.getElementById('nav-badge');
+  document.getElementById('nav-accion').textContent = clienteActual.nombre;
+  document.getElementById('nav-calle').textContent = clienteActual.direccion || 'Calculando...';
+  document.getElementById('nav-dist').textContent = '...';
+  panelNav.classList.add('visible');
+  if (navBadge) navBadge.style.display = 'block';
+
+  navegandoA = clienteActual;
+  mapGoogle.panTo(destino);
+
+  directionsService.route({
+    origin: origen,
+    destination: destino,
+    travelMode: google.maps.TravelMode.DRIVING
+  }, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+      const leg = result.routes[0]?.legs[0];
+      if (leg) {
+        document.getElementById('nav-dist').textContent = leg.distance?.text || '—';
+        document.getElementById('nav-unit').textContent = leg.duration?.text || '';
+        document.getElementById('nav-calle').textContent = leg.steps[0]?.instructions?.replace(/<[^>]*>/g,'') || clienteActual.direccion;
+      }
+      mostrarToast('🗺 Ruta trazada dentro del mapa');
+    } else {
+      // Fallback: solo centrar en el destino
+      mapGoogle.panTo(destino);
+      mapGoogle.setZoom(16);
+      mostrarToast('📍 Cliente marcado en el mapa');
+    }
+  });
 }
 
 function cerrarNav() {
@@ -2320,111 +2330,152 @@ window.initMap = function() {
 };
 
 // ============================================================
-// FIREBASE — USUARIOS ACTIVOS EN TIEMPO REAL
+// OJITO — USUARIOS ACTIVOS (Supabase presencia via REST)
 // ============================================================
-// INSTRUCCIÓN: Reemplaza estos valores con los de tu proyecto Firebase
-const FIREBASE_CONFIG = {
-  databaseURL: 'https://gmaz-rutas-default-rtdb.firebaseio.com'
-  // ⚠️ Reemplaza con tu URL de Firebase Realtime Database
-};
+let _ojito_session = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
-const FIREBASE_DB_URL = FIREBASE_CONFIG.databaseURL;
-let sessionId = null;
+async function _ojito_registrar() {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/presencia`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ session_id: _ojito_session, ts: new Date().toISOString() })
+    });
+  } catch(e) {}
+}
 
-function iniciarFirebase() {
-  sessionId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-  const presenceUrl = FIREBASE_DB_URL + '/activos/' + sessionId + '.json';
-  const countUrl    = FIREBASE_DB_URL + '/activos.json';
+async function _ojito_contar() {
+  try {
+    const limite = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/presencia?ts=gte.${encodeURIComponent(limite)}&select=session_id`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    const n = Array.isArray(rows) ? rows.length : 0;
+    ['ojito-num-rutas','ojito-num-mapa'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(n);
+    });
+  } catch(e) {}
+}
 
-  // Registrar presencia
-  async function registrar() {
-    try {
-      await fetch(presenceUrl, {
-        method: 'PUT',
-        body: JSON.stringify({ ts: Date.now(), ua: navigator.userAgent.substr(0, 40) })
-      });
-    } catch(e) {}
-  }
+async function _ojito_limpiar() {
+  try {
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/presencia?session_id=eq.${_ojito_session}`,
+      { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }, keepalive: true }
+    );
+  } catch(e) {}
+}
 
-  // Limpiar sesión propia al salir
-  async function limpiar() {
-    try {
-      await fetch(presenceUrl, { method: 'DELETE', keepalive: true });
-    } catch(e) {}
-  }
-
-  // Limpiar sesiones viejas (>10 min) y contar activos
-  async function actualizarContador() {
-    try {
-      const res = await fetch(countUrl);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (!data) { actualizarOjitos(0); return; }
-
-      const ahora = Date.now();
-      const limite = 10 * 60 * 1000; // 10 minutos
-      let activos = 0;
-      const viejos = [];
-
-      for (const [key, val] of Object.entries(data)) {
-        if (ahora - (val.ts || 0) < limite) {
-          activos++;
-        } else {
-          viejos.push(key);
-        }
-      }
-
-      // Limpiar viejos en background
-      for (const key of viejos) {
-        fetch(FIREBASE_DB_URL + '/activos/' + key + '.json', { method: 'DELETE' }).catch(() => {});
-      }
-
-      actualizarOjitos(activos);
-    } catch(e) {
-      actualizarOjitos(null);
-    }
-  }
-
-  function actualizarOjitos(n) {
-    const txt = n === null ? '—' : String(n);
-    const el1 = document.getElementById('ojito-num-rutas');
-    const el2 = document.getElementById('ojito-num-mapa');
-    if (el1) el1.textContent = txt;
-    if (el2) el2.textContent = txt;
-  }
-
-  // Iniciar
-  registrar();
-  actualizarContador();
-
-  // Renovar presencia cada 5 min
-  setInterval(() => { registrar(); actualizarContador(); }, 5 * 60 * 1000);
-
-  // Actualizar contador cada 30 seg
-  setInterval(actualizarContador, 30000);
-
-  // Limpiar al cerrar
-  window.addEventListener('beforeunload', limpiar);
+function iniciarOjito() {
+  _ojito_registrar();
+  _ojito_contar();
+  setInterval(() => { _ojito_registrar(); _ojito_contar(); }, 30000);
+  window.addEventListener('beforeunload', _ojito_limpiar);
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) limpiar();
-    else { registrar(); actualizarContador(); }
+    if (document.hidden) _ojito_limpiar();
+    else { _ojito_registrar(); _ojito_contar(); }
   });
 }
 
-// Iniciar Firebase al cargar
-document.addEventListener('DOMContentLoaded', iniciarFirebase);
+document.addEventListener('DOMContentLoaded', iniciarOjito);
 
 // ============================================================
-// FACTURAS — CONFIGURACIÓN DRIVE
+// FACTURAS — SUPABASE STORAGE
 // ============================================================
-// INSTRUCCIÓN: Reemplaza con la URL de tu Google Apps Script desplegado
-const FACTURAS_SCRIPT_URL = 'https://script.google.com/macros/s/TU_SCRIPT_ID_AQUI/exec';
+const STORAGE_BUCKET = 'facturas';
 
-let factArchivos = [];     // Lista de archivos del día desde Drive
-let factClientes = {};     // Mapa codigo -> {nombre, codigo, paginas:[{archivo, pagina, tipo}], datos:{}}
-let detalleActual = null;  // Cliente seleccionado actualmente
-let detPdfPages  = [];     // Páginas renderizadas del cliente actual
-let detPagActual = 0;      // Índice de página actual en vista previa
+function _hoy() { return new Date().toISOString().split('T')[0]; }
+function _ayer() {
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+// Sube los PDFs al bucket; borra la carpeta de ayer primero
+async function subirPDFsASupabase(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const estado = document.getElementById('upload-pdf-estado');
+  estado.textContent = '⏳ Preparando...';
+
+  try {
+    // 1. Borrar archivos de ayer
+    const folder_ayer = _ayer() + '/';
+    const listRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/list/${STORAGE_BUCKET}`,
+      {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix: folder_ayer, limit: 50 })
+      }
+    );
+    if (listRes.ok) {
+      const viejos = await listRes.json();
+      if (Array.isArray(viejos) && viejos.length > 0) {
+        await fetch(
+          `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}`,
+          {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prefixes: viejos.map(f => folder_ayer + f.name) })
+          }
+        );
+      }
+    }
+
+    // 2. Subir archivos de hoy
+    const folder_hoy = _hoy() + '/';
+    let subidos = 0;
+    for (const file of files) {
+      estado.textContent = `⏳ Subiendo ${file.name}...`;
+      const path = folder_hoy + file.name;
+      const res = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/pdf',
+            'x-upsert': 'true'
+          },
+          body: file
+        }
+      );
+      if (res.ok) subidos++;
+      else {
+        const err = await res.text();
+        console.error('Error subiendo', file.name, err);
+      }
+    }
+    estado.textContent = `✅ ${subidos}/${files.length} PDFs subidos para hoy`;
+    // Reindexar si la pantalla de facturas está abierta
+    if (!document.getElementById('pantalla-facturas').classList.contains('oculto')) {
+      cargarArchivosFacturas();
+    }
+  } catch(e) {
+    estado.textContent = '❌ Error: ' + e.message;
+  }
+}
+
+// URL pública de un archivo en storage
+function _pdfUrl(nombre) {
+  return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${_hoy()}/${encodeURIComponent(nombre)}`;
+}
+
+let factArchivos = [];
+let factClientes = {};
+let detalleActual = null;
+let detPdfPages  = [];
+let detPagActual = 0;
 let pdfLibCargada = false;
 
 // ============================================================
@@ -2445,6 +2496,21 @@ function abrirFacturas() {
   document.getElementById('fact-resultados').innerHTML = '';
 }
 
+// Abrir facturas con el cliente actual pre-buscado
+function abrirFacturasCliente() {
+  if (!clienteActual) return;
+  cerrarModal();
+  abrirFacturas();
+  // Esperar a que cargue y luego pre-buscar
+  setTimeout(() => {
+    const input = document.getElementById('fact-search-input');
+    if (input) {
+      input.value = clienteActual.id;
+      input.dispatchEvent(new Event('input'));
+    }
+  }, 800);
+}
+
 function cerrarFacturas() {
   document.getElementById('pantalla-facturas').classList.add('oculto');
   const input = document.getElementById('fact-search-input');
@@ -2456,45 +2522,56 @@ function cerrarDetalle() {
 }
 
 // ============================================================
-// CARGAR ARCHIVOS DESDE DRIVE (via Apps Script)
+// CARGAR ARCHIVOS DESDE SUPABASE STORAGE
 // ============================================================
 async function cargarArchivosFacturas() {
-  const dot  = document.getElementById('fact-estado-dot');
-  const txt  = document.getElementById('fact-estado-txt');
-  const cnt  = document.getElementById('fact-archivos-count');
+  const dot = document.getElementById('fact-estado-dot');
+  const txt = document.getElementById('fact-estado-txt');
+  const cnt = document.getElementById('fact-archivos-count');
 
   dot.className = 'fact-estado-dot cargando';
-  txt.textContent = 'Conectando con Drive...';
+  txt.textContent = 'Buscando facturas del día...';
   cnt.textContent = '';
 
   try {
-    const res = await fetch(FACTURAS_SCRIPT_URL + '?action=listar');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
+    const res = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/list/${STORAGE_BUCKET}`,
+      {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix: _hoy() + '/', limit: 20 })
+      }
+    );
 
-    if (!data.archivos || data.archivos.length === 0) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const archivos = await res.json();
+
+    const pdfs = Array.isArray(archivos) ? archivos.filter(f => f.name.toLowerCase().endsWith('.pdf')) : [];
+
+    if (pdfs.length === 0) {
       dot.className = 'fact-estado-dot error';
-      txt.textContent = 'No hay archivos subidos hoy';
+      txt.textContent = 'No hay PDFs subidos hoy';
       cnt.textContent = '';
       return;
     }
 
-    factArchivos = data.archivos;
+    factArchivos = pdfs.map(f => ({
+      nombre: f.name,
+      id: f.name,
+      url: _pdfUrl(f.name)
+    }));
+
     dot.className = 'fact-estado-dot';
     txt.textContent = 'Archivos listos';
     cnt.textContent = factArchivos.length + ' archivo' + (factArchivos.length > 1 ? 's' : '');
 
-    // Cargar PDF.js si no está
     await cargarPdfJs();
-
-    // Indexar todos los PDFs en background
     await indexarPDFs();
 
   } catch(e) {
     dot.className = 'fact-estado-dot error';
-    txt.textContent = 'Sin conexión — verifica Drive';
-    cnt.textContent = '';
-    console.log('Error cargando archivos:', e.message);
+    txt.textContent = 'Sin archivos — sube PDFs desde el panel';
+    console.log('Error storage:', e.message);
   }
 }
 
@@ -2526,8 +2603,7 @@ async function indexarPDFs() {
   for (const archivo of factArchivos) {
     try {
       const tipo = archivo.nombre.toLowerCase().includes('credit') ? 'credito' : 'soporte';
-      const url  = FACTURAS_SCRIPT_URL + '?action=pdf&id=' + encodeURIComponent(archivo.id);
-      const res  = await fetch(url);
+      const res  = await fetch(archivo.url);
       if (!res.ok) continue;
       const buf  = await res.arrayBuffer();
       const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -2538,11 +2614,9 @@ async function indexarPDFs() {
         const content = await page.getTextContent();
         const texto   = content.items.map(i => i.str).join(' ');
 
-        // Buscar código de 10 dígitos que empiece por 12
         const codigos = texto.match(/\b12\d{8}\b/g);
         if (!codigos) continue;
 
-        // Extraer datos del cliente de esta página
         const datos = extraerDatosPagina(texto);
 
         const codigoUnico = [...new Set(codigos)];
@@ -2555,7 +2629,6 @@ async function indexarPDFs() {
               datos: datos
             };
           }
-          // Solo agregar si no está duplicada esta combinación
           const yaExiste = factClientes[codigo].paginas.some(
             pg => pg.archivoId === archivo.id && pg.pagina === p
           );
@@ -2563,6 +2636,7 @@ async function indexarPDFs() {
             factClientes[codigo].paginas.push({
               archivoId: archivo.id,
               archivoNombre: archivo.nombre,
+              archivoUrl: archivo.url,
               pagina: p,
               tipo: tipo,
               pdfBuffer: buf
@@ -2715,16 +2789,20 @@ async function renderizarPaginas(cliente) {
   document.getElementById('det-loading-txt').textContent = 'Extrayendo páginas...';
 
   try {
-    // Agrupar páginas por archivo
+    // Agrupar páginas por archivo — usar URL directa de Supabase Storage
     const porArchivo = {};
     for (const pg of cliente.paginas) {
-      if (!porArchivo[pg.archivoId]) porArchivo[pg.archivoId] = { buf: pg.pdfBuffer, paginas: [] };
+      if (!porArchivo[pg.archivoId]) {
+        porArchivo[pg.archivoId] = { url: pg.archivoUrl, paginas: [] };
+      }
       porArchivo[pg.archivoId].paginas.push(pg.pagina);
     }
 
-    // Renderizar cada página
     for (const [archivoId, grupo] of Object.entries(porArchivo)) {
-      const pdf = await pdfjsLib.getDocument({ data: grupo.buf }).promise;
+      const res = await fetch(grupo.url);
+      if (!res.ok) continue;
+      const buf = await res.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
       for (const numPag of grupo.paginas.sort((a,b) => a-b)) {
         const page    = await pdf.getPage(numPag);
         const vp      = page.getViewport({ scale: 1.5 });
