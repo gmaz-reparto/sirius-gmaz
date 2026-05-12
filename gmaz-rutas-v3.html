@@ -921,6 +921,9 @@ html, body {
     <div id="upload-index-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
 
     <button onclick="document.getElementById('panel-coordinador').style.display='none'" style="width:100%; background:#f5f5f5; color:#666; border:none; border-radius:10px; padding:10px; font-size:13px; margin-top:14px; cursor:pointer;">Cerrar</button>
+
+    <div style="border-top:1px solid #F0F0F0; margin:14px 0;"></div>
+    <button id="btn-limpiar" onclick="limpiarTabla()" style="width:100%; background:#fff; color:#E30613; border:1.5px solid #E30613; border-radius:10px; padding:10px; font-size:13px; font-weight:600; cursor:pointer;">🗑 Limpiar tabla (borrar todos los clientes)</button>
   </div>
 </div>
 
@@ -1477,7 +1480,6 @@ async function subirExcelASupabase(input) {
     const texto = await file.text();
     let clientes = [];
 
-    // JSON generado por Claude — lectura directa, sin librerías externas
     const datos = JSON.parse(texto);
     const hoy   = new Date().toISOString().split('T')[0];
     clientes = datos
@@ -1488,14 +1490,16 @@ async function subirExcelASupabase(input) {
       estado.textContent = '❌ No se encontraron clientes válidos en el JSON';
       return;
     }
-    estado.textContent = `⏳ Subiendo ${clientes.length} clientes a Supabase...`;
 
-    // Borrar datos del día y reinsertar
-    const hoyFecha = hoy;
-    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?fecha=eq.${hoyFecha}`, {
+    estado.textContent = '⏳ Limpiando datos anteriores...';
+
+    // Borrar TODA la tabla antes de insertar
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=neq.DUMMY_NEVER_MATCHES`, {
       method: 'DELETE',
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     });
+
+    estado.textContent = `⏳ Subiendo ${clientes.length} clientes...`;
 
     for (let i = 0; i < clientes.length; i += 500) {
       const bloque = clientes.slice(i, i + 500);
@@ -1521,6 +1525,25 @@ async function subirExcelASupabase(input) {
   } catch(e) {
     estado.textContent = '❌ Error: ' + e.message;
     console.error(e);
+  }
+}
+
+// Botón manual: limpiar tabla completa
+async function limpiarTabla() {
+  const btn = document.getElementById('btn-limpiar');
+  if (!confirm('¿Borrar TODOS los clientes de la tabla? Deberás volver a subir el JSON del día.')) return;
+  btn.textContent = '⏳ Limpiando...';
+  btn.disabled = true;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=neq.DUMMY_NEVER_MATCHES`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    btn.textContent = '✅ Tabla limpia';
+    setTimeout(() => { btn.textContent = '🗑 Limpiar tabla'; btn.disabled = false; cargarDatos(); }, 2000);
+  } catch(e) {
+    btn.textContent = '❌ Error';
+    btn.disabled = false;
   }
 }
 
