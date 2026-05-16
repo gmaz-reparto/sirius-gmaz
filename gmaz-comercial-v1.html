@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#E30613">
+<title>GMAZ Comercial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --rojo: #E30613; --rojo-oscuro: #B5000F; --rojo-suave: #FFF0F1;
+  --negro: #0F1117; --gris-oscuro: #1C1F2A; --blanco: #FFFFFF;
+  --gris1: #F7F8FA; --gris2: #EEF0F4; --gris3: #D1D5DE;
+  --gris4: #8A90A0; --gris5: #4A5060;
+  --verde: #059669; --verde-suave: #ECFDF5;
+  --azul: #1A56DB; --azul-suave: #EFF6FF;
+  --amarillo: #D97706; --amarillo-suave: #FFFBEB;
+  --sombra-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --sombra-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --sombra-lg: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.08);
+  --radio-sm: 8px; --radio-md: 12px; --radio-lg: 16px; --radio-xl: 20px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; font-family: 'DM Sans', system-ui, sans-serif; background: var(--gris1); color: var(--negro); overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+/* ===== SPLASH ===== */
+#splash { position: fixed; inset: 0; background: var(--rojo); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.4s ease, transform 0.4s ease; }
+#splash.oculto { opacity: 0; transform: scale(1.05); pointer-events: none; }
+.splash-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.splash-barra { width: 5px; height: 52px; background: rgba(255,255,255,0.55); border-radius: 3px; }
+.splash-textos { display: flex; flex-direction: column; }
+.splash-gmaz { font-size: 44px; font-weight: 900; color: #fff; letter-spacing: -1.5px; line-height: 1; }
+.splash-comercial { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.75); letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; }
+.splash-status { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 10px; min-height: 20px; text-align: center; }
+.splash-loader { margin-top: 44px; display: flex; gap: 6px; }
+.splash-dot { width: 8px; height: 8px; background: rgba(255,255,255,0.4); border-radius: 50%; animation: pulse 1.2s ease infinite; }
+.splash-dot:nth-child(2) { animation-delay: 0.2s; }
+.splash-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.4;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+
+/* ===== HEADER COMÚN ===== */
+.app-header { background: var(--blanco); padding: 14px 16px 12px; border-bottom: 2px solid var(--rojo); box-shadow: var(--sombra-sm); flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+.header-logo { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.header-barra { width: 3px; height: 22px; background: var(--rojo); border-radius: 2px; }
+.header-titulo { font-size: 17px; font-weight: 900; color: var(--negro); letter-spacing: -0.4px; line-height: 1; }
+.header-sub { font-size: 8px; font-weight: 700; color: var(--rojo); letter-spacing: 3px; text-transform: uppercase; margin-top: 1px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.header-back { width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid var(--gris2); background: var(--blanco); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.1s; }
+.header-back:active { background: var(--gris1); }
+.badge-dia { background: var(--rojo-suave); color: var(--rojo); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; border: 1px solid rgba(227,6,19,0.15); text-transform: uppercase; }
+.badge-count { background: var(--gris2); color: var(--gris5); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+.btn-resumen { background: var(--negro); color: white; border: none; border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.btn-resumen:active { opacity: 0.8; }
+
+/* ===== PANTALLA VENDEDORES ===== */
+#pantalla-vendedores { position: fixed; inset: 0; background: var(--gris1); display: flex; flex-direction: column; z-index: 100; transition: opacity 0.3s ease, transform 0.3s ease; }
+#pantalla-vendedores.oculto { opacity: 0; transform: translateY(-16px); pointer-events: none; }
+
+.resume-banner { background: var(--blanco); border: 1.5px solid var(--rojo); border-radius: var(--radio-lg); margin: 12px 16px; padding: 13px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: var(--sombra-sm); transition: all 0.15s; }
+.resume-banner:active { transform: scale(0.98); }
+.resume-left { display: flex; flex-direction: column; gap: 1px; }
+.resume-label { font-size: 10px; color: var(--gris4); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.resume-codigo { font-size: 20px; font-weight: 900; color: var(--rojo); line-height: 1.1; }
+.resume-right { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--rojo); }
+
+.vend-info { padding: 4px 16px 4px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.vend-titulo { font-size: 13px; font-weight: 700; color: var(--negro); }
+.vend-sub { font-size: 11px; color: var(--gris4); }
+
+.vend-grid { flex: 1; overflow-y: auto; padding: 8px 16px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; -webkit-overflow-scrolling: touch; }
+.vend-grid::-webkit-scrollbar { display: none; }
+
+.vend-card { background: var(--blanco); border-radius: var(--radio-lg); padding: 15px 13px; border: 1.5px solid var(--gris2); box-shadow: var(--sombra-sm); cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; min-height: 108px; }
+.vend-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--rojo); border-radius: 0 2px 2px 0; }
+.vend-card:active { transform: scale(0.97); box-shadow: none; }
+.vend-codigo { font-size: 13px; font-weight: 900; color: var(--rojo); letter-spacing: -0.2px; }
+.vend-total { font-size: 26px; font-weight: 900; color: var(--negro); line-height: 1; }
+.vend-total-label { font-size: 10px; color: var(--gris4); font-weight: 500; margin-top: -2px; }
+.vend-hoy { display: inline-flex; align-items: center; gap: 4px; background: var(--verde-suave); color: var(--verde); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-top: 2px; }
+
+/* ===== PANTALLA CLIENTES ===== */
+#pantalla-clientes { position: fixed; inset: 0; background: var(--gris1); display: flex; flex-direction: column; z-index: 110; transition: opacity 0.25s ease, transform 0.25s ease; }
+#pantalla-clientes.oculto { opacity: 0; transform: translateX(30px); pointer-events: none; }
+
+.progress-wrap { height: 3px; background: var(--gris2); flex-shrink: 0; }
+.progress-fill { height: 100%; background: var(--verde); transition: width 0.4s ease; }
+
+.freq-wrap { background: var(--blanco); border-bottom: 1px solid var(--gris2); flex-shrink: 0; }
+.freq-scroll { display: flex; gap: 6px; padding: 9px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+.freq-scroll::-webkit-scrollbar { display: none; }
+.freq-chip { padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--gris3); background: var(--blanco); font-size: 11px; font-weight: 700; color: var(--gris5); cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.freq-chip.activo { background: var(--rojo); color: white; border-color: var(--rojo); }
+.freq-chip.chip-hoy { border-color: var(--rojo); color: var(--rojo); }
+.freq-chip.chip-hoy.activo { background: var(--rojo); color: white; }
+
+.clientes-lista { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--blanco); }
+.clientes-lista::-webkit-scrollbar { display: none; }
+
+.cli-card { display: flex; align-items: center; gap: 11px; padding: 13px 16px; border-bottom: 1px solid var(--gris1); cursor: pointer; transition: background 0.1s; }
+.cli-card:active { background: var(--gris1); }
+.estado-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.estado-dot.pendiente { background: var(--gris3); }
+.estado-dot.visitado { background: var(--verde); }
+.estado-dot.no-visitado { background: var(--rojo); }
+.cli-info { flex: 1; min-width: 0; }
+.cli-nombre { font-size: 13px; font-weight: 700; color: var(--negro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cli-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+.cli-canal { font-size: 10px; color: var(--gris4); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+.cli-barrio { font-size: 10px; color: var(--gris4); }
+.cli-freq-chip { font-size: 9px; color: var(--gris5); font-weight: 700; background: var(--gris2); padding: 1px 5px; border-radius: 6px; }
+.gec-badge { padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.gec-ORO { background: #FEF3C7; color: #B45309; }
+.gec-PLATA { background: #F3F4F6; color: #6B7280; }
+.gec-BRONCE { background: #FDF4E7; color: #92400E; }
+.gec-CUSTOMIZADO { background: #EDE9FE; color: #7C3AED; }
+.gec-default { background: var(--gris2); color: var(--gris5); }
+.cli-chev { color: var(--gris3); flex-shrink: 0; }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 30px; text-align: center; gap: 10px; }
+.empty-icon { font-size: 44px; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--gris5); }
+.empty-sub { font-size: 12px; color: var(--gris4); }
+
+/* ===== PANTALLA DETALLE ===== */
+#pantalla-detalle { position: fixed; inset: 0; background: var(--gris1); display: flex; flex-direction: column; z-index: 120; transition: opacity 0.25s ease, transform 0.25s ease; }
+#pantalla-detalle.oculto { opacity: 0; transform: translateX(50px); pointer-events: none; }
+
+.det-header { background: var(--blanco); padding: 14px 16px 12px; border-bottom: 2px solid var(--rojo); box-shadow: var(--sombra-sm); flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+.det-titulo { font-size: 14px; font-weight: 700; color: var(--negro); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+#det-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#det-scroll::-webkit-scrollbar { display: none; }
+
+#sv-container { height: 220px; background: var(--gris-oscuro); position: relative; overflow: hidden; flex-shrink: 0; }
+#sv-map { width: 100%; height: 100%; background-size: cover; background-position: center; }
+.sv-overlay { position: absolute; inset: 0; background: rgba(15,17,23,0.6); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; }
+.sv-spinner { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.25); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.sv-txt { font-size: 12px; color: rgba(255,255,255,0.75); font-weight: 500; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.det-card { background: var(--blanco); margin: 8px; border-radius: var(--radio-lg); box-shadow: var(--sombra-sm); overflow: hidden; }
+.det-card + .det-card { margin-top: 0; }
+
+.det-nombre-sec { padding: 15px 16px; border-bottom: 1px solid var(--gris1); }
+.det-nombre { font-size: 17px; font-weight: 900; color: var(--negro); line-height: 1.2; }
+.det-codigo-txt { font-size: 11px; color: var(--gris4); font-weight: 500; margin-top: 2px; }
+.det-badges-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.det-gec { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.det-canal-tag { background: var(--gris2); color: var(--gris5); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.det-freq-tag { background: var(--azul-suave); color: var(--azul); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+
+.det-row { display: flex; align-items: flex-start; gap: 11px; padding: 10px 16px; border-bottom: 1px solid var(--gris1); }
+.det-row:last-child { border-bottom: none; }
+.det-row-icon { color: var(--gris4); flex-shrink: 0; margin-top: 2px; }
+.det-row-body { flex: 1; }
+.det-row-label { font-size: 10px; color: var(--gris4); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.det-row-val { font-size: 14px; color: var(--negro); font-weight: 500; margin-top: 1px; line-height: 1.4; }
+.det-row-sub { font-size: 11px; color: var(--gris4); margin-top: 2px; }
+
+.det-tels-sec { padding: 14px 16px; }
+.det-tels-title { font-size: 11px; font-weight: 700; color: var(--gris5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.tel-btn { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: var(--radio-md); background: var(--verde-suave); color: var(--negro); border: 1.5px solid rgba(5,150,105,0.18); cursor: pointer; width: 100%; margin-bottom: 8px; text-decoration: none; transition: all 0.12s; }
+.tel-btn:last-child { margin-bottom: 0; }
+.tel-btn:active { background: rgba(5,150,105,0.15); }
+.tel-ico { width: 36px; height: 36px; background: var(--verde); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tel-info { flex: 1; }
+.tel-lbl { font-size: 9px; color: var(--verde); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.tel-num { font-size: 16px; font-weight: 700; color: var(--negro); }
+.tel-call-txt { font-size: 11px; font-weight: 700; color: var(--verde); }
+
+.det-acciones { padding: 8px 8px 12px; }
+.accion-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.btn-vis { background: var(--verde); color: white; border: none; border-radius: var(--radio-lg); padding: 14px 10px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; opacity: 0.7; }
+.btn-vis.activo { opacity: 1; box-shadow: 0 0 0 3px rgba(5,150,105,0.25); }
+.btn-novis { background: var(--blanco); color: var(--rojo); border: 2px solid var(--rojo); border-radius: var(--radio-lg); padding: 14px 10px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; opacity: 0.7; }
+.btn-novis.activo { background: var(--rojo-suave); opacity: 1; box-shadow: 0 0 0 3px rgba(227,6,19,0.18); }
+.btn-navegar { background: var(--azul); color: white; border: none; border-radius: var(--radio-lg); padding: 14px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-navegar:active { opacity: 0.85; }
+
+/* ===== PANEL ADMIN ===== */
+#panel-admin { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: flex-end; }
+#panel-admin.visible { display: flex; }
+.admin-card { background: var(--blanco); border-radius: 22px 22px 0 0; padding: 24px 20px 36px; width: 100%; max-width: 500px; }
+.admin-handle { width: 36px; height: 4px; background: var(--gris3); border-radius: 2px; margin: 0 auto 20px; }
+.admin-title { font-size: 18px; font-weight: 900; color: var(--negro); }
+.admin-sub { font-size: 12px; color: var(--gris4); margin-top: 2px; margin-bottom: 18px; }
+.admin-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 14px; border-radius: var(--radio-lg); border: 1.5px solid var(--gris2); background: var(--gris1); cursor: pointer; margin-bottom: 10px; transition: all 0.12s; }
+.admin-item:active { background: var(--gris2); }
+.admin-ico { width: 40px; height: 40px; border-radius: var(--radio-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+.admin-item-txt { flex: 1; text-align: left; }
+.admin-item-title { font-size: 14px; font-weight: 700; color: var(--negro); }
+.admin-item-sub { font-size: 11px; color: var(--gris4); margin-top: 1px; }
+.admin-estado { font-size: 12px; color: var(--gris5); text-align: center; min-height: 20px; margin-top: 6px; font-weight: 500; }
+.admin-close { display: block; text-align: center; padding: 14px; font-size: 14px; font-weight: 700; color: var(--gris4); cursor: pointer; margin-top: 4px; }
+
+/* ===== MODAL RESUMEN ===== */
+#modal-resumen { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 999; display: none; align-items: center; justify-content: center; padding: 20px; }
+#modal-resumen.visible { display: flex; }
+.resumen-card { background: var(--blanco); border-radius: 20px; padding: 24px 20px; width: 100%; max-width: 380px; box-shadow: var(--sombra-lg); }
+.resumen-title { font-size: 18px; font-weight: 900; color: var(--negro); margin-bottom: 16px; }
+.resumen-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--gris2); }
+.resumen-row:last-of-type { border-bottom: none; }
+.resumen-lbl { font-size: 14px; color: var(--gris5); font-weight: 500; display: flex; align-items: center; gap: 7px; }
+.resumen-val { font-size: 26px; font-weight: 900; }
+.val-verde { color: var(--verde); }
+.val-rojo { color: var(--rojo); }
+.val-gris { color: var(--gris4); }
+.val-negro { color: var(--negro); }
+.resumen-divider { border-top: 2px solid var(--gris2); margin-top: 6px; padding-top: 6px; }
+.resumen-btn-close { width: 100%; padding: 13px; border-radius: var(--radio-lg); background: var(--negro); color: white; border: none; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<!-- ===== SPLASH ===== -->
+<div id="splash">
+  <div class="splash-logo">
+    <div class="splash-barra"></div>
+    <div class="splash-textos">
+      <div class="splash-gmaz">GMAZ</div>
+      <div class="splash-comercial">Comercial</div>
+    </div>
+  </div>
+  <div id="splash-status" class="splash-status">Conectando con Supabase...</div>
+  <div class="splash-loader">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA VENDEDORES ===== -->
+<div id="pantalla-vendedores" class="oculto">
+  <div class="app-header">
+    <div class="header-logo" id="logo-vend" onclick="clickLogo()">
+      <div class="header-barra"></div>
+      <div>
+        <div class="header-titulo">GMAZ</div>
+        <div class="header-sub">Comercial</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="badge-dia" id="badge-dia-vend">---</div>
+    </div>
+  </div>
+
+  <div id="resume-banner" class="resume-banner" onclick="reanudarVendedor()" style="display:none">
+    <div class="resume-left">
+      <div class="resume-label">Continuar con</div>
+      <div class="resume-codigo" id="resume-codigo">---</div>
+    </div>
+    <div class="resume-right">
+      Ir a mis clientes
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <div class="vend-info">
+    <div class="vend-titulo" id="vend-titulo-txt">Selecciona tu ruta</div>
+    <div class="vend-sub" id="vend-sub-txt"></div>
+  </div>
+
+  <div class="vend-grid" id="vend-grid"></div>
+</div>
+
+<!-- ===== PANTALLA CLIENTES ===== -->
+<div id="pantalla-clientes" class="oculto">
+  <div class="app-header">
+    <div class="header-back" onclick="volverVendedores()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="var(--negro)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <div class="header-titulo" id="cli-header-codigo" style="font-size:15px">---</div>
+      <div class="header-sub">GMAZ Comercial</div>
+    </div>
+    <div class="header-right">
+      <div class="badge-count" id="cli-count-badge">0</div>
+      <button class="btn-resumen" onclick="mostrarResumen()">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="7" width="2" height="3.5" rx="1" fill="white"/><rect x="4.5" y="4" width="2" height="6.5" rx="1" fill="white"/><rect x="8.5" y="1" width="2" height="9.5" rx="1" fill="white"/></svg>
+        Resumen
+      </button>
+    </div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="freq-wrap">
+    <div class="freq-scroll" id="freq-chips"></div>
+  </div>
+  <div class="clientes-lista" id="clientes-lista"></div>
+</div>
+
+<!-- ===== PANTALLA DETALLE ===== -->
+<div id="pantalla-detalle" class="oculto">
+  <div class="det-header">
+    <div class="header-back" onclick="volverClientes()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9l5-5" stroke="var(--negro)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="det-titulo" id="det-header-nombre">---</div>
+    <div class="header-logo" style="flex-shrink:0" id="logo-det" onclick="clickLogo()">
+      <div class="header-barra"></div>
+      <div><div class="header-titulo" style="font-size:14px">GMAZ</div></div>
+    </div>
+  </div>
+
+  <div id="det-scroll">
+    <div id="sv-container">
+      <div id="sv-map"></div>
+      <div class="sv-overlay" id="sv-overlay">
+        <div class="sv-spinner"></div>
+        <div class="sv-txt">Cargando Street View...</div>
+      </div>
+    </div>
+    <div id="det-content"></div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- ===== PANEL ADMIN ===== -->
+<div id="panel-admin" onclick="adminBgClick(event)">
+  <div class="admin-card" onclick="event.stopPropagation()">
+    <div class="admin-handle"></div>
+    <div class="admin-title">Panel Coordinador</div>
+    <div class="admin-sub">Solo acceso autorizado · GMAZ Comercial</div>
+
+    <label class="admin-item" for="input-xlsx">
+      <div class="admin-ico" style="background:#ECFDF5">📊</div>
+      <div class="admin-item-txt">
+        <div class="admin-item-title">Subir Maestro (.xlsx)</div>
+        <div class="admin-item-sub">Lee el archivo y reemplaza todos los clientes</div>
+      </div>
+    </label>
+    <input type="file" id="input-xlsx" accept=".xlsx,.xls" style="display:none" onchange="subirXLSX(this)">
+
+    <div class="admin-item" onclick="borrarTabla()">
+      <div class="admin-ico" style="background:#FFF0F1">🗑</div>
+      <div class="admin-item-txt">
+        <div class="admin-item-title">Borrar tabla</div>
+        <div class="admin-item-sub">Elimina todos los registros de clientes_comercial</div>
+      </div>
+    </div>
+
+    <div class="admin-estado" id="admin-estado"></div>
+    <div class="admin-close" onclick="cerrarAdmin()">Cerrar</div>
+  </div>
+</div>
+
+<!-- ===== MODAL RESUMEN ===== -->
+<div id="modal-resumen" onclick="cerrarResumen()">
+  <div class="resumen-card" onclick="event.stopPropagation()">
+    <div class="resumen-title" id="resumen-titulo">Resumen</div>
+    <div id="resumen-contenido"></div>
+    <button class="resumen-btn-close" onclick="cerrarResumen()">Cerrar</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+const SUPABASE_URL  = 'https://arcymdurfmlubtgfyawn.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY3ltZHVyZm1sdWJ0Z2Z5YXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk1MDMsImV4cCI6MjA5MTUxNTUwM30.UpfEw5oZcntnyaS9F6om0dUwPjTvrEyTC4HVd1xYjv8';
+const SUPABASE_TABLE = 'clientes_comercial';
+const GMAPS_KEY = 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI';
+
+// ============================================================
+// DÍA Y FRECUENCIA
+// ============================================================
+const DIAS_CODIGO  = { 1:'L', 2:'M', 3:'R', 4:'J', 5:'V', 6:'S' };
+const DIAS_NOMBRE  = { 'L':'Lunes','M':'Martes','R':'Miércoles','J':'Jueves','V':'Viernes','S':'Sábado' };
+const HOY_NUM      = new Date().getDay();
+const CODIGO_HOY   = DIAS_CODIGO[HOY_NUM] || null;   // null = Domingo
+const NOMBRE_HOY   = CODIGO_HOY ? DIAS_NOMBRE[CODIGO_HOY] : 'Domingo';
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let CLIENTES      = [];
+let vendedorActual = '';
+let filtroFreq    = CODIGO_HOY || 'TODOS';
+let clienteActual  = null;
+let mapReady       = false;
+let svService      = null;
+let panorama       = null;
+let logoClicks     = 0;
+let logoTimer      = null;
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const hoy = new Date();
+  const diaStr = CODIGO_HOY
+    ? `${NOMBRE_HOY.substring(0,3).toUpperCase()} · ${CODIGO_HOY}`
+    : 'DOMINGO';
+  document.getElementById('badge-dia-vend').textContent = diaStr;
+  cargarDatos();
+});
+
+function initGoogleMaps() {
+  mapReady = true;
+  try { svService = new google.maps.StreetViewService(); } catch(e) {}
+}
+
+// ============================================================
+// SUPABASE — CARGA
+// ============================================================
+async function cargarDatos() {
+  document.getElementById('splash-status').textContent = 'Cargando clientes...';
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=nombre.asc&limit=10000`;
+    const res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    CLIENTES = Array.isArray(json) ? json : [];
+    document.getElementById('splash-status').textContent =
+      CLIENTES.length > 0 ? `✓ ${CLIENTES.length} clientes` : '⚠ Sin datos cargados';
+  } catch(e) {
+    CLIENTES = [];
+    document.getElementById('splash-status').textContent = '⚠ Sin conexión';
+    console.error('Supabase error:', e);
+  }
+  setTimeout(mostrarVendedores, 600);
+}
+
+// ============================================================
+// PANTALLA VENDEDORES
+// ============================================================
+function mostrarVendedores() {
+  ocultarTodo();
+  document.getElementById('splash').classList.add('oculto');
+  document.getElementById('pantalla-vendedores').classList.remove('oculto');
+
+  // Banner de reanudación
+  const ultimo = localStorage.getItem('gmaz_com_vendedor');
+  const existe  = ultimo && CLIENTES.some(c => c.ruta === ultimo);
+  const banner  = document.getElementById('resume-banner');
+  if (existe) {
+    document.getElementById('resume-codigo').textContent = ultimo;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  renderVendedores();
+}
+
+function renderVendedores() {
+  const grid = document.getElementById('vend-grid');
+
+  if (CLIENTES.length === 0) {
+    document.getElementById('vend-titulo-txt').textContent = 'Sin datos';
+    document.getElementById('vend-sub-txt').textContent = '';
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;padding:50px 20px;text-align:center;gap:12px">
+        <div style="font-size:52px">📭</div>
+        <div style="font-size:15px;font-weight:700;color:var(--gris5)">Sin clientes cargados</div>
+        <div style="font-size:12px;color:var(--gris4)">El coordinador debe subir el archivo MAESTRO.<br>Doble clic en el logo GMAZ para acceder.</div>
+      </div>`;
+    return;
+  }
+
+  const vendedores = getVendedores();
+  document.getElementById('vend-titulo-txt').textContent = 'Selecciona tu ruta';
+  document.getElementById('vend-sub-txt').textContent = `${vendedores.length} vendedores · ${CLIENTES.length} clientes`;
+
+  grid.innerHTML = vendedores.map(v => `
+    <div class="vend-card" onclick="seleccionarVendedor('${v.codigo}')">
+      <div class="vend-codigo">${v.codigo}</div>
+      <div>
+        <div class="vend-total">${v.total}</div>
+        <div class="vend-total-label">clientes</div>
+      </div>
+      ${CODIGO_HOY ? `<div class="vend-hoy">📅 Hoy: ${v.hoy}</div>` : ''}
+    </div>`).join('');
+}
+
+function getVendedores() {
+  const map = {};
+  for (const c of CLIENTES) {
+    if (!c.ruta) continue;
+    if (!map[c.ruta]) map[c.ruta] = { codigo: c.ruta, total: 0, hoy: 0 };
+    map[c.ruta].total++;
+    if (CODIGO_HOY && (c.frecuencia || '').includes(CODIGO_HOY)) map[c.ruta].hoy++;
+  }
+  return Object.values(map).sort((a, b) => a.codigo.localeCompare(b.codigo));
+}
+
+function reanudarVendedor() {
+  const u = localStorage.getItem('gmaz_com_vendedor');
+  if (u) seleccionarVendedor(u);
+}
+
+function seleccionarVendedor(codigo) {
+  vendedorActual = codigo;
+  filtroFreq = CODIGO_HOY || 'TODOS';
+  localStorage.setItem('gmaz_com_vendedor', codigo);
+  mostrarClientes();
+}
+
+// ============================================================
+// PANTALLA CLIENTES
+// ============================================================
+function mostrarClientes() {
+  ocultarTodo();
+  document.getElementById('pantalla-clientes').classList.remove('oculto');
+  document.getElementById('cli-header-codigo').textContent = vendedorActual;
+  renderChips();
+  renderClientes();
+}
+
+function renderChips() {
+  const todos = CLIENTES.filter(c => c.ruta === vendedorActual);
+  const dias  = ['L','M','R','J','V','S'];
+  let html = '';
+
+  if (CODIGO_HOY) {
+    const cnt = todos.filter(c => (c.frecuencia||'').includes(CODIGO_HOY)).length;
+    const act = filtroFreq === CODIGO_HOY ? 'activo' : 'chip-hoy';
+    html += `<div class="freq-chip ${act}" onclick="setFreq('${CODIGO_HOY}')">⭐ HOY (${NOMBRE_HOY.substring(0,3)}) · ${cnt}</div>`;
+  }
+
+  const actTodos = filtroFreq === 'TODOS' ? 'activo' : '';
+  html += `<div class="freq-chip ${actTodos}" onclick="setFreq('TODOS')">TODOS · ${todos.length}</div>`;
+
+  for (const d of dias) {
+    if (d === CODIGO_HOY) continue;
+    const cnt = todos.filter(c => (c.frecuencia||'').includes(d)).length;
+    if (cnt === 0) continue;
+    const act = filtroFreq === d ? 'activo' : '';
+    html += `<div class="freq-chip ${act}" onclick="setFreq('${d}')">${DIAS_NOMBRE[d].substring(0,3)} · ${cnt}</div>`;
+  }
+
+  document.getElementById('freq-chips').innerHTML = html;
+}
+
+function setFreq(codigo) {
+  filtroFreq = codigo;
+  renderChips();
+  renderClientes();
+}
+
+function renderClientes() {
+  const lista   = document.getElementById('clientes-lista');
+  const estados = getEstados();
+
+  let clientes = CLIENTES.filter(c => c.ruta === vendedorActual);
+  if (filtroFreq !== 'TODOS') {
+    clientes = clientes.filter(c => (c.frecuencia || '').includes(filtroFreq));
+  }
+
+  // Orden: no-visitado → pendiente → visitado
+  const orden = { 'no-visitado': 0, 'pendiente': 1, 'visitado': 2 };
+  clientes.sort((a, b) => (orden[estados[a.codigo]||'pendiente']||1) - (orden[estados[b.codigo]||'pendiente']||1));
+
+  document.getElementById('cli-count-badge').textContent = clientes.length;
+
+  const visitados = clientes.filter(c => estados[c.codigo] === 'visitado').length;
+  const pct = clientes.length > 0 ? (visitados / clientes.length * 100).toFixed(0) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  if (clientes.length === 0) {
+    lista.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">Sin clientes para este filtro</div>
+      <div class="empty-sub">Prueba otro día o selecciona TODOS</div>
+    </div>`;
+    return;
+  }
+
+  lista.innerHTML = clientes.map(c => {
+    const est = estados[c.codigo] || 'pendiente';
+    const gcls = gecClass(c.gec);
+    return `<div class="cli-card" onclick="abrirDetalle('${c.codigo}')">
+      <div class="estado-dot ${est}"></div>
+      <div class="cli-info">
+        <div class="cli-nombre">${c.nombre || 'Sin nombre'}</div>
+        <div class="cli-meta">
+          ${c.canal ? `<span class="cli-canal">${c.canal}</span>` : ''}
+          ${c.barrio ? `<span class="cli-barrio">· ${c.barrio}</span>` : ''}
+          ${c.frecuencia ? `<span class="cli-freq-chip">${c.frecuencia}</span>` : ''}
+        </div>
+      </div>
+      ${c.gec ? `<div class="gec-badge ${gcls}">${c.gec}</div>` : ''}
+      <svg class="cli-chev" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11l4-4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>`;
+  }).join('');
+}
+
+function gecClass(gec) {
+  if (!gec) return 'gec-default';
+  const g = gec.toUpperCase();
+  if (g.includes('ORO'))    return 'gec-ORO';
+  if (g.includes('PLATA'))  return 'gec-PLATA';
+  if (g.includes('BRONCE')) return 'gec-BRONCE';
+  if (g.includes('CUSTOM')) return 'gec-CUSTOMIZADO';
+  return 'gec-default';
+}
+
+// ============================================================
+// PANTALLA DETALLE
+// ============================================================
+function abrirDetalle(codigo) {
+  clienteActual = CLIENTES.find(c => c.codigo === codigo) || null;
+  if (!clienteActual) return;
+
+  ocultarTodo();
+  const pant = document.getElementById('pantalla-detalle');
+  pant.classList.remove('oculto');
+  document.getElementById('det-scroll').scrollTop = 0;
+  document.getElementById('det-header-nombre').textContent = clienteActual.nombre || 'Cliente';
+
+  renderDetalle();
+  cargarStreetView(clienteActual.lat, clienteActual.lng);
+}
+
+function renderDetalle() {
+  const c      = clienteActual;
+  const estado = getEstados()[c.codigo] || 'pendiente';
+  const gcls   = gecClass(c.gec);
+
+  // Teléfonos deduplicados
+  const phones = [];
+  const addPhone = (num, lbl) => {
+    const n = String(num||'').replace(/[^0-9]/g,'');
+    if (n && n !== '0' && n.length >= 7 && !phones.some(p => p.num === n)) {
+      phones.push({ num: n, lbl });
+    }
+  };
+  addPhone(c.telefono1, 'Teléfono 1');
+  addPhone(c.celular, 'Celular');
+  addPhone(c.telefono_contacto, 'Teléfono Contacto');
+
+  const fmtTel = n => {
+    if (n.length === 10) return n.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+    if (n.length === 7)  return n.replace(/(\d{3})(\d{4})/, '$1 $2');
+    return n;
+  };
+
+  const correoOk = c.correo && c.correo !== '0' && !c.correo.includes('sincorreo');
+
+  document.getElementById('det-content').innerHTML = `
+    <div class="det-card" style="margin-top:8px">
+      <div class="det-nombre-sec">
+        <div class="det-nombre">${c.nombre || 'Sin nombre'}</div>
+        <div class="det-codigo-txt">Código: ${c.codigo || '-'}</div>
+        <div class="det-badges-row">
+          ${c.gec    ? `<div class="gec-badge det-gec ${gcls}">${c.gec}</div>` : ''}
+          ${c.canal  ? `<div class="det-canal-tag">${c.canal}</div>` : ''}
+          ${c.frecuencia ? `<div class="det-freq-tag">📅 ${c.frecuencia}</div>` : ''}
+        </div>
+      </div>
+
+      ${c.direccion ? `
+      <div class="det-row">
+        <svg class="det-row-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5z" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="6" r="1.5" fill="currentColor"/></svg>
+        <div class="det-row-body">
+          <div class="det-row-label">Dirección</div>
+          <div class="det-row-val">${c.direccion}</div>
+          ${(c.barrio || c.municipio) ? `<div class="det-row-sub">${[c.barrio, c.municipio].filter(Boolean).join(' · ')}</div>` : ''}
+        </div>
+      </div>` : ''}
+
+      ${c.razon_social ? `
+      <div class="det-row">
+        <svg class="det-row-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 4V3a1 1 0 012 0v1M9 4V3a1 1 0 012 0v1" stroke="currentColor" stroke-width="1.4"/></svg>
+        <div class="det-row-body">
+          <div class="det-row-label">Razón Social</div>
+          <div class="det-row-val">${c.razon_social}</div>
+          ${c.cedula ? `<div class="det-row-sub">CC/NIT: ${c.cedula}</div>` : ''}
+        </div>
+      </div>` : (c.cedula ? `
+      <div class="det-row">
+        <svg class="det-row-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/></svg>
+        <div class="det-row-body">
+          <div class="det-row-label">Identificación</div>
+          <div class="det-row-val">${c.cedula}</div>
+        </div>
+      </div>` : '')}
+
+      ${correoOk ? `
+      <div class="det-row">
+        <svg class="det-row-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1 6l7 5 7-5" stroke="currentColor" stroke-width="1.4"/></svg>
+        <div class="det-row-body">
+          <div class="det-row-label">Correo</div>
+          <div class="det-row-val" style="font-size:12px;word-break:break-all">${c.correo}</div>
+        </div>
+      </div>` : ''}
+    </div>
+
+    ${phones.length > 0 ? `
+    <div class="det-card">
+      <div class="det-tels-sec">
+        <div class="det-tels-title">📞 Contactar cliente</div>
+        ${phones.map(p => `
+          <a class="tel-btn" href="tel:${p.num}">
+            <div class="tel-ico">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14.5 11.1c0 .3-.06.58-.2.85-.13.27-.32.52-.56.73-.4.35-.92.53-1.47.53-.15 0-.3-.01-.46-.04a8.63 8.63 0 01-4.01-1.79 8.5 8.5 0 01-2.78-4 8.78 8.78 0 01-.48-2c-.06-.46-.04-.77.02-1.05.05-.27.16-.52.31-.74.29-.4.65-.72 1.11-.72.17 0 .34.03.49.1.16.07.3.18.42.34l1.76 2.35c.11.16.2.3.25.44.06.13.08.26.08.38 0 .15-.04.3-.12.44-.08.14-.2.3-.34.45l-.46.48c-.02.02-.03.05-.03.07 0 .03.01.06.02.09.13.25.34.56.65.95.31.38.65.77 1.01 1.13.37.36.72.68 1.06.93.35.25.64.44.9.56.02.01.05.01.07.01.03 0 .06-.01.08-.03l.46-.48c.16-.16.31-.27.46-.34.14-.07.29-.1.45-.1.13 0 .25.02.38.07.13.04.27.12.42.22l1.88 1.29c.16.12.27.26.34.42.06.15.1.31.1.48z" fill="white"/></svg>
+            </div>
+            <div class="tel-info">
+              <div class="tel-lbl">${p.lbl}</div>
+              <div class="tel-num">${fmtTel(p.num)}</div>
+            </div>
+            <div class="tel-call-txt">LLAMAR →</div>
+          </a>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="det-acciones">
+      <div class="accion-row">
+        <button class="btn-vis ${estado==='visitado'?'activo':''}" id="btn-vis" onclick="marcarEstado('${c.codigo}','visitado')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Visitado
+        </button>
+        <button class="btn-novis ${estado==='no-visitado'?'activo':''}" id="btn-novis" onclick="marcarEstado('${c.codigo}','no-visitado')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          No visitado
+        </button>
+      </div>
+      <button class="btn-navegar" onclick="navegar(${c.lat},${c.lng})">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9L16 2l-7 14-1.5-6L2 9z" fill="white"/></svg>
+        Navegar en Google Maps
+      </button>
+    </div>`;
+}
+
+// ============================================================
+// STREET VIEW
+// ============================================================
+function cargarStreetView(lat, lng) {
+  const overlay = document.getElementById('sv-overlay');
+  const mapDiv  = document.getElementById('sv-map');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div class="sv-spinner"></div><div class="sv-txt">Cargando Street View...</div>';
+  mapDiv.style.backgroundImage = '';
+
+  if (!mapReady || !svService || typeof google === 'undefined') {
+    setTimeout(() => svEstatico(lat, lng), 500);
+    return;
+  }
+  try {
+    svService.getPanorama(
+      { location: { lat, lng }, radius: 120, preference: google.maps.StreetViewPreference.NEAREST, source: google.maps.StreetViewSource.OUTDOOR },
+      (data, status) => {
+        if (status === google.maps.StreetViewStatus.OK) {
+          if (panorama) {
+            try { panorama.setPosition({ lat, lng }); } catch(e) { panorama = null; }
+          }
+          if (!panorama) {
+            panorama = new google.maps.StreetViewPanorama(mapDiv, {
+              position: { lat, lng }, pov: { heading: 34, pitch: 0 }, zoom: 1,
+              enableCloseButton: false, addressControl: false, fullscreenControl: false,
+              motionTracking: false, motionTrackingControl: false,
+              linksControl: true, panControl: true, zoomControl: false,
+              showRoadLabels: false
+            });
+          }
+          overlay.style.display = 'none';
+        } else {
+          svEstatico(lat, lng);
+        }
+      }
+    );
+  } catch(e) { svEstatico(lat, lng); }
+}
+
+function svEstatico(lat, lng) {
+  const overlay = document.getElementById('sv-overlay');
+  const mapDiv  = document.getElementById('sv-map');
+  const w = document.getElementById('sv-container').offsetWidth || 400;
+  const url = `https://maps.googleapis.com/maps/api/streetview?size=${w}x220&location=${lat},${lng}&fov=90&heading=34&pitch=0&key=${GMAPS_KEY}&return_error_code=true`;
+  const img = new Image();
+  img.onload = () => {
+    mapDiv.style.backgroundImage = `url(${url})`;
+    overlay.style.display = 'none';
+  };
+  img.onerror = () => {
+    overlay.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.7);padding:16px">
+      <div style="font-size:36px;margin-bottom:8px">📍</div>
+      <div style="font-size:12px;font-weight:600">${clienteActual ? clienteActual.direccion : ''}</div>
+      <div style="font-size:11px;margin-top:4px;opacity:0.65">${lat ? lat.toFixed(5) : ''}, ${lng ? lng.toFixed(5) : ''}</div>
+    </div>`;
+  };
+  img.src = url;
+}
+
+// ============================================================
+// ESTADOS (localStorage)
+// ============================================================
+function getEstados() {
+  try { return JSON.parse(localStorage.getItem('gmaz_com_estados') || '{}'); }
+  catch { return {}; }
+}
+
+function marcarEstado(codigo, nuevoEstado) {
+  const estados = getEstados();
+  estados[codigo] = estados[codigo] === nuevoEstado ? 'pendiente' : nuevoEstado;
+  localStorage.setItem('gmaz_com_estados', JSON.stringify(estados));
+  const est = estados[codigo] || 'pendiente';
+  const bv  = document.getElementById('btn-vis');
+  const bvn = document.getElementById('btn-novis');
+  if (bv)  bv.className  = `btn-vis  ${est==='visitado'    ? 'activo' : ''}`;
+  if (bvn) bvn.className = `btn-novis ${est==='no-visitado' ? 'activo' : ''}`;
+}
+
+// ============================================================
+// NAVEGACIÓN GPS
+// ============================================================
+function navegar(lat, lng) {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank');
+}
+
+// ============================================================
+// FLUJO DE PANTALLAS
+// ============================================================
+function ocultarTodo() {
+  ['pantalla-vendedores','pantalla-clientes','pantalla-detalle'].forEach(id =>
+    document.getElementById(id).classList.add('oculto'));
+}
+
+function volverVendedores() { mostrarVendedores(); }
+
+function volverClientes() {
+  ocultarTodo();
+  document.getElementById('pantalla-clientes').classList.remove('oculto');
+  renderChips();
+  renderClientes();
+}
+
+// ============================================================
+// RESUMEN
+// ============================================================
+function mostrarResumen() {
+  const modal   = document.getElementById('modal-resumen');
+  const estados = getEstados();
+  const todos   = CLIENTES.filter(c => c.ruta === vendedorActual);
+  const filtrados = filtroFreq !== 'TODOS'
+    ? todos.filter(c => (c.frecuencia||'').includes(filtroFreq))
+    : todos;
+
+  const visitados   = filtrados.filter(c => estados[c.codigo] === 'visitado').length;
+  const noVisitados = filtrados.filter(c => estados[c.codigo] === 'no-visitado').length;
+  const pendientes  = filtrados.length - visitados - noVisitados;
+  const pct = filtrados.length > 0 ? Math.round(visitados / filtrados.length * 100) : 0;
+
+  const diaLabel = filtroFreq === 'TODOS' ? 'todos los días' : (DIAS_NOMBRE[filtroFreq] || filtroFreq);
+  document.getElementById('resumen-titulo').textContent = `Resumen · ${diaLabel}`;
+  document.getElementById('resumen-contenido').innerHTML = `
+    <div class="resumen-row">
+      <div class="resumen-lbl">✅ Visitados</div>
+      <div class="resumen-val val-verde">${visitados}</div>
+    </div>
+    <div class="resumen-row">
+      <div class="resumen-lbl">❌ No visitados</div>
+      <div class="resumen-val val-rojo">${noVisitados}</div>
+    </div>
+    <div class="resumen-row">
+      <div class="resumen-lbl">⏳ Pendientes</div>
+      <div class="resumen-val val-gris">${pendientes}</div>
+    </div>
+    <div class="resumen-row resumen-divider">
+      <div class="resumen-lbl">📋 Total</div>
+      <div class="resumen-val val-negro">${filtrados.length}</div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gris4);margin-bottom:5px">
+        <span>Progreso del día</span><span style="font-weight:700;color:var(--verde)">${pct}%</span>
+      </div>
+      <div style="height:8px;background:var(--gris2);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--verde);border-radius:4px;transition:width 0.5s"></div>
+      </div>
+    </div>`;
+  modal.classList.add('visible');
+}
+
+function cerrarResumen() {
+  document.getElementById('modal-resumen').classList.remove('visible');
+}
+
+// ============================================================
+// LOGO DOBLE CLIC → PANEL ADMIN
+// ============================================================
+function clickLogo() {
+  logoClicks++;
+  if (logoTimer) clearTimeout(logoTimer);
+  if (logoClicks >= 2) {
+    logoClicks = 0;
+    document.getElementById('panel-admin').classList.add('visible');
+  } else {
+    logoTimer = setTimeout(() => { logoClicks = 0; }, 700);
+  }
+}
+
+function adminBgClick(e) {
+  if (e.target === document.getElementById('panel-admin')) cerrarAdmin();
+}
+
+function cerrarAdmin() {
+  document.getElementById('panel-admin').classList.remove('visible');
+  document.getElementById('admin-estado').textContent = '';
+}
+
+// ============================================================
+// SUBIDA XLSX → SUPABASE
+// ============================================================
+async function subirXLSX(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const est = document.getElementById('admin-estado');
+  est.textContent = '⏳ Leyendo archivo Excel...';
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, { type: 'array', cellText: false, raw: false });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+    if (!rows || rows.length === 0) { est.textContent = '❌ Archivo vacío'; return; }
+
+    const clientes = parsearXLSX(rows);
+
+    if (clientes.length === 0) { est.textContent = '❌ No se encontraron clientes válidos (¿tiene columna Ruta con códigos KA4V?)'; return; }
+
+    est.textContent = '⏳ Borrando datos anteriores...';
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=gte.1`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+
+    est.textContent = `⏳ Subiendo ${clientes.length} clientes...`;
+    for (let i = 0; i < clientes.length; i += 500) {
+      const bloque = clientes.slice(i, i + 500);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(bloque)
+      });
+      if (!res.ok) throw new Error(await res.text());
+    }
+
+    CLIENTES = clientes;
+    est.textContent = `✅ ${clientes.length} clientes cargados correctamente`;
+    setTimeout(() => { cerrarAdmin(); mostrarVendedores(); }, 2000);
+
+  } catch(e) {
+    est.textContent = '❌ Error: ' + e.message;
+    console.error(e);
+  }
+  input.value = '';
+}
+
+function parsearXLSX(rows) {
+  const norm    = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+  const normTel = v => { const s = String(v||'').replace(/[^0-9]/g,''); return (s==='0'||s.length<7)?'':s; };
+
+  if (!rows[0]) return [];
+  const keys    = Object.keys(rows[0]);
+  const normMap = {};
+  keys.forEach(k => { normMap[norm(k)] = k; });
+
+  const findKey = (...words) => {
+    for (const w of words) {
+      const wu = norm(w);
+      const found = Object.keys(normMap).find(nk => nk.includes(wu));
+      if (found) return normMap[found];
+    }
+    return null;
+  };
+
+  const kCod  = findKey('CODIGO');
+  const kNom  = findKey('NOMBRE DEL CLIENTE','NOMBRE');
+  const kRuta = findKey('RUTA');
+  const kFrec = findKey('FRECUENCIA');
+  const kDir  = findKey('DIRECCION');
+  const kMun  = findKey('MUNICIPIO');
+  const kBrr  = findKey('BARRIO');
+  const kCan  = findKey('DESCRIPCION CANAL','CANAL');
+  const kLat  = findKey('GEOCAPTURA 2','LATITUD');
+  const kLng  = findKey('GEOCAPTURA 1','LONGITUD');
+  const kGec  = findKey('GEC');
+  const kCed  = findKey('CEDULA');
+  const kRaz  = findKey('RAZON SOCIAL');
+  const kTel1 = findKey('TELEFONO 1','TELEFONO1');
+  const kCel  = findKey('CELULAR');
+  const kTelC = findKey('TELEFONO CONTACTO');
+  const kCor  = findKey('CORREO');
+
+  const clientes = [];
+  for (const row of rows) {
+    const ruta = String(row[kRuta]||'').trim();
+    if (!ruta || !ruta.startsWith('KA4V')) continue;
+
+    const latRaw = parseFloat(String(row[kLat]||'').replace(',','.'));
+    const lngRaw = parseFloat(String(row[kLng]||'').replace(',','.'));
+    if (isNaN(latRaw) || isNaN(lngRaw)) continue;
+
+    // Coord. Geocaptura 1 = lng (negativo ~-77), Geocaptura 2 = lat (positivo ~1.2)
+    let lat = latRaw, lng = lngRaw;
+    // Si vienen swapped (lat negativa, lng positiva), intercambiar
+    if (latRaw < 0 && lngRaw > 0) { lat = lngRaw; lng = latRaw; }
+
+    // Validar bounds Colombia
+    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
+
+    clientes.push({
+      codigo: String(row[kCod]||'').trim(),
+      nombre: String(row[kNom]||'').trim(),
+      ruta,
+      frecuencia:        String(row[kFrec]||'').trim(),
+      direccion:         String(row[kDir]||'').trim(),
+      municipio:         String(row[kMun]||'').trim(),
+      barrio:            String(row[kBrr]||'').trim(),
+      canal:             String(row[kCan]||'').trim(),
+      lat, lng,
+      gec:               String(row[kGec]||'').trim(),
+      cedula:            String(row[kCed]||'').trim(),
+      razon_social:      String(row[kRaz]||'').trim(),
+      telefono1:         normTel(row[kTel1]),
+      celular:           normTel(row[kCel]),
+      telefono_contacto: normTel(row[kTelC]),
+      correo:            String(row[kCor]||'').trim()
+    });
+  }
+  return clientes;
+}
+
+async function borrarTabla() {
+  if (!confirm('¿Eliminar TODOS los clientes de la tabla clientes_comercial?')) return;
+  const est = document.getElementById('admin-estado');
+  est.textContent = '⏳ Borrando...';
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=gte.1`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    CLIENTES = [];
+    est.textContent = '✅ Tabla limpia';
+    setTimeout(() => { cerrarAdmin(); mostrarVendedores(); }, 1500);
+  } catch(e) {
+    est.textContent = '❌ Error: ' + e.message;
+  }
+}
+</script>
+
+<script>
+function initGoogleMaps() {
+  mapReady = true;
+  try { svService = new google.maps.StreetViewService(); } catch(e) {}
+}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&callback=initGoogleMaps"></script>
+
+</body>
+</html>
