@@ -1159,6 +1159,10 @@ html, body {
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 14h14L8 1z" stroke="#F59E0B" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v4M8 11v1" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/></svg>
         Reportar Novedad
       </button>
+      <button class="btn-accion" id="btn-llamar-vendedor" onclick="llamarVendedor()" style="display:none;background:#F0FFF8;color:#059669;border:1.5px solid rgba(5,150,105,0.3);grid-column:1/-1;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 1h3l1.5 3.5-1.75 1.75a9 9 0 0 0 4 4L11.5 8.5 15 10v3a1 1 0 0 1-1 1A13 13 0 0 1 2 2a1 1 0 0 1 1-1z" fill="#059669"/></svg>
+        <span id="btn-llamar-vendedor-txt">Llamar al vendedor</span>
+      </button>
     </div>
   </div>
 </div>
@@ -2716,6 +2720,20 @@ function abrirModal(cliente, orden) {
   const estado = estados[cliente.id] || 'pendiente';
   actualizarBotonesEstado(estado);
 
+  // Ocultar botón vendedor mientras carga
+  const btnVendedor = document.getElementById('btn-llamar-vendedor');
+  btnVendedor.style.display = 'none';
+
+  // Buscar vendedor en segundo plano
+  buscarVendedor(cliente.id).then(vendedor => {
+    if (vendedor && vendedor.celular_vendedor) {
+      const ruta = vendedor.ruta_vendedor || 'Vendedor';
+      document.getElementById('btn-llamar-vendedor-txt').textContent = `${ruta} — Llamar`;
+      btnVendedor.style.display = 'flex';
+      btnVendedor._celular = vendedor.celular_vendedor.replace(/[^0-9]/g, '');
+    }
+  });
+
   // Cargar Street View
   cargarStreetView(cliente.lat, cliente.lng);
 
@@ -2729,6 +2747,13 @@ function abrirModal(cliente, orden) {
   document.querySelectorAll('.cliente-item').forEach(el => el.classList.remove('activo'));
   const el = document.getElementById('item-' + cliente.id);
   if (el) el.classList.add('activo');
+}
+
+function llamarVendedor() {
+  const btn = document.getElementById('btn-llamar-vendedor');
+  const celular = btn._celular;
+  if (!celular) return;
+  window.location.href = `tel:${celular}`;
 }
 
 function cargarStreetView(lat, lng) {
