@@ -698,6 +698,15 @@ html, body {
 }
 #pantalla-detalle.oculto { opacity: 0; transform: translateX(30px); pointer-events: none; }
 
+#pantalla-novedad {
+  position: fixed; inset: 0;
+  background: #fff;
+  display: flex; flex-direction: column;
+  z-index: 9000;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#pantalla-novedad.oculto { opacity: 0; transform: translateY(30px); pointer-events: none; }
+
 .det-header {
   background: var(--blanco);
   padding: 12px 16px 10px;
@@ -887,43 +896,108 @@ html, body {
     Ver Facturas del Día
   </button>
 
-  <!-- Botón coordinador — oculto, se activa con doble toque en el logo GMAZ -->
-  <div id="panel-coordinador" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,0.18); padding:20px; width:90%; max-width:400px; z-index:9999; max-height:80vh; overflow-y:auto;">
-    <div style="font-weight:700; font-size:15px; color:#E30613; margin-bottom:4px;">⚙️ Panel Coordinador</div>
-    <div style="font-size:11px; color:#999; margin-bottom:16px;">Solo visible para el coordinador</div>
+  <!-- PANEL PIN -->
+  <div id="panel-pin" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:20px; padding:28px 24px; width:88%; max-width:320px; text-align:center; box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+      <div style="font-size:26px; margin-bottom:6px;">🔐</div>
+      <div style="font-weight:700; font-size:16px; color:#111; margin-bottom:4px;">Panel Coordinador</div>
+      <div style="font-size:12px; color:#999; margin-bottom:18px;">Ingresa tu PIN de 4 dígitos</div>
+      <div style="display:flex; gap:12px; justify-content:center; margin-bottom:18px;">
+        <div id="dot-0" style="width:14px;height:14px;border-radius:50%;border:2px solid #DDD;transition:all 0.15s;"></div>
+        <div id="dot-1" style="width:14px;height:14px;border-radius:50%;border:2px solid #DDD;transition:all 0.15s;"></div>
+        <div id="dot-2" style="width:14px;height:14px;border-radius:50%;border:2px solid #DDD;transition:all 0.15s;"></div>
+        <div id="dot-3" style="width:14px;height:14px;border-radius:50%;border:2px solid #DDD;transition:all 0.15s;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:210px;margin:0 auto 14px;">
+        <button onclick="pinInput('1')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;transition:background 0.1s;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">1</button>
+        <button onclick="pinInput('2')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">2</button>
+        <button onclick="pinInput('3')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">3</button>
+        <button onclick="pinInput('4')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">4</button>
+        <button onclick="pinInput('5')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">5</button>
+        <button onclick="pinInput('6')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">6</button>
+        <button onclick="pinInput('7')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">7</button>
+        <button onclick="pinInput('8')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">8</button>
+        <button onclick="pinInput('9')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">9</button>
+        <div></div>
+        <button onclick="pinInput('0')" style="padding:14px;font-size:18px;font-weight:600;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">0</button>
+        <button onclick="pinBorrar()" style="padding:14px;font-size:18px;border:1.5px solid #EEE;border-radius:12px;background:#fff;cursor:pointer;" onmousedown="this.style.background='#F5F5F5'" onmouseup="this.style.background='#fff'">⌫</button>
+      </div>
+      <div id="pin-error" style="font-size:12px;color:#E30613;min-height:16px;margin-bottom:8px;"></div>
+      <button onclick="cerrarPanelPin()" style="font-size:13px;color:#999;background:none;border:none;cursor:pointer;padding:4px 12px;">Cancelar</button>
+    </div>
+  </div>
 
-    <div style="font-weight:600; font-size:13px; color:#333; margin-bottom:8px;">📋 1. Cargar Clientes del Día</div>
-    <div style="font-size:12px; color:#666; margin-bottom:10px;">Archivo GMAZ_HOY.json generado por Claude</div>
-    <input type="file" id="input-excel" accept=".json" style="display:none" onchange="subirExcelASupabase(this)">
-    <button onclick="document.getElementById('input-excel').click()" style="width:100%; background:#E30613; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;">
-      📂 Seleccionar JSON de Clientes
-    </button>
-    <div id="upload-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
+  <!-- PANEL COORDINADOR -->
+  <div id="panel-coordinador" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#fff; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,0.2); padding:20px; width:92%; max-width:420px; z-index:9999; max-height:85vh; overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-weight:700;font-size:15px;color:#E30613;">⚙️ Panel Coordinador</div>
+        <div style="font-size:11px;color:#999;margin-top:2px;">Acceso protegido · Solo coordinador</div>
+      </div>
+      <button onclick="cerrarPanelCoordinador()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;padding:4px;">✕</button>
+    </div>
 
-    <div style="border-top:1px solid #F0F0F0; margin:16px 0;"></div>
+    <!-- SECCIÓN 1: RUTAS DEL DÍA (Excel directo) -->
+    <div style="background:#FFF8F8;border:1px solid #FFE0E0;border-radius:14px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px;">📊</span>
+        <div style="font-weight:600;font-size:13px;color:#111;">1. Rutas del Día</div>
+        <span style="margin-left:auto;font-size:10px;color:#E30613;background:#FFE0E0;padding:2px 8px;border-radius:10px;font-weight:500;">DIARIO</span>
+      </div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">Sube el Excel del sistema (P_PAS_XX.xlsx). Se convierte y carga automáticamente.</div>
+      <input type="file" id="input-excel-directo" accept=".xlsx,.xls" style="display:none" onchange="subirExcelDirecto(this)">
+      <button onclick="document.getElementById('input-excel-directo').click()" style="width:100%;background:#E30613;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">
+        📂 Subir Excel de Rutas (.xlsx)
+      </button>
+      <div id="estado-excel-directo" style="margin-top:6px;font-size:11px;color:#555;text-align:center;min-height:16px;"></div>
+      <button onclick="borrarClientes()" style="width:100%;margin-top:8px;background:#fff;color:#E30613;border:1px solid #FFE0E0;border-radius:10px;padding:8px;font-size:12px;font-weight:500;cursor:pointer;">
+        🗑 Borrar tabla de clientes
+      </button>
+    </div>
 
-    <div style="font-weight:600; font-size:13px; color:#333; margin-bottom:8px;">📄 2. Subir PDFs de Facturas</div>
-    <div style="font-size:12px; color:#666; margin-bottom:10px;">SOP_01, SOP_02, CREDITOS_PASTO — hasta 4 archivos. Los del día anterior se borran automáticamente.</div>
-    <input type="file" id="input-pdfs" accept=".pdf" multiple style="display:none" onchange="subirPDFsASupabase(this)">
-    <button onclick="document.getElementById('input-pdfs').click()" style="width:100%; background:#1A56DB; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;">
-      📂 Seleccionar PDFs (1-4 archivos)
-    </button>
-    <div id="upload-pdf-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
+    <!-- SECCIÓN 2: FACTURAS (PDFs) -->
+    <div style="background:#F5F8FF;border:1px solid #D0DCFF;border-radius:14px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px;">📄</span>
+        <div style="font-weight:600;font-size:13px;color:#111;">2. Facturas del Día</div>
+        <span style="margin-left:auto;font-size:10px;color:#1A56DB;background:#D0DCFF;padding:2px 8px;border-radius:10px;font-weight:500;">DIARIO</span>
+      </div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">Soportes de entrega y facturas electrónicas de crédito. Máximo 4 PDFs. El índice se genera automáticamente.</div>
+      <input type="file" id="input-pdfs" accept=".pdf" multiple style="display:none" onchange="subirPDFsYGenerarIndex(this)">
+      <button onclick="document.getElementById('input-pdfs').click()" style="width:100%;background:#1A56DB;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">
+        📂 Subir PDFs de Facturas (1-4)
+      </button>
+      <div id="upload-pdf-estado" style="margin-top:6px;font-size:11px;color:#555;text-align:center;min-height:16px;"></div>
+      <div id="pdf-progreso" style="display:none;margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:4px;">
+          <span id="pdf-prog-txt">Procesando...</span>
+          <span id="pdf-prog-pct">0%</span>
+        </div>
+        <div style="height:3px;background:#E0E8FF;border-radius:2px;"><div id="pdf-prog-fill" style="height:3px;background:#1A56DB;border-radius:2px;width:0%;transition:width 0.3s;"></div></div>
+      </div>
+      <button onclick="borrarFacturas()" style="width:100%;margin-top:8px;background:#fff;color:#1A56DB;border:1px solid #D0DCFF;border-radius:10px;padding:8px;font-size:12px;font-weight:500;cursor:pointer;">
+        🗑 Borrar facturas del día
+      </button>
+    </div>
 
-    <div style="border-top:1px solid #F0F0F0; margin:16px 0;"></div>
+    <!-- SECCIÓN 3: MAESTRO VENDEDORES -->
+    <div style="background:#F0FFF8;border:1px solid #B8F0D8;border-radius:14px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px;">👥</span>
+        <div style="font-weight:600;font-size:13px;color:#111;">3. Maestro de Vendedores</div>
+        <span style="margin-left:auto;font-size:10px;color:#059669;background:#B8F0D8;padding:2px 8px;border-radius:10px;font-weight:500;">MENSUAL</span>
+      </div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">Excel con: Código · Nombre cliente · Ruta vendedor · Celular. Se sube una vez al mes y queda permanente.</div>
+      <input type="file" id="input-maestro" accept=".xlsx,.xls" style="display:none" onchange="subirMaestroVendedores(this)">
+      <button onclick="document.getElementById('input-maestro').click()" style="width:100%;background:#059669;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">
+        📂 Subir Excel Maestro
+      </button>
+      <div id="estado-maestro" style="margin-top:6px;font-size:11px;color:#555;text-align:center;min-height:16px;"></div>
+      <button onclick="borrarMaestro()" style="width:100%;margin-top:8px;background:#fff;color:#059669;border:1px solid #B8F0D8;border-radius:10px;padding:8px;font-size:12px;font-weight:500;cursor:pointer;">
+        🗑 Borrar maestro de vendedores
+      </button>
+    </div>
 
-    <div style="font-weight:600; font-size:13px; color:#333; margin-bottom:8px;">📋 3. Subir Índice de Facturas</div>
-    <div style="font-size:12px; color:#666; margin-bottom:10px;">FACTURAS_INDEX.json generado por el Conversor</div>
-    <input type="file" id="input-index" accept=".json" style="display:none" onchange="subirIndexASupabase(this)">
-    <button onclick="document.getElementById('input-index').click()" style="width:100%; background:#059669; color:#fff; border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;">
-      📂 Seleccionar FACTURAS_INDEX.json
-    </button>
-    <div id="upload-index-estado" style="margin-top:8px; font-size:12px; color:#333; text-align:center; min-height:18px;"></div>
-
-    <button onclick="document.getElementById('panel-coordinador').style.display='none'" style="width:100%; background:#f5f5f5; color:#666; border:none; border-radius:10px; padding:10px; font-size:13px; margin-top:14px; cursor:pointer;">Cerrar</button>
-
-    <div style="border-top:1px solid #F0F0F0; margin:14px 0;"></div>
-    <button id="btn-limpiar" onclick="limpiarTabla()" style="width:100%; background:#fff; color:#E30613; border:1.5px solid #E30613; border-radius:10px; padding:10px; font-size:13px; font-weight:600; cursor:pointer;">🗑 Limpiar tabla (borrar todos los clientes)</button>
   </div>
 </div>
 
@@ -1081,12 +1155,68 @@ html, body {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="#4A5060" stroke-width="2" stroke-linecap="round"/></svg>
         No entregado
       </button>
+      <button class="btn-accion" id="btn-novedad" onclick="abrirNovedad()" style="background:#FFF8E1;color:#F59E0B;border:1.5px solid rgba(245,158,11,0.3);grid-column:1/-1;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 14h14L8 1z" stroke="#F59E0B" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v4M8 11v1" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Reportar Novedad
+      </button>
     </div>
   </div>
 </div>
 
 <!-- TOAST -->
 <div id="toast"></div>
+
+<!-- ==================== PANTALLA NOVEDAD ==================== -->
+<div id="pantalla-novedad" class="oculto">
+  <div style="background:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #F0F0F0;">
+    <button onclick="cerrarNovedad()" style="background:none;border:none;cursor:pointer;padding:4px;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#4A5060" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div>
+      <div style="font-size:14px;font-weight:600;color:#111;">Reportar Novedad</div>
+      <div style="font-size:11px;color:#F59E0B;" id="nov-cliente-nombre">—</div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Foto -->
+    <div>
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">📸 Foto de la novedad</div>
+      <input type="file" id="nov-input-foto" accept="image/*" capture="environment" style="display:none" onchange="novFotoSeleccionada(this)">
+      <div id="nov-foto-preview" onclick="document.getElementById('nov-input-foto').click()" style="width:100%;height:180px;background:#F5F5F5;border-radius:12px;border:2px dashed #DDD;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;">
+        <span style="font-size:36px;">📷</span>
+        <span style="font-size:12px;color:#999;margin-top:6px;">Toca para tomar foto</span>
+      </div>
+      <div id="nov-foto-estado" style="font-size:11px;color:#999;text-align:center;margin-top:4px;"></div>
+    </div>
+
+    <!-- Observación -->
+    <div>
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">📝 Descripción de la novedad</div>
+      <textarea id="nov-observacion" placeholder="Ej: Cliente cerrado, dirección incorrecta, rechazo del pedido..." style="width:100%;border:1.5px solid #E0E0E0;border-radius:12px;padding:12px;font-size:13px;font-family:inherit;resize:none;min-height:100px;outline:none;color:#111;" oninput="verificarNovedad()"></textarea>
+    </div>
+
+    <!-- Vendedor asignado -->
+    <div id="nov-vendedor-info" style="display:none;background:#F0FFF8;border:1px solid #B8F0D8;border-radius:10px;padding:12px;">
+      <div style="font-size:11px;color:#059669;font-weight:600;margin-bottom:4px;">✓ Vendedor identificado</div>
+      <div style="font-size:13px;color:#111;font-weight:500;" id="nov-vendedor-nombre">—</div>
+      <div style="font-size:11px;color:#666;" id="nov-vendedor-ruta">—</div>
+    </div>
+    <div id="nov-sin-vendedor" style="display:none;background:#FFF8E1;border:1px solid #FDE68A;border-radius:10px;padding:12px;">
+      <div style="font-size:11px;color:#F59E0B;font-weight:600;margin-bottom:4px;">⚠ Sin vendedor asignado</div>
+      <div style="font-size:12px;color:#666;">Este cliente no está en el maestro de vendedores</div>
+    </div>
+
+  </div>
+
+  <!-- Botón enviar -->
+  <div style="padding:16px;border-top:1px solid #F0F0F0;background:#fff;">
+    <button id="btn-enviar-novedad" onclick="enviarNovedad()" disabled style="width:100%;background:#25D366;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;transition:opacity 0.2s;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.089.535 4.05 1.472 5.757L0 24l6.406-1.452A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.896 0-3.67-.516-5.193-1.418l-.371-.221-3.804.862.876-3.703-.242-.382A9.944 9.944 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Enviar por WhatsApp
+    </button>
+  </div>
+</div>
 
 <!-- ==================== PANTALLA FACTURAS ==================== -->
 <div id="pantalla-facturas" class="oculto">
@@ -1458,17 +1588,619 @@ function parsearJSON(json) {
 }
 
 // ============================================================
-// SUBIDA DE DATOS A SUPABASE (solo coordinador)
+// PANEL COORDINADOR — PIN + ACTIVACIÓN
 // ============================================================
-// Activa el panel con doble clic en el logo GMAZ
+const COORDINADOR_PIN = '1234'; // ← CAMBIA ESTE PIN
+let pinActual = '';
 let logoClicks = 0;
+
 function activarPanelCoordinador() {
   logoClicks++;
   if (logoClicks >= 2) {
     logoClicks = 0;
-    document.getElementById('panel-coordinador').style.display = 'block';
+    const pin = document.getElementById('panel-pin');
+    pin.style.display = 'flex';
+    pinActual = '';
+    actualizarDots();
+    document.getElementById('pin-error').textContent = '';
   }
   setTimeout(() => { logoClicks = 0; }, 800);
+}
+
+function pinInput(d) {
+  if (pinActual.length >= 4) return;
+  pinActual += d;
+  actualizarDots();
+  if (pinActual.length === 4) {
+    setTimeout(() => {
+      if (pinActual === COORDINADOR_PIN) {
+        document.getElementById('panel-pin').style.display = 'none';
+        document.getElementById('panel-coordinador').style.display = 'block';
+        pinActual = '';
+        actualizarDots();
+      } else {
+        document.getElementById('pin-error').textContent = 'PIN incorrecto. Intenta de nuevo.';
+        pinActual = '';
+        actualizarDots();
+      }
+    }, 200);
+  }
+}
+
+function pinBorrar() {
+  pinActual = pinActual.slice(0, -1);
+  actualizarDots();
+  document.getElementById('pin-error').textContent = '';
+}
+
+function actualizarDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot-' + i);
+    if (dot) {
+      dot.style.background = i < pinActual.length ? '#E30613' : '#fff';
+      dot.style.borderColor = i < pinActual.length ? '#E30613' : '#DDD';
+    }
+  }
+}
+
+function cerrarPanelPin() {
+  document.getElementById('panel-pin').style.display = 'none';
+  pinActual = '';
+  actualizarDots();
+}
+
+function cerrarPanelCoordinador() {
+  document.getElementById('panel-coordinador').style.display = 'none';
+}
+
+// ============================================================
+// SECCIÓN 1: EXCEL DIRECTO → SUPABASE (sin conversor externo)
+// ============================================================
+async function subirExcelDirecto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const estado = document.getElementById('estado-excel-directo');
+  estado.textContent = '⏳ Leyendo Excel...';
+
+  try {
+    // Cargar JSZip si no está disponible
+    if (typeof JSZip === 'undefined') {
+      await cargarScriptExterno('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    }
+
+    estado.textContent = '⏳ Convirtiendo Excel...';
+    const clientes = await parsearExcelAClientes(file);
+
+    if (clientes.length === 0) {
+      estado.textContent = '❌ No se encontraron clientes válidos en el Excel';
+      return;
+    }
+
+    estado.textContent = '⏳ Limpiando tabla...';
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=neq.DUMMY_NEVER_MATCHES`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+
+    estado.textContent = `⏳ Subiendo ${clientes.length} clientes...`;
+    for (let i = 0; i < clientes.length; i += 500) {
+      const bloque = clientes.slice(i, i + 500);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(bloque)
+      });
+      if (!res.ok) throw new Error(await res.text());
+    }
+
+    estado.textContent = `✅ ${clientes.length} clientes cargados · ${[...new Set(clientes.map(c=>c.ruta))].length} rutas`;
+    setTimeout(() => { cargarDatos(); }, 1500);
+
+  } catch(e) {
+    estado.textContent = '❌ Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+async function parsearExcelAClientes(file) {
+  const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  const sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('text');
+  const doc = new DOMParser().parseFromString(sheetXml, 'application/xml');
+  const clientes = [];
+  const hoyFecha = new Date().toISOString().split('T')[0];
+  const rows = doc.getElementsByTagNameNS(NS, 'row');
+
+  for (let ri = 1; ri < rows.length; ri++) {
+    const cells = {};
+    for (const cell of rows[ri].getElementsByTagNameNS(NS, 'c')) {
+      const col = cell.getAttribute('r').replace(/[0-9]/g, '');
+      const ctype = cell.getAttribute('t') || '';
+      let val = '';
+      if (ctype === 'inlineStr') {
+        const is = cell.getElementsByTagNameNS(NS, 'is')[0];
+        const t  = is ? is.getElementsByTagNameNS(NS, 't')[0] : null;
+        val = t ? t.textContent : '';
+      } else {
+        const v = cell.getElementsByTagNameNS(NS, 'v')[0];
+        val = v ? v.textContent : '';
+      }
+      cells[col] = val;
+    }
+
+    const id = cells['A'];
+    const nombre = cells['B'] || '';
+    if (!id || nombre === 'Descanso') continue;
+
+    let lat, lng;
+    try {
+      lat = parseFloat((cells['G']||'0').replace(',','.'));
+      lng = parseFloat((cells['F']||'0').replace(',','.'));
+    } catch(e) { continue; }
+
+    const ruta = cells['H'] || '';
+    if (!ruta.startsWith('KA4V')) continue;
+    if (lat < -5 || lat > 13 || lng < -82 || lng > -60) continue;
+
+    clientes.push({
+      id: String(id), nombre: nombre.trim(), ruta,
+      lat, lng, direccion: (cells['C']||'').trim(),
+      barrio: '', celular: '', fecha: hoyFecha
+    });
+  }
+  return clientes;
+}
+
+async function borrarClientes() {
+  if (!confirm('¿Borrar TODOS los clientes de la tabla?')) return;
+  const estado = document.getElementById('estado-excel-directo');
+  estado.textContent = '⏳ Borrando...';
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=neq.DUMMY_NEVER_MATCHES`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    estado.textContent = '✅ Tabla de clientes limpia';
+    cargarDatos();
+  } catch(e) { estado.textContent = '❌ Error: ' + e.message; }
+}
+
+// ============================================================
+// SECCIÓN 2: PDFs + GENERAR ÍNDICE AUTOMÁTICAMENTE
+// ============================================================
+async function subirPDFsYGenerarIndex(input) {
+  const files = Array.from(input.files).filter(f => f.name.toLowerCase().endsWith('.pdf')).slice(0, 4);
+  if (!files.length) return;
+  const estado = document.getElementById('upload-pdf-estado');
+  const progWrap = document.getElementById('pdf-progreso');
+  progWrap.style.display = 'block';
+
+  const setProg = (txt, pct) => {
+    document.getElementById('pdf-prog-txt').textContent = txt;
+    document.getElementById('pdf-prog-pct').textContent = pct + '%';
+    document.getElementById('pdf-prog-fill').style.width = pct + '%';
+  };
+
+  try {
+    // 1. Borrar archivos de ayer
+    estado.textContent = '⏳ Limpiando archivos anteriores...';
+    const folderAyer = _ayer() + '/';
+    const listRes = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${STORAGE_BUCKET}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefix: folderAyer, limit: 50 })
+    });
+    if (listRes.ok) {
+      const viejos = await listRes.json();
+      if (Array.isArray(viejos) && viejos.length > 0) {
+        await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}`, {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prefixes: viejos.map(f => folderAyer + f.name) })
+        });
+      }
+    }
+
+    // 2. Subir PDFs
+    const folderHoy = _hoy() + '/';
+    let subidos = 0;
+    for (const file of files) {
+      setProg(`Subiendo ${file.name}...`, Math.round((subidos / files.length) * 40));
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${folderHoy + file.name}`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
+        body: file
+      });
+      if (res.ok) subidos++;
+    }
+
+    // 3. Cargar PDF.js y generar índice
+    setProg('Cargando motor de PDFs...', 42);
+    await cargarPdfJs();
+
+    const baseUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${folderHoy}`;
+    const index = {};
+    const totalPags = files.reduce((a, f) => a, 0);
+
+    for (let fi = 0; fi < files.length; fi++) {
+      const file = files[fi];
+      const tipo = file.name.toLowerCase().includes('credit') ? 'credito' : 'soporte';
+      const buf  = await file.arrayBuffer();
+      const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
+
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const pct = 42 + Math.round(((fi * pdf.numPages + p) / (files.length * pdf.numPages)) * 50);
+        setProg(`Indexando ${file.name} pág ${p}/${pdf.numPages}...`, Math.min(pct, 92));
+
+        const page    = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const texto   = content.items.map(i => i.str).join(' ');
+        const codigos = [...new Set((texto.match(/\b12\d{8}\b/g) || []))];
+
+        for (const codigo of codigos) {
+          if (!index[codigo]) index[codigo] = [];
+          if (!index[codigo].some(e => e.archivo === file.name && e.pagina === p)) {
+            index[codigo].push({
+              archivo: file.name,
+              url: baseUrl + encodeURIComponent(file.name),
+              pagina: p,
+              tipo
+            });
+          }
+        }
+      }
+    }
+
+    // 4. Subir índice a Storage
+    setProg('Subiendo índice...', 94);
+    const indexJson = JSON.stringify(index);
+    await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${folderHoy}FACTURAS_INDEX.json`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'x-upsert': 'true' },
+      body: indexJson
+    });
+
+    setProg('¡Listo!', 100);
+    const nCodigos = Object.keys(index).length;
+    estado.textContent = `✅ ${subidos} PDFs subidos · ${nCodigos} clientes indexados`;
+
+    // Recargar índice en facturas si está abierta
+    factClientes = {};
+    if (!document.getElementById('pantalla-facturas').classList.contains('oculto')) {
+      cargarArchivosFacturas();
+    }
+
+  } catch(e) {
+    estado.textContent = '❌ Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+async function borrarFacturas() {
+  if (!confirm('¿Borrar todos los PDFs e índice del día actual?')) return;
+  const estado = document.getElementById('upload-pdf-estado');
+  estado.textContent = '⏳ Borrando...';
+  try {
+    const folder = _hoy() + '/';
+    const listRes = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${STORAGE_BUCKET}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefix: folder, limit: 50 })
+    });
+    if (listRes.ok) {
+      const archivos = await listRes.json();
+      if (Array.isArray(archivos) && archivos.length > 0) {
+        await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}`, {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prefixes: archivos.map(f => folder + f.name) })
+        });
+      }
+    }
+    factClientes = {};
+    estado.textContent = '✅ Facturas del día borradas';
+  } catch(e) { estado.textContent = '❌ Error: ' + e.message; }
+}
+
+// ============================================================
+// SECCIÓN 3: MAESTRO DE VENDEDORES
+// ============================================================
+const MAESTRO_TABLE = 'maestro_vendedores';
+
+async function subirMaestroVendedores(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const estado = document.getElementById('estado-maestro');
+  estado.textContent = '⏳ Leyendo Excel maestro...';
+
+  try {
+    if (typeof JSZip === 'undefined') {
+      await cargarScriptExterno('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    }
+
+    const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('text');
+    const doc  = new DOMParser().parseFromString(sheetXml, 'application/xml');
+    const rows = doc.getElementsByTagNameNS(NS, 'row');
+
+    const registros = [];
+    for (let ri = 1; ri < rows.length; ri++) {
+      const cells = {};
+      for (const cell of rows[ri].getElementsByTagNameNS(NS, 'c')) {
+        const col = cell.getAttribute('r').replace(/[0-9]/g, '');
+        const ctype = cell.getAttribute('t') || '';
+        let val = '';
+        if (ctype === 'inlineStr') {
+          const is = cell.getElementsByTagNameNS(NS, 'is')[0];
+          val = is ? (is.getElementsByTagNameNS(NS, 't')[0]?.textContent || '') : '';
+        } else {
+          val = cell.getElementsByTagNameNS(NS, 'v')[0]?.textContent || '';
+        }
+        cells[col] = val.trim();
+      }
+
+      if (!cells['A']) continue;
+      const celular = (cells['D'] || '').replace(/[^0-9]/g, '');
+      registros.push({
+        codigo:         String(cells['A']),
+        nombre_cliente: cells['B'] || '',
+        ruta_vendedor:  cells['C'] || '',
+        celular_vendedor: celular
+      });
+    }
+
+    if (registros.length === 0) {
+      estado.textContent = '❌ No se encontraron registros válidos';
+      return;
+    }
+
+    estado.textContent = `⏳ Limpiando maestro anterior...`;
+    await fetch(`${SUPABASE_URL}/rest/v1/${MAESTRO_TABLE}?codigo=neq.DUMMY`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+
+    estado.textContent = `⏳ Subiendo ${registros.length} registros...`;
+    for (let i = 0; i < registros.length; i += 500) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${MAESTRO_TABLE}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(registros.slice(i, i + 500))
+      });
+      if (!res.ok) throw new Error(await res.text());
+    }
+
+    estado.textContent = `✅ ${registros.length} clientes en el maestro`;
+
+  } catch(e) {
+    estado.textContent = '❌ Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+async function borrarMaestro() {
+  if (!confirm('¿Borrar el maestro de vendedores? Se perderá la asignación de rutas.')) return;
+  const estado = document.getElementById('estado-maestro');
+  estado.textContent = '⏳ Borrando...';
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/${MAESTRO_TABLE}?codigo=neq.DUMMY`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    estado.textContent = '✅ Maestro borrado';
+  } catch(e) { estado.textContent = '❌ Error: ' + e.message; }
+}
+
+async function buscarVendedor(codigoCliente) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${MAESTRO_TABLE}?codigo=eq.${codigoCliente}&select=*`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows.length > 0 ? rows[0] : null;
+  } catch(e) { return null; }
+}
+
+// ============================================================
+// MÓDULO DE NOVEDADES
+// ============================================================
+let novFotoBase64 = null;
+let novVendedor   = null;
+
+async function abrirNovedad() {
+  if (!clienteActual) return;
+  novFotoBase64 = null;
+  novVendedor   = null;
+
+  document.getElementById('nov-cliente-nombre').textContent = clienteActual.nombre;
+  document.getElementById('nov-observacion').value = '';
+  document.getElementById('nov-foto-preview').innerHTML = `
+    <input type="file" id="nov-input-foto" accept="image/*" capture="environment" style="display:none" onchange="novFotoSeleccionada(this)">
+    <span style="font-size:36px;">📷</span>
+    <span style="font-size:12px;color:#999;margin-top:6px;">Toca para tomar foto</span>`;
+  document.getElementById('btn-enviar-novedad').disabled = true;
+  document.getElementById('btn-enviar-novedad').style.opacity = '0.5';
+  document.getElementById('nov-vendedor-info').style.display = 'none';
+  document.getElementById('nov-sin-vendedor').style.display = 'none';
+
+  // Primero mostrar la pantalla, luego cerrar el modal
+  document.getElementById('pantalla-novedad').classList.remove('oculto');
+  cerrarModal();
+
+  // Abrir cámara automáticamente
+  setTimeout(() => {
+    const inputFoto = document.getElementById('nov-input-foto');
+    if (inputFoto) inputFoto.click();
+  }, 300);
+
+  // Buscar vendedor en segundo plano
+  const vendedor = await buscarVendedor(clienteActual.id);
+  novVendedor = vendedor;
+  if (vendedor && vendedor.celular_vendedor) {
+    document.getElementById('nov-vendedor-info').style.display = 'block';
+    document.getElementById('nov-vendedor-nombre').textContent = vendedor.ruta_vendedor || 'Vendedor';
+    document.getElementById('nov-vendedor-ruta').textContent = 'Ruta: ' + (vendedor.ruta_vendedor || '—');
+  } else {
+    document.getElementById('nov-sin-vendedor').style.display = 'block';
+  }
+  verificarNovedad();
+}
+
+function cerrarNovedad() {
+  document.getElementById('pantalla-novedad').classList.add('oculto');
+}
+
+function novFotoSeleccionada(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.min(img.width, 1200);
+      canvas.height = Math.round(img.height * (canvas.width / img.width));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Marca de agua
+      const fechaHora = new Date().toLocaleString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const texto = `GMAZ · ${fechaHora} · ${clienteActual?.id || ''} · ${(clienteActual?.nombre || '').substring(0,25)}`;
+      const fontSize = Math.max(14, canvas.width * 0.022);
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0, canvas.height - fontSize * 2.2, canvas.width, fontSize * 2.2);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(texto, 8, canvas.height - fontSize * 0.6);
+
+      novFotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+      const prev = document.getElementById('nov-foto-preview');
+      prev.style.border = '2px solid #4CAF50';
+      prev.innerHTML = `<img src="${novFotoBase64}" style="width:100%;height:100%;object-fit:cover;">
+        <button onclick="event.stopPropagation();document.getElementById('nov-input-foto').click()" style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:500;">📷 Cambiar</button>`;
+
+      document.getElementById('nov-foto-estado').textContent = '✓ Foto con marca de agua lista';
+      document.getElementById('nov-foto-estado').style.color = '#4CAF50';
+      verificarNovedad();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function verificarNovedad() {
+  const tieneObs  = (document.getElementById('nov-observacion')?.value || '').trim().length > 2;
+  const tieneFoto = novFotoBase64 !== null;
+  const listo = tieneObs && tieneFoto;
+  const btn = document.getElementById('btn-enviar-novedad');
+  if (!btn) return;
+  btn.disabled = !listo;
+  btn.style.opacity = listo ? '1' : '0.4';
+  btn.style.cursor  = listo ? 'pointer' : 'not-allowed';
+}
+
+async function enviarNovedad() {
+  const obs      = (document.getElementById('nov-observacion')?.value || '').trim();
+  const cliente  = clienteActual;
+  if (!cliente || !obs || !novFotoBase64) {
+    mostrarToast('⚠ Completa la foto y la descripción');
+    return;
+  }
+
+  const fechaHora = new Date().toLocaleString('es-CO', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+
+  const mensaje =
+    `🚨 *NOVEDAD DE ENTREGA - GMAZ*\n\n` +
+    `📦 *Cliente:* ${cliente.nombre}\n` +
+    `🆔 *Código:* ${cliente.id}\n` +
+    `📍 *Dirección:* ${cliente.direccion || '—'}\n` +
+    `🕐 *Hora:* ${fechaHora}\n\n` +
+    `📝 *Novedad:* ${obs}\n\n` +
+    `_Enviado desde GMAZ Rutas_`;
+
+  // Convertir base64 a File para compartir
+  const blob = await (await fetch(novFotoBase64)).blob();
+  const fotoFile = new File([blob], `novedad_${cliente.id}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+  // Si hay vendedor asignado — intentar navigator.share con foto
+  if (novVendedor && novVendedor.celular_vendedor) {
+    let celular = novVendedor.celular_vendedor.replace(/[^0-9]/g, '');
+    if (celular.length === 10) celular = '57' + celular;
+
+    // Intentar compartir foto nativa (Android)
+    if (navigator.canShare && navigator.canShare({ files: [fotoFile] })) {
+      try {
+        await navigator.share({
+          files: [fotoFile],
+          text: mensaje,
+          title: `Novedad - ${cliente.nombre}`
+        });
+        mostrarToast('✅ Foto compartida');
+        cerrarNovedad();
+        return;
+      } catch(e) {
+        if (e.name !== 'AbortError') {
+          // Falló compartir nativo, usar WhatsApp directo
+        } else {
+          return; // Usuario canceló
+        }
+      }
+    }
+
+    // Fallback: abrir WhatsApp directo al vendedor con mensaje
+    const waUrl = `https://wa.me/${celular}?text=${encodeURIComponent(mensaje)}`;
+    window.open(waUrl, '_blank');
+    mostrarToast('📱 Abriendo WhatsApp al vendedor...\nAdjunta la foto manualmente');
+    cerrarNovedad();
+
+  } else {
+    // Sin vendedor — compartir foto genérica
+    if (navigator.canShare && navigator.canShare({ files: [fotoFile] })) {
+      try {
+        await navigator.share({ files: [fotoFile], text: mensaje, title: `Novedad - ${cliente.nombre}` });
+        mostrarToast('✅ Foto compartida');
+        cerrarNovedad();
+        return;
+      } catch(e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+    // Último fallback: copiar mensaje
+    try {
+      await navigator.clipboard.writeText(mensaje);
+      mostrarToast('📋 Mensaje copiado\n(Cliente sin vendedor asignado en el maestro)');
+    } catch(e) {
+      mostrarToast('⚠ Cliente sin vendedor en el maestro');
+    }
+  }
+}
+
+// Helper para cargar scripts externos
+function cargarScriptExterno(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
 }
 
 async function subirExcelASupabase(input) {
