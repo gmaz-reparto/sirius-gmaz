@@ -1810,9 +1810,19 @@ async function subirPDFsYGenerarIndex(input) {
     // 2. Subir PDFs
     const folderHoy = _hoy() + '/';
     let subidos = 0;
+    // Mapa nombre original → nombre limpio para usar consistentemente
+    const nombreMap = {};
     for (const file of files) {
-      setProg(`Subiendo ${file.name}...`, Math.round((subidos / files.length) * 40));
-      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${folderHoy + file.name}`, {
+      nombreMap[file.name] = file.name
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .replace(/_+/g, '_');
+    }
+
+    for (const file of files) {
+      const nombreLimpio = nombreMap[file.name];
+      setProg(`Subiendo ${nombreLimpio}...`, Math.round((subidos / files.length) * 40));
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${folderHoy + nombreLimpio}`, {
         method: 'POST',
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
         body: file
@@ -1821,8 +1831,8 @@ async function subirPDFsYGenerarIndex(input) {
         subidos++;
       } else {
         const errTxt = await res.text();
-        console.error(`Error subiendo ${file.name}:`, errTxt);
-        estado.textContent = `⚠ Error en ${file.name}: ${errTxt.substring(0,80)}`;
+        console.error(`Error subiendo ${nombreLimpio}:`, errTxt);
+        estado.textContent = `⚠ Error en ${nombreLimpio}: ${errTxt.substring(0,80)}`;
       }
     }
 
@@ -1836,13 +1846,14 @@ async function subirPDFsYGenerarIndex(input) {
 
     for (let fi = 0; fi < files.length; fi++) {
       const file = files[fi];
+      const nombreLimpio = nombreMap[file.name];
       const tipo = file.name.toLowerCase().includes('credit') ? 'credito' : 'soporte';
       const buf  = await file.arrayBuffer();
       const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
 
       for (let p = 1; p <= pdf.numPages; p++) {
         const pct = 42 + Math.round(((fi * pdf.numPages + p) / (files.length * pdf.numPages)) * 50);
-        setProg(`Indexando ${file.name} pág ${p}/${pdf.numPages}...`, Math.min(pct, 92));
+        setProg(`Indexando ${nombreLimpio} pág ${p}/${pdf.numPages}...`, Math.min(pct, 92));
 
         const page    = await pdf.getPage(p);
         const content = await page.getTextContent();
@@ -1851,10 +1862,10 @@ async function subirPDFsYGenerarIndex(input) {
 
         for (const codigo of codigos) {
           if (!index[codigo]) index[codigo] = [];
-          if (!index[codigo].some(e => e.archivo === file.name && e.pagina === p)) {
+          if (!index[codigo].some(e => e.archivo === nombreLimpio && e.pagina === p)) {
             index[codigo].push({
-              archivo: file.name,
-              url: baseUrl + encodeURIComponent(file.name),
+              archivo: nombreLimpio,
+              url: baseUrl + encodeURIComponent(nombreLimpio),
               pagina: p,
               tipo
             });
