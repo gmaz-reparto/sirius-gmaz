@@ -1817,7 +1817,13 @@ async function subirPDFsYGenerarIndex(input) {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
         body: file
       });
-      if (res.ok) subidos++;
+      if (res.ok) {
+        subidos++;
+      } else {
+        const errTxt = await res.text();
+        console.error(`Error subiendo ${file.name}:`, errTxt);
+        estado.textContent = `⚠ Error en ${file.name}: ${errTxt.substring(0,80)}`;
+      }
     }
 
     // 3. Cargar PDF.js y generar índice
@@ -2022,23 +2028,30 @@ let novVendedor   = null;
 
 async function abrirNovedad() {
   if (!clienteActual) return;
+
+  // Guardar referencia local ANTES de cerrar el modal
+  const clienteNovedad = { ...clienteActual };
+
   novFotoBase64 = null;
   novVendedor   = null;
+  clienteActual = clienteNovedad; // Restaurar por si cerrarModal lo borra
 
-  document.getElementById('nov-cliente-nombre').textContent = clienteActual.nombre;
+  document.getElementById('nov-cliente-nombre').textContent = clienteNovedad.nombre;
   document.getElementById('nov-observacion').value = '';
   document.getElementById('nov-foto-preview').innerHTML = `
-    <input type="file" id="nov-input-foto" accept="image/*" capture="environment" style="display:none" onchange="novFotoSeleccionada(this)">
     <span style="font-size:36px;">📷</span>
     <span style="font-size:12px;color:#999;margin-top:6px;">Toca para tomar foto</span>`;
+  document.getElementById('nov-foto-estado').textContent = '';
   document.getElementById('btn-enviar-novedad').disabled = true;
-  document.getElementById('btn-enviar-novedad').style.opacity = '0.5';
+  document.getElementById('btn-enviar-novedad').style.opacity = '0.4';
   document.getElementById('nov-vendedor-info').style.display = 'none';
   document.getElementById('nov-sin-vendedor').style.display = 'none';
 
-  // Primero mostrar la pantalla, luego cerrar el modal
   document.getElementById('pantalla-novedad').classList.remove('oculto');
   cerrarModal();
+
+  // Restaurar después de cerrar el modal
+  clienteActual = clienteNovedad;
 
   // Abrir cámara automáticamente
   setTimeout(() => {
@@ -2047,12 +2060,11 @@ async function abrirNovedad() {
   }, 300);
 
   // Buscar vendedor en segundo plano
-  const vendedor = await buscarVendedor(clienteActual.id);
+  const vendedor = await buscarVendedor(clienteNovedad.id);
   novVendedor = vendedor;
   if (vendedor && vendedor.celular_vendedor) {
     document.getElementById('nov-vendedor-info').style.display = 'block';
     document.getElementById('nov-vendedor-nombre').textContent = vendedor.ruta_vendedor || 'Vendedor';
-    document.getElementById('nov-vendedor-ruta').textContent = 'Ruta: ' + (vendedor.ruta_vendedor || '—');
   } else {
     document.getElementById('nov-sin-vendedor').style.display = 'block';
   }
