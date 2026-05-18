@@ -2148,60 +2148,37 @@ async function enviarNovedad() {
     `📝 *Novedad:* ${obs}\n\n` +
     `_Enviado desde GMAZ Rutas_`;
 
-  // Convertir base64 a File para compartir
-  const blob = await (await fetch(novFotoBase64)).blob();
-  const fotoFile = new File([blob], `novedad_${cliente.id}_${Date.now()}.jpg`, { type: 'image/jpeg' });
-
-  // Si hay vendedor asignado — intentar navigator.share con foto
   if (novVendedor && novVendedor.celular_vendedor) {
+    // Ir directo al chat del vendedor con el mensaje prellenado
     let celular = novVendedor.celular_vendedor.replace(/[^0-9]/g, '');
     if (celular.length === 10) celular = '57' + celular;
 
-    // Intentar compartir foto nativa (Android)
-    if (navigator.canShare && navigator.canShare({ files: [fotoFile] })) {
-      try {
-        await navigator.share({
-          files: [fotoFile],
-          text: mensaje,
-          title: `Novedad - ${cliente.nombre}`
-        });
-        mostrarToast('✅ Foto compartida');
-        cerrarNovedad();
-        return;
-      } catch(e) {
-        if (e.name !== 'AbortError') {
-          // Falló compartir nativo, usar WhatsApp directo
-        } else {
-          return; // Usuario canceló
-        }
-      }
-    }
+    // Guardar foto en galería del celular para adjuntar manualmente
+    const link = document.createElement('a');
+    link.href = novFotoBase64;
+    link.download = `novedad_${cliente.id}_${Date.now()}.jpg`;
+    link.click();
 
-    // Fallback: abrir WhatsApp directo al vendedor con mensaje
-    const waUrl = `https://wa.me/${celular}?text=${encodeURIComponent(mensaje)}`;
-    window.open(waUrl, '_blank');
-    mostrarToast('📱 Abriendo WhatsApp al vendedor...\nAdjunta la foto manualmente');
+    // Abrir WhatsApp directo al vendedor
+    setTimeout(() => {
+      window.open(`https://wa.me/${celular}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    }, 500);
+
+    mostrarToast('📥 Foto guardada · 📱 Abriendo WhatsApp al vendedor...');
     cerrarNovedad();
 
   } else {
     // Sin vendedor — compartir foto genérica
+    const blob = await (await fetch(novFotoBase64)).blob();
+    const fotoFile = new File([blob], `novedad_${cliente.id}.jpg`, { type: 'image/jpeg' });
     if (navigator.canShare && navigator.canShare({ files: [fotoFile] })) {
       try {
-        await navigator.share({ files: [fotoFile], text: mensaje, title: `Novedad - ${cliente.nombre}` });
-        mostrarToast('✅ Foto compartida');
+        await navigator.share({ files: [fotoFile], text: mensaje });
         cerrarNovedad();
         return;
-      } catch(e) {
-        if (e.name === 'AbortError') return;
-      }
+      } catch(e) { if (e.name === 'AbortError') return; }
     }
-    // Último fallback: copiar mensaje
-    try {
-      await navigator.clipboard.writeText(mensaje);
-      mostrarToast('📋 Mensaje copiado\n(Cliente sin vendedor asignado en el maestro)');
-    } catch(e) {
-      mostrarToast('⚠ Cliente sin vendedor en el maestro');
-    }
+    mostrarToast('⚠ Cliente sin vendedor asignado en el maestro');
   }
 }
 
