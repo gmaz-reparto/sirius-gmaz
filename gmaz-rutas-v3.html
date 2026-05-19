@@ -423,7 +423,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="ip-btn-lbl btn-call-lbl">Llamar</div>
       </div>
     </div>
-    <div class="ip-btn-nov" onclick="haptic();startNovedad()">
+    <div class="ip-btn-nov" onclick="haptic();startOrBorrarNovedad()">
       <div class="anim-nov" style="font-size:20px">🚨</div>
       <div class="ip-nov-lbl">Reportar novedad</div>
     </div>
@@ -557,9 +557,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="pc-lbl">Ejecutar cada mañana en orden</div>
     <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail">Reporte del día anterior con fechas</div></div><button class="pc-btn" id="pb1" onclick="haptic();downloadReport()">↓ Descargar</button></div>
     <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail">Elimina imágenes de Supabase Storage</div></div><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
-    <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail">Excel con puntos de entrega</div></div><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
-    <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail">PDFs del día para repartidores</div></div><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
-    <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail">Solo cuando haya cambios</div></div><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
+    <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail">Excel con puntos de entrega</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
+    <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail">PDFs del día para repartidores</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
+    <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail">Solo cuando haya cambios</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
   </div>
   <div class="pc-footer">⏱ Excel generado automáticamente a las 9:45pm Colombia · Fotos disponibles hasta "Limpiar"</div>
 </div>
@@ -853,6 +853,28 @@ async function llamarVendedor(){
 }
 
 /* ══ NOVEDAD ══ */
+function startOrBorrarNovedad(){
+  if(!clientes[clienteIdx])return;
+  if(clientes[clienteIdx]._st==='novedad'){
+    if(confirm('Este cliente ya tiene una novedad registrada.\n\n¿Deseas borrarla para registrar una nueva?')){
+      borrarNovedad();
+    }
+    return;
+  }
+  startNovedad();
+}
+
+async function borrarNovedad(){
+  const cod=getF(clientes[clienteIdx],CFG.COL_CODIGO);
+  const fecha=getColDate();
+  showLoad('Borrando novedad...');
+  try{
+    await sb.from(CFG.TBL_NOV).delete().eq('codigo_cliente',cod).eq('fecha',fecha);
+    setClientSt(clienteIdx,'pendiente');
+    hideLoad();toast('Novedad eliminada — puedes registrar una nueva','ok');
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+
 function startNovedad(){
   if(!clientes[clienteIdx])return;
   if(clientes[clienteIdx]._st==='novedad'){toast('Ya tiene novedad registrada','err');return;}
@@ -902,10 +924,10 @@ function bdClose(e){if(e.target===document.getElementById('modal-nov'))closeNovM
 
 async function submitNovedad(){
   if(!motivo||!photoFile)return;
-  const c=clientes[clienteIdx];
-  const cod=getF(c,CFG.COL_CODIGO),nom=getF(c,CFG.COL_NOMBRE),dir=getF(c,CFG.COL_DIR)||'—';
+  const cl=clientes[clienteIdx];
+  const cod=getF(cl,CFG.COL_CODIGO),nom=getF(cl,CFG.COL_NOMBRE),dir=getF(cl,CFG.COL_DIR)||'—';
   const fecha=getColDate();
-  showLoad('Subiendo foto...');
+  showLoad('Subiendo foto y registrando...');
   try{
     // 1. Subir foto
     const ext=photoFile.name.split('.').pop()||'jpg';
@@ -920,23 +942,33 @@ async function submitNovedad(){
       foto_url:fotoUrl,ruta:rutaActual,conductor:'Repartidor'
     });
     if(ie)throw ie;
-    // 3. Actualizar UI
     setClientSt(clienteIdx,'novedad');
     hideLoad();closeNovModal();
-    // 4. WhatsApp con foto
-    const hora=new Date().toLocaleString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const msg=`🚨 *NOVEDAD DE ENTREGA - GMAZ*\n\n📦 *Cliente:* ${nom}\n🆔 *Código:* ${cod}\n📍 *Dirección:* ${dir}\n🕐 *Hora:* ${hora}\n❌ *Motivo:* ${motivo}\n\n📸 *Foto de evidencia:*\n${fotoUrl}\n\n_Enviado desde GMAZ Rutas_`;
-    if(vendedorActual?.celular_vendedor){
-      let cel=String(vendedorActual.celular_vendedor).replace(/[^0-9]/g,'');
+    // 3. Construir mensaje WhatsApp (igual al v3 original)
+    const fechaHora=new Date().toLocaleString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const msg=
+      `🚨 *NOVEDAD DE ENTREGA - GMAZ*\n\n`+
+      `📦 *Cliente:* ${nom}\n`+
+      `🆔 *Código:* ${cod}\n`+
+      `📍 *Dirección:* ${dir}\n`+
+      `🕐 *Hora:* ${fechaHora}\n`+
+      `❌ *Motivo:* ${motivo}\n\n`+
+      `📸 *Foto de evidencia:*\n${fotoUrl}\n\n`+
+      `_Enviado desde GMAZ Rutas_`;
+    // 4. Buscar vendedor por código del cliente y enviar WhatsApp
+    const{data:vend}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('codigo',cod).maybeSingle();
+    if(vend?.celular_vendedor){
+      let cel=String(vend.celular_vendedor).replace(/[^0-9]/g,'');
       if(cel.length===10)cel='57'+cel;
-      setTimeout(()=>window.open(`https://wa.me/${cel}?text=${encodeURIComponent(msg)}`, '_blank'),350);
-      toast('Novedad registrada — abriendo WhatsApp','ok');
+      setTimeout(()=>window.open(`https://wa.me/${cel}?text=${encodeURIComponent(msg)}`,'_blank'),350);
+      toast('Novedad guardada — abriendo WhatsApp ✓','ok');
     }else{
-      setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'),350);
-      toast('Novedad registrada — sin vendedor asignado','err');
+      setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank'),350);
+      toast('Novedad guardada — sin vendedor asignado','err');
     }
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
+
 
 /* ══ LOGO TAPS → COORDINADOR ══ */
 function handleLogoTap(){
@@ -1069,7 +1101,7 @@ async function uploadRoutes(ev){
     // Lat/Lng
     const latCol=findCol('latit')||findCol('lat');
     const lngCol=findCol('longit')||findCol('lng');
-    const nombreCol=findCol('nombre')||findCol('razon')||findCol('client');
+    const nombreCol=findCol('nombre')||findCol('razon')||findCol('establecimiento')||findCol('client');
     const dirCol=findCol('direc');
     logProg('Ruta → '+(rutaCol||'NO ENCONTRADA'),rutaCol?'ok':'err');
     logProg('ID cliente → '+(idCol||'NO ENCONTRADA'),idCol?'ok':'err');
@@ -1489,6 +1521,57 @@ async function uploadMaster(ev){
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al actualizar maestro');}
   ev.target.value='';
 }
+
+/* ══ BORRAR DATOS ══ */
+async function borrarRutas(){
+  if(!confirm('¿Borrar TODOS los clientes de la tabla?'))return;
+  showLoad('Borrando rutas...');
+  try{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?id=neq.DUMMY_NEVER_MATCHES',{
+      method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    clientes=[];renderClientList();
+    hideLoad();toast('Rutas borradas ✓','ok');
+    document.getElementById('pb3').textContent='↑ Subir';document.getElementById('pb3').classList.remove('done');
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+
+async function borrarFacturasHoy(){
+  if(!confirm('¿Borrar todos los PDFs e índice del día actual?'))return;
+  showLoad('Borrando facturas...');
+  const hoyStr=new Date().toISOString().split('T')[0];
+  const folder=hoyStr+'/';
+  try{
+    const listRes=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_FACT,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:folder,limit:50})
+    });
+    if(listRes.ok){
+      const archivos=await listRes.json();
+      if(Array.isArray(archivos)&&archivos.length){
+        await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT,{
+          method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+          body:JSON.stringify({prefixes:archivos.map(f=>folder+f.name)})
+        });
+      }
+    }
+    factClientes={};hideLoad();toast('Facturas borradas ✓','ok');
+    document.getElementById('pb4').textContent='↑ Subir';document.getElementById('pb4').classList.remove('done');
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+
+async function borrarMaestro(){
+  if(!confirm('¿Borrar todo el maestro de vendedores?'))return;
+  showLoad('Borrando maestro...');
+  try{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/maestro_vendedores?codigo=neq.DUMMY',{
+      method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    hideLoad();toast('Maestro borrado ✓','ok');
+    document.getElementById('pb5').textContent='↑ Subir';document.getElementById('pb5').classList.remove('done');
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=places,geometry&callback=initMap&language=es&region=CO"></script>
