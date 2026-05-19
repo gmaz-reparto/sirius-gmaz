@@ -914,7 +914,7 @@ async function uploadRoutes(ev){
     logProg(rows.length+' filas encontradas en el Excel','info');
     if(!rows.length){logProg('El archivo está vacío','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
     updateProg(40,'Borrando rutas anteriores...');
-    const{error:de}=await sb.from(CFG.TBL).delete().neq('id',0);
+    const{error:de}=await sb.from(CFG.TBL).delete().not('id','is',null);
     if(de){logProg('Error borrando datos anteriores: '+de.message,'err');endProg(false,'Error al borrar');ev.target.value='';return;}
     logProg('Rutas anteriores eliminadas','ok');
     updateProg(60,'Subiendo '+rows.length+' clientes...');
@@ -1028,7 +1028,9 @@ async function uploadMaster(ev){
     const sinCel=unique.filter(r=>!r.celular_vendedor).length;
     if(sinCel>0)logProg(sinCel+' vendedores sin número de celular','info');
     updateProg(65,'Actualizando en Supabase...');
-    const{error}=await sb.from(CFG.TBL_VEND).upsert(unique,{onConflict:'ruta_vendedor'});
+    // Borrar todo primero, luego insertar fresco
+    await sb.from(CFG.TBL_VEND).delete().not('ruta_vendedor','is',null);
+    const{error}=await sb.from(CFG.TBL_VEND).insert(unique);
     if(error)throw error;
     unique.slice(0,5).forEach(r=>logProg('Ruta vendedor '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
     if(unique.length>5)logProg('... y '+(unique.length-5)+' vendedores más','info');
