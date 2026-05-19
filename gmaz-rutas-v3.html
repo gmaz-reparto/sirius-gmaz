@@ -596,7 +596,7 @@ async function openClient(i){
   showScr('scr-client');
   // Buscar vendedor
   try{
-    const{data}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('ruta',rutaActual).maybeSingle();
+    const{data}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('ruta_vendedor',rutaActual).maybeSingle();
     vendedorActual=data;
     const rv=data?.ruta_vendedor||'—';
     document.getElementById('cl-ruta-venta').textContent=rv;
@@ -920,7 +920,12 @@ async function uploadRoutes(ev){
     updateProg(60,'Subiendo '+rows.length+' clientes...');
     // Insertar con retry automático — si falla por columna desconocida, la elimina y reintenta
     const insertConRetry=async(data,intento=1)=>{
-      const{error}=await sb.from(CFG.TBL).insert(data);
+      // Asegurar que cada fila tenga id (requerido por la tabla)
+      const conId=data.map(r=>({
+        ...r,
+        id:r.id||getF(r,CFG.COL_CODIGO)||String(Date.now()+Math.floor(Math.random()*9999))
+      }));
+      const{error}=await sb.from(CFG.TBL).insert(conId);
       if(!error)return null;
       const match=error.message.match(/Could not find the '(.+?)' column/);
       if(match&&intento<=20){
@@ -946,13 +951,21 @@ async function uploadInvoices(ev){
   const files=Array.from(ev.target.files);if(!files.length)return;
   openProg('Subiendo facturas y soportes',files.length+' archivos PDF seleccionados');
   logProg(files.length+' archivos seleccionados','info');
+  // Función para limpiar nombres de archivo (tildes, espacios, caracteres especiales)
+  const sanitize=(name)=>name
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9._-]/g,'_')
+    .replace(/_+/g,'_')
+    .replace(/^_|_$/g,'');
   let ok=0,errs=0;
   for(let i=0;i<files.length;i++){
     const f=files[i];
+    const nombreLimpio=sanitize(f.name);
     const pct=((i)/files.length)*90;
     updateProg(pct,'Subiendo '+f.name+' ('+(i+1)+' de '+files.length+')...');
+    if(nombreLimpio!==f.name)logProg('Nombre limpiado: '+f.name+' → '+nombreLimpio,'info');
     try{
-      const{error}=await sb.storage.from(CFG.BCK_FACT).upload(f.name,f,{contentType:'application/pdf',upsert:true});
+      const{error}=await sb.storage.from(CFG.BCK_FACT).upload(nombreLimpio,f,{contentType:'application/pdf',upsert:true});
       if(error)throw error;
       logProg(f.name+' — subida correctamente','ok');
       ok++;
@@ -988,37 +1001,39 @@ async function uploadMaster(ev){
     const cols=Object.keys(rows[0]||{});
     logProg('Columnas detectadas: '+cols.join(', '),'info');
     updateProg(35,'Mapeando columnas...');
-    // Normalizar claves a minúsculas sin tildes para comparación robusta
+    // Normalizar claves sin importar mayúsculas ni tildes
     const norm=(s)=>s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const getVal=(row,names)=>{
       const keys=Object.keys(row);
       for(const n of names){
         const found=keys.find(k=>norm(k)===norm(n));
         if(found!==undefined&&row[found]!==''&&row[found]!==null)return String(row[found]).trim();
-      }
-      return '';
+      }return '';
     };
+    // Mapear columnas — tabla tiene ruta_vendedor y celular_vendedor
     const mapped=rows.map(row=>{
-      const ruta=getVal(row,['ruta','ruta_entrega','ruta entrega','cod ruta','codigo ruta']);
-      const rutaVend=getVal(row,['ruta_vendedor','ruta vendedor','rutavendedor','vendedor ruta'])||ruta;
-      const celular=getVal(row,['celular','celular_vendedor','telefono','tel','movil']).replace(/[^0-9]/g,'');
-      return{ruta,ruta_vendedor:rutaVend,celular_vendedor:celular};
-    }).filter(r=>r.ruta);
+      const rutaVend=getVal(row,['ruta','ruta_vendedor','ruta vendedor','ruta de venta','cod ruta']);
+      const celular=getVal(row,['celular','celular_vendedor','telefono','tel','movil','celular vendedor']).replace(/[^0-9]/g,'');
+      return{ruta_vendedor:rutaVend,celular_vendedor:celular};
+    }).filter(r=>r.ruta_vendedor);
     if(!mapped.length){
-      logProg('No se encontró columna de ruta — columnas disponibles: '+cols.join(', '),'err');
-      logProg('Renombra la columna de ruta a "Ruta" en el Excel','info');
+      logProg('No se encontró columna de ruta — disponibles: '+cols.join(', '),'err');
       endProg(false,'Sin datos de ruta');ev.target.value='';return;
     }
-    const sinCel=mapped.filter(r=>!r.celular_vendedor).length;
-    if(sinCel>0)logProg(sinCel+' registros sin número de celular','info');
-    logProg('Mapeados '+mapped.length+' registros','ok');
+    // Deduplicar por ruta_vendedor (un registro por vendedor)
+    const deduped={};
+    mapped.forEach(r=>{deduped[r.ruta_vendedor]=r;});
+    const unique=Object.values(deduped);
+    logProg('Rutas únicas de vendedores: '+unique.length+' (de '+mapped.length+' filas)','info');
+    const sinCel=unique.filter(r=>!r.celular_vendedor).length;
+    if(sinCel>0)logProg(sinCel+' vendedores sin número de celular','info');
     updateProg(65,'Actualizando en Supabase...');
-    const{error}=await sb.from(CFG.TBL_VEND).upsert(mapped,{onConflict:'ruta'});
+    const{error}=await sb.from(CFG.TBL_VEND).upsert(unique,{onConflict:'ruta_vendedor'});
     if(error)throw error;
-    mapped.slice(0,5).forEach(r=>logProg('Ruta '+r.ruta+' → '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
-    if(mapped.length>5)logProg('... y '+(mapped.length-5)+' registros más','info');
+    unique.slice(0,5).forEach(r=>logProg('Ruta vendedor '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
+    if(unique.length>5)logProg('... y '+(unique.length-5)+' vendedores más','info');
     updateProg(100,'');
-    endProg(true,'✓ '+mapped.length+' registros actualizados');
+    endProg(true,'✓ '+unique.length+' vendedores actualizados');
     const b=document.getElementById('pb5');b.textContent='✓ Actualizado';b.classList.add('done');
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al actualizar maestro');}
   ev.target.value='';
