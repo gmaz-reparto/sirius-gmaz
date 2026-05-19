@@ -904,43 +904,52 @@ async function cleanPhotos(){
 async function uploadRoutes(ev){
   const file=ev.target.files[0];if(!file)return;
   openProg('Subiendo rutas del día',file.name);
-  logProg('Leyendo archivo: '+file.name,'info');
-  updateProg(10,'Leyendo Excel...');
+  logProg('Leyendo: '+file.name,'info');updateProg(10,'Leyendo Excel...');
   try{
     const ab=await file.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
-    let rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-    logProg(rows.length+' filas encontradas en el Excel','info');
-    if(!rows.length){logProg('El archivo está vacío','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
+    const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(!raw.length){logProg('Archivo vacío','err');endProg(false,'Sin datos');ev.target.value='';return;}
+    logProg(raw.length+' filas encontradas','info');
+    const norm=(s)=>String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+    const getV=(row,variants)=>{const keys=Object.keys(row);for(const v of variants){const k=keys.find(k=>norm(k)===norm(v));if(k!==undefined&&row[k]!==''&&row[k]!==null)return String(row[k]).trim();}return '';};
+    const hoyFecha=new Date().toISOString().split('T')[0];
+    const clientes2=raw.map(row=>({
+      id:       getV(row,['CLIENTE','cliente','CODIGO','codigo','ID','Codigo','Cliente']),
+      nombre:   getV(row,['NOMBRE','nombre','NOMBRE_CLIENTE','nombre_cliente','NombreCliente','Nombre']),
+      ruta:     getV(row,['RUTA','ruta','Ruta']),
+      lat:      parseFloat(getV(row,['LAT','lat','LATITUD','latitud','Latitud','Coord. Geocaptura 1'])||'0'),
+      lng:      parseFloat(getV(row,['LNG','lng','LONGITUD','longitud','Longitud','Coord. Geocaptura 2'])||'0'),
+      direccion:getV(row,['DIRECCION','DIRECCIÓN','direccion','Dirección','Direc']),
+      barrio:   getV(row,['BARRIO','barrio','Barrio'])||'',
+      celular:  getV(row,['CELULAR','celular','TELEFONO','telefono'])||'',
+      fecha:    hoyFecha
+    })).filter(c=>c.id&&c.ruta&&c.ruta.startsWith('KA4V'));
+    if(!clientes2.length){logProg('No se encontraron clientes con ruta KA4V — revisa las columnas','err');endProg(false,'Sin clientes válidos');ev.target.value='';return;}
+    logProg(clientes2.length+' clientes válidos con ruta KA4V','ok');
     updateProg(40,'Borrando rutas anteriores...');
-    const{error:de}=await sb.from(CFG.TBL).delete().not('id','is',null);
-    if(de){logProg('Error borrando datos anteriores: '+de.message,'err');endProg(false,'Error al borrar');ev.target.value='';return;}
+    const delRes=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?id=neq.DUMMY_NEVER_MATCHES',{
+      method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
     logProg('Rutas anteriores eliminadas','ok');
-    updateProg(60,'Subiendo '+rows.length+' clientes...');
-    // Insertar con retry automático — si falla por columna desconocida, la elimina y reintenta
-    const insertConRetry=async(data,intento=1)=>{
-      // Asegurar que cada fila tenga id (requerido por la tabla)
-      const conId=data.map(r=>({
-        ...r,
-        id:r.id||getF(r,CFG.COL_CODIGO)||String(Date.now()+Math.floor(Math.random()*9999))
-      }));
-      const{error}=await sb.from(CFG.TBL).insert(conId);
-      if(!error)return null;
-      const match=error.message.match(/Could not find the '(.+?)' column/);
-      if(match&&intento<=20){
-        const col=match[1];
-        logProg('Columna "'+col+'" no existe en la tabla — ignorada','info');
-        const filtrado=data.map(r=>{const c={...r};delete c[col];return c;});
-        return insertConRetry(filtrado,intento+1);
-      }
-      return error;
-    };
-    const err=await insertConRetry(rows);
-    if(err)throw err;
-    logProg(rows.length+' clientes subidos correctamente','ok');
-    updateProg(100,'');
-    endProg(true,'✓ '+rows.length+' clientes cargados');
+    updateProg(60,'Subiendo '+clientes2.length+' clientes en bloques...');
+    let uploaded=0;
+    for(let i=0;i<clientes2.length;i+=500){
+      const bloque=clientes2.slice(i,i+500);
+      const res=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL,{
+        method:'POST',
+        headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify(bloque)
+      });
+      if(!res.ok){const t=await res.text();throw new Error(t);}
+      uploaded+=bloque.length;
+      updateProg(60+(uploaded/clientes2.length)*35,'Subidos '+uploaded+' de '+clientes2.length+'...');
+    }
+    logProg(clientes2.length+' clientes subidos correctamente','ok');
+    const rutasOk=[...new Set(clientes2.map(c=>c.ruta))];
+    logProg('Rutas: '+rutasOk.join(', '),'info');
+    updateProg(100,'');endProg(true,'✓ '+clientes2.length+' clientes · '+rutasOk.length+' rutas');
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
     clientes=[];renderClientList();
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir rutas');}
@@ -949,93 +958,75 @@ async function uploadRoutes(ev){
 
 async function uploadInvoices(ev){
   const files=Array.from(ev.target.files);if(!files.length)return;
-  openProg('Subiendo facturas y soportes',files.length+' archivos PDF seleccionados');
+  openProg('Subiendo facturas y soportes',files.length+' archivos PDF');
   logProg(files.length+' archivos seleccionados','info');
-  // Función para limpiar nombres de archivo (tildes, espacios, caracteres especiales)
-  const sanitize=(name)=>name
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-zA-Z0-9._-]/g,'_')
-    .replace(/_+/g,'_')
-    .replace(/^_|_$/g,'');
+  const limpiarNombre=(n)=>n.replace(/[áàâä]/gi,'a').replace(/[éèêë]/gi,'e').replace(/[íìîï]/gi,'i').replace(/[óòôö]/gi,'o').replace(/[úùûü]/gi,'u').replace(/ñ/gi,'n').replace(/[^a-zA-Z0-9._\-]/g,'_').replace(/_+/g,'_');
   let ok=0,errs=0;
   for(let i=0;i<files.length;i++){
-    const f=files[i];
-    const nombreLimpio=sanitize(f.name);
-    const pct=((i)/files.length)*90;
-    updateProg(pct,'Subiendo '+f.name+' ('+(i+1)+' de '+files.length+')...');
-    if(nombreLimpio!==f.name)logProg('Nombre limpiado: '+f.name+' → '+nombreLimpio,'info');
+    const f=files[i];const nombreLimpio=limpiarNombre(f.name);
+    updateProg((i/files.length)*90,'Subiendo '+f.name+' ('+(i+1)+' de '+files.length+')...');
+    if(nombreLimpio!==f.name)logProg('Nombre: '+f.name+' → '+nombreLimpio,'info');
     try{
-      const{error}=await sb.storage.from(CFG.BCK_FACT).upload(nombreLimpio,f,{contentType:'application/pdf',upsert:true});
-      if(error)throw error;
-      logProg(f.name+' — subida correctamente','ok');
-      ok++;
-    }catch(e){
-      logProg(f.name+' — ERROR: '+e.message,'err');
-      errs++;
-    }
+      const ab=await f.arrayBuffer();
+      const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+nombreLimpio,{
+        method:'POST',
+        headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf','x-upsert':'true'},
+        body:ab
+      });
+      if(!res.ok){const t=await res.text();throw new Error(t);}
+      logProg(f.name+' — subida correctamente','ok');ok++;
+    }catch(e){logProg(f.name+' — ERROR: '+e.message,'err');errs++;}
   }
   updateProg(100,'');
-  if(errs===0){
-    endProg(true,'✓ '+ok+' facturas subidas correctamente');
-    const b=document.getElementById('pb4');b.textContent='✓ '+ok+' subidas';b.classList.add('done');
-  }else if(ok===0){
-    endProg(false,'✗ Todos los archivos fallaron ('+errs+' errores)');
-  }else{
-    endProg(true,ok+' OK · '+errs+' con error');
-    const b=document.getElementById('pb4');b.textContent='✓ '+ok+'/'+files.length;b.classList.add('done');
-  }
+  if(errs===0){endProg(true,'✓ '+ok+' facturas subidas');const b=document.getElementById('pb4');b.textContent='✓ '+ok+' subidas';b.classList.add('done');}
+  else if(ok===0)endProg(false,'✗ Todos los archivos fallaron');
+  else{endProg(true,ok+' OK · '+errs+' con error');const b=document.getElementById('pb4');b.textContent='✓ '+ok+'/'+files.length;b.classList.add('done');}
   ev.target.value='';
 }
 
 async function uploadMaster(ev){
   const file=ev.target.files[0];if(!file)return;
   openProg('Actualizando maestro de clientes',file.name);
-  logProg('Leyendo archivo: '+file.name,'info');
-  updateProg(15,'Leyendo Excel...');
+  logProg('Leyendo: '+file.name,'info');updateProg(15,'Leyendo Excel...');
   try{
     const ab=await file.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
-    logProg(rows.length+' filas encontradas','info');
-    if(!rows.length){logProg('El archivo está vacío','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
-    const cols=Object.keys(rows[0]||{});
-    logProg('Columnas detectadas: '+cols.join(', '),'info');
-    updateProg(35,'Mapeando columnas...');
-    // Normalizar claves sin importar mayúsculas ni tildes
-    const norm=(s)=>s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const getVal=(row,names)=>{
-      const keys=Object.keys(row);
-      for(const n of names){
-        const found=keys.find(k=>norm(k)===norm(n));
-        if(found!==undefined&&row[found]!==''&&row[found]!==null)return String(row[found]).trim();
-      }return '';
-    };
-    // Mapear columnas — tabla tiene ruta_vendedor y celular_vendedor
-    const mapped=rows.map(row=>{
-      const rutaVend=getVal(row,['ruta','ruta_vendedor','ruta vendedor','ruta de venta','cod ruta']);
-      const celular=getVal(row,['celular','celular_vendedor','telefono','tel','movil','celular vendedor']).replace(/[^0-9]/g,'');
-      return{ruta_vendedor:rutaVend,celular_vendedor:celular};
-    }).filter(r=>r.ruta_vendedor);
-    if(!mapped.length){
-      logProg('No se encontró columna de ruta — disponibles: '+cols.join(', '),'err');
-      endProg(false,'Sin datos de ruta');ev.target.value='';return;
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    // Leer por posición de columna como el v3 original: A=codigo B=nombre C=ruta_vendedor D=celular
+    const rawArr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(rawArr.length<2){logProg('Sin datos','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
+    logProg((rawArr.length-1)+' filas encontradas','info');
+    const registros=rawArr.slice(1).map(row=>({
+      codigo:          String(row[0]||'').trim(),
+      nombre_cliente:  String(row[1]||'').trim(),
+      ruta_vendedor:   String(row[2]||'').trim(),
+      celular_vendedor:String(row[3]||'').replace(/[^0-9]/g,'')
+    })).filter(r=>r.codigo);
+    if(!registros.length){logProg('Sin registros válidos','err');endProg(false,'Sin datos');ev.target.value='';return;}
+    logProg(registros.length+' registros válidos','ok');
+    const sinCel=registros.filter(r=>!r.celular_vendedor).length;
+    if(sinCel)logProg(sinCel+' registros sin celular','info');
+    updateProg(40,'Borrando maestro anterior...');
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/maestro_vendedores?codigo=neq.DUMMY',{
+      method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    logProg('Maestro anterior eliminado','ok');
+    updateProg(60,'Subiendo '+registros.length+' registros en bloques...');
+    let uploaded2=0;
+    for(let i=0;i<registros.length;i+=500){
+      const bloque=registros.slice(i,i+500);
+      const res=await fetch(CFG.SUPABASE_URL+'/rest/v1/maestro_vendedores',{
+        method:'POST',
+        headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify(bloque)
+      });
+      if(!res.ok){const t=await res.text();throw new Error(t);}
+      uploaded2+=bloque.length;
+      updateProg(60+(uploaded2/registros.length)*35,'Subidos '+uploaded2+' de '+registros.length+'...');
     }
-    // Deduplicar por ruta_vendedor (un registro por vendedor)
-    const deduped={};
-    mapped.forEach(r=>{deduped[r.ruta_vendedor]=r;});
-    const unique=Object.values(deduped);
-    logProg('Rutas únicas de vendedores: '+unique.length+' (de '+mapped.length+' filas)','info');
-    const sinCel=unique.filter(r=>!r.celular_vendedor).length;
-    if(sinCel>0)logProg(sinCel+' vendedores sin número de celular','info');
-    updateProg(65,'Actualizando en Supabase...');
-    // Borrar todo primero, luego insertar fresco
-    await sb.from(CFG.TBL_VEND).delete().not('ruta_vendedor','is',null);
-    const{error}=await sb.from(CFG.TBL_VEND).insert(unique);
-    if(error)throw error;
-    unique.slice(0,5).forEach(r=>logProg('Ruta vendedor '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
-    if(unique.length>5)logProg('... y '+(unique.length-5)+' vendedores más','info');
-    updateProg(100,'');
-    endProg(true,'✓ '+unique.length+' vendedores actualizados');
+    registros.slice(0,3).forEach(r=>logProg('Cod: '+r.codigo+' · Vendedor: '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
+    if(registros.length>3)logProg('... y '+(registros.length-3)+' más','info');
+    updateProg(100,'');endProg(true,'✓ '+registros.length+' clientes en el maestro');
     const b=document.getElementById('pb5');b.textContent='✓ Actualizado';b.classList.add('done');
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al actualizar maestro');}
   ev.target.value='';
