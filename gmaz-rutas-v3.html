@@ -454,7 +454,7 @@ const CFG={
   SUPABASE_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY3ltZHVyZm1sdWJ0Z2Z5YXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk1MDMsImV4cCI6MjA5MTUxNTUwM30.UpfEw5oZcntnyaS9F6om0dUwPjTvrEyTC4HVd1xYjv8',
   GMAPS_KEY:'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
   TBL:'clientes_rutas',TBL_NOV:'novedades',TBL_VEND:'maestro_vendedores',
-  BCK_FOTOS:'fotos-novedades',BCK_REP:'reportes',BCK_FACT:'facturas',
+  BCK_FOTOS:'fotos-novedades',BCK_REP:'reportes',BCK_FACT:'facturas_Gmaz',
   COL_CODIGO:['CLIENTE','CODIGO','codigo','ID_CLIENTE'],
   COL_NOMBRE:['NOMBRE','nombre_cliente','NOMBRE_CLIENTE'],
   COL_RUTA:['RUTA','ruta'],
@@ -913,41 +913,29 @@ async function uploadRoutes(ev){
     let rows=XLSX.utils.sheet_to_json(ws,{defval:''});
     logProg(rows.length+' filas encontradas en el Excel','info');
     if(!rows.length){logProg('El archivo está vacío','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
-    updateProg(25,'Verificando columnas con Supabase...');
-    // Obtener columnas válidas de la tabla
-    let validCols=null;
-    try{
-      const{data:cd}=await sb.from('information_schema.columns').select('column_name').eq('table_name',CFG.TBL).eq('table_schema','public');
-      if(cd?.length){
-        validCols=cd.map(r=>r.column_name);
-        logProg('Columnas válidas en tabla: '+validCols.filter(c=>c!=='id'&&c!=='created_at').join(', '),'info');
-      }
-    }catch(e){logProg('No se pudo verificar esquema, insertando tal cual','info');}
-    // Filtrar columnas desconocidas
-    const excelCols=Object.keys(rows[0]||{});
-    if(validCols){
-      const desconocidas=excelCols.filter(k=>!validCols.includes(k));
-      if(desconocidas.length){
-        desconocidas.forEach(c=>logProg('Columna ignorada (no existe en tabla): '+c,'info'));
-      }
-    }
-    const mapped=rows.map(row=>{
-      if(!validCols)return row;
-      const clean={};
-      Object.keys(row).forEach(k=>{if(validCols.includes(k))clean[k]=row[k];});
-      return clean;
-    }).filter(r=>Object.keys(r).length>0);
-    if(!mapped.length){logProg('Sin columnas compatibles con la tabla de Supabase','err');endProg(false,'Error de compatibilidad');ev.target.value='';return;}
-    updateProg(50,'Borrando rutas anteriores...');
+    updateProg(40,'Borrando rutas anteriores...');
     const{error:de}=await sb.from(CFG.TBL).delete().neq('id',0);
     if(de){logProg('Error borrando datos anteriores: '+de.message,'err');endProg(false,'Error al borrar');ev.target.value='';return;}
     logProg('Rutas anteriores eliminadas','ok');
-    updateProg(70,'Subiendo '+mapped.length+' clientes...');
-    const{error}=await sb.from(CFG.TBL).insert(mapped);
-    if(error)throw error;
-    logProg(mapped.length+' clientes subidos correctamente','ok');
+    updateProg(60,'Subiendo '+rows.length+' clientes...');
+    // Insertar con retry automático — si falla por columna desconocida, la elimina y reintenta
+    const insertConRetry=async(data,intento=1)=>{
+      const{error}=await sb.from(CFG.TBL).insert(data);
+      if(!error)return null;
+      const match=error.message.match(/Could not find the '(.+?)' column/);
+      if(match&&intento<=20){
+        const col=match[1];
+        logProg('Columna "'+col+'" no existe en la tabla — ignorada','info');
+        const filtrado=data.map(r=>{const c={...r};delete c[col];return c;});
+        return insertConRetry(filtrado,intento+1);
+      }
+      return error;
+    };
+    const err=await insertConRetry(rows);
+    if(err)throw err;
+    logProg(rows.length+' clientes subidos correctamente','ok');
     updateProg(100,'');
-    endProg(true,'✓ '+mapped.length+' clientes cargados');
+    endProg(true,'✓ '+rows.length+' clientes cargados');
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
     clientes=[];renderClientList();
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir rutas');}
@@ -997,27 +985,38 @@ async function uploadMaster(ev){
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
     logProg(rows.length+' filas encontradas','info');
     if(!rows.length){logProg('El archivo está vacío','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
-    // Mostrar columnas detectadas en el Excel
     const cols=Object.keys(rows[0]||{});
     logProg('Columnas detectadas: '+cols.join(', '),'info');
     updateProg(35,'Mapeando columnas...');
-    // Mapeo flexible de nombres de columnas
+    // Normalizar claves a minúsculas sin tildes para comparación robusta
+    const norm=(s)=>s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const getVal=(row,names)=>{
+      const keys=Object.keys(row);
+      for(const n of names){
+        const found=keys.find(k=>norm(k)===norm(n));
+        if(found!==undefined&&row[found]!==''&&row[found]!==null)return String(row[found]).trim();
+      }
+      return '';
+    };
     const mapped=rows.map(row=>{
-      const ruta=String(row['ruta']||row['RUTA']||row['Ruta']||row['RUTA_ENTREGA']||'').trim();
-      const rutaVend=String(row['ruta_vendedor']||row['RUTA_VENDEDOR']||row['Ruta Vendedor']||row['RUTA VENDEDOR']||row['RutaVendedor']||row['Ruta_Vendedor']||ruta||'').trim();
-      const celular=String(row['celular_vendedor']||row['CELULAR_VENDEDOR']||row['Celular']||row['CELULAR']||row['celular']||row['Telefono']||row['TELEFONO']||row['Tel']||'').replace(/[^0-9]/g,'');
+      const ruta=getVal(row,['ruta','ruta_entrega','ruta entrega','cod ruta','codigo ruta']);
+      const rutaVend=getVal(row,['ruta_vendedor','ruta vendedor','rutavendedor','vendedor ruta'])||ruta;
+      const celular=getVal(row,['celular','celular_vendedor','telefono','tel','movil']).replace(/[^0-9]/g,'');
       return{ruta,ruta_vendedor:rutaVend,celular_vendedor:celular};
     }).filter(r=>r.ruta);
-    if(!mapped.length){logProg('No se encontró columna de ruta en el Excel','err');endProg(false,'Sin datos de ruta');ev.target.value='';return;}
-    // Mostrar resumen del mapeo
-    logProg('Mapeados '+mapped.length+' registros con columnas: ruta, ruta_vendedor, celular_vendedor','ok');
-    // Verificar que haya celulares
+    if(!mapped.length){
+      logProg('No se encontró columna de ruta — columnas disponibles: '+cols.join(', '),'err');
+      logProg('Renombra la columna de ruta a "Ruta" en el Excel','info');
+      endProg(false,'Sin datos de ruta');ev.target.value='';return;
+    }
     const sinCel=mapped.filter(r=>!r.celular_vendedor).length;
-    if(sinCel>0)logProg(sinCel+' registros sin número de celular — revisa el Excel','info');
+    if(sinCel>0)logProg(sinCel+' registros sin número de celular','info');
+    logProg('Mapeados '+mapped.length+' registros','ok');
     updateProg(65,'Actualizando en Supabase...');
     const{error}=await sb.from(CFG.TBL_VEND).upsert(mapped,{onConflict:'ruta'});
     if(error)throw error;
-    mapped.forEach(r=>logProg('Ruta '+r.ruta+' → Vendedor '+r.ruta_vendedor+' · Cel '+r.celular_vendedor,'ok'));
+    mapped.slice(0,5).forEach(r=>logProg('Ruta '+r.ruta+' → '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
+    if(mapped.length>5)logProg('... y '+(mapped.length-5)+' registros más','info');
     updateProg(100,'');
     endProg(true,'✓ '+mapped.length+' registros actualizados');
     const b=document.getElementById('pb5');b.textContent='✓ Actualizado';b.classList.add('done');
