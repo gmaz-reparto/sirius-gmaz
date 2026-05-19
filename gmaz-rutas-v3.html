@@ -689,6 +689,8 @@ function startRoute(ruta,lista){
     document.getElementById('cp-title').textContent='Clientes · '+ruta;
     document.getElementById('cp-count').textContent=clientes.length+' puntos';
     renderClientList();
+    // Precargar índice de facturas en background
+    setTimeout(()=>cargarIndiceFacturas(),1000);
     if(gmap){renderMarkers();if(clientes.length){const lat=parseFloat(getF(clientes[0],CFG.COL_LAT)),lng=parseFloat(getF(clientes[0],CFG.COL_LNG));if(lat&&lng)gmap.panTo({lat,lng});}}
   },3000);
 }
@@ -1086,44 +1088,40 @@ async function uploadRoutes(ev){
     const ab=await file.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
-    const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
-    if(!raw.length){logProg('Archivo vacío','err');endProg(false,'Sin datos');ev.target.value='';return;}
-    logProg(raw.length+' filas encontradas','info');
-    // Detectar columnas dinámicamente — sin importar el nombre exacto
-    const norm=(s)=>String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
-    const cols=Object.keys(raw[0]||{});
-    logProg('Columnas: '+cols.join(', '),'info');
-    const findCol=(includes)=>cols.find(k=>norm(k).includes(includes));
-    // Columna ruta: busca "ruta" en cualquier nombre (ID_de_ruta_, RUTA, Ruta, etc.)
-    const rutaCol=findCol('ruta');
-    // Columna id cliente: busca "ubicac" (ID_de_ubicación_), o "codigo", "cliente", "id"
-    const idCol=findCol('ubicaci')||findCol('codigo')||findCol('cliente');
-    // Lat/Lng
-    const latCol=findCol('latit')||findCol('lat');
-    const lngCol=findCol('longit')||findCol('lng');
-    const nombreCol=findCol('nombre')||findCol('razon')||findCol('establecimiento')||findCol('client');
-    const dirCol=findCol('direc');
-    logProg('Ruta → '+(rutaCol||'NO ENCONTRADA'),rutaCol?'ok':'err');
-    logProg('ID cliente → '+(idCol||'NO ENCONTRADA'),idCol?'ok':'err');
-    if(latCol)logProg('Lat → '+latCol,'info');
-    if(lngCol)logProg('Lng → '+lngCol,'info');
-    if(!rutaCol||!idCol){logProg('No se encontraron columnas de ruta o ID','err');endProg(false,'Sin columnas clave');ev.target.value='';return;}
+    // Leer por posición de columna (como el v3 original):
+    // A=ID_de_ubicación_, B=Descripción_, C=Dirección, F=Longitud_, G=Latitud_, H=ID_de_ruta_
+    const rawArr=XLSX.utils.sheet_to_json(ws,{header:'A',defval:''});
+    logProg(rawArr.length+' filas encontradas','info');
+    if(!rawArr.length){logProg('Archivo vacío','err');endProg(false,'Sin datos');ev.target.value='';return;}
+    // Mostrar encabezados detectados
+    const hdrs=rawArr[0];
+    logProg('Columnas: A='+hdrs['A']+' B='+hdrs['B']+' C='+hdrs['C']+' F='+hdrs['F']+' G='+hdrs['G']+' H='+hdrs['H'],'info');
     const hoyFecha=new Date().toISOString().split('T')[0];
-    // Log detalle columnas para debug
-    if(raw.length>0){const sampleKeys=Object.keys(raw[0]);logProg('Columnas detectadas: '+sampleKeys.join(' | '),'info');}
-    const clientes2=raw.map(row=>({
-      id:       String(row[idCol]||'').trim(),
-      nombre:   nombreCol?String(row[nombreCol]||'').trim():'',
-      ruta:     String(row[rutaCol]||'').trim(),
-      lat:      (() => { const v=latCol?parseFloat(String(row[latCol]||'0').replace(',','.')):0; return isNaN(v)?0:v; })(),
-      lng:      (() => { const v=lngCol?parseFloat(String(row[lngCol]||'0').replace(',','.')):0; return isNaN(v)?0:v; })(),
-      direccion:dirCol?String(row[dirCol]||'').trim():'',
-      barrio:'',celular:'',fecha:hoyFecha
-    })).filter(c=>c.id&&String(c.id).trim()!=='');
-    if(!clientes2.length){logProg('Sin clientes con id y ruta válidos','err');endProg(false,'Sin clientes');ev.target.value='';return;}
-    logProg(clientes2.length+' clientes válidos','ok');
+    const parseNum=(v)=>{
+      if(v===null||v===''||v===undefined)return 0;
+      return parseFloat(String(v).replace(',','.').trim())||0;
+    };
+    // Saltar fila de encabezados y filas de Descanso (sin código cliente)
+    const clientes2=rawArr.slice(1)
+      .filter(row=>row['A']&&String(row['A']).trim().startsWith('12')&&row['B']!=='Descanso')
+      .map(row=>({
+        id:       String(row['A']).trim(),
+        nombre:   String(row['B']||'').trim(),
+        direccion:String(row['C']||'').trim(),
+        lat:      parseNum(row['G']),
+        lng:      parseNum(row['F']),
+        ruta:     String(row['H']||'').trim(),
+        barrio:   String(row['E']||'').trim(),
+        celular:  '',
+        fecha:    hoyFecha
+      }))
+      .filter(c=>c.ruta.startsWith('KA4V')&&c.lat!==0&&c.lng!==0);
+    if(!clientes2.length){
+      logProg('Sin clientes válidos — verifica que la columna A tenga códigos que empiezan por 12','err');
+      endProg(false,'Sin clientes');ev.target.value='';return;
+    }
     const rutasUnicas=[...new Set(clientes2.map(c=>c.ruta))];
-    logProg('Rutas: '+rutasUnicas.slice(0,8).join(', ')+(rutasUnicas.length>8?'...':''),'info');
+    logProg(clientes2.length+' clientes válidos · '+rutasUnicas.length+' rutas: '+rutasUnicas.slice(0,5).join(', ')+(rutasUnicas.length>5?'...':''),'ok');
     updateProg(40,'Borrando rutas anteriores...');
     await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?id=neq.DUMMY_NEVER_MATCHES',{
       method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
@@ -1143,336 +1141,13 @@ async function uploadRoutes(ev){
       updateProg(60+(uploaded/clientes2.length)*35,'Subidos '+uploaded+' de '+clientes2.length+'...');
     }
     logProg(clientes2.length+' clientes subidos correctamente','ok');
-    updateProg(100,'');endProg(true,'✓ '+clientes2.length+' clientes · '+rutasUnicas.length+' rutas');
+    updateProg(100,'');
+    endProg(true,'✓ '+clientes2.length+' clientes · '+rutasUnicas.length+' rutas');
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
     clientes=[];renderClientList();
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir rutas');}
   ev.target.value='';
 }
-
-
-/* ══ FACTURAS — ESTADO GLOBAL ══ */
-let factClientes={};
-let detalleActual=null;
-let detPagActual=0;
-let detPdfPages=[];
-let pdfLibCargada=false;
-
-/* ══ ABRIR FACTURAS DESDE BOTÓN CLIENTE ══ */
-function verFacturaCliente(){
-  if(!clientes[clienteIdx])return;
-  const cod=getF(clientes[clienteIdx],CFG.COL_CODIGO);
-  if(factClientes[cod]){
-    abrirDetalleFactura(factClientes[cod]);return;
-  }
-  abrirFacturas();
-  // esperar a que cargue el índice y abrir directo si el código existe
-  let intentos=0;
-  const esperar=()=>{
-    if(factClientes[cod]){abrirDetalleFactura(factClientes[cod]);return;}
-    if(++intentos<20)setTimeout(esperar,400);
-    else toast('Este cliente no tiene facturas hoy','err');
-  };
-  setTimeout(esperar,600);
-}
-
-function abrirFacturas(){
-  const p=document.getElementById('pantalla-facturas');
-  p.classList.remove('oculto');
-  const hoy=new Date();
-  document.getElementById('fact-sub-fecha').textContent=hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('fact-search-input').value='';
-  document.getElementById('fact-resultados').innerHTML='';
-  cargarIndiceFacturas();
-}
-
-function cerrarFacturas(){document.getElementById('pantalla-facturas').classList.add('oculto');}
-function cerrarDetalle(){document.getElementById('pantalla-detalle').classList.add('oculto');}
-
-/* ══ CARGAR ÍNDICE FACTURAS_INDEX.json ══ */
-async function cargarIndiceFacturas(){
-  const dot=document.getElementById('fact-dot');
-  const txt=document.getElementById('fact-estado-txt');
-  const cnt=document.getElementById('fact-count');
-  dot.className='fact-dot cargando';txt.textContent='Cargando índice...';cnt.textContent='';
-  factClientes={};
-  const hoyStr=new Date().toISOString().split('T')[0];
-  const indexUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FACT+'/'+hoyStr+'/FACTURAS_INDEX.json';
-  try{
-    const res=await fetch(indexUrl+'?t='+Date.now());
-    if(!res.ok)throw new Error('Sin índice para hoy');
-    const index=await res.json();
-    const codigos=Object.keys(index);
-    if(!codigos.length)throw new Error('Índice vacío');
-    for(const cod of codigos){
-      const paginas=index[cod];
-      // Buscar nombre del cliente en la lista cargada
-      const cl=clientes.find(x=>getF(x,CFG.COL_CODIGO)===cod);
-      factClientes[cod]={
-        codigo:cod,
-        nombre:cl?getF(cl,CFG.COL_NOMBRE):'',
-        paginas:paginas.map(p=>({archivoId:p.archivo,archivoUrl:p.url,pagina:p.pagina,tipo:p.tipo})),
-        datos:{direccion:cl?getF(cl,CFG.COL_DIR):''}
-      };
-    }
-    dot.className='fact-dot';txt.textContent='Facturas listas';cnt.textContent=codigos.length+' clientes con facturas';
-    await cargarPdfJs();
-  }catch(e){
-    dot.className='fact-dot error';txt.textContent='Sin índice — sube los PDFs desde el panel coordinador';
-    console.log('Índice error:',e.message);
-  }
-}
-
-/* ══ BUSCAR CLIENTE EN FACTURAS ══ */
-function buscarClienteFact(q){
-  const cont=document.getElementById('fact-resultados');
-  q=q.trim().toLowerCase();
-  if(!q||q.length<2){cont.innerHTML='';return;}
-  if(!Object.keys(factClientes).length){cont.innerHTML='<div class="fact-empty">Espera — cargando índice...</div>';return;}
-  const res=Object.values(factClientes).filter(c=>c.codigo.includes(q)||c.nombre.toLowerCase().includes(q));
-  if(!res.length){cont.innerHTML='<div class="fact-empty">No se encontró ningún cliente.</div>';return;}
-  cont.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">'+res.length+' resultado'+(res.length>1?'s':'')+'</div>';
-  res.forEach(c=>{
-    const sops=c.paginas.filter(p=>p.tipo==='soporte').length;
-    const creds=c.paginas.filter(p=>p.tipo==='credito').length;
-    const div=document.createElement('div');div.className='fact-card';
-    div.innerHTML='<div class="fact-card-nombre">'+(c.nombre||'Cliente '+c.codigo)+'</div><div class="fact-card-codigo">Código: '+c.codigo+'</div><div class="fact-badges">'+(sops?'<span class="fact-badge-s">📋 '+sops+' soporte'+(sops>1?'s':'')+'</span>':'')+(creds?'<span class="fact-badge-c">🧾 '+creds+' factura'+(creds>1?'s':'')+'</span>':'')+'</div>';
-    div.onclick=()=>{haptic();abrirDetalleFactura(c);};
-    cont.appendChild(div);
-  });
-}
-
-/* ══ ABRIR DETALLE ══ */
-async function abrirDetalleFactura(cliente){
-  detalleActual=cliente;detPagActual=0;detPdfPages=[];
-  document.getElementById('det-nombre').textContent=cliente.nombre||'Cliente '+cliente.codigo;
-  document.getElementById('det-codigo').textContent='Código: '+cliente.codigo;
-  document.getElementById('di-nombre').textContent=cliente.nombre||'—';
-  document.getElementById('di-codigo').textContent=cliente.codigo;
-  document.getElementById('di-dir').textContent=cliente.datos.direccion||'—';
-  const sops=cliente.paginas.filter(p=>p.tipo==='soporte').length;
-  const creds=cliente.paginas.filter(p=>p.tipo==='credito').length;
-  document.getElementById('di-docs').textContent=cliente.paginas.length+' doc'+(cliente.paginas.length>1?'s':'')+(sops?' · '+sops+' soporte'+(sops>1?'s':''):'')+(creds?' · '+creds+' factura'+(creds>1?'s':''):'');
-  document.getElementById('det-wa-num').value='';
-  cambiarDetTab('preview');
-  document.getElementById('pantalla-detalle').classList.remove('oculto');
-  renderizarPaginasFact(cliente);
-}
-
-/* ══ RENDERIZAR PÁGINAS ══ */
-async function renderizarPaginasFact(cliente){
-  const loading=document.getElementById('det-loading');
-  const canvas=document.getElementById('det-canvas');
-  loading.style.display='flex';canvas.style.display='none';detPdfPages=[];
-  document.getElementById('det-loading-txt').textContent='Extrayendo páginas...';
-  try{
-    await cargarPdfJs();
-    const porArchivo={};
-    for(const pg of cliente.paginas){
-      if(!porArchivo[pg.archivoId])porArchivo[pg.archivoId]={url:pg.archivoUrl,paginas:[]};
-      porArchivo[pg.archivoId].paginas.push(pg.pagina);
-    }
-    for(const[aid,grupo] of Object.entries(porArchivo)){
-      const res=await fetch(grupo.url);if(!res.ok)continue;
-      const buf=await res.arrayBuffer();
-      const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-      for(const num of grupo.paginas.sort((a,b)=>a-b)){
-        const page=await pdf.getPage(num);
-        const vp=page.getViewport({scale:1.5});
-        const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
-        await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-        const pg=cliente.paginas.find(p=>p.archivoId===aid&&p.pagina===num);
-        detPdfPages.push({canvas:cv,titulo:pg?(pg.tipo==='soporte'?'Soporte de entrega':'Factura electrónica'):'Documento'});
-      }
-    }
-    loading.style.display='none';mostrarPaginaFact();
-  }catch(e){loading.style.display='flex';document.getElementById('det-loading-txt').textContent='Error: '+e.message;}
-}
-
-function mostrarPaginaFact(){
-  if(!detPdfPages.length)return;
-  const canvas=document.getElementById('det-canvas');
-  const total=detPdfPages.length;const pg=detPdfPages[detPagActual];
-  canvas.width=pg.canvas.width;canvas.height=pg.canvas.height;
-  canvas.getContext('2d').drawImage(pg.canvas,0,0);
-  canvas.style.display='block';canvas.style.width='100%';
-  document.getElementById('det-pdf-titulo').textContent=pg.titulo;
-  document.getElementById('det-pdf-sub').textContent='Página '+(detPagActual+1)+' de '+total;
-  document.getElementById('det-prev').disabled=detPagActual===0;
-  document.getElementById('det-next').disabled=detPagActual===total-1;
-}
-
-function navPagina(dir){detPagActual=Math.max(0,Math.min(detPdfPages.length-1,detPagActual+dir));mostrarPaginaFact();}
-
-function cambiarDetTab(tab){
-  document.querySelectorAll('.det-tab').forEach(t=>t.classList.remove('activo'));
-  document.querySelectorAll('.det-tab-content').forEach(t=>t.classList.remove('activo'));
-  document.getElementById('dtab-'+tab).classList.add('activo');
-  document.getElementById('dcontent-'+tab).classList.add('activo');
-}
-
-/* ══ CARGAR PDF.JS ══ */
-async function cargarPdfJs(){
-  if(pdfLibCargada)return;
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';pdfLibCargada=true;res();};
-    s.onerror=rej;document.head.appendChild(s);
-  });
-}
-
-async function cargarJsPDF(){
-  if(window.jspdf)return;
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    s.onload=res;s.onerror=rej;document.head.appendChild(s);
-  });
-}
-
-/* ══ GENERAR PDF DEL CLIENTE ══ */
-async function generarPDFCliente(){
-  if(!detalleActual||!detPdfPages.length)return null;
-  await cargarJsPDF();
-  const{jsPDF}=window.jspdf;
-  const pc=detPdfPages[0].canvas;
-  const doc=new jsPDF({orientation:pc.width>pc.height?'l':'p',unit:'px',format:[pc.width,pc.height]});
-  for(let i=0;i<detPdfPages.length;i++){
-    if(i>0){const cv=detPdfPages[i].canvas;doc.addPage([cv.width,cv.height],cv.width>cv.height?'l':'p');}
-    const cv=detPdfPages[i].canvas;
-    doc.addImage(cv.toDataURL('image/jpeg',.85),'JPEG',0,0,cv.width,cv.height);
-  }
-  return doc;
-}
-
-/* ══ DESCARGAR PDF ══ */
-async function descargarPDFFact(){
-  if(!detalleActual)return;
-  toast('Generando PDF...');
-  document.getElementById('det-generando').classList.add('visible');
-  try{
-    const doc=await generarPDFCliente();
-    const nombre=(detalleActual.nombre||detalleActual.codigo).replace(/[^a-zA-Z0-9]/g,'_');
-    const hoy=new Date().toISOString().slice(0,10).replace(/-/g,'');
-    doc.save('GMAZ_'+nombre+'_'+hoy+'.pdf');
-    toast('PDF descargado ✓','ok');
-  }catch(e){toast('Error al generar PDF','err');}
-  finally{document.getElementById('det-generando').classList.remove('visible');}
-}
-
-/* ══ ENVIAR POR WHATSAPP ══ */
-async function enviarWhatsAppFact(){
-  if(!detalleActual)return;
-  const numInput=document.getElementById('det-wa-num').value.replace(/\D/g,'');
-  if(!numInput||numInput.length<7){toast('Ingresa el número de WhatsApp','err');document.getElementById('det-wa-num').focus();return;}
-  const numFull=numInput.startsWith('57')?numInput:'57'+numInput;
-  toast('Generando PDF...');
-  document.getElementById('det-generando').classList.add('visible');
-  try{
-    const doc=await generarPDFCliente();
-    const nombre=(detalleActual.nombre||detalleActual.codigo).replace(/[^a-zA-Z0-9]/g,'_');
-    const hoy=new Date().toISOString().slice(0,10).replace(/-/g,'');
-    const blob=doc.output('blob');
-    const file=new File([blob],'GMAZ_'+nombre+'_'+hoy+'.pdf',{type:'application/pdf'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:'Facturas GMAZ — '+(detalleActual.nombre||detalleActual.codigo),text:'Documentos de entrega del día'});
-      toast('PDF compartido ✓','ok');
-    }else{
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download='GMAZ_'+nombre+'_'+hoy+'.pdf';a.click();
-      URL.revokeObjectURL(url);
-      setTimeout(()=>window.open('https://wa.me/'+numFull+'?text='+encodeURIComponent('Hola, te envío los documentos de entrega GMAZ del día '+new Date().toLocaleDateString('es-CO')+'. El PDF se descargó en tu dispositivo.'),'_blank'),800);
-      toast('PDF descargado — WhatsApp abierto','ok');
-    }
-  }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message,'err');}
-  finally{document.getElementById('det-generando').classList.remove('visible');}
-}
-
-/* ══ SUBIR PDFs Y GENERAR ÍNDICE (panel coordinador) ══ */
-async function uploadInvoices(ev){
-  const files=Array.from(ev.target.files).filter(f=>f.name.toLowerCase().endsWith('.pdf')).slice(0,4);
-  if(!files.length)return;
-  openProg('Subiendo facturas y soportes',files.length+' PDFs — generando índice automático');
-  const limpiarNombre=(n)=>n.replace(/[áàâä]/gi,'a').replace(/[éèêë]/gi,'e').replace(/[íìîï]/gi,'i').replace(/[óòôö]/gi,'o').replace(/[úùûü]/gi,'u').replace(/ñ/gi,'n').replace(/[^a-zA-Z0-9.\-]/g,'_').replace(/_+/g,'_');
-  const hoyStr=new Date().toISOString().split('T')[0];
-  const folder=hoyStr+'/';
-  const baseUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FACT+'/'+folder;
-  const nombreMap={};
-  files.forEach(f=>{nombreMap[f.name]=limpiarNombre(f.name);});
-  logProg(files.length+' PDFs seleccionados','info');
-  updateProg(5,'Borrando archivos de ayer...');
-  // Borrar carpeta de ayer
-  const ayer=getColDate(-1)+'/';
-  try{
-    const listRes=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_FACT,{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({prefix:ayer,limit:50})
-    });
-    if(listRes.ok){
-      const viejos=await listRes.json();
-      if(Array.isArray(viejos)&&viejos.length){
-        await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT,{
-          method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
-          body:JSON.stringify({prefixes:viejos.map(f=>ayer+f.name)})
-        });
-        logProg('Archivos de ayer eliminados','ok');
-      }
-    }
-  }catch(e){logProg('No se pudieron borrar archivos de ayer','info');}
-  // Subir PDFs
-  let subidos=0;
-  for(const file of files){
-    const nl=nombreMap[file.name];
-    updateProg(10+((subidos/files.length)*35),'Subiendo '+file.name+'...');
-    if(nl!==file.name)logProg('Nombre: '+file.name+' → '+nl,'info');
-    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+nl,{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf','x-upsert':'true'},
-      body:file
-    });
-    if(res.ok){logProg(file.name+' — subido','ok');subidos++;}
-    else{const t=await res.text();logProg(file.name+' — ERROR: '+t,'err');}
-  }
-  // Generar índice con PDF.js
-  updateProg(50,'Cargando motor PDF...');
-  logProg('Indexando códigos de clientes en los PDFs...','info');
-  await cargarPdfJs();
-  const index={};
-  for(let fi=0;fi<files.length;fi++){
-    const file=files[fi];const nl=nombreMap[file.name];
-    const tipo=file.name.toLowerCase().includes('credit')?'credito':'soporte';
-    const buf=await file.arrayBuffer();
-    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-    for(let p=1;p<=pdf.numPages;p++){
-      const pct=50+((fi*pdf.numPages+p)/(files.length*pdf.numPages))*40;
-      updateProg(Math.min(pct,90),'Indexando '+nl+' pág '+p+'/'+pdf.numPages+'...');
-      const page=await pdf.getPage(p);
-      const content=await page.getTextContent();
-      const texto=content.items.map(i=>i.str).join(' ');
-      const codigos=[...new Set((texto.match(/\b12\d{8}\b/g)||[]))];
-      for(const cod of codigos){
-        if(!index[cod])index[cod]=[];
-        if(!index[cod].some(e=>e.archivo===nl&&e.pagina===p))
-          index[cod].push({archivo:nl,url:baseUrl+encodeURIComponent(nl),pagina:p,tipo});
-      }
-    }
-  }
-  // Subir índice
-  updateProg(92,'Subiendo índice...');
-  const indexJson=JSON.stringify(index);
-  await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+'FACTURAS_INDEX.json',{
-    method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
-    body:indexJson
-  });
-  const nCods=Object.keys(index).length;
-  logProg(subidos+' PDFs subidos · '+nCods+' clientes indexados','ok');
-  updateProg(100,'');
-  endProg(true,'✓ '+subidos+' PDFs · '+nCods+' clientes indexados');
-  const b=document.getElementById('pb4');b.textContent='✓ '+subidos+' subidos';b.classList.add('done');
-  factClientes={};
-  ev.target.value='';
-}
-
 
 async function uploadMaster(ev){
   const file=ev.target.files[0];if(!file)return;
