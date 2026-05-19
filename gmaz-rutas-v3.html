@@ -209,6 +209,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .pc-btn{background:var(--negro);color:#fff;border:none;border-radius:6px;padding:7px 10px;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s}
 .pc-btn.done{background:var(--verde)}
 .pc-footer{background:var(--blanco);border-top:.5px solid var(--gris2);padding:9px 14px;font-size:8px;color:var(--gris4);flex-shrink:0}
+.pc-estado{font-size:9px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap;flex-shrink:0}
+.pc-estado-ok{background:var(--verde-s);color:var(--verde);border:1px solid rgba(5,150,105,.2)}
+.pc-estado-warn{background:var(--amarillo-s);color:var(--amarillo);border:1px solid rgba(217,119,6,.2)}
+.pc-estado-empty{background:var(--gris1);color:var(--gris4);border:1px solid var(--gris2)}
 
 /* ══ PROGRESO ══ */
 #prog-overlay{position:fixed;inset:0;z-index:850;background:rgba(15,17,23,.72);display:none;align-items:flex-end;backdrop-filter:blur(2px)}
@@ -557,9 +561,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="pc-lbl">Ejecutar cada mañana en orden</div>
     <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail">Reporte del día anterior con fechas</div></div><button class="pc-btn" id="pb1" onclick="haptic();downloadReport()">↓ Descargar</button></div>
     <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail">Elimina imágenes de Supabase Storage</div></div><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
-    <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail">Excel con puntos de entrega</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
-    <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail">PDFs del día para repartidores</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
-    <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail">Solo cuando haya cambios</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
+    <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
+    <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
+    <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
   </div>
   <div class="pc-footer">⏱ Excel generado automáticamente a las 9:45pm Colombia · Fotos disponibles hasta "Limpiar"</div>
 </div>
@@ -594,12 +598,12 @@ const CFG={
   GMAPS_KEY:'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
   TBL:'clientes_rutas',TBL_NOV:'novedades',TBL_VEND:'maestro_vendedores',
   BCK_FOTOS:'fotos-novedades',BCK_REP:'reportes',BCK_FACT:'facturas_Gmaz',
-  COL_CODIGO:['CLIENTE','CODIGO','codigo','ID_CLIENTE'],
-  COL_NOMBRE:['NOMBRE','nombre_cliente','NOMBRE_CLIENTE'],
-  COL_RUTA:['RUTA','ruta'],
-  COL_LAT:['LAT','lat','Coord. Geocaptura 1','LATITUD'],
-  COL_LNG:['LNG','lng','Coord. Geocaptura 2','LONGITUD'],
-  COL_DIR:['DIRECCION','DIRECCIÓN','direccion','Dirección'],
+  COL_CODIGO:['id','ID_de_ubicacion_','ID_de_ubicación_','CLIENTE','CODIGO','codigo','ID_CLIENTE'],
+  COL_NOMBRE:['nombre','Descripcion_','Descripción_','NOMBRE','nombre_cliente','NOMBRE_CLIENTE','Descripcion'],
+  COL_RUTA:['ruta','ID_de_ruta_','RUTA'],
+  COL_LAT:['lat','Latitud_','LAT','Coord. Geocaptura 1','LATITUD'],
+  COL_LNG:['lng','Longitud_','LNG','Coord. Geocaptura 2','LONGITUD'],
+  COL_DIR:['direccion','Direccion__linea_1_','Dirección__línea_1_','DIRECCION','DIRECCIÓN','Dirección'],
   COORD_PWD:'gmaz2024',COORD_TAPS:3,UTC_OFFSET:-5
 };
 
@@ -607,6 +611,252 @@ let sb,gmap,gpano,svSvc,truckMk,dirRenderer;
 let clientes=[],markers=[],rutaActual='',clienteIdx=0,vendedorActual=null;
 let motivo=null,photoFile=null,photoPreviewUrl=null;
 let logoTaps=0,logoTimer=null,coordUnlocked=false;
+
+/* ══ FACTURAS — ESTADO GLOBAL ══ */
+let factClientes={};
+let detalleActual=null;
+let detPagActual=0;
+let detPdfPages=[];
+let pdfLibCargada=false;
+
+/* ══ CARGAR PDF.JS ══ */
+async function cargarPdfJs(){
+  if(pdfLibCargada)return;
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';pdfLibCargada=true;res();};
+    s.onerror=rej;document.head.appendChild(s);
+  });
+}
+
+async function cargarJsPDF(){
+  if(window.jspdf)return;
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=res;s.onerror=rej;document.head.appendChild(s);
+  });
+}
+
+/* ══ CARGAR ÍNDICE FACTURAS ══ */
+async function cargarIndiceFacturas(){
+  const dot=document.getElementById('fact-dot');
+  const txt=document.getElementById('fact-estado-txt');
+  const cnt=document.getElementById('fact-count');
+  if(dot){dot.className='fact-dot cargando';txt.textContent='Cargando índice...';cnt.textContent='';}
+  factClientes={};
+  const offset=-5;
+  const ahora=new Date();
+  const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
+  const ayer=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0];
+  let index=null;let fechaUsada=hoy;
+  for(const fecha of [hoy,ayer]){
+    try{
+      const url=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FACT+'/'+fecha+'/FACTURAS_INDEX.json';
+      const res=await fetch(url+'?t='+Date.now());
+      if(res.ok){const d=await res.json();if(Object.keys(d).length){index=d;fechaUsada=fecha;break;}}
+    }catch(e){}
+  }
+  if(!index){
+    if(dot){dot.className='fact-dot error';txt.textContent='Sin facturas — sube los PDFs desde el panel coordinador';}
+    return;
+  }
+  const codigos=Object.keys(index);
+  for(const cod of codigos){
+    const paginas=index[cod];
+    const cl=clientes.find(x=>getF(x,CFG.COL_CODIGO)===cod||String(x.id)===cod);
+    const nombre=cl?(cl.nombre||getF(cl,CFG.COL_NOMBRE)||''):('');
+    factClientes[cod]={
+      codigo:cod,
+      nombre:nombre||('Cliente '+cod),
+      paginas:paginas.map(p=>({archivoId:p.archivo,archivoUrl:p.url,pagina:p.pagina,tipo:p.tipo})),
+      datos:{direccion:cl?(cl.direccion||getF(cl,CFG.COL_DIR)||''):''}
+    };
+  }
+  if(dot){
+    dot.className='fact-dot';
+    txt.textContent='Facturas listas'+(fechaUsada===ayer?' (ayer)':'');
+    cnt.textContent=codigos.length+' clientes con facturas';
+  }
+  try{await cargarPdfJs();}catch(e){}
+}
+
+/* ══ ABRIR / CERRAR PANTALLAS FACTURAS ══ */
+async function verFacturaCliente(){
+  if(!clientes[clienteIdx])return;
+  const cod=String(clientes[clienteIdx].id||getF(clientes[clienteIdx],CFG.COL_CODIGO));
+  if(!Object.keys(factClientes).length){
+    showLoad('Cargando facturas...');
+    await cargarIndiceFacturas();
+    hideLoad();
+  }
+  if(factClientes[cod]){
+    abrirDetalleFactura(factClientes[cod]);
+    return;
+  }
+  toast('Este cliente no tiene facturas hoy','err');
+  abrirFacturas();
+}
+
+function abrirFacturas(){
+  const p=document.getElementById('pantalla-facturas');
+  p.classList.remove('oculto');
+  const hoy=new Date();
+  const el=document.getElementById('fact-sub-fecha');
+  if(el)el.textContent=hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  const si=document.getElementById('fact-search-input');
+  if(si){si.value='';document.getElementById('fact-resultados').innerHTML='';}
+  cargarIndiceFacturas();
+}
+
+function cerrarFacturas(){document.getElementById('pantalla-facturas').classList.add('oculto');}
+function cerrarDetalle(){document.getElementById('pantalla-detalle').classList.add('oculto');}
+
+/* ══ BUSCAR CLIENTE EN FACTURAS ══ */
+function buscarClienteFact(q){
+  const cont=document.getElementById('fact-resultados');
+  q=q.trim().toLowerCase();
+  if(!q||q.length<2){cont.innerHTML='';return;}
+  if(!Object.keys(factClientes).length){cont.innerHTML='<div class="fact-empty">Espera — cargando índice...</div>';return;}
+  const res=Object.values(factClientes).filter(cl=>cl.codigo.includes(q)||cl.nombre.toLowerCase().includes(q));
+  if(!res.length){cont.innerHTML='<div class="fact-empty">No se encontró ningún cliente.</div>';return;}
+  cont.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">'+res.length+' resultado'+(res.length>1?'s':'')+'</div>';
+  res.forEach(cl=>{
+    const sops=cl.paginas.filter(p=>p.tipo==='soporte').length;
+    const creds=cl.paginas.filter(p=>p.tipo==='credito').length;
+    const div=document.createElement('div');div.className='fact-card';
+    div.innerHTML='<div class="fact-card-nombre">'+cl.nombre+'</div><div class="fact-card-codigo">Código: '+cl.codigo+'</div><div class="fact-badges">'+(sops?'<span class="fact-badge-s">📋 '+sops+' soporte'+(sops>1?'s':'')+'</span>':'')+(creds?'<span class="fact-badge-c">🧾 '+creds+' factura'+(creds>1?'s':'')+'</span>':'')+'</div>';
+    div.onclick=()=>{haptic();abrirDetalleFactura(cl);};
+    cont.appendChild(div);
+  });
+}
+
+/* ══ ABRIR DETALLE FACTURA ══ */
+async function abrirDetalleFactura(cliente){
+  detalleActual=cliente;detPagActual=0;detPdfPages=[];
+  document.getElementById('det-nombre').textContent=cliente.nombre;
+  document.getElementById('det-codigo').textContent='Código: '+cliente.codigo;
+  document.getElementById('di-nombre').textContent=cliente.nombre;
+  document.getElementById('di-codigo').textContent=cliente.codigo;
+  document.getElementById('di-dir').textContent=cliente.datos.direccion||'—';
+  const sops=cliente.paginas.filter(p=>p.tipo==='soporte').length;
+  const creds=cliente.paginas.filter(p=>p.tipo==='credito').length;
+  document.getElementById('di-docs').textContent=cliente.paginas.length+' doc'+(cliente.paginas.length>1?'s':'')+(sops?' · '+sops+' soporte'+(sops>1?'s':''):'')+(creds?' · '+creds+' factura'+(creds>1?'s':''):'');
+  document.getElementById('det-wa-num').value='';
+  cambiarDetTab('preview');
+  document.getElementById('pantalla-detalle').classList.remove('oculto');
+  renderizarPaginasFact(cliente);
+}
+
+async function renderizarPaginasFact(cliente){
+  const loading=document.getElementById('det-loading');
+  const canvas=document.getElementById('det-canvas');
+  loading.style.display='flex';canvas.style.display='none';detPdfPages=[];
+  document.getElementById('det-loading-txt').textContent='Extrayendo páginas...';
+  try{
+    await cargarPdfJs();
+    const porArchivo={};
+    for(const pg of cliente.paginas){
+      if(!porArchivo[pg.archivoId])porArchivo[pg.archivoId]={url:pg.archivoUrl,paginas:[]};
+      porArchivo[pg.archivoId].paginas.push(pg.pagina);
+    }
+    for(const[aid,grupo] of Object.entries(porArchivo)){
+      const res=await fetch(grupo.url);if(!res.ok)continue;
+      const buf=await res.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+      for(const num of grupo.paginas.sort((a,b)=>a-b)){
+        const page=await pdf.getPage(num);
+        const vp=page.getViewport({scale:1.5});
+        const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+        await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+        const pg=cliente.paginas.find(p=>p.archivoId===aid&&p.pagina===num);
+        detPdfPages.push({canvas:cv,titulo:pg?(pg.tipo==='soporte'?'Soporte de entrega':'Factura electrónica'):'Documento'});
+      }
+    }
+    loading.style.display='none';mostrarPaginaFact();
+  }catch(e){loading.style.display='flex';document.getElementById('det-loading-txt').textContent='Error: '+e.message;}
+}
+
+function mostrarPaginaFact(){
+  if(!detPdfPages.length)return;
+  const canvas=document.getElementById('det-canvas');
+  const total=detPdfPages.length;const pg=detPdfPages[detPagActual];
+  canvas.width=pg.canvas.width;canvas.height=pg.canvas.height;
+  canvas.getContext('2d').drawImage(pg.canvas,0,0);
+  canvas.style.display='block';canvas.style.width='100%';
+  document.getElementById('det-pdf-titulo').textContent=pg.titulo;
+  document.getElementById('det-pdf-sub').textContent='Página '+(detPagActual+1)+' de '+total;
+  document.getElementById('det-prev').disabled=detPagActual===0;
+  document.getElementById('det-next').disabled=detPagActual===total-1;
+}
+
+function navPagina(dir){detPagActual=Math.max(0,Math.min(detPdfPages.length-1,detPagActual+dir));mostrarPaginaFact();}
+
+function cambiarDetTab(tab){
+  document.querySelectorAll('.det-tab').forEach(t=>t.classList.remove('activo'));
+  document.querySelectorAll('.det-tab-content').forEach(t=>t.classList.remove('activo'));
+  const dt=document.getElementById('dtab-'+tab);
+  const dc=document.getElementById('dcontent-'+tab);
+  if(dt)dt.classList.add('activo');
+  if(dc)dc.classList.add('activo');
+}
+
+async function generarPDFCliente(){
+  if(!detalleActual||!detPdfPages.length)return null;
+  await cargarJsPDF();
+  const{jsPDF}=window.jspdf;
+  const pc=detPdfPages[0].canvas;
+  const doc=new jsPDF({orientation:pc.width>pc.height?'l':'p',unit:'px',format:[pc.width,pc.height]});
+  for(let i=0;i<detPdfPages.length;i++){
+    if(i>0){const cv=detPdfPages[i].canvas;doc.addPage([cv.width,cv.height],cv.width>cv.height?'l':'p');}
+    const cv=detPdfPages[i].canvas;
+    doc.addImage(cv.toDataURL('image/jpeg',.85),'JPEG',0,0,cv.width,cv.height);
+  }
+  return doc;
+}
+
+async function descargarPDFFact(){
+  if(!detalleActual)return;
+  toast('Generando PDF...');
+  document.getElementById('det-generando').classList.add('visible');
+  try{
+    const doc=await generarPDFCliente();
+    const nombre=(detalleActual.nombre||detalleActual.codigo).replace(/[^a-zA-Z0-9]/g,'_');
+    const hoy=new Date().toISOString().slice(0,10).replace(/-/g,'');
+    doc.save('GMAZ_'+nombre+'_'+hoy+'.pdf');
+    toast('PDF descargado ✓','ok');
+  }catch(e){toast('Error al generar PDF','err');}
+  finally{document.getElementById('det-generando').classList.remove('visible');}
+}
+
+async function enviarWhatsAppFact(){
+  if(!detalleActual)return;
+  const numInput=document.getElementById('det-wa-num').value.replace(/\D/g,'');
+  if(!numInput||numInput.length<7){toast('Ingresa el número de WhatsApp','err');document.getElementById('det-wa-num').focus();return;}
+  const numFull=numInput.startsWith('57')?numInput:'57'+numInput;
+  toast('Generando PDF...');
+  document.getElementById('det-generando').classList.add('visible');
+  try{
+    const doc=await generarPDFCliente();
+    const nombre=(detalleActual.nombre||detalleActual.codigo).replace(/[^a-zA-Z0-9]/g,'_');
+    const hoy=new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const blob=doc.output('blob');
+    const file=new File([blob],'GMAZ_'+nombre+'_'+hoy+'.pdf',{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Facturas GMAZ — '+detalleActual.nombre,text:'Documentos de entrega del día'});
+      toast('PDF compartido ✓','ok');
+    }else{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='GMAZ_'+nombre+'_'+hoy+'.pdf';a.click();
+      URL.revokeObjectURL(url);
+      setTimeout(()=>window.open('https://wa.me/'+numFull+'?text='+encodeURIComponent('Hola, te envío los documentos de entrega GMAZ del día '+new Date().toLocaleDateString('es-CO')+'. El PDF se descargó en tu dispositivo.'),'_blank'),800);
+      toast('PDF descargado — WhatsApp abierto','ok');
+    }
+  }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message,'err');}
+  finally{document.getElementById('det-generando').classList.remove('visible');}
+}
+
 
 const getF=(o,c)=>{for(const k of c){if(o[k]!=null&&String(o[k]).trim()!=='')return o[k];}return '';};
 const getColDate=(d=0)=>{const n=new Date();const c=new Date(n.getTime()+CFG.UTC_OFFSET*3600000);c.setDate(c.getDate()+d);return c.toISOString().split('T')[0];};
@@ -985,7 +1235,75 @@ function handleLogoTap(){
     }else openCoord();
   }
 }
-function openCoord(){updateDateStrip();document.getElementById('panel-coord').classList.add('show');}
+function openCoord(){updateDateStrip();document.getElementById('panel-coord').classList.add('show');verificarEstadoPanel();}
+
+async function verificarEstadoPanel(){
+  const offset=-5;
+  const ahora=new Date();
+  const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
+
+  // Helper para actualizar el indicador
+  const setEst=(id,detId,ok,txt,det)=>{
+    const el=document.getElementById(id);
+    const del=document.getElementById(detId);
+    if(!el||!del)return;
+    el.textContent=txt;
+    el.className='pc-estado '+(ok===true?'pc-estado-ok':ok===false?'pc-estado-warn':'pc-estado-empty');
+    del.textContent=det;
+  };
+
+  // ── Verificar rutas (contar clientes en tabla)
+  setEst('pc-est-rutas','pc-det-rutas',null,'...','Verificando...');
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?select=id&limit=1',{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Prefer':'count=exact'}
+    });
+    const count=parseInt(r.headers.get('content-range')?.split('/')[1]||'0');
+    if(count>0){
+      // Obtener las rutas disponibles
+      const r2=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?select=ruta',{
+        headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+      });
+      const rows=await r2.json();
+      const rutas=[...new Set(rows.map(x=>x.ruta).filter(Boolean))].sort();
+      setEst('pc-est-rutas','pc-det-rutas',true,'✓ '+count+' clientes',rutas.slice(0,6).join(', ')+(rutas.length>6?'...':''));
+    }else{
+      setEst('pc-est-rutas','pc-det-rutas',false,'⚠ Vacío','Sin clientes cargados — sube el Excel');
+    }
+  }catch(e){setEst('pc-est-rutas','pc-det-rutas',null,'?','Error al verificar');}
+
+  // ── Verificar facturas (buscar índice de hoy)
+  setEst('pc-est-fact','pc-det-fact',null,'...','Verificando...');
+  try{
+    let encontrado=false;
+    for(const fecha of [hoy,new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]]){
+      const url=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FACT+'/'+fecha+'/FACTURAS_INDEX.json';
+      const r=await fetch(url+'?t='+Date.now());
+      if(r.ok){
+        const idx=await r.json();
+        const n=Object.keys(idx).length;
+        const esHoy=fecha===hoy;
+        setEst('pc-est-fact','pc-det-fact',esHoy,'✓ '+n+' clientes'+(esHoy?'':' (ayer '+fecha+')'),esHoy?'Índice del día — PDFs listos':'Índice de ayer — considera subir los de hoy');
+        encontrado=true;break;
+      }
+    }
+    if(!encontrado)setEst('pc-est-fact','pc-det-fact',false,'⚠ Sin PDFs','No hay facturas — sube los PDFs del día');
+  }catch(e){setEst('pc-est-fact','pc-det-fact',null,'?','Error al verificar');}
+
+  // ── Verificar maestro (contar vendedores)
+  setEst('pc-est-maest','pc-det-maest',null,'...','Verificando...');
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/maestro_vendedores?select=ruta_vendedor&limit=1',{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Prefer':'count=exact'}
+    });
+    const count=parseInt(r.headers.get('content-range')?.split('/')[1]||'0');
+    if(count>0){
+      setEst('pc-est-maest','pc-det-maest',true,'✓ '+count+' registros','Maestro de vendedores cargado');
+    }else{
+      setEst('pc-est-maest','pc-det-maest',false,'⚠ Vacío','Sin vendedores — sube el maestro');
+    }
+  }catch(e){setEst('pc-est-maest','pc-det-maest',null,'?','Error al verificar');}
+}
 function closeCoord(){document.getElementById('panel-coord').classList.remove('show');}
 function updateDateStrip(){
   const hoy=getColDate(),ayer=getColDate(-1);
@@ -1146,6 +1464,94 @@ async function uploadRoutes(ev){
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
     clientes=[];renderClientList();
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir rutas');}
+  ev.target.value='';
+}
+
+async function uploadInvoices(ev){
+  const files=Array.from(ev.target.files).filter(f=>f.name.toLowerCase().endsWith('.pdf')).slice(0,4);
+  if(!files.length)return;
+  openProg('Subiendo facturas y soportes',files.length+' PDFs — generando índice automático');
+  const limpiarNombre=(n)=>n.replace(/[áàâä]/gi,'a').replace(/[éèêë]/gi,'e').replace(/[íìîï]/gi,'i').replace(/[óòôö]/gi,'o').replace(/[úùûü]/gi,'u').replace(/ñ/gi,'n').replace(/[^a-zA-Z0-9.\-]/g,'_').replace(/_+/g,'_');
+  // Usar fecha Colombia UTC-5
+  const offset=-5;
+  const ahora=new Date();
+  const hoyStr=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
+  const folder=hoyStr+'/';
+  const baseUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FACT+'/'+folder;
+  const nombreMap={};
+  files.forEach(f=>{nombreMap[f.name]=limpiarNombre(f.name);});
+  logProg(files.length+' PDFs seleccionados para el '+hoyStr,'info');
+  // 1. Borrar archivos de ayer
+  updateProg(5,'Borrando archivos de ayer...');
+  const ayerStr=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]+'/';
+  try{
+    const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_FACT,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:ayerStr,limit:50})
+    });
+    if(lr.ok){const viejos=await lr.json();if(Array.isArray(viejos)&&viejos.length){
+      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT,{
+        method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({prefixes:viejos.map(f=>ayerStr+f.name)})
+      });
+      logProg('Archivos de ayer eliminados','ok');
+    }}
+  }catch(e){logProg('No se pudieron borrar archivos de ayer','info');}
+  // 2. Subir PDFs
+  let subidos=0;
+  for(const file of files){
+    const nl=nombreMap[file.name];
+    updateProg(10+((subidos/files.length)*35),'Subiendo '+file.name+'...');
+    if(nl!==file.name)logProg('Nombre: '+file.name+' → '+nl,'info');
+    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+nl,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf','x-upsert':'true'},
+      body:file
+    });
+    if(res.ok){logProg(file.name+' subido ✓','ok');subidos++;}
+    else{const t=await res.text();logProg(file.name+' ERROR: '+t,'err');}
+  }
+  if(!subidos){endProg(false,'Sin PDFs subidos');ev.target.value='';return;}
+  // 3. Generar índice con PDF.js
+  updateProg(50,'Cargando motor PDF.js...');
+  logProg('Indexando códigos de clientes en los PDFs...','info');
+  await cargarPdfJs();
+  const index={};
+  for(let fi=0;fi<files.length;fi++){
+    const file=files[fi];const nl=nombreMap[file.name];
+    const tipo=file.name.toLowerCase().includes('credit')?'credito':'soporte';
+    const buf=await file.arrayBuffer();
+    let pdf;try{pdf=await pdfjsLib.getDocument({data:buf}).promise;}catch(e){logProg('Error leyendo '+nl+': '+e.message,'err');continue;}
+    for(let p=1;p<=pdf.numPages;p++){
+      const pct=50+((fi*pdf.numPages+p)/(files.length*pdf.numPages))*40;
+      updateProg(Math.min(pct,90),'Indexando '+nl+' pág '+p+'/'+pdf.numPages+'...');
+      try{
+        const page=await pdf.getPage(p);
+        const content=await page.getTextContent();
+        const texto=content.items.map(i=>i.str).join(' ');
+        const codigos=[...new Set((texto.match(/\b12\d{8}\b/g)||[]))];
+        for(const cod of codigos){
+          if(!index[cod])index[cod]=[];
+          if(!index[cod].some(e=>e.archivo===nl&&e.pagina===p))
+            index[cod].push({archivo:nl,url:baseUrl+encodeURIComponent(nl),pagina:p,tipo});
+        }
+      }catch(e){}
+    }
+  }
+  // 4. Subir índice
+  updateProg(92,'Subiendo índice...');
+  const nCods=Object.keys(index).length;
+  logProg(nCods+' clientes indexados en los PDFs','info');
+  await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+'FACTURAS_INDEX.json',{
+    method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+    body:JSON.stringify(index)
+  });
+  logProg('Índice FACTURAS_INDEX.json subido ✓','ok');
+  // 5. Recargar índice en memoria
+  factClientes={};
+  await cargarIndiceFacturas();
+  updateProg(100,'');
+  endProg(true,'✓ '+subidos+' PDFs subidos · '+nCods+' clientes indexados');
+  const b=document.getElementById('pb4');b.textContent='✓ '+subidos+' subidos';b.classList.add('done');
   ev.target.value='';
 }
 
