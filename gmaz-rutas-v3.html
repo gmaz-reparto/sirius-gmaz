@@ -596,7 +596,7 @@ async function openClient(i){
   showScr('scr-client');
   // Buscar vendedor
   try{
-    const{data}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('ruta_vendedor',rutaActual).maybeSingle();
+    const{data}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('codigo',cod).maybeSingle();
     vendedorActual=data;
     const rv=data?.ruta_vendedor||'—';
     document.getElementById('cl-ruta-venta').textContent=rv;
@@ -912,28 +912,45 @@ async function uploadRoutes(ev){
     const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
     if(!raw.length){logProg('Archivo vacío','err');endProg(false,'Sin datos');ev.target.value='';return;}
     logProg(raw.length+' filas encontradas','info');
-    const norm=(s)=>String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
-    const getV=(row,variants)=>{const keys=Object.keys(row);for(const v of variants){const k=keys.find(k=>norm(k)===norm(v));if(k!==undefined&&row[k]!==''&&row[k]!==null)return String(row[k]).trim();}return '';};
+    // Detectar columnas dinámicamente — sin importar el nombre exacto
+    const norm=(s)=>String(s).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    const cols=Object.keys(raw[0]||{});
+    logProg('Columnas: '+cols.join(', '),'info');
+    const findCol=(includes)=>cols.find(k=>norm(k).includes(includes));
+    // Columna ruta: busca "ruta" en cualquier nombre (ID_de_ruta_, RUTA, Ruta, etc.)
+    const rutaCol=findCol('ruta');
+    // Columna id cliente: busca "ubicac" (ID_de_ubicación_), o "codigo", "cliente", "id"
+    const idCol=findCol('ubicaci')||findCol('codigo')||findCol('cliente');
+    // Lat/Lng
+    const latCol=findCol('latit')||findCol('lat');
+    const lngCol=findCol('longit')||findCol('lng');
+    const nombreCol=findCol('nombre');
+    const dirCol=findCol('direc');
+    logProg('Ruta → '+(rutaCol||'NO ENCONTRADA'),rutaCol?'ok':'err');
+    logProg('ID cliente → '+(idCol||'NO ENCONTRADA'),idCol?'ok':'err');
+    if(latCol)logProg('Lat → '+latCol,'info');
+    if(lngCol)logProg('Lng → '+lngCol,'info');
+    if(!rutaCol||!idCol){logProg('No se encontraron columnas de ruta o ID','err');endProg(false,'Sin columnas clave');ev.target.value='';return;}
     const hoyFecha=new Date().toISOString().split('T')[0];
     const clientes2=raw.map(row=>({
-      id:       getV(row,['CLIENTE','cliente','CODIGO','codigo','ID','Codigo','Cliente']),
-      nombre:   getV(row,['NOMBRE','nombre','NOMBRE_CLIENTE','nombre_cliente','NombreCliente','Nombre']),
-      ruta:     getV(row,['RUTA','ruta','Ruta']),
-      lat:      parseFloat(getV(row,['LAT','lat','LATITUD','latitud','Latitud','Coord. Geocaptura 1'])||'0'),
-      lng:      parseFloat(getV(row,['LNG','lng','LONGITUD','longitud','Longitud','Coord. Geocaptura 2'])||'0'),
-      direccion:getV(row,['DIRECCION','DIRECCIÓN','direccion','Dirección','Direc']),
-      barrio:   getV(row,['BARRIO','barrio','Barrio'])||'',
-      celular:  getV(row,['CELULAR','celular','TELEFONO','telefono'])||'',
-      fecha:    hoyFecha
-    })).filter(c=>c.id&&c.ruta&&c.ruta.startsWith('KA4V'));
-    if(!clientes2.length){logProg('No se encontraron clientes con ruta KA4V — revisa las columnas','err');endProg(false,'Sin clientes válidos');ev.target.value='';return;}
-    logProg(clientes2.length+' clientes válidos con ruta KA4V','ok');
+      id:       String(row[idCol]||'').trim(),
+      nombre:   nombreCol?String(row[nombreCol]||'').trim():'',
+      ruta:     String(row[rutaCol]||'').trim(),
+      lat:      latCol?parseFloat(String(row[latCol]||'0').replace(',','.')):0,
+      lng:      lngCol?parseFloat(String(row[lngCol]||'0').replace(',','.')):0,
+      direccion:dirCol?String(row[dirCol]||'').trim():'',
+      barrio:'',celular:'',fecha:hoyFecha
+    })).filter(c=>c.id&&c.ruta);
+    if(!clientes2.length){logProg('Sin clientes con id y ruta válidos','err');endProg(false,'Sin clientes');ev.target.value='';return;}
+    logProg(clientes2.length+' clientes válidos','ok');
+    const rutasUnicas=[...new Set(clientes2.map(c=>c.ruta))];
+    logProg('Rutas: '+rutasUnicas.slice(0,8).join(', ')+(rutasUnicas.length>8?'...':''),'info');
     updateProg(40,'Borrando rutas anteriores...');
-    const delRes=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?id=neq.DUMMY_NEVER_MATCHES',{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL+'?id=neq.DUMMY_NEVER_MATCHES',{
       method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
     });
     logProg('Rutas anteriores eliminadas','ok');
-    updateProg(60,'Subiendo '+clientes2.length+' clientes en bloques...');
+    updateProg(60,'Subiendo '+clientes2.length+' clientes...');
     let uploaded=0;
     for(let i=0;i<clientes2.length;i+=500){
       const bloque=clientes2.slice(i,i+500);
@@ -947,9 +964,7 @@ async function uploadRoutes(ev){
       updateProg(60+(uploaded/clientes2.length)*35,'Subidos '+uploaded+' de '+clientes2.length+'...');
     }
     logProg(clientes2.length+' clientes subidos correctamente','ok');
-    const rutasOk=[...new Set(clientes2.map(c=>c.ruta))];
-    logProg('Rutas: '+rutasOk.join(', '),'info');
-    updateProg(100,'');endProg(true,'✓ '+clientes2.length+' clientes · '+rutasOk.length+' rutas');
+    updateProg(100,'');endProg(true,'✓ '+clientes2.length+' clientes · '+rutasUnicas.length+' rutas');
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
     clientes=[];renderClientList();
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir rutas');}
@@ -960,7 +975,7 @@ async function uploadInvoices(ev){
   const files=Array.from(ev.target.files);if(!files.length)return;
   openProg('Subiendo facturas y soportes',files.length+' archivos PDF');
   logProg(files.length+' archivos seleccionados','info');
-  const limpiarNombre=(n)=>n.replace(/[áàâä]/gi,'a').replace(/[éèêë]/gi,'e').replace(/[íìîï]/gi,'i').replace(/[óòôö]/gi,'o').replace(/[úùûü]/gi,'u').replace(/ñ/gi,'n').replace(/[^a-zA-Z0-9._\-]/g,'_').replace(/_+/g,'_');
+  const limpiarNombre=(n)=>n.replace(/[áàâä]/gi,'a').replace(/[éèêë]/gi,'e').replace(/[íìîï]/gi,'i').replace(/[óòôö]/gi,'o').replace(/[úùûü]/gi,'u').replace(/ñ/gi,'n').replace(/[^a-zA-Z0-9.\-]/g,'_').replace(/_+/g,'_');
   let ok=0,errs=0;
   for(let i=0;i<files.length;i++){
     const f=files[i];const nombreLimpio=limpiarNombre(f.name);
@@ -968,11 +983,11 @@ async function uploadInvoices(ev){
     if(nombreLimpio!==f.name)logProg('Nombre: '+f.name+' → '+nombreLimpio,'info');
     try{
       const ab=await f.arrayBuffer();
-      const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+nombreLimpio,{
-        method:'POST',
-        headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf','x-upsert':'true'},
-        body:ab
-      });
+      const url=CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+nombreLimpio;
+      const hdrs={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf'};
+      // Borrar primero si existe (evita error de UPDATE en RLS), luego insertar
+      await fetch(url,{method:'DELETE',headers:hdrs});
+      const res=await fetch(url,{method:'POST',headers:hdrs,body:ab});
       if(!res.ok){const t=await res.text();throw new Error(t);}
       logProg(f.name+' — subida correctamente','ok');ok++;
     }catch(e){logProg(f.name+' — ERROR: '+e.message,'err');errs++;}
