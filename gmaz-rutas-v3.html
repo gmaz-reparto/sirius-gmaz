@@ -317,9 +317,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 /* ══ TACÓMETRO SIDEBAR ══ */
 #taco-slide{
   position:fixed;right:0;top:0;height:100vh;
-  z-index:300;display:flex;align-items:stretch;
+  z-index:300;display:none;align-items:stretch;
   pointer-events:none;
 }
+#taco-slide.visible{display:flex;}
 .taco-tab{
   pointer-events:auto;
   width:28px;height:100%;
@@ -1187,6 +1188,11 @@ function showScr(id){
     el.classList.toggle('hidden',s!==id);
     el.classList.toggle('activo',s===id&&s==='scr-map');
   });
+  // Mostrar tacómetro solo en pantalla de mapa
+  const taco=document.getElementById('taco-slide');
+  if(taco)taco.classList.toggle('visible',id==='scr-map');
+  // Cerrar tacómetro al salir del mapa
+  if(id!=='scr-map'){tacoAbierto=false;const tb=document.getElementById('taco-body');if(tb)tb.classList.remove('abierto');}
 }
 
 document.addEventListener('click',e=>{
