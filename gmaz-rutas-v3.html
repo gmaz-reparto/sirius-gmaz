@@ -315,45 +315,58 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 /* ══ TACÓMETRO DESLIZABLE ══ */
 /* ══ TACÓMETRO SIDEBAR ══ */
+/* Solo la franja roja del borde — siempre visible */
 #taco-slide{
   position:fixed;right:0;top:0;height:100vh;
-  z-index:300;display:none;align-items:stretch;
+  z-index:300;display:none;
   pointer-events:none;
 }
-#taco-slide.visible{display:flex;}
+#taco-slide.visible{display:block;}
+
+/* Franja roja delgada pegada al borde — como la sombra que ves */
 .taco-tab{
-  pointer-events:auto;
-  width:28px;height:100%;
-  background:linear-gradient(180deg,#0F1117 0%,#1a1f2e 50%,#0F1117 100%);
-  border-left:2px solid rgba(227,6,19,0.6);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  position:fixed;right:0;top:0;height:100vh;
+  width:8px;
+  background:linear-gradient(180deg,#E30613 0%,#8B0000 50%,#E30613 100%);
+  box-shadow:-2px 0 8px rgba(227,6,19,0.5);
   cursor:pointer;
-  box-shadow:-3px 0 12px rgba(0,0,0,.4);
-}
-.taco-tab-icon{font-size:14px}
-.taco-tab-pct{
-  font-size:9px;font-weight:900;color:#4ade80;
-  writing-mode:vertical-rl;text-orientation:mixed;
-  transform:rotate(180deg);letter-spacing:1px;
-}
-.taco-tab-bar{
-  width:4px;height:60px;background:rgba(255,255,255,.08);
-  border-radius:2px;overflow:hidden;margin:4px 0;
-}
-.taco-tab-fill{
-  width:100%;background:linear-gradient(180deg,#4ade80,#fbbf24,#f87171);
-  border-radius:2px;transition:height .5s ease;
-  /* height se actualiza con JS */
-}
-.taco-body{
   pointer-events:auto;
-  width:30vw;min-width:110px;max-width:160px;
+  z-index:301;
+  transition:width .2s;
+}
+.taco-tab:active{width:12px;}
+/* Ícono pequeño centrado en la franja */
+.taco-tab-icon{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:10px;
+  writing-mode:vertical-rl;
+}
+.taco-tab-pct{
+  position:absolute;top:55%;left:50%;
+  transform:translate(-50%,0) rotate(180deg);
+  font-size:8px;font-weight:900;color:white;
+  writing-mode:vertical-rl;letter-spacing:1px;
+  margin-top:8px;
+}
+.taco-tab-bar{display:none;}
+.taco-tab-fill{display:none;}
+
+/* Panel que sale al deslizar */
+.taco-body{
+  position:fixed;right:8px;top:0;height:100vh;
+  width:30vw;min-width:120px;max-width:160px;
   background:rgba(10,12,20,0.97);
-  border-left:1px solid rgba(227,6,19,0.3);
-  transform:translateX(100%);
+  border-left:2px solid rgba(227,6,19,0.5);
+  border-right:none;
+  border-radius:12px 0 0 12px;
+  transform:translateX(calc(100% + 8px));
   transition:transform .4s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;
   overflow:hidden;
+  pointer-events:auto;
+  z-index:302;
+  box-shadow:-4px 0 20px rgba(0,0,0,.5);
 }
 .taco-body.abierto{transform:translateX(0);}
 .taco-header{
@@ -362,13 +375,13 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   display:flex;flex-direction:column;align-items:center;
   flex-shrink:0;
 }
-.taco-ruta-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+.taco-ruta-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
 .taco-fecha{font-size:8px;color:rgba(255,255,255,.5)}
 .taco-gauge-wrap{padding:10px 8px 0;flex-shrink:0}
 .taco-pct-big{font-size:28px;font-weight:900;text-align:center;line-height:1;margin:4px 0 0}
 .taco-cierre-lbl{font-size:8px;color:rgba(255,255,255,.4);text-align:center;letter-spacing:1px;text-transform:uppercase}
 .taco-divider{height:.5px;background:rgba(255,255,255,.08);margin:8px 0;flex-shrink:0}
-.taco-stats-col{display:flex;flex-direction:column;gap:0;flex:1;padding:0 8px}
+.taco-stats-col{display:flex;flex-direction:column;gap:0;flex:1;padding:0 8px;overflow-y:auto}
 .taco-stat-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:.5px solid rgba(255,255,255,.06)}
 .taco-stat-row:last-child{border-bottom:none}
 .taco-stat-ico{font-size:14px;flex-shrink:0}
@@ -775,6 +788,11 @@ function toggleTaco(){
   tacoAbierto=!tacoAbierto;
   document.getElementById('taco-body').classList.toggle('abierto',tacoAbierto);
   haptic(30);
+  // Overlay para cerrar al tocar fuera
+  let ov=document.getElementById('taco-overlay');
+  if(tacoAbierto){
+    if(!ov){ov=document.createElement('div');ov.id='taco-overlay';ov.style.cssText='position:fixed;inset:0;right:168px;z-index:299;background:transparent';ov.onclick=()=>toggleTaco();document.body.appendChild(ov);}
+  }else{if(ov)ov.remove();}
 }
 
 function actualizarTaco(){
