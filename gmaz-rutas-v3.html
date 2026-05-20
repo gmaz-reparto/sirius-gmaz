@@ -314,36 +314,67 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 @keyframes parpadeo{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* ══ TACÓMETRO DESLIZABLE ══ */
+/* ══ TACÓMETRO SIDEBAR ══ */
 #taco-slide{
-  position:absolute;right:0;top:50%;transform:translateY(-50%);
-  z-index:50;display:block;
-  pointer-events:auto;
+  position:fixed;right:0;top:0;height:100vh;
+  z-index:300;display:flex;align-items:stretch;
+  pointer-events:none;
 }
 .taco-tab{
-  position:absolute;left:-22px;top:50%;transform:translateY(-50%);
-  background:rgba(10,12,20,0.92);border:1px solid rgba(227,6,19,0.5);
-  border-right:none;border-radius:10px 0 0 10px;
-  width:22px;height:60px;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;writing-mode:vertical-rl;font-size:8px;font-weight:700;
-  color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase;
-  padding:4px 0;
+  pointer-events:auto;
+  width:28px;height:100%;
+  background:linear-gradient(180deg,#0F1117 0%,#1a1f2e 50%,#0F1117 100%);
+  border-left:2px solid rgba(227,6,19,0.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  cursor:pointer;
+  box-shadow:-3px 0 12px rgba(0,0,0,.4);
+}
+.taco-tab-icon{font-size:14px}
+.taco-tab-pct{
+  font-size:9px;font-weight:900;color:#4ade80;
+  writing-mode:vertical-rl;text-orientation:mixed;
+  transform:rotate(180deg);letter-spacing:1px;
+}
+.taco-tab-bar{
+  width:4px;height:60px;background:rgba(255,255,255,.08);
+  border-radius:2px;overflow:hidden;margin:4px 0;
+}
+.taco-tab-fill{
+  width:100%;background:linear-gradient(180deg,#4ade80,#fbbf24,#f87171);
+  border-radius:2px;transition:height .5s ease;
+  /* height se actualiza con JS */
 }
 .taco-body{
-  background:rgba(10,12,20,0.95);border:1px solid rgba(227,6,19,0.4);
-  border-right:none;border-radius:12px 0 0 12px;
-  padding:10px 10px 10px 12px;width:130px;
-  transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  pointer-events:auto;
+  width:30vw;min-width:110px;max-width:160px;
+  background:rgba(10,12,20,0.97);
+  border-left:1px solid rgba(227,6,19,0.3);
+  transform:translateX(100%);
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  overflow:hidden;
 }
 .taco-body.abierto{transform:translateX(0);}
-.taco-ruta-lbl{font-size:8px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:6px}
-.taco-gauge-wrap{position:relative;width:100px;height:56px;margin:0 auto}
-.taco-pct-big{font-size:22px;font-weight:900;text-align:center;line-height:1;margin:2px 0}
-.taco-cierre-lbl{font-size:8px;color:rgba(255,255,255,.4);text-align:center}
-.taco-stats-row{display:flex;justify-content:space-around;margin-top:7px;padding-top:7px;border-top:.5px solid rgba(255,255,255,.08)}
-.taco-st{text-align:center}
-.taco-sn{font-size:12px;font-weight:700}
-.taco-sl{font-size:7px;color:rgba(255,255,255,.35)}
-.taco-update{font-size:7px;color:rgba(255,255,255,.25);text-align:center;margin-top:5px}
+.taco-header{
+  background:linear-gradient(135deg,#E30613,#8B0000);
+  padding:10px 8px 8px;
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;
+}
+.taco-ruta-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+.taco-fecha{font-size:8px;color:rgba(255,255,255,.5)}
+.taco-gauge-wrap{padding:10px 8px 0;flex-shrink:0}
+.taco-pct-big{font-size:28px;font-weight:900;text-align:center;line-height:1;margin:4px 0 0}
+.taco-cierre-lbl{font-size:8px;color:rgba(255,255,255,.4);text-align:center;letter-spacing:1px;text-transform:uppercase}
+.taco-divider{height:.5px;background:rgba(255,255,255,.08);margin:8px 0;flex-shrink:0}
+.taco-stats-col{display:flex;flex-direction:column;gap:0;flex:1;padding:0 8px}
+.taco-stat-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:.5px solid rgba(255,255,255,.06)}
+.taco-stat-row:last-child{border-bottom:none}
+.taco-stat-ico{font-size:14px;flex-shrink:0}
+.taco-stat-lbl{font-size:9px;color:rgba(255,255,255,.5);flex:1;margin-left:6px}
+.taco-stat-val{font-size:16px;font-weight:900}
+.taco-update{font-size:7px;color:rgba(255,255,255,.2);text-align:center;padding:6px;flex-shrink:0}
+@keyframes needle-swing{0%{transform:rotate(-90deg)}100%{transform:rotate(var(--needle-angle))}}
 
 /* ══ BUSCADOR EN LISTA CLIENTES ══ */
 .cp-search-wrap{padding:5px 10px;background:var(--blanco);border-bottom:.5px solid var(--gris2);flex-shrink:0}
@@ -419,34 +450,63 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div id="gmap"></div>
     <div id="map-strip">Ruta: <span id="map-strip-ruta">—</span></div>
 
-<!-- ══ TACÓMETRO DESLIZABLE ══ -->
+<!-- ══ TACÓMETRO SIDEBAR ══ -->
 <div id="taco-slide">
-  <div class="taco-tab" onclick="toggleTaco()">📊</div>
+  <!-- Pestaña siempre visible -->
+  <div class="taco-tab" onclick="toggleTaco()">
+    <div class="taco-tab-icon">📊</div>
+    <div class="taco-tab-bar"><div class="taco-tab-fill" id="taco-tab-fill" style="height:100%"></div></div>
+    <div class="taco-tab-pct" id="taco-tab-pct">100%</div>
+  </div>
+  <!-- Panel desplegable -->
   <div class="taco-body" id="taco-body">
-    <div class="taco-ruta-lbl" id="taco-ruta-lbl">—</div>
+    <div class="taco-header">
+      <div class="taco-ruta-lbl" id="taco-ruta-lbl">—</div>
+      <div class="taco-fecha" id="taco-fecha">—</div>
+    </div>
     <div class="taco-gauge-wrap">
-      <svg id="taco-svg" viewBox="0 0 100 56" width="100" height="56" role="img" aria-label="Tacómetro de cierre">
+      <svg id="taco-svg" viewBox="0 0 110 62" width="100%" role="img" aria-label="Tacómetro">
         <defs><linearGradient id="gTaco" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stop-color="#f87171"/>
-          <stop offset="60%" stop-color="#fbbf24"/>
+          <stop offset="55%" stop-color="#fbbf24"/>
           <stop offset="100%" stop-color="#4ade80"/>
         </linearGradient></defs>
-        <path d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8" stroke-linecap="round"/>
-        <path id="taco-arc" d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="url(#gTaco)" stroke-width="8" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="0"/>
-        <line id="taco-needle" x1="50" y1="52" x2="50" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" transform="rotate(90,50,52)"/>
-        <circle cx="50" cy="52" r="5" fill="#E30613"/>
-        <text x="7" y="56" font-size="8" fill="rgba(255,255,255,.3)">0</text>
-        <text x="82" y="56" font-size="8" fill="rgba(255,255,255,.3)">100</text>
+        <path d="M12 58 A43 43 0 0 1 98 58" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9" stroke-linecap="round"/>
+        <path id="taco-arc" d="M12 58 A43 43 0 0 1 98 58" fill="none" stroke="url(#gTaco)" stroke-width="9" stroke-linecap="round" stroke-dasharray="135" stroke-dashoffset="0"/>
+        <line id="taco-needle" x1="55" y1="58" x2="55" y2="20" stroke="white" stroke-width="2.5" stroke-linecap="round" style="transform-origin:55px 58px;transform:rotate(-90deg);transition:transform .8s cubic-bezier(.34,1.56,.64,1)"/>
+        <circle cx="55" cy="58" r="6" fill="#E30613"/>
+        <circle cx="55" cy="58" r="3" fill="white"/>
+        <text x="10" y="62" font-size="8" fill="rgba(255,255,255,.3)">0</text>
+        <text x="50" y="14" font-size="8" fill="rgba(255,255,255,.3)">50</text>
+        <text x="90" y="62" font-size="8" fill="rgba(255,255,255,.3)">100</text>
       </svg>
+      <div class="taco-pct-big" id="taco-pct" style="color:#4ade80">100%</div>
+      <div class="taco-cierre-lbl">de cierre</div>
     </div>
-    <div class="taco-pct-big" id="taco-pct">100%</div>
-    <div class="taco-cierre-lbl">de cierre</div>
-    <div class="taco-stats-row">
-      <div class="taco-st"><div class="taco-sn" id="taco-ok" style="color:#4ade80">0</div><div class="taco-sl">OK</div></div>
-      <div class="taco-st"><div class="taco-sn" id="taco-rej" style="color:#f87171">0</div><div class="taco-sl">Rej</div></div>
-      <div class="taco-st"><div class="taco-sn" id="taco-cajas" style="color:#fbbf24">0</div><div class="taco-sl">Cajas</div></div>
+    <div class="taco-divider"></div>
+    <div class="taco-stats-col">
+      <div class="taco-stat-row">
+        <div class="taco-stat-ico">✅</div>
+        <div class="taco-stat-lbl">Entregados</div>
+        <div class="taco-stat-val" id="taco-ok" style="color:#4ade80">0</div>
+      </div>
+      <div class="taco-stat-row">
+        <div class="taco-stat-ico">❌</div>
+        <div class="taco-stat-lbl">Rechazos</div>
+        <div class="taco-stat-val" id="taco-rej" style="color:#f87171">0</div>
+      </div>
+      <div class="taco-stat-row">
+        <div class="taco-stat-ico">📦</div>
+        <div class="taco-stat-lbl">Cajas rej.</div>
+        <div class="taco-stat-val" id="taco-cajas" style="color:#fbbf24">0</div>
+      </div>
+      <div class="taco-stat-row">
+        <div class="taco-stat-ico">🏁</div>
+        <div class="taco-stat-lbl">Total</div>
+        <div class="taco-stat-val" id="taco-total" style="color:rgba(255,255,255,.6)">0</div>
+      </div>
     </div>
-    <div class="taco-update" id="taco-update">Actualizando...</div>
+    <div class="taco-update" id="taco-update">—</div>
   </div>
 </div>
 
@@ -763,22 +823,36 @@ async function consultarTacoSupabase(){
 function actualizarTacoLocal(){
   if(!rutaActual||!clientes.length)return;
   const total=clientes.length;
-  const rechazos=clientes.filter(c=>c._st==='novedad').length;
+  const rechazos=clientes.filter(cl=>cl._st==='novedad').length;
   const entregados=total-rechazos;
   const pct=Math.round((entregados/total)*100);
-  cajasRechazadas=clientes.filter(c=>c._st==='novedad')
-    .reduce((sum,cl)=>sum+parseFloat(String(cl.CAJA_||cl.caja||cl['CAJA_']||0).replace(',','.')||0),0);
-  document.getElementById('taco-pct').textContent=pct+'%';
-  document.getElementById('taco-pct').style.color=pct>=90?'#4ade80':pct>=75?'#fbbf24':'#f87171';
-  document.getElementById('taco-ok').textContent=entregados;
-  document.getElementById('taco-rej').textContent=rechazos;
-  document.getElementById('taco-cajas').textContent=Math.round(cajasRechazadas);
-  document.getElementById('taco-ruta-lbl').textContent=rutaActual;
+  cajasRechazadas=clientes.filter(cl=>cl._st==='novedad')
+    .reduce((sum,cl2)=>sum+parseFloat(String(cl2.CAJA_||cl2['CAJA_']||0).replace(',','.')||0),0);
+  const col=pct>=90?'#4ade80':pct>=75?'#fbbf24':'#f87171';
+  // Actualizar pestaña
+  const tabPct=document.getElementById('taco-tab-pct');
+  const tabFill=document.getElementById('taco-tab-fill');
+  if(tabPct){tabPct.textContent=pct+'%';tabPct.style.color=col;}
+  if(tabFill){tabFill.style.height=pct+'%';tabFill.style.background=col;}
+  // Actualizar panel
+  const elPct=document.getElementById('taco-pct');
+  if(elPct){elPct.textContent=pct+'%';elPct.style.color=col;}
+  const elOk=document.getElementById('taco-ok');if(elOk)elOk.textContent=entregados;
+  const elRej=document.getElementById('taco-rej');if(elRej)elRej.textContent=rechazos;
+  const elCaj=document.getElementById('taco-cajas');if(elCaj)elCaj.textContent=Math.round(cajasRechazadas);
+  const elTot=document.getElementById('taco-total');if(elTot)elTot.textContent=total;
+  const elRuta=document.getElementById('taco-ruta-lbl');if(elRuta)elRuta.textContent=rutaActual;
+  const elFecha=document.getElementById('taco-fecha');
+  if(elFecha)elFecha.textContent=new Date().toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
+  // Animar aguja SVG — rotación de -90deg(0%) a 90deg(100%)
   const angulo=-90+(pct/100)*180;
-  document.getElementById('taco-needle').setAttribute('transform',`rotate(${angulo},50,52)`);
-  document.getElementById('taco-arc').setAttribute('stroke-dashoffset',125.7*(1-pct/100));
+  const needle=document.getElementById('taco-needle');
+  if(needle)needle.style.transform='rotate('+angulo+'deg)';
+  // Arco
+  const arc=document.getElementById('taco-arc');
+  if(arc)arc.setAttribute('stroke-dashoffset',135*(1-pct/100));
   const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('taco-update').textContent='Actualizado: '+now;
+  const elUpd=document.getElementById('taco-update');if(elUpd)elUpd.textContent='Actualizado: '+now;
 }
 
 function iniciarTacoInterval(){
@@ -1628,8 +1702,8 @@ async function submitNovedad(){
     const fn=`${fecha}/${cod}_${Date.now()}.${ext}`;
     const{error:ue}=await sb.storage.from(CFG.BCK_FOTOS).upload(fn,photoFile,{contentType:photoFile.type,upsert:false});
     if(ue)throw ue;
-    const{data:ud}=sb.storage.from(CFG.BCK_FOTOS).getPublicUrl(fn);
-    const fotoUrl=ud.publicUrl;
+    // Construir URL público manualmente — garantiza formato correcto
+    const fotoUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FOTOS+'/'+fn;
     // 2. Guardar novedad
     const{error:ie}=await sb.from(CFG.TBL_NOV).insert({
       fecha,codigo_cliente:cod,nombre_cliente:nom,motivo,
