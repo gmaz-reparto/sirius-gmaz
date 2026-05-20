@@ -316,10 +316,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 /* ══ TACÓMETRO DESLIZABLE ══ */
 #taco-slide{
   position:absolute;right:0;top:50%;transform:translateY(-50%);
-  z-index:50;display:none;
+  z-index:50;display:block;
   pointer-events:auto;
 }
-#scr-map #taco-slide{display:block;}
 .taco-tab{
   position:absolute;left:-22px;top:50%;transform:translateY(-50%);
   background:rgba(10,12,20,0.92);border:1px solid rgba(227,6,19,0.5);
@@ -416,9 +415,41 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <span class="hdr-info" id="map-badge-info">—</span>
     </div>
   </div>
-  <div id="map-container">
+  <div id="map-container" style="position:relative">
     <div id="gmap"></div>
     <div id="map-strip">Ruta: <span id="map-strip-ruta">—</span></div>
+
+<!-- ══ TACÓMETRO DESLIZABLE ══ -->
+<div id="taco-slide">
+  <div class="taco-tab" onclick="toggleTaco()">📊</div>
+  <div class="taco-body" id="taco-body">
+    <div class="taco-ruta-lbl" id="taco-ruta-lbl">—</div>
+    <div class="taco-gauge-wrap">
+      <svg id="taco-svg" viewBox="0 0 100 56" width="100" height="56" role="img" aria-label="Tacómetro de cierre">
+        <defs><linearGradient id="gTaco" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f87171"/>
+          <stop offset="60%" stop-color="#fbbf24"/>
+          <stop offset="100%" stop-color="#4ade80"/>
+        </linearGradient></defs>
+        <path d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8" stroke-linecap="round"/>
+        <path id="taco-arc" d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="url(#gTaco)" stroke-width="8" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="0"/>
+        <line id="taco-needle" x1="50" y1="52" x2="50" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" transform="rotate(90,50,52)"/>
+        <circle cx="50" cy="52" r="5" fill="#E30613"/>
+        <text x="7" y="56" font-size="8" fill="rgba(255,255,255,.3)">0</text>
+        <text x="82" y="56" font-size="8" fill="rgba(255,255,255,.3)">100</text>
+      </svg>
+    </div>
+    <div class="taco-pct-big" id="taco-pct">100%</div>
+    <div class="taco-cierre-lbl">de cierre</div>
+    <div class="taco-stats-row">
+      <div class="taco-st"><div class="taco-sn" id="taco-ok" style="color:#4ade80">0</div><div class="taco-sl">OK</div></div>
+      <div class="taco-st"><div class="taco-sn" id="taco-rej" style="color:#f87171">0</div><div class="taco-sl">Rej</div></div>
+      <div class="taco-st"><div class="taco-sn" id="taco-cajas" style="color:#fbbf24">0</div><div class="taco-sl">Cajas</div></div>
+    </div>
+    <div class="taco-update" id="taco-update">Actualizando...</div>
+  </div>
+</div>
+
     <div id="map-legend">
       <div class="leg-dot" style="background:var(--rojo)"></div><span class="leg-lbl">Pendiente</span>
       <div class="leg-dot" style="background:var(--verde);margin-left:5px"></div><span class="leg-lbl">Entregado</span>
@@ -559,38 +590,6 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       </button>
       <div class="det-wa-nota">Se abre WhatsApp con el PDF listo para enviar</div>
     </div>
-  </div>
-</div>
-
-
-<!-- ══ TACÓMETRO DESLIZABLE ══ -->
-<div id="taco-slide">
-  <div class="taco-tab" onclick="toggleTaco()">📊</div>
-  <div class="taco-body" id="taco-body">
-    <div class="taco-ruta-lbl" id="taco-ruta-lbl">—</div>
-    <div class="taco-gauge-wrap">
-      <svg id="taco-svg" viewBox="0 0 100 56" width="100" height="56" role="img" aria-label="Tacómetro de cierre">
-        <defs><linearGradient id="gTaco" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#f87171"/>
-          <stop offset="60%" stop-color="#fbbf24"/>
-          <stop offset="100%" stop-color="#4ade80"/>
-        </linearGradient></defs>
-        <path d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8" stroke-linecap="round"/>
-        <path id="taco-arc" d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="url(#gTaco)" stroke-width="8" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="0"/>
-        <line id="taco-needle" x1="50" y1="52" x2="50" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" transform="rotate(90,50,52)"/>
-        <circle cx="50" cy="52" r="5" fill="#E30613"/>
-        <text x="7" y="56" font-size="8" fill="rgba(255,255,255,.3)">0</text>
-        <text x="82" y="56" font-size="8" fill="rgba(255,255,255,.3)">100</text>
-      </svg>
-    </div>
-    <div class="taco-pct-big" id="taco-pct">100%</div>
-    <div class="taco-cierre-lbl">de cierre</div>
-    <div class="taco-stats-row">
-      <div class="taco-st"><div class="taco-sn" id="taco-ok" style="color:#4ade80">0</div><div class="taco-sl">OK</div></div>
-      <div class="taco-st"><div class="taco-sn" id="taco-rej" style="color:#f87171">0</div><div class="taco-sl">Rej</div></div>
-      <div class="taco-st"><div class="taco-sn" id="taco-cajas" style="color:#fbbf24">0</div><div class="taco-sl">Cajas</div></div>
-    </div>
-    <div class="taco-update" id="taco-update">Actualizando...</div>
   </div>
 </div>
 
