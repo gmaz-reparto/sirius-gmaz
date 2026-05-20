@@ -112,28 +112,28 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 /* ══ CLIENT SCREEN ══ */
 #scr-client{background:var(--gris-oscuro,#1C1F2A)}
-#sv-wrap{flex:0 0 70%;position:relative;background:#1C1F2A;min-height:0}
+#sv-wrap{flex:0 0 65%;position:relative;background:#1C1F2A;min-height:0}
 #sv-pano{width:100%;height:100%}
 #sv-nosv{position:absolute;inset:0;background:#1C1F2A;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
 #sv-nosv p{font-size:11px;color:var(--gris4);text-align:center;line-height:1.5}
 #sv-status{position:absolute;top:8px;left:8px;background:rgba(15,17,23,.78);border-radius:16px;padding:3px 10px;font-size:8px;font-weight:700;color:rgba(255,255,255,.7);z-index:1}
 #sv-status.live{color:#34d399}
-.info-panel{flex:0 0 30%;background:var(--blanco);display:flex;flex-direction:column;min-height:0;padding:8px 12px 0;padding-bottom:max(8px,env(safe-area-inset-bottom,8px))}
-.ip-route-badges{display:flex;gap:6px;margin-bottom:7px;flex-shrink:0}
+.info-panel{flex:0 0 35%;background:var(--blanco);display:flex;flex-direction:column;min-height:0;padding:6px 10px;padding-bottom:max(52px,env(safe-area-inset-bottom,52px));overflow-y:auto;}
+.ip-route-badges{display:flex;gap:5px;margin-bottom:5px;flex-shrink:0}
 .ip-rb{border-radius:5px;padding:2px 9px;font-size:9px;font-weight:700}
 .ip-rb-r{background:var(--rojo-s);color:var(--rojo);border:1px solid rgba(227,6,19,.2)}
 .ip-rb-g{background:var(--verde-s);color:var(--verde);border:1px solid rgba(5,150,105,.2)}
-.ip-name{font-size:13px;font-weight:900;color:var(--negro);line-height:1.2;flex-shrink:0}
-.ip-code{font-size:9px;color:var(--gris4);margin-top:2px;margin-bottom:8px;flex-shrink:0}
-.ip-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;flex-shrink:0}
-.ip-btn{background:var(--gris1);border:1.5px solid var(--gris2);border-radius:10px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:transform .1s}
+.ip-name{font-size:12px;font-weight:900;color:var(--negro);line-height:1.2;flex-shrink:0}
+.ip-code{font-size:9px;color:var(--gris4);margin-top:1px;margin-bottom:5px;flex-shrink:0}
+.ip-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;flex-shrink:0}
+.ip-btn{background:var(--gris1);border:1.5px solid var(--gris2);border-radius:9px;padding:6px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:transform .1s}
 .ip-btn:active{transform:scale(.94)}
-.ip-btn-icon{font-size:22px}
-.ip-btn-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.ip-btn-icon{font-size:19px}
+.ip-btn-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .btn-nav-lbl{color:var(--azul)}.btn-fact-lbl{color:var(--amarillo)}.btn-call-lbl{color:var(--verde)}
-.ip-btn-nov{background:var(--rojo-s);border:1.5px solid rgba(227,6,19,.2);border-radius:10px;padding:11px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:transform .1s;flex-shrink:0}
+.ip-btn-nov{background:var(--rojo-s);border:1.5px solid rgba(227,6,19,.2);border-radius:9px;padding:9px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:transform .1s;flex-shrink:0}
 .ip-btn-nov:active{transform:scale(.97)}
-.ip-nov-lbl{font-size:11px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:.3px}
+.ip-nov-lbl{font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:.3px}
 
 /* ══ ANIMACIONES BOTONES ══ */
 @keyframes truck-bounce{from{transform:translateY(0)}to{transform:translateY(-4px)}}
@@ -312,6 +312,52 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .det-generando{display:none;align-items:center;gap:8px;padding:10px 14px;margin-bottom:8px}
 .det-generando.visible{display:flex}
 @keyframes parpadeo{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ══ TACÓMETRO DESLIZABLE ══ */
+#taco-slide{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  z-index:50;display:none;
+  pointer-events:auto;
+}
+#scr-map #taco-slide{display:block;}
+.taco-tab{
+  position:absolute;left:-22px;top:50%;transform:translateY(-50%);
+  background:rgba(10,12,20,0.92);border:1px solid rgba(227,6,19,0.5);
+  border-right:none;border-radius:10px 0 0 10px;
+  width:22px;height:60px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;writing-mode:vertical-rl;font-size:8px;font-weight:700;
+  color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase;
+  padding:4px 0;
+}
+.taco-body{
+  background:rgba(10,12,20,0.95);border:1px solid rgba(227,6,19,0.4);
+  border-right:none;border-radius:12px 0 0 12px;
+  padding:10px 10px 10px 12px;width:130px;
+  transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.taco-body.abierto{transform:translateX(0);}
+.taco-ruta-lbl{font-size:8px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:6px}
+.taco-gauge-wrap{position:relative;width:100px;height:56px;margin:0 auto}
+.taco-pct-big{font-size:22px;font-weight:900;text-align:center;line-height:1;margin:2px 0}
+.taco-cierre-lbl{font-size:8px;color:rgba(255,255,255,.4);text-align:center}
+.taco-stats-row{display:flex;justify-content:space-around;margin-top:7px;padding-top:7px;border-top:.5px solid rgba(255,255,255,.08)}
+.taco-st{text-align:center}
+.taco-sn{font-size:12px;font-weight:700}
+.taco-sl{font-size:7px;color:rgba(255,255,255,.35)}
+.taco-update{font-size:7px;color:rgba(255,255,255,.25);text-align:center;margin-top:5px}
+
+/* ══ BUSCADOR EN LISTA CLIENTES ══ */
+.cp-search-wrap{padding:5px 10px;background:var(--blanco);border-bottom:.5px solid var(--gris2);flex-shrink:0}
+.cp-search{width:100%;background:var(--gris1);border:1.5px solid var(--gris2);border-radius:8px;padding:6px 10px;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--negro);outline:none;transition:border-color .2s}
+.cp-search:focus{border-color:var(--rojo)}
+
+/* ══ SCROLL INFO-PANEL ══ */
+.info-panel{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.info-panel::-webkit-scrollbar{display:none;}
+
+/* ══ PARPADEO PUNTO 1 ══ */
+@keyframes punto1{0%,100%{box-shadow:0 0 0 0 rgba(227,6,19,.7)}50%{box-shadow:0 0 0 8px rgba(227,6,19,0)}}
+.punto-primero{animation:punto1 1s ease-in-out infinite!important}
 </style>
 </head>
 <body>
@@ -356,9 +402,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <!-- MAP -->
 <div id="scr-map" class="scr hidden">
   <div class="hdr">
-    <div class="hdr-logo" onclick="handleLogoTap()">
-      <div class="hdr-bar"></div>
-      <div><div class="hdr-g">GMAZ</div><div class="hdr-s">Rutas · Coca-Cola</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="btn-back" onclick="haptic();volverASeleccion()" title="Cambiar ruta">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#4A5060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="hdr-logo" onclick="handleLogoTap()">
+        <div class="hdr-bar"></div>
+        <div><div class="hdr-g">GMAZ</div><div class="hdr-s">Rutas · Coca-Cola</div></div>
+      </div>
     </div>
     <div class="hdr-badge">
       <span class="hdr-ruta" id="map-badge-ruta">—</span>
@@ -378,6 +429,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="cp-header">
       <div class="cp-title" id="cp-title">Clientes de ruta</div>
       <div class="cp-count" id="cp-count">0 puntos</div>
+    </div>
+    <div class="cp-search-wrap">
+      <input class="cp-search" type="search" id="cp-search" placeholder="🔍 Buscar por código o nombre..." autocomplete="off" oninput="filtrarClientes(this.value)">
     </div>
     <div id="client-list"></div>
   </div>
@@ -508,6 +562,38 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 
+
+<!-- ══ TACÓMETRO DESLIZABLE ══ -->
+<div id="taco-slide">
+  <div class="taco-tab" onclick="toggleTaco()">📊</div>
+  <div class="taco-body" id="taco-body">
+    <div class="taco-ruta-lbl" id="taco-ruta-lbl">—</div>
+    <div class="taco-gauge-wrap">
+      <svg id="taco-svg" viewBox="0 0 100 56" width="100" height="56" role="img" aria-label="Tacómetro de cierre">
+        <defs><linearGradient id="gTaco" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f87171"/>
+          <stop offset="60%" stop-color="#fbbf24"/>
+          <stop offset="100%" stop-color="#4ade80"/>
+        </linearGradient></defs>
+        <path d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8" stroke-linecap="round"/>
+        <path id="taco-arc" d="M10 52 A40 40 0 0 1 90 52" fill="none" stroke="url(#gTaco)" stroke-width="8" stroke-linecap="round" stroke-dasharray="125.7" stroke-dashoffset="0"/>
+        <line id="taco-needle" x1="50" y1="52" x2="50" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" transform="rotate(90,50,52)"/>
+        <circle cx="50" cy="52" r="5" fill="#E30613"/>
+        <text x="7" y="56" font-size="8" fill="rgba(255,255,255,.3)">0</text>
+        <text x="82" y="56" font-size="8" fill="rgba(255,255,255,.3)">100</text>
+      </svg>
+    </div>
+    <div class="taco-pct-big" id="taco-pct">100%</div>
+    <div class="taco-cierre-lbl">de cierre</div>
+    <div class="taco-stats-row">
+      <div class="taco-st"><div class="taco-sn" id="taco-ok" style="color:#4ade80">0</div><div class="taco-sl">OK</div></div>
+      <div class="taco-st"><div class="taco-sn" id="taco-rej" style="color:#f87171">0</div><div class="taco-sl">Rej</div></div>
+      <div class="taco-st"><div class="taco-sn" id="taco-cajas" style="color:#fbbf24">0</div><div class="taco-sl">Cajas</div></div>
+    </div>
+    <div class="taco-update" id="taco-update">Actualizando...</div>
+  </div>
+</div>
+
 <!-- MODAL NOVEDAD -->
 <div id="modal-nov" onclick="bdClose(event)">
 <div id="nov-sheet">
@@ -559,13 +645,17 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div class="pc-body">
     <div class="pc-date" id="pc-date">📅 Cargando...</div>
     <div class="pc-lbl">Ejecutar cada mañana en orden</div>
-    <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail">Reporte del día anterior con fechas</div></div><button class="pc-btn" id="pb1" onclick="haptic();downloadReport()">↓ Descargar</button></div>
-    <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail">Elimina imágenes de Supabase Storage</div></div><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
+    <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();downloadReport()">↓ Descargar</button></div>
+    <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
     <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
     <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
     <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
   </div>
-  <div class="pc-footer">⏱ Excel generado automáticamente a las 9:45pm Colombia · Fotos disponibles hasta "Limpiar"</div>
+  <div style="padding:0 14px 10px">
+    <div style="font-size:9px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Resumen de la operación de hoy</div>
+    <div id="pc-resumen" style="font-size:11px;color:var(--gris4);text-align:center;padding:12px">Cargando...</div>
+  </div>
+  <div class="pc-footer">⏱ Excel generado a las 9:45pm · Resumen se actualiza cada 30 segundos</div>
 </div>
 
 <!-- PROGRESS PANEL -->
@@ -611,6 +701,144 @@ let sb,gmap,gpano,svSvc,truckMk,dirRenderer;
 let clientes=[],markers=[],rutaActual='',clienteIdx=0,vendedorActual=null;
 let motivo=null,photoFile=null,photoPreviewUrl=null;
 let logoTaps=0,logoTimer=null,coordUnlocked=false;
+let ultimaPosGPS=null; // Última posición GPS del watchPosition
+
+/* ══ VIBRACIÓN ══ */
+const haptic=(intensidad=40)=>{try{navigator.vibrate&&navigator.vibrate(intensidad);}catch(e){}};
+
+/* ══ TACÓMETRO ══ */
+let tacoAbierto=false;
+let tacoInterval=null;
+let cajasRechazadas=0;
+
+function toggleTaco(){
+  tacoAbierto=!tacoAbierto;
+  document.getElementById('taco-body').classList.toggle('abierto',tacoAbierto);
+  haptic(30);
+}
+
+function actualizarTaco(){
+  if(!rutaActual||!clientes.length)return;
+  const total=clientes.length;
+  const rechazos=clientes.filter(c=>c._st==='novedad').length;
+  const entregados=clientes.filter(c=>c._st!=='novedad').length;
+  const pct=Math.round((entregados/total)*100);
+  // Cajas rechazadas — sumar CAJA_ de clientes con novedad
+  cajasRechazadas=clientes.filter(c=>c._st==='novedad')
+    .reduce((sum,cl)=>sum+parseFloat(String(cl.CAJA_||cl.caja||0).replace(',','.')||0),0);
+  // Actualizar UI
+  document.getElementById('taco-pct').textContent=pct+'%';
+  document.getElementById('taco-pct').style.color=pct>=90?'#4ade80':pct>=75?'#fbbf24':'#f87171';
+  document.getElementById('taco-ok').textContent=entregados;
+  document.getElementById('taco-rej').textContent=rechazos;
+  document.getElementById('taco-cajas').textContent=Math.round(cajasRechazadas);
+  document.getElementById('taco-ruta-lbl').textContent=rutaActual;
+  // Actualizar aguja SVG
+  const angulo=-90+(pct/100)*180;
+  document.getElementById('taco-needle').setAttribute('transform',`rotate(${angulo},50,52)`);
+  // Actualizar dashoffset del arco
+  const offset=125.7*(1-pct/100);
+  document.getElementById('taco-arc').setAttribute('stroke-dashoffset',offset);
+  // Actualizar timestamp
+  const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('taco-update').textContent='Actualizado: '+now;
+  // Consultar Supabase cada 30s para datos reales
+  consultarTacoSupabase();
+}
+
+async function consultarTacoSupabase(){
+  if(!rutaActual)return;
+  try{
+    const fecha=getColDate();
+    const{data}=await sb.from(CFG.TBL_NOV).select('codigo_cliente').eq('ruta',rutaActual).eq('fecha',fecha);
+    if(!data)return;
+    // Actualizar estado de clientes con novedades reales de Supabase
+    data.forEach(n=>{
+      const idx2=clientes.findIndex(c=>String(c.id||getF(c,CFG.COL_CODIGO))===n.codigo_cliente);
+      if(idx2>=0&&clientes[idx2]._st!=='novedad'){setClientSt(idx2,'novedad');}
+    });
+    actualizarTacoLocal();
+  }catch(e){}
+}
+
+function actualizarTacoLocal(){
+  if(!rutaActual||!clientes.length)return;
+  const total=clientes.length;
+  const rechazos=clientes.filter(c=>c._st==='novedad').length;
+  const entregados=total-rechazos;
+  const pct=Math.round((entregados/total)*100);
+  cajasRechazadas=clientes.filter(c=>c._st==='novedad')
+    .reduce((sum,cl)=>sum+parseFloat(String(cl.CAJA_||cl.caja||cl['CAJA_']||0).replace(',','.')||0),0);
+  document.getElementById('taco-pct').textContent=pct+'%';
+  document.getElementById('taco-pct').style.color=pct>=90?'#4ade80':pct>=75?'#fbbf24':'#f87171';
+  document.getElementById('taco-ok').textContent=entregados;
+  document.getElementById('taco-rej').textContent=rechazos;
+  document.getElementById('taco-cajas').textContent=Math.round(cajasRechazadas);
+  document.getElementById('taco-ruta-lbl').textContent=rutaActual;
+  const angulo=-90+(pct/100)*180;
+  document.getElementById('taco-needle').setAttribute('transform',`rotate(${angulo},50,52)`);
+  document.getElementById('taco-arc').setAttribute('stroke-dashoffset',125.7*(1-pct/100));
+  const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('taco-update').textContent='Actualizado: '+now;
+}
+
+function iniciarTacoInterval(){
+  if(tacoInterval)clearInterval(tacoInterval);
+  tacoInterval=setInterval(()=>{actualizarTacoLocal();consultarTacoSupabase();},30000);
+  actualizarTacoLocal();
+}
+
+/* ══ BUSCADOR DE CLIENTES ══ */
+function filtrarClientes(q){
+  q=q.trim().toLowerCase();
+  const lista=document.getElementById('client-list');
+  if(!q){renderClientList();return;}
+  const found=clientes.filter((c,i)=>{
+    const nom=(c.nombre||getF(c,CFG.COL_NOMBRE)||'').toLowerCase();
+    const cod=String(c.id||getF(c,CFG.COL_CODIGO)||'');
+    return nom.includes(q)||cod.includes(q);
+  });
+  lista.innerHTML='';
+  if(!found.length){lista.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--gris4)">Sin resultados</div>';return;}
+  found.forEach(c=>{
+    const idxReal=clientes.indexOf(c);
+    const nom=c.nombre||getF(c,CFG.COL_NOMBRE)||'(sin nombre)';
+    const dir=c.direccion||getF(c,CFG.COL_DIR)||'—';
+    const cod=String(c.id||getF(c,CFG.COL_CODIGO)||'');
+    const st=c._st;
+    const div=document.createElement('div');
+    div.className='ci'+(idxReal===clienteIdx?' activo':'');
+    const numCls=st==='entregado'?'ci-num ci-e':st==='novedad'?'ci-num ci-n':'ci-num ci-p';
+    const numTxt=st==='entregado'?'✓':st==='novedad'?'!':String(idxReal+1);
+    div.innerHTML=`<div class="${numCls}">${numTxt}</div><div class="ci-data"><div class="ci-name">${nom}</div><div class="ci-dir">${cod} · ${dir}</div></div>`;
+    div.onclick=()=>{haptic();document.getElementById('cp-search').value='';renderClientList();openClient(idxReal);};
+    lista.appendChild(div);
+  });
+}
+
+/* ══ PUNTO #1 PARPADEANTE ══ */
+function actualizarPuntoPrimero(){
+  // El primer cliente sin entregar ni novedad parpadea
+  markers.forEach((m,i)=>{
+    if(!m)return;
+    const icon=m.getIcon();
+    // Encontrar el primero pendiente
+    const primerPendiente=clientes.findIndex(c=>c._st==='pendiente');
+    if(i===primerPendiente){
+      // Ícono más grande y parpadeante
+      m.setIcon(cIconPrimero());
+    }
+  });
+}
+
+function cIconPrimero(){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+    <circle cx="12" cy="12" r="10" fill="#E30613" stroke="white" stroke-width="2.5"/>
+    <circle cx="12" cy="12" r="5" fill="white" opacity=".5"/>
+    <animateTransform attributeName="transform" type="scale" values="1;1.25;1" dur="1s" repeatCount="indefinite" additive="sum"/>
+  </svg>`;
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(28,28),anchor:new google.maps.Point(14,14)};
+}
 
 /* ══ FACTURAS — ESTADO GLOBAL ══ */
 let factClientes={};
@@ -843,15 +1071,29 @@ async function enviarWhatsAppFact(){
     const hoy=new Date().toISOString().slice(0,10).replace(/-/g,'');
     const blob=doc.output('blob');
     const file=new File([blob],'GMAZ_'+nombre+'_'+hoy+'.pdf',{type:'application/pdf'});
+    // Intentar compartir directamente con Web Share API (incluye PDF)
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:'Facturas GMAZ — '+detalleActual.nombre,text:'Documentos de entrega del día'});
-      toast('PDF compartido ✓','ok');
+      try{
+        await navigator.share({files:[file],title:'Facturas GMAZ — '+detalleActual.nombre,text:'Documentos de entrega GMAZ · '+new Date().toLocaleDateString('es-CO')});
+        toast('PDF compartido ✓','ok');
+      }catch(shareErr){
+        if(shareErr.name!=='AbortError'){
+          // Fallback: descargar + abrir WhatsApp con número marcado
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');a.href=url;a.download='GMAZ_'+nombre+'_'+hoy+'.pdf';a.click();
+          URL.revokeObjectURL(url);
+          setTimeout(()=>window.open('https://wa.me/'+numFull,'_blank'),600);
+          toast('PDF descargado — WhatsApp abierto con el número','ok');
+        }
+      }
     }else{
+      // Sin Web Share: descargar PDF y abrir WhatsApp con número marcado directo
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');a.href=url;a.download='GMAZ_'+nombre+'_'+hoy+'.pdf';a.click();
       URL.revokeObjectURL(url);
-      setTimeout(()=>window.open('https://wa.me/'+numFull+'?text='+encodeURIComponent('Hola, te envío los documentos de entrega GMAZ del día '+new Date().toLocaleDateString('es-CO')+'. El PDF se descargó en tu dispositivo.'),'_blank'),800);
-      toast('PDF descargado — WhatsApp abierto','ok');
+      // Abrir WhatsApp con el número marcado — solo toca enviar
+      setTimeout(()=>window.open('https://wa.me/'+numFull,'_blank'),600);
+      toast('PDF descargado — WhatsApp abierto con el número','ok');
     }
   }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message,'err');}
   finally{document.getElementById('det-generando').classList.remove('visible');}
@@ -864,19 +1106,21 @@ const showLoad=(t='Cargando...')=>{document.getElementById('load-txt').textConte
 const hideLoad=()=>document.getElementById('loading').classList.remove('show');
 let toastT;
 const toast=(m,t='')=>{const el=document.getElementById('toast');el.textContent=m;el.className='show '+t;clearTimeout(toastT);toastT=setTimeout(()=>el.className='',3500);};
-const haptic=()=>{
-  try{
-    // Intentar vibrar — funciona en Android con HTTPS o en algunos casos con file://
-    if(navigator.vibrate)navigator.vibrate([40]);
-  }catch(e){}
-  // Feedback visual como respaldo: micro-escala en el elemento activo
-};
+// haptic definida arriba;
 
 function showScr(id){
   ['scr-splash','scr-start','scr-routes','scr-map','scr-client'].forEach(s=>{
-    document.getElementById(s).classList.toggle('hidden',s!==id);
+    const el=document.getElementById(s);
+    el.classList.toggle('hidden',s!==id);
+    el.classList.toggle('activo',s===id&&s==='scr-map');
   });
 }
+
+document.addEventListener('click',e=>{
+  // Vibración en cualquier elemento interactivo
+  const el=e.target.closest('button,.ab,.ip-btn,.ip-btn-nov,.ruta-card,.ci,.ns-opt,.route-card,.pc-btn,.btn-back,.taco-tab,.det-tab,.sbtn');
+  if(el)try{navigator.vibrate&&navigator.vibrate(40);}catch(err){}
+},true);
 
 document.addEventListener('DOMContentLoaded',()=>{
   sb=supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY);
@@ -889,6 +1133,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     loadRoutes();
   },1400);
 });
+
+
+async function restaurarEstadosDia(){
+  if(!rutaActual||!clientes.length)return;
+  const fecha=getColDate();
+  try{
+    const res=await fetch(
+      CFG.SUPABASE_URL+'/rest/v1/estados_entrega?fecha=eq.'+fecha+'&ruta=eq.'+encodeURIComponent(rutaActual)+'&select=codigo_cliente,estado',
+      {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}}
+    );
+    if(!res.ok)return;
+    const estados=await res.json();
+    if(!estados||!estados.length)return;
+    const mapaEstados={};
+    estados.forEach(e=>mapaEstados[e.codigo_cliente]=e.estado);
+    let restaurados=0;
+    clientes.forEach((cl,i)=>{
+      const cod=String(cl.id||getF(cl,CFG.COL_CODIGO));
+      if(mapaEstados[cod]&&mapaEstados[cod]!=='pendiente'){
+        clientes[i]._st=mapaEstados[cod];
+        restaurados++;
+      }
+    });
+    if(restaurados>0)toast('Progreso restaurado: '+restaurados+' clientes','ok');
+  }catch(e){console.log('Error restaurando:',e);}
+}
 
 async function loadRoutes(){
   showLoad('Cargando rutas...');
@@ -938,9 +1208,16 @@ function startRoute(ruta,lista){
     document.getElementById('map-strip-ruta').textContent=ruta;
     document.getElementById('cp-title').textContent='Clientes · '+ruta;
     document.getElementById('cp-count').textContent=clientes.length+' puntos';
-    renderClientList();
-    // Precargar índice de facturas en background
-    setTimeout(()=>cargarIndiceFacturas(),1000);
+    // Restaurar estados del día desde Supabase y renderizar
+    (async()=>{
+      await restaurarEstadosDia();
+      renderClientList();
+      // Precargar índice de facturas en background
+      setTimeout(()=>cargarIndiceFacturas(),1000);
+      // Iniciar tacómetro
+      setTimeout(()=>iniciarTacoInterval(),500);
+      setTimeout(()=>autoNavPrimerCliente(),2000);
+    })();
     if(gmap){renderMarkers();if(clientes.length){const lat=parseFloat(getF(clientes[0],CFG.COL_LAT)),lng=parseFloat(getF(clientes[0],CFG.COL_LNG));if(lat&&lng)gmap.panTo({lat,lng});}}
   },3000);
 }
@@ -1014,6 +1291,11 @@ async function openClient(i){
 }
 
 function goToMap(){showScr('scr-map');}
+function volverASeleccion(){
+  // No borra nada — solo vuelve a la pantalla de selección
+  // El progreso queda guardado en Supabase
+  showScr('scr-routes');
+}
 
 /* ══ MAPS ══ */
 function initMap(){
@@ -1029,10 +1311,16 @@ function initMap(){
   gmap.setStreetView(gpano);
   svSvc=new google.maps.StreetViewService();
   truckMk=new google.maps.Marker({position:pasto,map:gmap,icon:truckIcon(),zIndex:1000,title:'Tu posición'});
+  let gpsOptimizado=false;
   navigator.geolocation&&navigator.geolocation.watchPosition(p=>{
     const pos={lat:p.coords.latitude,lng:p.coords.longitude};
     truckMk&&truckMk.setPosition(pos);
-  },null,{enableHighAccuracy:true,timeout:10000,maximumAge:5000});
+    if(navMode&&gpano)gpano.setPosition(pos);
+    if(!gpsOptimizado&&clientes.length>1){
+      gpsOptimizado=true;
+      setTimeout(()=>optimizarRutaDesdeGPS(pos),800);
+    }
+  },e=>console.log('GPS:',e.message),{enableHighAccuracy:true,timeout:10000,maximumAge:5000});
 }
 
 function truckIcon(){
@@ -1040,80 +1328,235 @@ function truckIcon(){
   return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(54,44),anchor:new google.maps.Point(27,42)};
 }
 
-function cIcon(st,act){
-  const col={pendiente:'#E30613',entregado:'#059669',novedad:'#D97706'}[st]||'#E30613';
-  const sz=act?18:11;
-  const s=`<svg xmlns="http://www.w3.org/2000/svg" width="${sz*2}" height="${sz*2}"><circle cx="${sz}" cy="${sz}" r="${sz-2}" fill="${col}" stroke="white" stroke-width="2"/>${act?`<circle cx="${sz}" cy="${sz}" r="${sz-7}" fill="white" opacity=".45"/>`:''}
-</svg>`;
-  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(sz*2,sz*2),anchor:new google.maps.Point(sz,sz)};
-}
+function cIcon(st,act){return cIconNumero(st,act,0);}
+
 
 function renderMarkers(){
   markers.forEach(m=>m&&m.setMap(null));markers=[];
-  clientes.forEach((c,i)=>{
-    const lat=parseFloat(getF(c,CFG.COL_LAT)),lng=parseFloat(getF(c,CFG.COL_LNG));
+  clientes.forEach((cl2,i)=>{
+    const lat=parseFloat(cl2.lat||getF(cl2,CFG.COL_LAT)||0),lng=parseFloat(cl2.lng||getF(cl2,CFG.COL_LNG)||0);
     if(!lat||!lng){markers.push(null);return;}
-    const mk=new google.maps.Marker({position:{lat,lng},map:gmap,icon:cIcon(c._st,i===0),zIndex:i===0?100:10,title:getF(c,CFG.COL_NOMBRE)});
+    const num=i+1;
+    const mk=new google.maps.Marker({
+      position:{lat,lng},map:gmap,
+      icon:cIconNumero(cl2._st,i===clienteIdx,num),
+      zIndex:i===clienteIdx?100:10,
+      title:(cl2.nombre||getF(cl2,CFG.COL_NOMBRE)||'')
+    });
     mk.addListener('click',()=>{haptic();openClient(i);});
     markers.push(mk);
   });
 }
 
+function cIconNumero(st,act,num){
+  const col={pendiente:'#E30613',entregado:'#059669',novedad:'#D97706'}[st]||'#E30613';
+  const sz=act?22:17;const fs=act?10:8;
+  const txt=st==='entregado'?'✓':st==='novedad'?'!':num>0?String(num):'';
+  const s='<svg xmlns="http://www.w3.org/2000/svg" width="'+(sz*2)+'" height="'+(sz*2)+'"><circle cx="'+sz+'" cy="'+sz+'" r="'+(sz-2)+'" fill="'+col+'" stroke="white" stroke-width="2"/><text x="'+sz+'" y="'+(sz+fs*0.4)+'" text-anchor="middle" font-size="'+fs+'" font-weight="bold" fill="white" font-family="Arial">'+txt+'</text></svg>';
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(sz*2,sz*2),anchor:new google.maps.Point(sz,sz)};
+}
+
+function optimizarRutaDesdeGPS(posActual){
+  if(!clientes.length||!posActual)return;
+  const getLat=cl=>parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
+  const getLng=cl=>parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+  const dist=(a,b)=>{const dl=a.lat-b.lat,dn=a.lng-b.lng;return dl*dl+dn*dn;};
+  // Solo optimizar pendientes
+  const procesados=clientes.filter(cl=>cl._st!=='pendiente');
+  const pendientes=clientes.filter(cl=>cl._st==='pendiente');
+  if(pendientes.length<2){renderMarkers();return;}
+  let pos={lat:posActual.lat,lng:posActual.lng};
+  const ordenados=[];const restantes=[...pendientes];
+  while(restantes.length){
+    let minD=Infinity,minI=0;
+    restantes.forEach((cl,i)=>{const d=dist(pos,{lat:getLat(cl),lng:getLng(cl)});if(d<minD){minD=d;minI=i;}});
+    const sig=restantes.splice(minI,1)[0];
+    ordenados.push(sig);
+    pos={lat:getLat(sig),lng:getLng(sig)};
+  }
+  clientes=[...procesados,...ordenados];
+  clienteIdx=0;
+  renderMarkers();
+  renderClientList();
+}
+
+
 function setClientSt(i,st){
   clientes[i]._st=st;
   if(markers[i])markers[i].setIcon(cIcon(st,i===clienteIdx));
   updateClientItem(i);
+  actualizarTacoLocal();
+  const primerPend=clientes.findIndex(c=>c._st==='pendiente');
+  markers.forEach((m,j)=>{
+    if(!m)return;
+    if(j===primerPend&&st==='novedad')m.setAnimation&&m.setAnimation(null);
+  });
+  // Guardar estado en Supabase para no perder progreso
+  guardarEstadoCliente(i,st);
+}
+
+async function guardarEstadoCliente(i,st){
+  if(!rutaActual||!clientes[i])return;
+  const cod=String(clientes[i].id||getF(clientes[i],CFG.COL_CODIGO));
+  const fecha=getColDate();
+  try{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega',{
+      method:'POST',
+      headers:{
+        'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'resolution=merge-duplicates,return=minimal'
+      },
+      body:JSON.stringify({
+        fecha,codigo_cliente:cod,
+        nombre_cliente:clientes[i].nombre||getF(clientes[i],CFG.COL_NOMBRE)||'',
+        estado:st,ruta:rutaActual
+      })
+    });
+  }catch(e){console.log('Error guardando estado:',e);}
 }
 
 /* ══ NAVEGACIÓN ══ */
 function activateNav(){
-  const c=clientes[clienteIdx];if(!c)return;
-  const lat=parseFloat(getF(c,CFG.COL_LAT)),lng=parseFloat(getF(c,CFG.COL_LNG));
+  const cl=clientes[clienteIdx];if(!cl)return;
+  const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
+  const lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
   if(!lat||!lng){toast('Sin coordenadas para este cliente','err');return;}
+  navMode=true;
+  if(!dirRenderer)dirRenderer=new google.maps.DirectionsRenderer({
+    map:gmap,suppressMarkers:true,
+    polylineOptions:{strokeColor:'#E30613',strokeWeight:5,strokeOpacity:.9}
+  });
+  // Usar última posición GPS conocida del watchPosition (ya está activo)
+  if(ultimaPosGPS){
+    calcularRuta(ultimaPosGPS,{lat,lng});
+    return;
+  }
+  // Si no hay posición previa, solicitarla
+  showLoad('Obteniendo ubicación...');
+  navigator.geolocation.getCurrentPosition(
+    p=>{ultimaPosGPS={lat:p.coords.latitude,lng:p.coords.longitude};calcularRuta(ultimaPosGPS,{lat,lng});},
+    e=>{hideLoad();navMode=false;toast('Activa la ubicación en el navegador para navegar','err');},
+    {enableHighAccuracy:true,timeout:10000,maximumAge:30000}
+  );
+}
+
+function calcularRuta(origen,destino){
   showLoad('Calculando ruta...');
-  if(!dirRenderer)dirRenderer=new google.maps.DirectionsRenderer({map:gmap,polylineOptions:{strokeColor:'#E30613',strokeWeight:4,strokeOpacity:.85}});
+  new google.maps.DirectionsService().route({
+    origin:origen,destination:destino,
+    travelMode:google.maps.TravelMode.DRIVING
+  },(r,s)=>{
+    hideLoad();
+    if(s==='OK'){
+      dirRenderer.setDirections(r);
+      goToMap();
+      toast('Navegando — sigue la línea roja 🔴','ok');
+    }else{
+      toast('No se pudo calcular ruta','err');
+      navMode=false;
+    }
+  });
+}
+
+function autoNavPrimerCliente(){
+  if(!gmap||!navigator.geolocation)return;
+  const primer=clientes.findIndex(cl=>cl._st==='pendiente');
+  if(primer<0)return;
+  const cl=clientes[primer];
+  const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
+  const lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+  if(!lat||!lng)return;
+  if(!dirRenderer)dirRenderer=new google.maps.DirectionsRenderer({
+    map:gmap,suppressMarkers:true,
+    polylineOptions:{strokeColor:'#E30613',strokeWeight:5,strokeOpacity:.85}
+  });
   navigator.geolocation.getCurrentPosition(p=>{
     new google.maps.DirectionsService().route({
       origin:{lat:p.coords.latitude,lng:p.coords.longitude},
       destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
-    },(r,s)=>{
-      hideLoad();
-      if(s==='OK'){dirRenderer.setDirections(r);goToMap();toast('Ruta calculada — sigue el camino rojo','ok');}
-      else toast('No se pudo calcular ruta','err');
-    });
-  },e=>{hideLoad();toast('Error GPS: '+e.message,'err');});
+    },(r,s)=>{if(s==='OK')dirRenderer.setDirections(r);});
+  },null,{enableHighAccuracy:true,timeout:8000,maximumAge:10000});
 }
 
-/* ══ FACTURAS / LLAMAR ══ */
-async function verFactura(){
-  const c=clientes[clienteIdx];if(!c)return;
-  const cod=getF(c,CFG.COL_CODIGO);showLoad('Buscando factura...');
+
+
+async function llamarVendedor(){
+  if(!clientes[clienteIdx])return;
+  const cod=String(clientes[clienteIdx].id||getF(clientes[clienteIdx],CFG.COL_CODIGO));
+  // Primero usar el vendedor ya cargado en memoria
+  if(vendedorActual?.celular_vendedor){
+    const cel=String(vendedorActual.celular_vendedor).replace(/[^0-9]/g,'');
+    if(cel){window.location.href='tel:'+cel;return;}
+  }
+  // Si no está en memoria, consultar Supabase
+  showLoad('Buscando número...');
   try{
-    const{data}=await sb.storage.from(CFG.BCK_FACT).list('',{search:cod});
+    const{data}=await sb.from(CFG.TBL_VEND).select('celular_vendedor,ruta_vendedor').eq('codigo',cod).maybeSingle();
     hideLoad();
-    if(!data?.length){toast('Sin factura para '+cod,'err');return;}
-    const{data:u}=sb.storage.from(CFG.BCK_FACT).getPublicUrl(data[0].name);
-    window.open(u.publicUrl,'_blank');
+    if(data?.celular_vendedor){
+      vendedorActual=data;
+      const cel=String(data.celular_vendedor).replace(/[^0-9]/g,'');
+      window.location.href='tel:'+cel;
+    }else{
+      toast('Sin número de vendedor para este cliente','err');
+    }
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
-async function llamarVendedor(){
-  if(vendedorActual?.celular_vendedor){
-    window.location.href='tel:'+vendedorActual.celular_vendedor;return;
-  }
-  toast('Sin número de vendedor para esta ruta','err');
-}
-
-/* ══ NOVEDAD ══ */
 function startOrBorrarNovedad(){
   if(!clientes[clienteIdx])return;
   if(clientes[clienteIdx]._st==='novedad'){
-    if(confirm('Este cliente ya tiene una novedad registrada.\n\n¿Deseas borrarla para registrar una nueva?')){
-      borrarNovedad();
-    }
+    haptic(60);
+    // Opciones: Logré entregar O Borrar para nueva novedad
+    const opc=confirm('⚠️ Este cliente tiene novedad registrada.\n\n✅ Pulsa ACEPTAR si lograste entregar el producto.\n❌ Pulsa CANCELAR para no hacer nada.');
+    if(opc){convertirAEntregado();}
     return;
   }
   startNovedad();
+}
+
+async function convertirAEntregado(){
+  const cl=clientes[clienteIdx];
+  const cod=String(cl.id||getF(cl,CFG.COL_CODIGO));
+  const nom=cl.nombre||getF(cl,CFG.COL_NOMBRE)||'—';
+  const dir=cl.direccion||getF(cl,CFG.COL_DIR)||'—';
+  const fecha=getColDate();
+  showLoad('Actualizando...');
+  try{
+    // 1. Obtener URL de la foto para borrarla
+    const{data:novData}=await sb.from(CFG.TBL_NOV)
+      .select('foto_url,id').eq('codigo_cliente',cod).eq('fecha',fecha).maybeSingle();
+    // 2. Borrar novedad de la tabla
+    await sb.from(CFG.TBL_NOV).delete().eq('codigo_cliente',cod).eq('fecha',fecha);
+    // 3. Borrar foto de Storage si existe
+    if(novData?.foto_url){
+      const path=novData.foto_url.split('/fotos-novedades/')[1];
+      if(path)await sb.storage.from(CFG.BCK_FOTOS).remove([path]);
+    }
+    // 4. Cambiar estado a entregado
+    setClientSt(clienteIdx,'entregado');
+    hideLoad();
+    toast('✅ Cliente actualizado a ENTREGADO','ok');
+    haptic([50,30,50]);
+    // 5. Enviar WhatsApp al vendedor
+    const{data:vend}=await sb.from(CFG.TBL_VEND).select('celular_vendedor').eq('codigo',cod).maybeSingle();
+    const fechaHora=new Date().toLocaleString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const msgOk=
+      `✅ *ENTREGA EXITOSA - GMAZ*\n\n`+
+      `📦 *Cliente:* ${nom}\n`+
+      `🔢 *Codigo:* ${cod}\n`+
+      `📍 *Direccion:* ${dir}\n`+
+      `🚚 *Ruta entrega:* ${rutaActual}\n`+
+      `🕐 *Hora:* ${fechaHora}\n\n`+
+      `✔️ El cliente fue visitado nuevamente y el pedido fue entregado exitosamente.\n\n`+
+      `_Enviado desde GMAZ Rutas_`;
+    if(vend?.celular_vendedor){
+      let cel=String(vend.celular_vendedor).replace(/[^0-9]/g,'');
+      if(cel.length===10)cel='57'+cel;
+      setTimeout(()=>window.open('https://wa.me/'+cel+'?text='+encodeURIComponent(msgOk),'_blank'),400);
+    }
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
 async function borrarNovedad(){
@@ -1201,8 +1644,9 @@ async function submitNovedad(){
     const msg=
       `🚨 *NOVEDAD DE ENTREGA - GMAZ*\n\n`+
       `📦 *Cliente:* ${nom}\n`+
-      `🆔 *Código:* ${cod}\n`+
-      `📍 *Dirección:* ${dir}\n`+
+      `🔢 *Codigo:* ${cod}\n`+
+      `📍 *Direccion:* ${dir}\n`+
+      `🚚 *Ruta entrega:* ${rutaActual}\n`+
       `🕐 *Hora:* ${fechaHora}\n`+
       `❌ *Motivo:* ${motivo}\n\n`+
       `📸 *Foto de evidencia:*\n${fotoUrl}\n\n`+
@@ -1235,12 +1679,85 @@ function handleLogoTap(){
     }else openCoord();
   }
 }
-function openCoord(){updateDateStrip();document.getElementById('panel-coord').classList.add('show');verificarEstadoPanel();}
+function openCoord(){updateDateStrip();document.getElementById('panel-coord').classList.add('show');verificarEstadoPanel();cargarResumenOperacion();}
+
+let resumenInterval=null;
+async function cargarResumenOperacion(){
+  const fecha=getColDate();
+  try{
+    // Obtener todas las novedades del día
+    const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,motivo').eq('fecha',fecha);
+    if(!novs||!novs.length){
+      document.getElementById('pc-resumen').innerHTML='<div style="text-align:center;padding:16px;font-size:11px;color:var(--gris4)">Sin novedades registradas hoy</div>';
+      return;
+    }
+    // Agrupar por ruta
+    const porRuta={};
+    novs.forEach(n=>{
+      if(!porRuta[n.ruta])porRuta[n.ruta]={rechazos:0,ruta:n.ruta};
+      porRuta[n.ruta].rechazos++;
+    });
+    // Obtener total de clientes por ruta
+    const{data:tots}=await sb.from(CFG.TBL).select('ruta,id');
+    const totalPorRuta={};
+    (tots||[]).forEach(c=>{if(!totalPorRuta[c.ruta])totalPorRuta[c.ruta]=0;totalPorRuta[c.ruta]++;});
+    // Construir resumen
+    const totalNov=novs.length;
+    const totalCli=(tots||[]).length;
+    const pctGlobal=totalCli>0?Math.round(((totalCli-totalNov)/totalCli)*100):100;
+    const rutaMax=Object.values(porRuta).sort((a,b)=>b.rechazos-a.rechazos)[0];
+    // Render
+    const col=pctGlobal>=90?'var(--verde)':pctGlobal>=75?'var(--amarillo)':'var(--rojo)';
+    let html=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:${col}">${pctGlobal}%</div>
+        <div style="font-size:8px;color:var(--gris4)">Cierre general</div>
+      </div>
+      <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:var(--rojo)">${totalNov}</div>
+        <div style="font-size:8px;color:var(--gris4)">Rechazos totales</div>
+      </div>
+      <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:var(--negro)">${Object.keys(porRuta).length}</div>
+        <div style="font-size:8px;color:var(--gris4)">Rutas con nov.</div>
+      </div>
+    </div>`;
+    if(rutaMax&&rutaMax.rechazos>0){
+      html+=`<div style="background:var(--rojo-s);border:1px solid rgba(227,6,19,.2);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        <div style="font-size:16px">⚠️</div>
+        <div><div style="font-size:11px;font-weight:700;color:var(--rojo)">Ruta con más rechazos: ${rutaMax.ruta}</div>
+        <div style="font-size:9px;color:var(--gris4)">${rutaMax.rechazos} rechazo${rutaMax.rechazos>1?'s':''} registrado${rutaMax.rechazos>1?'s':''} hoy</div></div>
+      </div>`;
+    }
+    // Ranking por ruta
+    html+='<div style="font-size:9px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Detalle por ruta</div>';
+    Object.values(porRuta).sort((a,b)=>b.rechazos-a.rechazos).forEach((r,i)=>{
+      const tot=totalPorRuta[r.ruta]||0;
+      const pct=tot>0?Math.round(((tot-r.rechazos)/tot)*100):100;
+      const medal=i===0?'🔴':i===1?'🟡':'🟢';
+      const col2=pct>=90?'var(--verde)':pct>=75?'var(--amarillo)':'var(--rojo)';
+      html+=`<div style="background:var(--blanco);border:1px solid var(--gris2);border-radius:8px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
+        <div style="font-size:14px">${medal}</div>
+        <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--negro)">${r.ruta}</div>
+        <div style="font-size:9px;color:var(--gris4)">${r.rechazos} rechazo${r.rechazos>1?'s':''} · ${tot} clientes</div></div>
+        <span style="font-size:11px;font-weight:700;color:${col2};background:var(--gris1);border:1px solid var(--gris2);border-radius:5px;padding:2px 8px">${pct}%</span>
+      </div>`;
+    });
+    const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    html+=`<div style="font-size:9px;color:var(--gris4);text-align:center;margin-top:8px">Actualizado: ${now} · Se actualiza cada 30s</div>`;
+    document.getElementById('pc-resumen').innerHTML=html;
+  }catch(e){
+    document.getElementById('pc-resumen').innerHTML='<div style="padding:12px;font-size:11px;color:var(--gris4)">Error al cargar resumen</div>';
+  }
+  // Intervalo cada 30s
+  if(!resumenInterval)resumenInterval=setInterval(cargarResumenOperacion,30000);
+}
 
 async function verificarEstadoPanel(){
   const offset=-5;
   const ahora=new Date();
   const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
+  const ayer=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0];
 
   // Helper para actualizar el indicador
   const setEst=(id,detId,ok,txt,det)=>{
@@ -1251,6 +1768,28 @@ async function verificarEstadoPanel(){
     el.className='pc-estado '+(ok===true?'pc-estado-ok':ok===false?'pc-estado-warn':'pc-estado-empty');
     del.textContent=det;
   };
+
+  // ── Verificar Excel de novedades del día anterior
+  setEst('pc-est-nov','pc-det-nov',null,'...','Verificando...');
+  try{
+    const rNov=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_REP+'/reporte_'+ayer+'.xlsx?t='+Date.now(),{method:'HEAD'});
+    if(rNov.ok){
+      setEst('pc-est-nov','pc-det-nov',true,'⚠ Pendiente','Reporte del '+ayer+' disponible — recuerda descargarlo como Novedades-'+ayer+'.xlsx');
+    }else{
+      setEst('pc-est-nov','pc-det-nov',null,'Sin reporte','No hay novedades del '+ayer+' o ya fue descargado');
+    }
+  }catch(e){setEst('pc-est-nov','pc-det-nov',null,'?','Error al verificar');}
+
+  // ── Verificar fotos del día anterior
+  setEst('pc-est-fotos','pc-det-fotos',null,'...','Verificando...');
+  try{
+    const{data:fotos}=await sb.storage.from(CFG.BCK_FOTOS).list(ayer);
+    if(fotos&&fotos.length>0){
+      setEst('pc-est-fotos','pc-det-fotos',false,'⚠ '+fotos.length+' fotos','Hay '+fotos.length+' fotos del '+ayer+' sin limpiar');
+    }else{
+      setEst('pc-est-fotos','pc-det-fotos',null,'Sin fotos','No hay fotos del '+ayer+' — ya fueron limpiadas o no hubo novedades');
+    }
+  }catch(e){setEst('pc-est-fotos','pc-det-fotos',null,'?','Error al verificar');}
 
   // ── Verificar rutas (contar clientes en tabla)
   setEst('pc-est-rutas','pc-det-rutas',null,'...','Verificando...');
@@ -1304,7 +1843,10 @@ async function verificarEstadoPanel(){
     }
   }catch(e){setEst('pc-est-maest','pc-det-maest',null,'?','Error al verificar');}
 }
-function closeCoord(){document.getElementById('panel-coord').classList.remove('show');}
+function closeCoord(){
+  document.getElementById('panel-coord').classList.remove('show');
+  if(resumenInterval){clearInterval(resumenInterval);resumenInterval=null;}
+}
 function updateDateStrip(){
   const hoy=getColDate(),ayer=getColDate(-1);
   const el=document.getElementById('pc-date');
@@ -1358,43 +1900,68 @@ function closeProg(){document.getElementById('prog-overlay').classList.remove('s
 
 /* ══ PANEL COORDINADOR ══ */
 async function downloadReport(){
-  const ayer=getColDate(-1);showLoad('Descargando reporte...');
+  const ayer=getColDate(-1);showLoad('Buscando reporte...');
   try{
     const{data,error}=await sb.storage.from(CFG.BCK_REP).download(`reporte_${ayer}.xlsx`);
     if(error)throw error;
     const url=URL.createObjectURL(data);
     const a=document.createElement('a');a.href=url;
-    a.download=`GMAZ_Novedades_${ayer}.xlsx`;
+    // Nombre del archivo: Novedades-YYYY-MM-DD.xlsx
+    a.download=`Novedades-${ayer}.xlsx`;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url),1000);
-    hideLoad();const b=document.getElementById('pb1');b.textContent='✓ Listo';b.classList.add('done');
-    toast('Excel GMAZ_Novedades_'+ayer+'.xlsx descargado','ok');
-  }catch(e){hideLoad();toast('Sin reporte del '+ayer,'err');}
+    hideLoad();
+    const b=document.getElementById('pb1');b.textContent='✓ Descargado';b.classList.add('done');
+    const est=document.getElementById('pc-est-nov');
+    const det=document.getElementById('pc-det-nov');
+    if(est){est.textContent='✓ Descargado';est.className='pc-estado pc-estado-ok';}
+    if(det)det.textContent='Archivo: Novedades-'+ayer+'.xlsx';
+    toast('Novedades-'+ayer+'.xlsx descargado','ok');
+  }catch(e){
+    hideLoad();
+    const est=document.getElementById('pc-est-nov');
+    if(est){est.textContent='⚠ Sin reporte';est.className='pc-estado pc-estado-warn';}
+    const det=document.getElementById('pc-det-nov');
+    if(det)det.textContent='Sin reporte del '+ayer+' — puede que no haya habido novedades';
+    toast('Sin reporte del '+ayer,'err');
+  }
 }
 
 async function cleanPhotos(){
-  if(!confirm('¿Eliminar fotos del día anterior?'))return;
   const ayer=getColDate(-1);
-  openProg('Limpiando fotos','Fotos del '+ayer);
-  logProg('Buscando fotos del '+ayer,'info');
-  updateProg(20,'Listando archivos en Storage...');
+  // Primero verificar cuántas fotos hay sin preguntar aún
+  showLoad('Verificando fotos...');
+  let listaFotos=[];
   try{
-    const{data,error}=await sb.storage.from(CFG.BCK_FOTOS).list(ayer);
-    if(error)throw error;
-    if(!data?.length){
-      logProg('No hay fotos del '+ayer,'err');
-      endProg(false,'Sin fotos para limpiar');
-      return;
-    }
-    logProg(data.length+' fotos encontradas','info');
-    updateProg(50,'Eliminando '+data.length+' fotos...');
-    const paths=data.map(f=>`${ayer}/${f.name}`);
+    const{data}=await sb.storage.from(CFG.BCK_FOTOS).list(ayer);
+    listaFotos=data||[];
+  }catch(e){}
+  hideLoad();
+  if(!listaFotos.length){
+    toast('No hay fotos del '+ayer+' para limpiar','err');
+    const est=document.getElementById('pc-est-fotos');
+    const det=document.getElementById('pc-det-fotos');
+    if(est){est.textContent='Sin fotos';est.className='pc-estado pc-estado-empty';}
+    if(det)det.textContent='No hay fotos del '+ayer;
+    return;
+  }
+  if(!confirm('Hay '+listaFotos.length+' fotos del '+ayer+'. ¿Eliminarlas todas?'))return;
+  openProg('Limpiando fotos del '+ayer,listaFotos.length+' fotos encontradas');
+  logProg(listaFotos.length+' fotos del '+ayer,'info');
+  listaFotos.forEach(f=>logProg(f.name,'info'));
+  updateProg(40,'Eliminando '+listaFotos.length+' fotos...');
+  try{
+    const paths=listaFotos.map(f=>`${ayer}/${f.name}`);
     const{error:de}=await sb.storage.from(CFG.BCK_FOTOS).remove(paths);
     if(de)throw de;
-    data.forEach(f=>logProg(f.name+' eliminada','ok'));
+    logProg('Todas eliminadas correctamente','ok');
     updateProg(100,'');
-    endProg(true,'✓ '+data.length+' fotos eliminadas');
+    endProg(true,'✓ '+listaFotos.length+' fotos eliminadas');
     const b=document.getElementById('pb2');b.textContent='✓ Limpio';b.classList.add('done');
+    const est=document.getElementById('pc-est-fotos');
+    const det=document.getElementById('pc-det-fotos');
+    if(est){est.textContent='✓ Limpio';est.className='pc-estado pc-estado-ok';}
+    if(det)det.textContent=''+listaFotos.length+' fotos del '+ayer+' eliminadas';
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al limpiar');}
 }
 
@@ -1430,6 +1997,7 @@ async function uploadRoutes(ev){
         lng:      parseNum(row['F']),
         ruta:     String(row['H']||'').trim(),
         barrio:   String(row['E']||'').trim(),
+        CAJA_:    parseFloat(String(row['J']||'0').replace(',','.'))||0,
         celular:  '',
         fecha:    hoyFecha
       }))
