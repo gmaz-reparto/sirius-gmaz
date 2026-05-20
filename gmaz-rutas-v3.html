@@ -325,14 +325,13 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 /* Franja roja delgada pegada al borde — como la sombra que ves */
 .taco-tab{
-  position:fixed;right:0;top:0;height:100vh;
-  width:8px;
-  background:linear-gradient(180deg,#E30613 0%,#8B0000 50%,#E30613 100%);
-  box-shadow:-2px 0 8px rgba(227,6,19,0.5);
-  cursor:pointer;
-  pointer-events:auto;
-  z-index:301;
-  transition:width .2s;
+  position:fixed;right:0;top:10px;
+  height:20vh;max-height:100px;min-height:50px;
+  width:6px;
+  background:rgba(227,6,19,0.55);
+  border-radius:3px 0 0 3px;
+  box-shadow:-2px 0 8px rgba(227,6,19,.4);
+  cursor:pointer;pointer-events:auto;z-index:301;
 }
 .taco-tab:active{width:12px;}
 /* Ícono pequeño centrado en la franja */
@@ -342,13 +341,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   font-size:10px;
   writing-mode:vertical-rl;
 }
-.taco-tab-pct{
-  position:absolute;top:55%;left:50%;
-  transform:translate(-50%,0) rotate(180deg);
-  font-size:8px;font-weight:900;color:white;
-  writing-mode:vertical-rl;letter-spacing:1px;
-  margin-top:8px;
-}
+.taco-tab-pct{display:none}
 .taco-tab-bar{display:none;}
 .taco-tab-fill{display:none;}
 
@@ -356,7 +349,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .taco-body{
   position:fixed;right:8px;top:0;height:100vh;
   width:30vw;min-width:120px;max-width:160px;
-  background:rgba(10,12,20,0.97);
+  background:rgba(5,12,5,0.50);backdrop-filter:blur(2px);
   border-left:2px solid rgba(227,6,19,0.5);
   border-right:none;
   border-radius:12px 0 0 12px;
@@ -369,6 +362,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   box-shadow:-4px 0 20px rgba(0,0,0,.5);
 }
 .taco-body.abierto{transform:translateX(0);}
+.taco-body::before{content:'';position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.4),transparent);animation:taco-scan 3s linear infinite;pointer-events:none;z-index:1;}
+@keyframes taco-scan{0%{top:0%}100%{top:100%}}
 .taco-header{
   background:linear-gradient(135deg,#E30613,#8B0000);
   padding:10px 8px 8px;
@@ -477,6 +472,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="taco-header">
       <div class="taco-ruta-lbl" id="taco-ruta-lbl">—</div>
       <div class="taco-fecha" id="taco-fecha">—</div>
+      <div class="taco-live"><div class="taco-live-dot"></div><span class="taco-live-txt">EN VIVO</span></div>
     </div>
     <div class="taco-gauge-wrap">
       <svg id="taco-svg" viewBox="0 0 110 62" width="100%" role="img" aria-label="Tacómetro">
@@ -494,7 +490,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <text x="50" y="14" font-size="8" fill="rgba(255,255,255,.3)">50</text>
         <text x="90" y="62" font-size="8" fill="rgba(255,255,255,.3)">100</text>
       </svg>
-      <div class="taco-pct-big" id="taco-pct" style="color:#4ade80">100%</div>
+      <div class="taco-pct-big" id="taco-pct" style="color:#4ade80;font-size:32px;font-weight:900;text-shadow:0 0 14px rgba(0,255,65,.7)">100%</div>
       <div class="taco-cierre-lbl">de cierre</div>
     </div>
     <div class="taco-divider"></div>
@@ -520,7 +516,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="taco-stat-val" id="taco-total" style="color:rgba(255,255,255,.6)">0</div>
       </div>
     </div>
-    <div class="taco-update" id="taco-update">—</div>
+    <!-- Mini gauge % rechazo -->
+    <div style="padding:5px 6px 2px;border-top:.5px solid rgba(0,255,65,.08);flex-shrink:0">
+      <div style="font-size:6px;color:rgba(248,113,113,.4);font-family:monospace;text-align:center;letter-spacing:1px;margin-bottom:2px">% RECHAZO</div>
+      <svg id="taco-rej-arc-svg" viewBox="0 0 90 32" width="100%" role="img" aria-label="Porcentaje de rechazo">
+        <path d="M8 28 A37 37 0 0 1 82 28" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="5" stroke-linecap="round"/>
+        <path id="taco-rej-arc" d="M8 28 A37 37 0 0 1 82 28" fill="none" stroke="#f87171" stroke-width="5" stroke-linecap="round" stroke-dasharray="116" stroke-dashoffset="116"/>
+        <text id="taco-rej-pct" x="45" y="30" text-anchor="middle" font-size="11" fill="#f87171" font-weight="bold" font-family="monospace">0%</text>
+      </svg>
+    </div>
+    <div class="taco-update" id="taco-update">SYS::--</div>
   </div>
 </div>
 
@@ -828,15 +833,23 @@ async function consultarTacoSupabase(){
   if(!rutaActual)return;
   try{
     const fecha=getColDate();
-    const{data}=await sb.from(CFG.TBL_NOV).select('codigo_cliente').eq('ruta',rutaActual).eq('fecha',fecha);
+    const{data}=await sb.from(CFG.TBL_NOV).select('codigo_cliente,motivo').eq('ruta',rutaActual).eq('fecha',fecha);
     if(!data)return;
-    // Actualizar estado de clientes con novedades reales de Supabase
+    // Sincronizar estados con Supabase — marcar como novedad los que están en la tabla
+    let hubocambio=false;
     data.forEach(n=>{
-      const idx2=clientes.findIndex(c=>String(c.id||getF(c,CFG.COL_CODIGO))===n.codigo_cliente);
-      if(idx2>=0&&clientes[idx2]._st!=='novedad'){setClientSt(idx2,'novedad');}
+      const idx2=clientes.findIndex(cl=>String(cl.id||getF(cl,CFG.COL_CODIGO))===String(n.codigo_cliente));
+      if(idx2>=0&&clientes[idx2]._st!=='novedad'){
+        clientes[idx2]._st='novedad';
+        if(markers[idx2])markers[idx2].setIcon(cIconNumero('novedad',idx2===clienteIdx,idx2+1));
+        updateClientItem(idx2);
+        hubocambio=true;
+      }
     });
+    if(hubocambio)actualizarTacoLocal();
+    // También actualizar el tacómetro siempre con los datos actuales
     actualizarTacoLocal();
-  }catch(e){}
+  }catch(e){console.log('Error taco supabase:',e);}
 }
 
 function actualizarTacoLocal(){
@@ -1480,15 +1493,12 @@ function optimizarRutaDesdeGPS(posActual){
 
 function setClientSt(i,st){
   clientes[i]._st=st;
-  if(markers[i])markers[i].setIcon(cIcon(st,i===clienteIdx));
+  // Usar cIconNumero para mantener el número visible con el color correcto
+  if(markers[i])markers[i].setIcon(cIconNumero(st,i===clienteIdx,i+1));
   updateClientItem(i);
   actualizarTacoLocal();
-  const primerPend=clientes.findIndex(c=>c._st==='pendiente');
-  markers.forEach((m,j)=>{
-    if(!m)return;
-    if(j===primerPend&&st==='novedad')m.setAnimation&&m.setAnimation(null);
-  });
-  // Guardar estado en Supabase para no perder progreso
+  // Actualizar todos los marcadores para reflejar cambios de numeración
+  markers.forEach((m,j)=>{if(m)m.setIcon(cIconNumero(clientes[j]._st,j===clienteIdx,j+1));});
   guardarEstadoCliente(i,st);
 }
 
@@ -1651,7 +1661,7 @@ async function convertirAEntregado(){
     if(vend?.celular_vendedor){
       let cel=String(vend.celular_vendedor).replace(/[^0-9]/g,'');
       if(cel.length===10)cel='57'+cel;
-      setTimeout(()=>window.open('https://wa.me/'+cel+'?text='+encodeURIComponent(msgOk),'_blank'),400);
+      setTimeout(()=>{const a=document.createElement('a');a.href='https://wa.me/'+cel+'?text='+encodeURIComponent(msgOk);a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);},400);
     }
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
@@ -1753,10 +1763,10 @@ async function submitNovedad(){
     if(vend?.celular_vendedor){
       let cel=String(vend.celular_vendedor).replace(/[^0-9]/g,'');
       if(cel.length===10)cel='57'+cel;
-      setTimeout(()=>window.open(`https://wa.me/${cel}?text=${encodeURIComponent(msg)}`,'_blank'),350);
+      setTimeout(()=>{const a=document.createElement('a');a.href='https://wa.me/'+cel+'?text='+encodeURIComponent(msg);a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);},350);
       toast('Novedad guardada — abriendo WhatsApp ✓','ok');
     }else{
-      setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank'),350);
+      setTimeout(()=>{const a=document.createElement('a');a.href='https://wa.me/?text='+encodeURIComponent(msg);a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);},350);
       toast('Novedad guardada — sin vendedor asignado','err');
     }
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
