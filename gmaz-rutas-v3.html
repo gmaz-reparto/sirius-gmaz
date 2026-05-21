@@ -704,6 +704,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="ns-opt" onclick="haptic();pickReason('PRODUCTO NO CARGADO',this)">
       <div class="ns-opt-icon">🚫</div><div class="ns-radio"></div><div class="ns-txt">Producto no cargado</div>
     </div>
+    <div class="ns-opt" onclick="haptic();pickReason('RECHAZO PARCIAL',this)">
+      <div class="ns-opt-icon">⚡</div><div class="ns-radio"></div><div class="ns-txt">Rechazo parcial</div>
+    </div>
   </div>
   <div class="ns-actions">
     <button class="ns-cancel" onclick="haptic();closeNovModal()">Cancelar</button>
@@ -1795,8 +1798,8 @@ async function cargarResumenOperacion(){
   if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:12px;font-size:11px;color:var(--gris4)">Cargando...</div>';
   try{
-    // Novedades del día con código de cliente
-    const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,motivo').eq('fecha',fecha);
+    // Novedades del día con código de cliente y nombre
+    const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo').eq('fecha',fecha);
     // Clientes con CAJA_ para calcular cajas rechazadas
     const{data:todos}=await sb.from(CFG.TBL).select('ruta,id,CAJA_');
     if(!novs||!novs.length){
@@ -1860,13 +1863,30 @@ async function cargarResumenOperacion(){
       const pct=tot>0?Math.round(((tot-r.rechazos)/tot)*100):100;
       const medal=i===0?'🔴':i===1?'🟡':'🟢';
       const col2=pct>=90?'var(--verde)':pct>=75?'var(--amarillo)':'var(--rojo)';
-      html+=`<div style="background:var(--blanco);border:1px solid var(--gris2);border-radius:8px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
-        <div style="font-size:14px">${medal}</div>
-        <div style="flex:1">
-          <div style="font-size:11px;font-weight:700;color:var(--negro)">${r.ruta}</div>
-          <div style="font-size:9px;color:var(--gris4)">${r.rechazos} rej · 📦${Math.round(r.cajas)} cajas · ${tot} clientes</div>
+      // Novedades de esta ruta para mostrar detalle
+      const novsRuta=novs.filter(n=>n.ruta===r.ruta);
+      let detalleHtml='';
+      novsRuta.forEach(n=>{
+        const cajas=cajasPorCod[String(n.codigo_cliente)]||0;
+        const iconMotivo={'CLIENTE CERRADO':'🏪','CLIENTE SIN DINERO':'💸','PEDIDO MAL ELABORADO':'📦','CLIENTE NO HIZO PEDIDO':'🗓️','PRODUCTO NO CARGADO':'🚫','RECHAZO PARCIAL':'⚡'}[n.motivo]||'❌';
+        detalleHtml+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:.5px solid var(--gris1)">
+          <span style="font-size:11px">${iconMotivo}</span>
+          <div style="flex:1">
+            <div style="font-size:9px;font-weight:600;color:var(--negro)">${n.nombre_cliente||n.codigo_cliente}</div>
+            <div style="font-size:8px;color:var(--gris4)">${n.motivo}${cajas>0?' · 📦'+cajas+' cajas':''}</div>
+          </div>
+        </div>`;
+      });
+      html+=`<div style="background:var(--blanco);border:1px solid var(--gris2);border-radius:8px;margin-bottom:6px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px">
+          <div style="font-size:14px">${medal}</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:700;color:var(--negro)">${r.ruta}</div>
+            <div style="font-size:9px;color:var(--gris4)">${r.rechazos} rej · 📦${Math.round(r.cajas)} cajas · ${tot} clientes</div>
+          </div>
+          <span style="font-size:13px;font-weight:900;color:${col2};background:var(--gris1);border:1px solid var(--gris2);border-radius:5px;padding:3px 10px">${pct}%</span>
         </div>
-        <span style="font-size:11px;font-weight:700;color:${col2};background:var(--gris1);border:1px solid var(--gris2);border-radius:5px;padding:2px 8px">${pct}%</span>
+        ${detalleHtml?`<div style="border-top:.5px solid var(--gris2)">${detalleHtml}</div>`:''}
       </div>`;
     });
     const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
