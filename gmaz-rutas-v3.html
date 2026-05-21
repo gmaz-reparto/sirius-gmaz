@@ -1798,102 +1798,121 @@ async function cargarResumenOperacion(){
   if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:12px;font-size:11px;color:var(--gris4)">Cargando...</div>';
   try{
-    // Novedades del día con código de cliente y nombre
     const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo').eq('fecha',fecha);
-    // Clientes con CAJA_ para calcular cajas rechazadas
     const{data:todos}=await sb.from(CFG.TBL).select('ruta,id,CAJA_');
+    const{data:maest}=await sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor');
+    // Mapa ruta vendedor por código
+    const rutaVend={};
+    (maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
+    // Mapa cajas por código
+    const cajasCod={};
+    (todos||[]).forEach(cl=>cajasCod[String(cl.id)]=parseFloat(String(cl['CAJA_']||0).replace(',','.')||0));
     if(!novs||!novs.length){
-      el.innerHTML='<div style="text-align:center;padding:16px;font-size:11px;color:var(--gris4)">Sin novedades registradas hoy ✅</div>';
+      el.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--gris4)">✅ Sin novedades registradas hoy</div>';
       return;
     }
-    // Mapa de cajas por código de cliente
-    const cajasPorCod={};
-    (todos||[]).forEach(cl=>{cajasPorCod[String(cl.id)]=parseFloat(String(cl['CAJA_']||cl.CAJA_||0).replace(',','.')||0);});
-    // Agrupar por ruta
+    // Totales
+    const totalCli=(todos||[]).length;
+    const totalNov=novs.length;
+    const totalCajas=novs.reduce((s,n)=>s+(cajasCod[n.codigo_cliente]||0),0);
+    const pctGlobal=totalCli>0?Math.round(((totalCli-totalNov)/totalCli)*100):100;
+    const colGlobal=pctGlobal>=90?'#059669':pctGlobal>=75?'#D97706':'#E30613';
+    // Agrupar por ruta de entrega
     const porRuta={};
     novs.forEach(n=>{
-      const r=n.ruta||'SIN RUTA';
-      if(!porRuta[r])porRuta[r]={rechazos:0,cajas:0,ruta:r};
-      porRuta[r].rechazos++;
-      porRuta[r].cajas+=cajasPorCod[String(n.codigo_cliente)]||0;
+      if(!porRuta[n.ruta])porRuta[n.ruta]={ruta:n.ruta,rechazos:0,cajas:0,clientes:[]};
+      porRuta[n.ruta].rechazos++;
+      porRuta[n.ruta].cajas+=cajasCod[n.codigo_cliente]||0;
+      porRuta[n.ruta].clientes.push(n);
     });
-    // Totales por ruta
     const totalPorRuta={};
-    const cajasTotPorRuta={};
-    (todos||[]).forEach(cl=>{
-      const r=cl.ruta||'SIN RUTA';
-      if(!totalPorRuta[r])totalPorRuta[r]=0;
-      if(!cajasTotPorRuta[r])cajasTotPorRuta[r]=0;
-      totalPorRuta[r]++;
-      cajasTotPorRuta[r]+=parseFloat(String(cl['CAJA_']||cl.CAJA_||0).replace(',','.')||0);
-    });
-    const totalNov=novs.length;
-    const totalCli=(todos||[]).length;
-    const totalCajas=Object.values(porRuta).reduce((s,r)=>s+r.cajas,0);
-    const pctGlobal=totalCli>0?Math.round(((totalCli-totalNov)/totalCli)*100):100;
-    const col=pctGlobal>=90?'var(--verde)':pctGlobal>=75?'var(--amarillo)':'var(--rojo)';
-    // Ruta con más rechazos
+    (todos||[]).forEach(cl=>{if(!totalPorRuta[cl.ruta])totalPorRuta[cl.ruta]=0;totalPorRuta[cl.ruta]++;});
     const rutaMax=Object.values(porRuta).sort((a,b)=>b.rechazos-a.rechazos)[0];
-    let html=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-      <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:900;color:${col}">${pctGlobal}%</div>
-        <div style="font-size:8px;color:var(--gris4)">Cierre general</div>
+    // ── RENDER OPCIÓN B ──
+    const iconMotivo={'CLIENTE CERRADO':'🏪','CLIENTE SIN DINERO':'💸','PEDIDO MAL ELABORADO':'📦','CLIENTE NO HIZO PEDIDO':'🗓️','PRODUCTO NO CARGADO':'🚫','RECHAZO PARCIAL':'⚡'};
+    // Velocímetro SVG
+    const needleAngle=-90+(pctGlobal/100)*180;
+    let html=`
+    <!-- HEADER -->
+    <div style="background:linear-gradient(135deg,#E30613,#8B0000);margin:-0px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0;margin-bottom:0">
+      <div><div style="font-size:13px;font-weight:700;color:white">Panel Coordinador · GMAZ</div><div style="font-size:8px;color:rgba(255,255,255,.6);margin-top:1px">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div>
+      <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:8px;color:white"><span style="width:5px;height:5px;border-radius:50%;background:white;display:inline-block;animation:lv 1s ease infinite"></span>EN VIVO</div>
+    </div>
+    <!-- 3 KPIs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#FAFAFA;border-bottom:1px solid #EEE;border-left:1px solid #EEE;border-right:1px solid #EEE">
+      <div style="padding:14px 10px;text-align:center;border-right:1px solid #EEE">
+        <div style="font-size:8px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Cierre general</div>
+        <svg viewBox="0 0 100 58" width="90" height="52" style="display:block;margin:0 auto" role="img" aria-label="${pctGlobal}% cierre">
+          <defs><linearGradient id="gPnl" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#EF4444"/><stop offset="50%" stop-color="#F59E0B"/><stop offset="100%" stop-color="#10B981"/></linearGradient></defs>
+          <path d="M12 54 A38 38 0 0 1 88 54" fill="none" stroke="#F0F0F0" stroke-width="7" stroke-linecap="round"/>
+          <path d="M12 54 A38 38 0 0 1 88 54" fill="none" stroke="url(#gPnl)" stroke-width="7" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="${119.4*(1-pctGlobal/100)}"/>
+          <line x1="50" y1="54" x2="50" y2="20" stroke="#E30613" stroke-width="2" stroke-linecap="round" style="transform-origin:50px 54px;transform:rotate(${needleAngle}deg)"/>
+          <circle cx="50" cy="54" r="4" fill="#E30613"/>
+        </svg>
+        <div style="font-size:26px;font-weight:900;color:${colGlobal};line-height:1;margin-top:2px">${pctGlobal}%</div>
+        <div style="font-size:8px;color:#bbb;margin-top:2px">de cierre</div>
       </div>
-      <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:900;color:var(--rojo)">${totalNov}</div>
-        <div style="font-size:8px;color:var(--gris4)">Rechazos</div>
+      <div style="padding:14px 10px;text-align:center;border-right:1px solid #EEE">
+        <div style="font-size:8px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Total rechazos</div>
+        <div style="font-size:46px;font-weight:900;color:#E30613;line-height:1;margin:8px 0">${totalNov}</div>
+        <div style="font-size:8px;color:#bbb">clientes rechazados</div>
+        <div style="margin-top:6px;font-size:8px;color:#D97706">📦 ${Math.round(totalCajas)} cajas rechazadas</div>
       </div>
-      <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:22px;font-weight:900;color:var(--amarillo)">${Math.round(totalCajas)}</div>
-        <div style="font-size:8px;color:var(--gris4)">📦 Cajas rej.</div>
-      </div>
-    </div>`;
-    if(rutaMax){
-      const pctRuta=totalPorRuta[rutaMax.ruta]>0?Math.round(((totalPorRuta[rutaMax.ruta]-rutaMax.rechazos)/totalPorRuta[rutaMax.ruta])*100):100;
-      html+=`<div style="background:var(--rojo-s);border:1px solid rgba(227,6,19,.2);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-        <div style="font-size:18px">⚠️</div>
-        <div><div style="font-size:11px;font-weight:700;color:var(--rojo)">Más rechazos: ${rutaMax.ruta}</div>
-        <div style="font-size:9px;color:var(--gris4)">${rutaMax.rechazos} rechazo${rutaMax.rechazos>1?'s':''} · ${Math.round(rutaMax.cajas)} cajas · ${pctRuta}% cierre</div></div>
-      </div>`;
-    }
-    // Ranking por ruta
-    html+='<div style="font-size:9px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Detalle por ruta</div>';
-    Object.values(porRuta).sort((a,b)=>b.rechazos-a.rechazos).forEach((r,i)=>{
-      const tot=totalPorRuta[r.ruta]||0;
-      const pct=tot>0?Math.round(((tot-r.rechazos)/tot)*100):100;
-      const medal=i===0?'🔴':i===1?'🟡':'🟢';
-      const col2=pct>=90?'var(--verde)':pct>=75?'var(--amarillo)':'var(--rojo)';
-      // Novedades de esta ruta para mostrar detalle
-      const novsRuta=novs.filter(n=>n.ruta===r.ruta);
-      let detalleHtml='';
-      novsRuta.forEach(n=>{
-        const cajas=cajasPorCod[String(n.codigo_cliente)]||0;
-        const iconMotivo={'CLIENTE CERRADO':'🏪','CLIENTE SIN DINERO':'💸','PEDIDO MAL ELABORADO':'📦','CLIENTE NO HIZO PEDIDO':'🗓️','PRODUCTO NO CARGADO':'🚫','RECHAZO PARCIAL':'⚡'}[n.motivo]||'❌';
-        detalleHtml+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:.5px solid var(--gris1)">
-          <span style="font-size:11px">${iconMotivo}</span>
-          <div style="flex:1">
-            <div style="font-size:9px;font-weight:600;color:var(--negro)">${n.nombre_cliente||n.codigo_cliente}</div>
-            <div style="font-size:8px;color:var(--gris4)">${n.motivo}${cajas>0?' · 📦'+cajas+' cajas':''}</div>
-          </div>
-        </div>`;
-      });
-      html+=`<div style="background:var(--blanco);border:1px solid var(--gris2);border-radius:8px;margin-bottom:6px;overflow:hidden">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px">
-          <div style="font-size:14px">${medal}</div>
-          <div style="flex:1">
-            <div style="font-size:11px;font-weight:700;color:var(--negro)">${r.ruta}</div>
-            <div style="font-size:9px;color:var(--gris4)">${r.rechazos} rej · 📦${Math.round(r.cajas)} cajas · ${tot} clientes</div>
-          </div>
-          <span style="font-size:13px;font-weight:900;color:${col2};background:var(--gris1);border:1px solid var(--gris2);border-radius:5px;padding:3px 10px">${pct}%</span>
+      <div style="padding:14px 10px;text-align:center">
+        <div style="font-size:8px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Rutas activas</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px">
+          <div style="background:#F0FDF4;border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:900;color:#059669">${Object.values(porRuta).filter(r=>{const t=totalPorRuta[r.ruta]||0;return t>0&&Math.round(((t-r.rechazos)/t)*100)>=90}).length+Object.keys(totalPorRuta).filter(r=>!porRuta[r]).length}</div><div style="font-size:7px;color:#999">✅ OK</div></div>
+          <div style="background:#FFF5F5;border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:900;color:#E30613">${Object.values(porRuta).filter(r=>{const t=totalPorRuta[r.ruta]||0;return t>0&&Math.round(((t-r.rechazos)/t)*100)<90}).length}</div><div style="font-size:7px;color:#999">⚠️ Alerta</div></div>
         </div>
-        ${detalleHtml?`<div style="border-top:.5px solid var(--gris2)">${detalleHtml}</div>`:''}
+        ${rutaMax?`<div style="margin-top:6px;background:#FFF5F5;border-radius:6px;padding:5px 8px;font-size:8px;font-weight:600;color:#E30613">⚠️ ${rutaMax.ruta} — más rechazos</div>`:''}
+      </div>
+    </div>
+    <!-- GRÁFICA BARRAS + DETALLE RECHAZOS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #EEE;border-top:none">
+      <div style="padding:12px;background:#FAFAFA;border-right:1px solid #EEE">
+        <div style="font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">% Cierre por ruta</div>`;
+    // Barras por ruta
+    const rutasOrdenadas=Object.keys(totalPorRuta).sort();
+    const maxH=60;
+    const barW=Math.min(16,Math.floor(110/rutasOrdenadas.length)-4);
+    let svgBars=`<svg viewBox="0 0 110 90" width="100%" role="img" aria-label="Barras de cierre por ruta">`;
+    rutasOrdenadas.forEach((r,i)=>{
+      const tot=totalPorRuta[r]||0;
+      const rej=porRuta[r]?.rechazos||0;
+      const pct=tot>0?Math.round(((tot-rej)/tot)*100):100;
+      const h=Math.round((pct/100)*maxH);
+      const x=8+i*(barW+4);
+      const col=pct>=90?'#10B981':pct>=75?'#F59E0B':'#EF4444';
+      svgBars+=`<rect x="${x}" y="${70-h}" width="${barW}" height="${h}" fill="${col}" rx="2" opacity=".9"/>`;
+      svgBars+=`<text x="${x+barW/2}" y="${66-h}" text-anchor="middle" font-size="7" fill="${col}" font-weight="bold">${pct}%</text>`;
+      const code=r.replace('KA4V','V');
+      svgBars+=`<text x="${x+barW/2}" y="80" text-anchor="middle" font-size="6.5" fill="#888">${code}</text>`;
+    });
+    svgBars+=`<line x1="2" y1="70" x2="108" y2="70" stroke="#EEE" stroke-width="1"/></svg>`;
+    html+=svgBars+'</div>';
+    // Lista rechazos
+    html+=`<div style="padding:12px;max-height:200px;overflow-y:auto">
+      <div style="font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Detalle rechazos · vendedor · cajas</div>`;
+    novs.forEach(n=>{
+      const ico=iconMotivo[n.motivo]||'❌';
+      const caj=cajasCod[n.codigo_cliente]||0;
+      const vend=rutaVend[n.codigo_cliente]||'—';
+      html+=`<div style="display:flex;align-items:center;padding:6px 0;border-bottom:.5px solid #F3F4F6;gap:7px">
+        <span style="font-size:13px">${ico}</span>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:600;color:#374151">${n.nombre_cliente||n.codigo_cliente}</div>
+          <div style="font-size:8px;color:#9CA3AF">${n.ruta} · ${n.motivo}</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;color:#E30613;background:#FFF0F0;padding:1px 6px;border-radius:4px;white-space:nowrap">${vend}</span>
+        ${caj>0?`<span style="font-size:9px;font-weight:700;color:#D97706;background:#FEF3C7;padding:1px 6px;border-radius:4px">📦${caj}</span>`:''}
       </div>`;
     });
+    html+=`</div></div>`;
     const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-    html+=`<div style="font-size:9px;color:var(--gris4);text-align:center;margin-top:8px">Actualizado: ${now} · cada 30s</div>`;
+    html+=`<div style="text-align:center;font-size:8px;color:#9CA3AF;padding:8px;border:1px solid #EEE;border-top:none;border-radius:0 0 8px 8px;background:#FAFAFA">Actualizado: ${now} · se actualiza cada 30s</div>`;
     el.innerHTML=html;
   }catch(e){
-    if(el)el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--gris4)">Error al cargar: '+e.message+'</div>';
+    if(el)el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--gris4)">Error: '+e.message+'</div>';
   }
 }
 
