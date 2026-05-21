@@ -1871,25 +1871,26 @@ async function cargarResumenOperacion(){
     <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #EEE;border-top:none">
       <div style="padding:12px;background:#FAFAFA;border-right:1px solid #EEE">
         <div style="font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">% Cierre por ruta</div>`;
-    // Barras por ruta
+    // Barras por ruta — usar lista vertical en vez de SVG para mejor legibilidad
     const rutasOrdenadas=Object.keys(totalPorRuta).sort();
-    const maxH=60;
-    const barW=Math.min(16,Math.floor(110/rutasOrdenadas.length)-4);
-    let svgBars=`<svg viewBox="0 0 110 90" width="100%" role="img" aria-label="Barras de cierre por ruta">`;
-    rutasOrdenadas.forEach((r,i)=>{
+    let barsHtml='';
+    rutasOrdenadas.forEach(r=>{
       const tot=totalPorRuta[r]||0;
       const rej=porRuta[r]?.rechazos||0;
       const pct=tot>0?Math.round(((tot-rej)/tot)*100):100;
-      const h=Math.round((pct/100)*maxH);
-      const x=8+i*(barW+4);
       const col=pct>=90?'#10B981':pct>=75?'#F59E0B':'#EF4444';
-      svgBars+=`<rect x="${x}" y="${70-h}" width="${barW}" height="${h}" fill="${col}" rx="2" opacity=".9"/>`;
-      svgBars+=`<text x="${x+barW/2}" y="${66-h}" text-anchor="middle" font-size="7" fill="${col}" font-weight="bold">${pct}%</text>`;
-      const code=r.replace('KA4V','V');
-      svgBars+=`<text x="${x+barW/2}" y="80" text-anchor="middle" font-size="6.5" fill="#888">${code}</text>`;
+      const bgCol=pct>=90?'#F0FDF4':pct>=75?'#FFFBEB':'#FFF5F5';
+      const code=r.replace('KA4V','');
+      barsHtml+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:.5px solid #F0F0F0">
+        <span style="font-size:9px;font-weight:700;color:#555;min-width:38px">V${code}</span>
+        <div style="flex:1;height:14px;background:#F0F0F0;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${col};border-radius:3px;transition:width .5s"></div>
+        </div>
+        <span style="font-size:10px;font-weight:900;color:${col};min-width:34px;text-align:right">${pct}%</span>
+        ${rej>0?`<span style="font-size:8px;color:#E30613;min-width:20px">${rej}✗</span>`:'<span style="min-width:20px"></span>'}
+      </div>`;
     });
-    svgBars+=`<line x1="2" y1="70" x2="108" y2="70" stroke="#EEE" stroke-width="1"/></svg>`;
-    html+=svgBars+'</div>';
+    html+=barsHtml+'</div>';
     // Lista rechazos
     html+=`<div style="padding:12px;max-height:200px;overflow-y:auto">
       <div style="font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Detalle rechazos · vendedor · cajas</div>`;
