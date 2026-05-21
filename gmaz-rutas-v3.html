@@ -1791,49 +1791,66 @@ function openCoord(){updateDateStrip();document.getElementById('panel-coord').cl
 let resumenInterval=null;
 async function cargarResumenOperacion(){
   const fecha=getColDate();
+  const el=document.getElementById('pc-resumen');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:12px;font-size:11px;color:var(--gris4)">Cargando...</div>';
   try{
-    // Obtener todas las novedades del día
+    // Novedades del día con código de cliente
     const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,motivo').eq('fecha',fecha);
+    // Clientes con CAJA_ para calcular cajas rechazadas
+    const{data:todos}=await sb.from(CFG.TBL).select('ruta,id,CAJA_');
     if(!novs||!novs.length){
-      document.getElementById('pc-resumen').innerHTML='<div style="text-align:center;padding:16px;font-size:11px;color:var(--gris4)">Sin novedades registradas hoy</div>';
+      el.innerHTML='<div style="text-align:center;padding:16px;font-size:11px;color:var(--gris4)">Sin novedades registradas hoy ✅</div>';
       return;
     }
+    // Mapa de cajas por código de cliente
+    const cajasPorCod={};
+    (todos||[]).forEach(cl=>{cajasPorCod[String(cl.id)]=parseFloat(String(cl['CAJA_']||cl.CAJA_||0).replace(',','.')||0);});
     // Agrupar por ruta
     const porRuta={};
     novs.forEach(n=>{
-      if(!porRuta[n.ruta])porRuta[n.ruta]={rechazos:0,ruta:n.ruta};
-      porRuta[n.ruta].rechazos++;
+      const r=n.ruta||'SIN RUTA';
+      if(!porRuta[r])porRuta[r]={rechazos:0,cajas:0,ruta:r};
+      porRuta[r].rechazos++;
+      porRuta[r].cajas+=cajasPorCod[String(n.codigo_cliente)]||0;
     });
-    // Obtener total de clientes por ruta
-    const{data:tots}=await sb.from(CFG.TBL).select('ruta,id');
+    // Totales por ruta
     const totalPorRuta={};
-    (tots||[]).forEach(c=>{if(!totalPorRuta[c.ruta])totalPorRuta[c.ruta]=0;totalPorRuta[c.ruta]++;});
-    // Construir resumen
+    const cajasTotPorRuta={};
+    (todos||[]).forEach(cl=>{
+      const r=cl.ruta||'SIN RUTA';
+      if(!totalPorRuta[r])totalPorRuta[r]=0;
+      if(!cajasTotPorRuta[r])cajasTotPorRuta[r]=0;
+      totalPorRuta[r]++;
+      cajasTotPorRuta[r]+=parseFloat(String(cl['CAJA_']||cl.CAJA_||0).replace(',','.')||0);
+    });
     const totalNov=novs.length;
-    const totalCli=(tots||[]).length;
+    const totalCli=(todos||[]).length;
+    const totalCajas=Object.values(porRuta).reduce((s,r)=>s+r.cajas,0);
     const pctGlobal=totalCli>0?Math.round(((totalCli-totalNov)/totalCli)*100):100;
-    const rutaMax=Object.values(porRuta).sort((a,b)=>b.rechazos-a.rechazos)[0];
-    // Render
     const col=pctGlobal>=90?'var(--verde)':pctGlobal>=75?'var(--amarillo)':'var(--rojo)';
+    // Ruta con más rechazos
+    const rutaMax=Object.values(porRuta).sort((a,b)=>b.rechazos-a.rechazos)[0];
     let html=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
       <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:20px;font-weight:900;color:${col}">${pctGlobal}%</div>
+        <div style="font-size:22px;font-weight:900;color:${col}">${pctGlobal}%</div>
         <div style="font-size:8px;color:var(--gris4)">Cierre general</div>
       </div>
       <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:20px;font-weight:900;color:var(--rojo)">${totalNov}</div>
-        <div style="font-size:8px;color:var(--gris4)">Rechazos totales</div>
+        <div style="font-size:22px;font-weight:900;color:var(--rojo)">${totalNov}</div>
+        <div style="font-size:8px;color:var(--gris4)">Rechazos</div>
       </div>
       <div style="background:var(--gris1);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:20px;font-weight:900;color:var(--negro)">${Object.keys(porRuta).length}</div>
-        <div style="font-size:8px;color:var(--gris4)">Rutas con nov.</div>
+        <div style="font-size:22px;font-weight:900;color:var(--amarillo)">${Math.round(totalCajas)}</div>
+        <div style="font-size:8px;color:var(--gris4)">📦 Cajas rej.</div>
       </div>
     </div>`;
-    if(rutaMax&&rutaMax.rechazos>0){
+    if(rutaMax){
+      const pctRuta=totalPorRuta[rutaMax.ruta]>0?Math.round(((totalPorRuta[rutaMax.ruta]-rutaMax.rechazos)/totalPorRuta[rutaMax.ruta])*100):100;
       html+=`<div style="background:var(--rojo-s);border:1px solid rgba(227,6,19,.2);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-        <div style="font-size:16px">⚠️</div>
-        <div><div style="font-size:11px;font-weight:700;color:var(--rojo)">Ruta con más rechazos: ${rutaMax.ruta}</div>
-        <div style="font-size:9px;color:var(--gris4)">${rutaMax.rechazos} rechazo${rutaMax.rechazos>1?'s':''} registrado${rutaMax.rechazos>1?'s':''} hoy</div></div>
+        <div style="font-size:18px">⚠️</div>
+        <div><div style="font-size:11px;font-weight:700;color:var(--rojo)">Más rechazos: ${rutaMax.ruta}</div>
+        <div style="font-size:9px;color:var(--gris4)">${rutaMax.rechazos} rechazo${rutaMax.rechazos>1?'s':''} · ${Math.round(rutaMax.cajas)} cajas · ${pctRuta}% cierre</div></div>
       </div>`;
     }
     // Ranking por ruta
@@ -1845,20 +1862,21 @@ async function cargarResumenOperacion(){
       const col2=pct>=90?'var(--verde)':pct>=75?'var(--amarillo)':'var(--rojo)';
       html+=`<div style="background:var(--blanco);border:1px solid var(--gris2);border-radius:8px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
         <div style="font-size:14px">${medal}</div>
-        <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--negro)">${r.ruta}</div>
-        <div style="font-size:9px;color:var(--gris4)">${r.rechazos} rechazo${r.rechazos>1?'s':''} · ${tot} clientes</div></div>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:700;color:var(--negro)">${r.ruta}</div>
+          <div style="font-size:9px;color:var(--gris4)">${r.rechazos} rej · 📦${Math.round(r.cajas)} cajas · ${tot} clientes</div>
+        </div>
         <span style="font-size:11px;font-weight:700;color:${col2};background:var(--gris1);border:1px solid var(--gris2);border-radius:5px;padding:2px 8px">${pct}%</span>
       </div>`;
     });
     const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-    html+=`<div style="font-size:9px;color:var(--gris4);text-align:center;margin-top:8px">Actualizado: ${now} · Se actualiza cada 30s</div>`;
-    document.getElementById('pc-resumen').innerHTML=html;
+    html+=`<div style="font-size:9px;color:var(--gris4);text-align:center;margin-top:8px">Actualizado: ${now} · cada 30s</div>`;
+    el.innerHTML=html;
   }catch(e){
-    document.getElementById('pc-resumen').innerHTML='<div style="padding:12px;font-size:11px;color:var(--gris4)">Error al cargar resumen</div>';
+    if(el)el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--gris4)">Error al cargar: '+e.message+'</div>';
   }
-  // Intervalo cada 30s
-  if(!resumenInterval)resumenInterval=setInterval(cargarResumenOperacion,30000);
 }
+
 
 async function verificarEstadoPanel(){
   const offset=-5;
