@@ -84,12 +84,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 /* ══ MAP SCREEN ══ */
 #scr-map{background:var(--negro)}
-#map-container{flex:0 0 70%;position:relative;min-height:0}
+#map-container{flex:0 0 60%;position:relative;min-height:0}
 #gmap{width:100%;height:100%}
 #map-strip{position:absolute;top:6px;left:10px;background:rgba(255,255,255,.92);border-radius:16px;padding:3px 10px;font-size:9px;font-weight:700;color:var(--gris5);box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:1;pointer-events:none}
 #map-legend{position:absolute;bottom:6px;right:8px;display:flex;align-items:center;gap:5px;pointer-events:none}
 .leg-dot{width:7px;height:7px;border-radius:50%}.leg-lbl{font-size:8px;color:var(--gris5);font-weight:600}
-.client-panel{flex:0 0 30%;background:var(--blanco);border-top:1px solid var(--gris2);display:flex;flex-direction:column;min-height:0}
+.client-panel{flex:0 0 40%;background:var(--blanco);border-top:1px solid var(--gris2);display:flex;flex-direction:column;min-height:0}
 .cp-header{padding:5px 14px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-bottom:.5px solid var(--gris2)}
 .cp-title{font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:.8px}
 .cp-count{font-size:9px;color:var(--gris4)}
@@ -719,24 +719,43 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 <!-- COORDINATOR PANEL -->
 <div id="panel-coord">
+  <!-- HEADER -->
   <div class="pc-hdr">
-    <div class="pc-logo"><div class="pc-bar"></div><div><div class="pc-title">Panel Coordinador</div><div class="pc-sub">Rutina diaria · GMAZ</div></div></div>
+    <div class="pc-logo"><div class="pc-bar"></div><div><div class="pc-title">Panel Coordinador</div><div class="pc-sub">GMAZ · Coca-Cola Pasto</div></div></div>
     <button class="pc-close" onclick="haptic();closeCoord()">✕ Cerrar</button>
   </div>
-  <div class="pc-body">
-    <div class="pc-date" id="pc-date">📅 Cargando...</div>
-    <div class="pc-lbl">Ejecutar cada mañana en orden</div>
-    <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();downloadReport()">↓ Descargar</button></div>
-    <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
-    <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
-    <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
-    <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
+  <!-- PESTAÑAS -->
+  <div style="display:flex;border-bottom:2px solid var(--gris2);background:var(--blanco);flex-shrink:0">
+    <button id="pctab-1" onclick="haptic();switchPcTab(1)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--rojo);border-bottom:2px solid var(--rojo);margin-bottom:-2px;cursor:pointer">📋 Rutina</button>
+    <button id="pctab-2" onclick="haptic();switchPcTab(2)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">📊 Operación</button>
+    <button id="pctab-3" onclick="haptic();switchPcTab(3)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">📥 Histórico</button>
   </div>
-  <div style="padding:0 14px 10px">
-    <div style="font-size:9px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Resumen de la operación de hoy</div>
-    <div id="pc-resumen" style="font-size:11px;color:var(--gris4);text-align:center;padding:12px">Cargando...</div>
+  <!-- TAB 1: RUTINA DIARIA -->
+  <div id="pctab-content-1" style="flex:1;overflow-y:auto">
+    <div class="pc-body">
+      <div class="pc-date" id="pc-date">📅 Cargando...</div>
+      <div class="pc-lbl">Ejecutar cada mañana en orden</div>
+      <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();switchPcTab(3)">📋 Ver histórico</button></div>
+      <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
+      <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
+      <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
+      <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
+    </div>
   </div>
-  <div class="pc-footer">⏱ Excel generado a las 9:45pm · Resumen se actualiza cada 30 segundos</div>
+  <!-- TAB 2: OPERACIÓN HOY -->
+  <div id="pctab-content-2" style="flex:1;overflow-y:auto;display:none">
+    <div style="padding:14px">
+      <div id="pc-resumen" style="font-size:11px;color:var(--gris4);text-align:center;padding:12px">Cargando...</div>
+    </div>
+  </div>
+  <!-- TAB 3: HISTÓRICO -->
+  <div id="pctab-content-3" style="flex:1;overflow-y:auto;display:none">
+    <div style="padding:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--negro);margin-bottom:12px">📥 Novedades de los últimos 7 días</div>
+      <div id="pc-hist-lista"><div style="font-size:11px;color:var(--gris4)">Cargando...</div></div>
+    </div>
+  </div>
+  <div class="pc-footer">⏱ Excel generado a las 9:45pm · Actualización automática cada 30s</div>
 </div>
 
 <!-- PROGRESS PANEL -->
@@ -1279,18 +1298,20 @@ async function loadRoutes(){
     const{data,error}=await sb.from(CFG.TBL).select('*');
     if(error)throw error;
     if(!data?.length){hideLoad();showScr('scr-routes');document.getElementById('routes-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#8A90A0;font-size:13px">Sin rutas cargadas hoy</div>';return;}
-    // Agrupar por ruta
+    // Agrupar por ruta con total de cajas
     const rutas={};
     data.forEach(c=>{
       const r=getF(c,CFG.COL_RUTA)||'SIN RUTA';
-      if(!rutas[r])rutas[r]={code:r,clientes:[],entregados:0,novedades:0};
+      if(!rutas[r])rutas[r]={code:r,clientes:[],entregados:0,novedades:0,totalCajas:0};
       rutas[r].clientes.push({...c,_st:'pendiente'});
+      rutas[r].totalCajas+=parseFloat(String(c['CAJA_']||c.CAJA_||0).replace(',','.')||0);
     });
     const grid=document.getElementById('routes-grid');
     grid.innerHTML='';
     Object.values(rutas).sort((a,b)=>a.code.localeCompare(b.code)).forEach(r=>{
       const card=document.createElement('div');
       card.className='route-card';
+      const cajasTot=Math.round(r.totalCajas||0);
       card.innerHTML=`
         <div class="rc-code">${r.code}</div>
         <div class="rc-num">${r.clientes.length}</div>
@@ -1298,7 +1319,8 @@ async function loadRoutes(){
         <div class="rc-dots">
           <div class="rc-dot rc-dot-r"></div><span class="rc-dlbl">${r.clientes.length}</span>
           <div class="rc-dot rc-dot-g" style="margin-left:4px"></div><span class="rc-dlbl">0</span>
-        </div>`;
+        </div>
+        ${cajasTot>0?`<div style="margin-top:5px;font-size:9px;font-weight:600;color:#4A5060">📦 ${cajasTot} cajas totales</div>`:''}`;
       card.onclick=()=>{haptic();startRoute(r.code,r.clientes);};
       grid.appendChild(card);
     });
@@ -1789,7 +1811,12 @@ function handleLogoTap(){
     }else openCoord();
   }
 }
-function openCoord(){updateDateStrip();document.getElementById('panel-coord').classList.add('show');verificarEstadoPanel();cargarResumenOperacion();}
+function openCoord(){
+  updateDateStrip();
+  document.getElementById('panel-coord').classList.add('show');
+  switchPcTab(1);
+  verificarEstadoPanel();
+}
 
 let resumenInterval=null;
 async function cargarResumenOperacion(){
@@ -2064,32 +2091,104 @@ function endProg(ok,msg){
 function closeProg(){document.getElementById('prog-overlay').classList.remove('show');}
 
 /* ══ PANEL COORDINADOR ══ */
-async function downloadReport(){
-  const ayer=getColDate(-1);showLoad('Buscando reporte...');
-  try{
-    const{data,error}=await sb.storage.from(CFG.BCK_REP).download(`reporte_${ayer}.xlsx`);
-    if(error)throw error;
-    const url=URL.createObjectURL(data);
-    const a=document.createElement('a');a.href=url;
-    // Nombre del archivo: Novedades-YYYY-MM-DD.xlsx
-    a.download=`Novedades-${ayer}.xlsx`;
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    hideLoad();
-    const b=document.getElementById('pb1');b.textContent='✓ Descargado';b.classList.add('done');
-    const est=document.getElementById('pc-est-nov');
-    const det=document.getElementById('pc-det-nov');
-    if(est){est.textContent='✓ Descargado';est.className='pc-estado pc-estado-ok';}
-    if(det)det.textContent='Archivo: Novedades-'+ayer+'.xlsx';
-    toast('Novedades-'+ayer+'.xlsx descargado','ok');
-  }catch(e){
-    hideLoad();
-    const est=document.getElementById('pc-est-nov');
-    if(est){est.textContent='⚠ Sin reporte';est.className='pc-estado pc-estado-warn';}
-    const det=document.getElementById('pc-det-nov');
-    if(det)det.textContent='Sin reporte del '+ayer+' — puede que no haya habido novedades';
-    toast('Sin reporte del '+ayer,'err');
+async function downloadReport(){}
+
+
+function switchPcTab(n){
+  [1,2,3].forEach(i=>{
+    const btn=document.getElementById('pctab-'+i);
+    const content=document.getElementById('pctab-content-'+i);
+    const activo=i===n;
+    if(btn){
+      btn.style.color=activo?'var(--rojo)':'var(--gris4)';
+      btn.style.borderBottom=activo?'2px solid var(--rojo)':'none';
+      btn.style.marginBottom=activo?'-2px':'0';
+    }
+    if(content)content.style.display=activo?'block':'none';
+  });
+  // Cargar contenido según pestaña
+  if(n===2)cargarResumenOperacion();
+  if(n===3)cargarHistoricoNovedades();
+}
+
+function toggleHistorico(){
+  const el=document.getElementById('pc-historico');
+  const lista=document.getElementById('pc-hist-lista');
+  if(el.style.display==='none'){
+    el.style.display='block';
+    lista.innerHTML='<div style="font-size:10px;color:var(--gris4)">Cargando...</div>';
+    cargarHistoricoNovedades();
+  }else{el.style.display='none';}
+}
+
+async function cargarHistoricoNovedades(){
+  const lista=document.getElementById('pc-hist-lista');
+  // Generar últimos 7 días
+  const dias=[];
+  const offset=-5;
+  for(let i=1;i<=7;i++){
+    const d=new Date(Date.now()+offset*3600000-i*86400000);
+    dias.push(d.toISOString().split('T')[0]);
   }
+  let html='';
+  for(const fecha of dias){
+    // Contar novedades de ese día
+    const{count}=await sb.from(CFG.TBL_NOV).select('id',{count:'exact',head:true}).eq('fecha',fecha);
+    const n=count||0;
+    const col=n>0?'var(--rojo)':'var(--gris4)';
+    const bg=n>0?'var(--rojo-s)':'var(--gris1)';
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${bg};border-radius:6px;margin-bottom:4px">
+      <div style="flex:1">
+        <div style="font-size:10px;font-weight:600;color:var(--negro)">${fecha}</div>
+        <div style="font-size:9px;color:${col}">${n>0?n+' novedad'+(n>1?'es':''):' Sin novedades'}</div>
+      </div>
+      ${n>0?`<button onclick="haptic();descargarNovedasFecha('${fecha}')" style="background:var(--rojo);color:white;border:none;border-radius:5px;padding:4px 8px;font-size:9px;font-weight:700;cursor:pointer">↓ Excel</button>`:''}
+    </div>`;
+  }
+  lista.innerHTML=html||'<div style="font-size:10px;color:var(--gris4)">Sin datos en los últimos 7 días</div>';
+}
+
+async function descargarNovedasFecha(fecha){
+  showLoad('Generando Excel de '+fecha+'...');
+  try{
+    // Obtener novedades del día
+    const{data:novs}=await sb.from(CFG.TBL_NOV)
+      .select('fecha,ruta,nombre_cliente,motivo,codigo_cliente')
+      .eq('fecha',fecha).order('ruta');
+    if(!novs||!novs.length){hideLoad();toast('Sin novedades para '+fecha,'err');return;}
+    // Obtener ruta de vendedor del maestro para cada cliente
+    const codigos=novs.map(n=>n.codigo_cliente);
+    const{data:maest}=await sb.from(CFG.TBL_VEND)
+      .select('codigo,ruta_vendedor')
+      .in('codigo',codigos);
+    const rutaVend={};
+    (maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
+    // Construir filas con ruta del vendedor
+    const filas=novs.map(n=>({
+      'Fecha':n.fecha,
+      'Ruta entrega':n.ruta,
+      'Código':n.codigo_cliente,
+      'Cliente':n.nombre_cliente,
+      'Motivo':n.motivo,
+      'Ruta vendedor':rutaVend[String(n.codigo_cliente)]||'—'
+    }));
+    if(window.XLSX){
+      const ws=XLSX.utils.json_to_sheet(filas);
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Novedades');
+      XLSX.writeFile(wb,'Novedades-'+fecha+'.xlsx');
+      hideLoad();toast('Novedades-'+fecha+'.xlsx descargado','ok');
+    }else{
+      const header='Fecha,Ruta entrega,Codigo,Cliente,Motivo,Ruta vendedor';
+      const rows=filas.map(f=>[f['Fecha'],f['Ruta entrega'],f['Código'],(f['Cliente']||'').replace(/,/g,' '),(f['Motivo']||'').replace(/,/g,' '),f['Ruta vendedor']].join(','));
+      const blob=new Blob([[header].concat(rows).join('\n')],{type:'text/csv'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='Novedades-'+fecha+'.csv';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      hideLoad();toast('Novedades-'+fecha+'.csv descargado','ok');
+    }
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
 async function cleanPhotos(){
