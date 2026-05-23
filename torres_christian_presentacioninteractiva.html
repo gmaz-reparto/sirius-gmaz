@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProtegePyme — Presentación Interactiva</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#E8541A;
+  --amber:#F59E0B;
+  --navy:#0F2337;
+  --steel:#1E3A52;
+  --light-steel:#2D5473;
+  --white:#FFFFFF;
+  --dark:#080F18;
+  --muted:#7A9BB5;
+  --soft:#F0F5FA;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Source Sans 3',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .55s ease,transform .55s ease;transform:scale(.97);}
+.slide.active{opacity:1;pointer-events:all;transform:scale(1);}
+.slide.exit{opacity:0;transform:scale(1.03);}
+#prog{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--orange),var(--amber));transition:width .4s ease;z-index:100;}
+#snum{position:fixed;bottom:20px;right:24px;font-size:11px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:6px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(232,84,26,.3);border-color:var(--orange);}
+#prev{left:12px;}#next{right:12px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:3px;font-weight:700;margin-bottom:14px;}
+.tag-or{background:rgba(232,84,26,.18);color:#FFA07A;}
+.tag-nav{background:rgba(15,35,55,.5);color:var(--muted);border:1px solid rgba(255,255,255,.1);}
+.line{width:40px;height:3px;background:var(--orange);border-radius:1px;margin:10px 0 18px;}
+@keyframes slideR{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+.slide.active .a{animation:slideR .65s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.22s;}.d3{animation-delay:.34s;}.d4{animation-delay:.46s;}.d5{animation-delay:.58s;}.d6{animation-delay:.7s;}
+
+/* PORTADA */
+#s0{background:var(--navy);justify-content:center;align-items:flex-start;padding:80px 100px;overflow:hidden;}
+#s0::before{content:'';position:absolute;right:0;top:0;width:40%;height:100%;background:linear-gradient(135deg,var(--orange),var(--amber));opacity:.08;}
+#s0::after{content:'';position:absolute;right:80px;top:50%;transform:translateY(-50%);width:280px;height:280px;border:2px solid rgba(232,84,26,.2);border-radius:12px;transform:translateY(-50%) rotate(12deg);}
+.p0k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:18px;}
+.p0t{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,8.5vw,110px);color:var(--white);line-height:.95;margin-bottom:14px;letter-spacing:.02em;}
+.p0t span{color:var(--orange);}
+.p0s{font-size:17px;color:var(--muted);margin-bottom:44px;max-width:480px;line-height:1.65;}
+.p0m span{display:block;font-size:13px;color:rgba(255,255,255,.45);margin-bottom:4px;}
+.p0m strong{color:rgba(255,255,255,.8);}
+.shield{position:absolute;right:110px;top:50%;transform:translateY(-50%);font-size:140px;opacity:.15;}
+
+/* INTRO */
+#s1{background:var(--dark);padding:60px 100px;justify-content:center;}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+.ig h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,4.5vw,56px);color:var(--white);line-height:1.05;margin-bottom:16px;letter-spacing:.02em;}
+.ig h2 em{color:var(--orange);font-style:normal;}
+.ig p{font-size:14px;color:var(--muted);line-height:1.8;}
+.sc-list{display:flex;flex-direction:column;gap:13px;}
+.sc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:17px 20px;border-left:3px solid var(--orange);}
+.sc .n{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--orange);}
+.sc .l{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* IDEA */
+#s2{background:var(--navy);padding:60px 100px;justify-content:center;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:26px;}
+.gc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:20px 17px;transition:transform .2s,border-color .2s;}
+.gc:hover{transform:translateY(-3px);border-color:var(--orange);}
+.gc .ico{font-size:24px;margin-bottom:10px;}
+.gc h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.gc p{font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* IMPACTOS */
+#s3{background:var(--dark);padding:60px 100px;justify-content:center;}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:26px;}
+.il{display:flex;flex-direction:column;gap:11px;}
+.ii{display:flex;gap:12px;align-items:flex-start;}
+.id{width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;margin-top:6px;}
+.ii p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.vc{background:linear-gradient(135deg,rgba(15,35,55,.8),rgba(30,58,82,.6));border:1px solid rgba(232,84,26,.2);border-radius:10px;padding:17px;margin-bottom:11px;}
+.vc h4{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px;}
+.vc p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* LIMITACIONES */
+#s4{background:var(--navy);padding:60px 100px;justify-content:center;}
+.lg2{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-top:26px;}
+.lc{border:1px solid rgba(232,84,26,.25);border-radius:8px;padding:19px 20px;background:rgba(232,84,26,.04);}
+.ln{font-family:'Bebas Neue',sans-serif;font-size:34px;color:rgba(232,84,26,.25);margin-bottom:6px;}
+.lc h4{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:5px;}
+.lc p{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* PÚBLICO */
+#s5{background:var(--dark);padding:60px 100px;justify-content:center;}
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:22px;}
+.pb{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:22px;}
+.pb h4{font-size:14px;font-weight:700;color:var(--white);margin-bottom:11px;}
+.pb li{font-size:12px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.5;list-style:none;}
+.pb li:last-child{border-bottom:none;}
+.ps-list{display:flex;flex-direction:column;gap:9px;}
+.ps{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:rgba(232,84,26,.08);border-radius:7px;border-left:3px solid var(--orange);}
+.ps .pl{font-size:12px;color:var(--muted);}
+.ps .pv{font-size:16px;font-weight:700;color:var(--orange);}
+
+/* BUYER PERSONA */
+#s6{background:var(--navy);padding:60px 100px;justify-content:center;}
+.persona{display:grid;grid-template-columns:190px 1fr;gap:34px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:30px;margin-top:18px;}
+.pav{text-align:center;}
+.av{width:100px;height:100px;border-radius:8px;background:linear-gradient(135deg,var(--orange),var(--amber));display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 13px;border:2px solid rgba(255,255,255,.15);}
+.pn{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--white);letter-spacing:.05em;}
+.pr{font-size:11px;color:var(--orange);margin-top:3px;}
+.pdata{font-size:11px;color:rgba(255,255,255,.45);margin-top:9px;line-height:1.7;}
+.pdet{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.pd h5{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;font-weight:700;}
+.pd li{font-size:11.5px;color:var(--muted);padding:3px 0;line-height:1.5;list-style:none;}
+.pd li::before{content:'▸ ';color:var(--orange);font-size:9px;}
+
+/* LANDING */
+#s7{background:var(--dark);padding:36px 80px;justify-content:center;}
+.lf{border:1.5px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;height:calc(100vh - 108px);display:flex;flex-direction:column;background:#fff;}
+.lb{background:#F0F0F0;padding:7px 13px;display:flex;align-items:center;gap:7px;}
+.ld{width:9px;height:9px;border-radius:50%;}
+.lu{flex:1;background:#fff;border-radius:4px;padding:3px 10px;font-size:10px;color:#666;margin:0 10px;}
+.lbody{flex:1;overflow-y:auto;}
+.lhero{background:linear-gradient(135deg,#0F2337,#1E3A52);padding:32px 42px;color:#fff;text-align:center;}
+.lhero h1{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;margin-bottom:8px;}
+.lhero p{font-size:12px;opacity:.75;max-width:360px;margin:0 auto 18px;line-height:1.6;}
+.lcta{background:#E8541A;color:#fff;border:none;padding:10px 28px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;}
+.lsec{padding:22px 42px;}
+.lsec h2{font-size:17px;font-weight:700;color:#0F2337;margin-bottom:13px;}
+.lcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.lcard{background:#F5F7FA;border:1px solid #D0DDE8;border-radius:8px;padding:13px;text-align:center;}
+.lcard .lcn{font-size:22px;font-weight:900;color:#E8541A;}
+.lcard p{font-size:10px;color:#666;margin-top:3px;}
+.lform{background:#F0F5FA;padding:19px 42px;border-top:1px solid #E0E8F0;}
+.lform h3{font-size:14px;font-weight:700;color:#0F2337;margin-bottom:10px;}
+.li{width:100%;padding:8px 12px;border:1px solid #C0D0E0;border-radius:6px;font-size:12px;margin-bottom:7px;}
+.ls{width:100%;background:#E8541A;color:#fff;border:none;padding:10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* EMBUDO */
+#s8,#s9,#s10{background:var(--dark);padding:60px 100px;justify-content:center;}
+.fs{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:24px 28px;margin-top:18px;}
+.fsh{display:flex;align-items:center;gap:13px;margin-bottom:13px;}
+.fsb{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;}
+.ba{background:var(--orange);color:#fff;}
+.bi{background:#27AE60;color:#fff;}
+.bc{background:var(--amber);color:#0F2337;}
+.bf{background:#9B59B6;color:#fff;}
+.fst{font-size:18px;font-weight:700;color:var(--white);}
+.fsa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.fai{background:rgba(255,255,255,.05);border-radius:8px;padding:12px 14px;border-left:3px solid var(--orange);}
+.fai h5{font-size:12px;font-weight:700;color:var(--white);margin-bottom:3px;}
+.fai p{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* EMBUDO VISUAL */
+#s11{background:var(--navy);padding:60px 100px;justify-content:center;align-items:center;}
+.fv{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;max-width:580px;}
+.fvs{width:100%;padding:16px 20px;text-align:center;cursor:pointer;transition:filter .2s;position:relative;color:#fff;font-weight:700;}
+.fvs:nth-child(1){background:linear-gradient(90deg,#E8541A,#C43D0F);clip-path:polygon(0 0,100% 0,97% 100%,3% 100%);}
+.fvs:nth-child(2){background:linear-gradient(90deg,#F59E0B,#D48A00);clip-path:polygon(3% 0,97% 0,94% 100%,6% 100%);margin-top:-2px;color:#0F2337;}
+.fvs:nth-child(3){background:linear-gradient(90deg,#1E3A52,#2D5473);clip-path:polygon(6% 0,94% 0,90% 100%,10% 100%);margin-top:-2px;}
+.fvs:nth-child(4){background:linear-gradient(90deg,#9B59B6,#7D3C98);clip-path:polygon(10% 0,90% 0,85% 100%,15% 100%);margin-top:-2px;}
+.fvs:hover{filter:brightness(1.12);}
+.fvl{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.08em;}
+.fvsub{font-size:11px;opacity:.8;margin-top:2px;}
+.fvtt{position:absolute;left:calc(100%+14px);top:50%;transform:translateY(-50%);background:var(--dark);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:12px 15px;width:210px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;}
+.fvs:hover .fvtt{opacity:1;}
+.fvtt p{font-size:11px;color:var(--muted);line-height:1.6;font-weight:400;}
+
+/* CIERRE */
+#s12{background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;}
+.ct{font-family:'Bebas Neue',sans-serif;font-size:clamp(38px,5.5vw,70px);color:var(--white);font-weight:400;max-width:700px;margin:0 auto 18px;letter-spacing:.03em;}
+.ct em{color:var(--orange);font-style:normal;}
+.cs{font-size:15px;color:var(--muted);max-width:480px;margin:0 auto 36px;line-height:1.7;}
+.cbtn{display:inline-block;background:var(--orange);color:#fff;padding:13px 38px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+.cbtn:hover{background:var(--amber);color:var(--navy);transform:translateY(-2px);}
+
+/* REFS */
+#s13{background:var(--navy);padding:60px 100px;justify-content:flex-start;overflow-y:auto;}
+.rl{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:12px;}
+.rl li{font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.75;padding-left:20px;text-indent:-20px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:11px;}
+.rl li em{color:rgba(255,255,255,.65);}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="snum">1 / 14</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- PORTADA -->
+<div class="slide active" id="s0">
+  <div class="shield">🛡️</div>
+  <div class="p0k a d1">Electiva Marketing Digital · UNIMINUTO · 2026</div>
+  <div class="p0t a d2">Protege<span>Pyme</span></div>
+  <p class="p0s a d3">El marketplace digital donde las pymes colombianas compran sus elementos de protección personal y reciben asesoría normativa incluida — todo en un solo lugar.</p>
+  <div class="p0m a d4">
+    <span><strong>Presentado por:</strong> Christian Camilo Torres Naranjo — ID: 1102118</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Docente:</strong> Óscar Javier Cardona Tovar</span>
+    <span><strong>Pasto, Nariño — Mayo 2026</strong></span>
+  </div>
+</div>
+
+<!-- INTRODUCCIÓN -->
+<div class="slide" id="s1">
+  <div class="ig">
+    <div>
+      <div class="tag tag-or a d1">Introducción</div>
+      <h2 class="a d2">Las pymes compran EPP sin saber si es el <em>correcto</em> para su riesgo</h2>
+      <div class="line a d3"></div>
+      <p class="a d4">En Colombia hay más de 1.8 millones de pymes. La mayoría de ellas tienen trabajadores expuestos a riesgos físicos, químicos o mecánicos que requieren elementos de protección personal (EPP) específicos. El problema es que la gran mayoría compra por precio, sin saber qué norma aplica a su sector ni si el producto que compra las protege ante una visita del Ministerio de Trabajo. ProtegePyme resuelve eso: vende EPP certificado con la asesoría normativa incluida en cada compra.</p>
+    </div>
+    <div class="sc-list">
+      <div class="sc a d2"><div class="n">1.8M</div><div class="l">Pymes en Colombia con al menos un trabajador en riesgo físico o mecánico</div></div>
+      <div class="sc a d3"><div class="n">68%</div><div class="l">De las pymes compran EPP genérico sin verificar si cumple la normativa del Ministerio de Trabajo</div></div>
+      <div class="sc a d4"><div class="n">$55M</div><div class="l">Promedio de multas que puede enfrentar una pyme por incumplimiento en uso de EPP (Decreto 1072/2015)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- IDEA DE NEGOCIO -->
+<div class="slide" id="s2">
+  <div class="tag tag-or a d1">Idea de Negocio Digital</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--white);letter-spacing:.03em" class="a d2">¿Qué hace ProtegePyme?</h2>
+  <div class="line a d3"></div>
+  <div class="g3">
+    <div class="gc a d2"><div class="ico">🛒</div><h4>Marketplace especializado</h4><p>Catálogo digital de EPP certificado organizado por sector económico: construcción, manufactura, minería, servicios, salud</p></div>
+    <div class="gc a d3"><div class="ico">⚖️</div><h4>Asesoría normativa incluida</h4><p>Cada producto muestra qué norma lo exige, para qué riesgo sirve y qué multa evita. Nunca más comprar el EPP equivocado</p></div>
+    <div class="gc a d4"><div class="ico">🏷️</div><h4>Precios competitivos</h4><p>Compra directa a fabricantes y distribuidores mayoristas. Sin intermediarios innecesarios. Precios de mercado mayorista para pymes</p></div>
+    <div class="gc a d3"><div class="ico">📦</div><h4>Entrega nacional</h4><p>Envío a domicilio en toda Colombia. Las pymes fuera de las grandes ciudades acceden al mismo catálogo y precios</p></div>
+    <div class="gc a d4"><div class="ico">📋</div><h4>Kit normativo por sector</h4><p>Paquetes preconfigurados de EPP por sector y número de trabajadores. En dos clics, la pyme sabe qué necesita</p></div>
+    <div class="gc a d5"><div class="ico">🤝</div><h4>Modelo B2B y B2C</h4><p>Atiende tanto al empresario directo como a las IPS y asesores SST que necesitan EPP para sus clientes corporativos</p></div>
+  </div>
+</div>
+
+<!-- IMPACTOS Y VENTAJAS -->
+<div class="slide" id="s3">
+  <div class="tag tag-nav a d1">Impactos y Ventajas</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--white);letter-spacing:.03em" class="a d2">Lo que ProtegePyme cambia en el mercado</h2>
+  <div class="line a d3"></div>
+  <div class="tc">
+    <div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px" class="a d2">Impactos en el mercado colombiano</p>
+      <div class="il">
+        <div class="ii a d3"><div class="id"></div><p>Reduce el riesgo de multas del MinTrabajo al garantizar que el EPP comprado cumple la norma exacta del sector</p></div>
+        <div class="ii a d3"><div class="id"></div><p>Abre el mercado de EPP a pymes de ciudades intermedias que hoy no tienen acceso a distribuidores especializados</p></div>
+        <div class="ii a d4"><div class="id"></div><p>Digitaliza un mercado que hoy opera casi completamente por llamadas telefónicas y visitas presenciales</p></div>
+        <div class="ii a d4"><div class="id"></div><p>Crea un canal de distribución nuevo para fabricantes de EPP que quieren llegar a clientes más pequeños</p></div>
+        <div class="ii a d5"><div class="id"></div><p>Educa al empresario: por primera vez entiende por qué usa cada elemento de protección y qué pasa si no lo usa</p></div>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px" class="a d2">Ventajas competitivas clave</p>
+      <div class="a d3"><div class="vc"><h4>🔑 Asesoría como diferenciador</h4><p>Ningún marketplace en Colombia vende EPP con asesoría normativa incluida. Eso hace que ProtegePyme no sea solo una tienda</p></div></div>
+      <div class="a d4"><div class="vc"><h4>📊 Datos del sector</h4><p>Con el tiempo, ProtegePyme acumula datos únicos sobre qué EPP compran las pymes por sector, que puede monetizarse con aseguradoras y ARL</p></div></div>
+      <div class="a d5"><div class="vc"><h4>🔄 Recompra natural</h4><p>El EPP tiene vida útil limitada y debe reemplazarse periódicamente. Eso genera recompra recurrente sin necesidad de volver a convencer al cliente</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIMITACIONES -->
+<div class="slide" id="s4">
+  <div class="tag tag-or a d1">Limitaciones — Con transparencia</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--white);letter-spacing:.03em" class="a d2">Los retos que hay que resolver</h2>
+  <div class="line a d3"></div>
+  <div class="lg2">
+    <div class="lc a d2"><div class="ln">01</div><h4>Logística en ciudades pequeñas</h4><p>Las pymes en municipios alejados pueden tener dificultades con los tiempos de entrega y los costos de envío, que pueden hacer el producto menos competitivo frente a proveedores locales aunque menos especializados.</p></div>
+    <div class="lc a d3"><div class="ln">02</div><h4>Gestión del inventario</h4><p>Un marketplace de EPP implica manejar decenas de categorías de productos con normativas distintas. La actualización constante del catálogo según cambios en la legislación requiere un equipo dedicado.</p></div>
+    <div class="lc a d4"><div class="ln">03</div><h4>Competencia con ferreterías locales</h4><p>Muchas pymes compran EPP en ferreterías de confianza. Cambiar ese hábito requiere demostrar que la diferencia en calidad y cumplimiento normativo vale el esfuerzo de comprar en línea.</p></div>
+    <div class="lc a d5"><div class="ln">04</div><h4>Certificaciones y calidad</h4><p>Garantizar que todos los productos del catálogo tienen las certificaciones ICONTEC o equivalentes requiere un proceso de verificación inicial costoso y un monitoreo continuo de los proveedores.</p></div>
+  </div>
+</div>
+
+<!-- PÚBLICO OBJETIVO -->
+<div class="slide" id="s5">
+  <div class="tag tag-nav a d1">Público Objetivo</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--white);letter-spacing:.03em" class="a d2">¿Quién compra en ProtegePyme?</h2>
+  <div class="line a d3"></div>
+  <div class="pg">
+    <div class="pb a d3">
+      <h4>🏭 Perfil del cliente objetivo</h4>
+      <ul>
+        <li>Pymes de 10 a 150 trabajadores en sectores de riesgo III-V</li>
+        <li>Sectores: construcción, metalmecánica, manufactura, minería</li>
+        <li>Responsable de compra: gerente, coordinador SST o jefe de planta</li>
+        <li>Historial: ha comprado EPP sin verificar norma o ha recibido multas</li>
+        <li>Ubicación: ciudades intermedias y grandes de Colombia</li>
+        <li>Comportamiento: busca precio + agilidad pero no sabe qué norma aplica</li>
+      </ul>
+    </div>
+    <div class="ps-list">
+      <div class="ps a d3"><span class="pl">Pymes con trabajadores en riesgo III-V</span><span class="pv">~280K</span></div>
+      <div class="ps a d4"><span class="pl">% que compran EPP sin asesoría normativa</span><span class="pv">68%</span></div>
+      <div class="ps a d4"><span class="pl">Gasto promedio anual en EPP por pyme</span><span class="pv">$4.2M</span></div>
+      <div class="ps a d5"><span class="pl">Multa mínima por incumplimiento en EPP</span><span class="pv">$55M</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- BUYER PERSONA -->
+<div class="slide" id="s6">
+  <div class="tag tag-or a d1">Buyer Persona</div>
+  <div class="persona a d2">
+    <div class="pav">
+      <div class="av">👷</div>
+      <div class="pn">Ricardo Palomino</div>
+      <div class="pr">Dueño de taller metalmecánico</div>
+      <div class="pdata">38 años · Cali, Valle<br>Casado, 2 hijos<br>Taller con 25 empleados<br>Riesgo ARL clase IV</div>
+    </div>
+    <div class="pdet">
+      <div class="pd"><h5>¿Qué hace?</h5><ul><li>Opera un taller de soldadura y corte</li><li>Compra insumos y EPP mensualmente</li><li>Gestiona ARL y seguridad del equipo</li><li>Ha recibido una multa del MinTrabajo</li></ul></div>
+      <div class="pd"><h5>¿Qué le preocupa?</h5><ul><li>Otra visita de inspección del Ministerio</li><li>Que algún empleado sufra un accidente</li><li>No saber si el casco que compra sirve</li><li>Gastar en EPP que no cumple norma</li></ul></div>
+      <div class="pd"><h5>¿Qué busca?</h5><ul><li>Saber exactamente qué EPP necesita</li><li>Precios justos y entrega rápida</li><li>Un proveedor que lo asesore de verdad</li><li>No volver a recibir una multa</li></ul></div>
+      <div class="pd"><h5>¿Qué lo frena?</h5><ul><li>Compra donde siempre lo ha hecho</li><li>Desconfía de compras online para esto</li><li>Cree que todo EPP es igual si es barato</li><li>No tiene tiempo de investigar normas</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<!-- LANDING PAGE -->
+<div class="slide" id="s7">
+  <div class="tag tag-or a d1" style="margin-bottom:6px">Maqueta Landing Page</div>
+  <div class="lf a d2">
+    <div class="lb">
+      <div class="ld" style="background:#FF5F57"></div>
+      <div class="ld" style="background:#FFBD2E"></div>
+      <div class="ld" style="background:#28CA42"></div>
+      <div class="lu">🔒 www.protegepyme.co</div>
+    </div>
+    <div class="lbody">
+      <div class="lhero">
+        <h1>EL EPP CORRECTO PARA SU SECTOR — CON LA NORMA INCLUIDA</h1>
+        <p>Compre elementos de protección personal certificados y sepa exactamente qué multa está evitando con cada compra.</p>
+        <button class="lcta">Ver EPP por mi sector →</button>
+      </div>
+      <div class="lsec">
+        <h2>¿Por qué no es lo mismo cualquier EPP?</h2>
+        <div class="lcards">
+          <div class="lcard"><div class="lcn">68%</div><p>De las pymes usan EPP que no cumple la norma exacta de su sector</p></div>
+          <div class="lcard"><div class="lcn">$55M</div><p>Multa mínima por incumplimiento en uso de EPP según Decreto 1072/2015</p></div>
+          <div class="lcard"><div class="lcn">2 días</div><p>Tiempo de entrega promedio en las principales ciudades de Colombia</p></div>
+        </div>
+      </div>
+      <div class="lform">
+        <h3>Encuentre el kit EPP de su sector en 30 segundos</h3>
+        <input class="li" placeholder="¿Cuál es su sector? (construcción, manufactura...)" readonly>
+        <input class="li" placeholder="¿Cuántos trabajadores tiene?" readonly>
+        <button class="ls">Ver mi kit EPP recomendado →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ATRACCIÓN -->
+<div class="slide" id="s8">
+  <div class="tag tag-or a d1">Embudo de Ventas — Etapa 1</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--white);letter-spacing:.03em" class="a d2">Atracción: llegar antes de que llegue la multa</h2>
+  <div class="line a d3"></div>
+  <div class="fs a d3">
+    <div class="fsh"><div class="fsb ba">1</div><div class="fst">Estrategia de Atracción</div></div>
+    <div class="fsa">
+      <div class="fai"><h5>🔍 SEO por sector</h5><p>Posicionar en Google «EPP para construcción Colombia», «elementos protección metalmecánica norma ICONTEC» y «kit SST pymes»</p></div>
+      <div class="fai"><h5>📹 YouTube educativo</h5><p>Videos cortos: «¿Qué EPP necesita su taller según el Ministerio de Trabajo?» — dirigidos al responsable de compra de cada sector</p></div>
+      <div class="fai"><h5>🤝 Alianza con IPS y asesores SST</h5><p>Las IPS y consultores de SST recomiendan ProtegePyme a sus clientes como proveedor de EPP certificado compatible con sus programas</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- INTERACCIÓN Y CONVERSIÓN -->
+<div class="slide" id="s9">
+  <div class="tag tag-nav a d1">Embudo de Ventas — Etapas 2 y 3</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--white);letter-spacing:.03em" class="a d2">Interacción y Conversión</h2>
+  <div class="line a d3"></div>
+  <div class="fs a d3" style="margin-bottom:13px">
+    <div class="fsh"><div class="fsb bi">2</div><div class="fst">Interacción — Del interés a la confianza</div></div>
+    <div class="fsa">
+      <div class="fai"><h5>🔍 Calculadora de riesgo EPP</h5><p>Herramienta gratuita que en 3 preguntas identifica qué EPP necesita la empresa y cuánto arriesga si no lo tiene</p></div>
+      <div class="fai"><h5>📄 Guía normativa gratuita</h5><p>«Todo lo que su empresa necesita saber sobre EPP según el Decreto 1072 de 2015» — descargable sin registro</p></div>
+      <div class="fai"><h5>💬 Asesor en línea</h5><p>Chat en vivo con un especialista en SST que resuelve dudas sobre qué EPP aplica a cada situación laboral específica</p></div>
+    </div>
+  </div>
+  <div class="fs a d4">
+    <div class="fsh"><div class="fsb bc">3</div><div class="fst">Conversión — De visitante a comprador</div></div>
+    <div class="fsa">
+      <div class="fai"><h5>🎁 Primera compra con descuento</h5><p>10% de descuento en el primer pedido y envío gratis para pedidos mayores a $500.000 — sin condiciones adicionales</p></div>
+      <div class="fai"><h5>📋 Kit normativo recomendado</h5><p>El sistema sugiere automáticamente el kit completo de EPP según el sector y número de trabajadores ingresados</p></div>
+      <div class="fai"><h5>✅ Garantía de cumplimiento</h5><p>«Si compra aquí y el MinTrabajo le objeta algún producto, le devolvemos el dinero» — argumento de cierre diferenciador</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- FIDELIZACIÓN -->
+<div class="slide" id="s10">
+  <div class="tag tag-or a d1">Embudo de Ventas — Etapa 4</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--white);letter-spacing:.03em" class="a d2">Fidelización: que vuelvan antes de que se los acaben</h2>
+  <div class="line a d3"></div>
+  <div class="fs a d3">
+    <div class="fsh"><div class="fsb bf">4</div><div class="fst">Estrategia de Fidelización</div></div>
+    <div class="fsa">
+      <div class="fai"><h5>📅 Alertas de renovación</h5><p>El sistema recuerda automáticamente cuándo vence la vida útil de cada EPP comprado y envía una cotización de reposición</p></div>
+      <div class="fai"><h5>📊 Panel de cumplimiento</h5><p>Cada empresa cliente tiene un dashboard que muestra qué EPP tiene vigente, cuál necesita renovar y qué normativa cumple actualmente</p></div>
+      <div class="fai"><h5>💳 Cuenta empresarial con crédito</h5><p>Clientes frecuentes acceden a crédito a 30 días para sus compras de EPP, sin trámites bancarios complicados</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMBUDO VISUAL -->
+<div class="slide" id="s11">
+  <div class="tag tag-nav a d1" style="display:block;text-align:center">Embudo de Ventas — Visión Completa</div>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--white);text-align:center;letter-spacing:.03em;margin-bottom:20px" class="a d2">Las 4 etapas del recorrido del cliente en ProtegePyme</h2>
+  <div style="display:flex;justify-content:center" class="a d3">
+    <div class="fv">
+      <div class="fvs"><div class="fvl">🔴 ATRACCIÓN</div><div class="fvsub">SEO · YouTube · Alianzas IPS</div><div class="fvtt"><p>Contenido educativo sobre normativa EPP que llega al gerente o coordinador SST justo cuando busca solucionar un problema</p></div></div>
+      <div class="fvs"><div class="fvl">🟡 INTERACCIÓN</div><div class="fvsub">Calculadora · Guía · Asesor online</div><div class="fvtt"><p>El cliente prueba la calculadora gratuita, descarga la guía y consulta con el asesor. Confianza antes del primer peso</p></div></div>
+      <div class="fvs"><div class="fvl">🔵 CONVERSIÓN</div><div class="fvsub">Descuento · Kit recomendado · Garantía</div><div class="fvtt"><p>El kit preconfigurado y la garantía de cumplimiento eliminan las dudas finales. El pedido se hace en menos de 5 minutos</p></div></div>
+      <div class="fvs"><div class="fvl">🟣 FIDELIZACIÓN</div><div class="fvsub">Alertas · Panel · Crédito</div><div class="fvtt"><p>La empresa no necesita recordar cuándo renovar. ProtegePyme lo recuerda por ella y tiene el crédito listo para la recompra</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CIERRE -->
+<div class="slide" id="s12">
+  <div class="tag tag-or a d1" style="display:inline-block">Cierre</div>
+  <div class="ct a d2">Comprar EPP sin saber la norma es como <em>comprar un seguro que no cubre nada</em></div>
+  <p class="cs a d3">ProtegePyme no es una ferretería online. Es el primer marketplace de Colombia donde cada compra viene acompañada de la certeza de que lo que se compra cumple exactamente con lo que la ley exige. Eso cambia todo para las pymes que han vivido la angustia de una visita de inspección.</p>
+  <div class="a d4"><span class="cbtn">www.protegepyme.co → Ver mi kit EPP</span></div>
+</div>
+
+<!-- BIBLIOGRAFÍA -->
+<div class="slide" id="s13">
+  <div class="tag tag-nav a d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="rl">
+    <li class="a d2">Carrasco Barea, P. (Ed.). (2019). <em>Inbound marketing como filosofía de atracción al nuevo usuario digital y engagement. Un estudio de caso de éxito: Netflix</em> (pp. 5-17). [Trabajo de grado, Universidad de Sevilla]. Repositorio Universidad de Sevilla. https://idus.us.es/handle/11441/93413</li>
+    <li class="a d3">Coll Rubio, P., & Micó Sanz, J. L. (Eds.). (2019). <em>Marketing y comunicación en la nueva economía</em> (pp. 125-185). Ecoe Ediciones.</li>
+    <li class="a d3">Durán Flores, R. M. (Ed.). (2018). <em>El inbound marketing y la importancia del marketing de contenidos</em> (pp. 9-19). [Trabajo de grado, Universidad de Sevilla]. Repositorio Universidad de Sevilla. https://idus.us.es/handle/11441/88357</li>
+    <li class="a d4">Gómez, B. (2018). El influencer: herramienta clave en el contexto digital de la publicidad engañosa. <em>Methaodos, 6</em>(1), 149-156. https://www.redalyc.org/journal/4415/441556240010/html/</li>
+    <li class="a d4">Aljohani, H. (2020). A review of research on inbound marketing. <em>Journal for Research on Business and Social Science, 3</em>(4), 1-8. http://www.jrbssonline.com/wp-content/uploads/2021/05/Volume3Issue4Paper1.pdf</li>
+    <li class="a d5">Ministerio de Trabajo de Colombia. (2015). <em>Decreto 1072 de 2015: Decreto Único Reglamentario del Sector Trabajo</em>. Diario Oficial 49523.</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){slides[cur].classList.remove('active');slides[cur].classList.add('exit');setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),650);cur=((n%total)+total)%total;slides[cur].classList.add('active');document.getElementById('prog').style.width=((cur+1)/total*100)+'%';document.getElementById('snum').textContent=(cur+1)+' / '+total;}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}});
+let tx=0;document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>

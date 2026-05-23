@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiesgoCalc — Presentación Interactiva</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2B45;
+  --teal:#1A6B8A;
+  --gold:#C8952A;
+  --gold-light:#F0C060;
+  --cream:#F5F0E8;
+  --white:#FFFFFF;
+  --dark:#0A1628;
+  --muted:#8BA0B0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'DM Sans',sans-serif;}
+
+/* SLIDES */
+.deck{width:100%;height:100vh;position:relative;}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .6s ease,transform .6s ease;
+  transform:translateX(60px);
+  overflow:hidden;
+}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.slide.exit{opacity:0;transform:translateX(-60px);}
+
+/* PROGRESS */
+#prog-bar{position:fixed;top:0;left:0;height:3px;background:var(--gold);transition:width .4s ease;z-index:100;}
+#slide-num{position:fixed;bottom:24px;right:28px;font-size:12px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+
+/* NAV */
+.nav-btn{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:44px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.05);
+  color:var(--white);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;z-index:100;backdrop-filter:blur(8px);
+}
+.nav-btn:hover{background:rgba(200,149,42,.25);border-color:var(--gold);}
+#prev{left:16px;}#next{right:16px;}
+
+/* SECTION TAG */
+.tag{
+  display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  padding:4px 14px;border-radius:20px;font-weight:600;margin-bottom:16px;
+}
+.tag-gold{background:rgba(200,149,42,.15);color:var(--gold-light);}
+.tag-teal{background:rgba(26,107,138,.25);color:#7DD3E8;}
+
+/* HELPERS */
+.accent-line{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:12px 0 20px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+.slide.active .anim{animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) both;}
+.slide.active .d1{animation-delay:.1s;}
+.slide.active .d2{animation-delay:.25s;}
+.slide.active .d3{animation-delay:.4s;}
+.slide.active .d4{animation-delay:.55s;}
+.slide.active .d5{animation-delay:.7s;}
+.slide.active .d6{animation-delay:.85s;}
+
+/* ── SLIDE 0: PORTADA ── */
+#s0{background:var(--navy);justify-content:center;align-items:flex-start;padding:80px 100px;}
+#s0::before{content:'';position:absolute;right:-80px;top:-80px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(200,149,42,.12),transparent 65%);}
+#s0::after{content:'';position:absolute;left:0;bottom:0;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(26,107,138,.15),transparent 65%);}
+.s0-kicker{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:24px;}
+.s0-title{font-family:'Playfair Display',serif;font-size:clamp(52px,7vw,88px);font-weight:900;color:var(--white);line-height:1;margin-bottom:8px;}
+.s0-title span{color:var(--gold);}
+.s0-sub{font-size:18px;color:var(--muted);margin-bottom:48px;max-width:520px;line-height:1.6;}
+.s0-meta{display:flex;flex-direction:column;gap:6px;}
+.s0-meta span{font-size:13px;color:rgba(255,255,255,.5);}
+.s0-meta strong{color:rgba(255,255,255,.85);}
+.s0-badge{
+  position:absolute;right:100px;top:50%;transform:translateY(-50%);
+  width:180px;height:180px;border-radius:50%;
+  background:var(--gold);display:flex;align-items:center;justify-content:center;
+  flex-direction:column;text-align:center;
+}
+.s0-badge .big{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:var(--navy);line-height:1;}
+.s0-badge .small{font-size:11px;color:rgba(13,43,69,.7);font-weight:600;letter-spacing:.05em;}
+
+/* ── SLIDE 1: INTRODUCCIÓN ── */
+#s1{background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;}
+.s1-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;width:100%;}
+.s1-left h2{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);color:var(--white);line-height:1.15;margin-bottom:20px;}
+.s1-left h2 em{color:var(--gold);font-style:normal;}
+.s1-left p{font-size:15px;color:var(--muted);line-height:1.75;max-width:440px;}
+.s1-stats{display:flex;flex-direction:column;gap:16px;}
+.stat-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:20px 24px;
+}
+.stat-card .num{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;color:var(--gold);line-height:1;}
+.stat-card .lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* ── SLIDE 2: IDEA DE NEGOCIO ── */
+#s2{background:var(--navy);padding:60px 100px;justify-content:center;}
+.s2-title{font-family:'Playfair Display',serif;font-size:clamp(28px,3.5vw,44px);color:var(--white);margin-bottom:8px;}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px;}
+.feat-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:24px 20px;
+  transition:transform .2s,border-color .2s;
+}
+.feat-card:hover{transform:translateY(-4px);border-color:var(--gold);}
+.feat-icon{font-size:28px;margin-bottom:12px;}
+.feat-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:8px;}
+.feat-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* ── SLIDE 3: IMPACTOS Y VENTAJAS ── */
+#s3{background:var(--dark);padding:60px 100px;justify-content:center;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-top:32px;}
+.impact-list{display:flex;flex-direction:column;gap:14px;}
+.impact-item{display:flex;gap:14px;align-items:flex-start;}
+.impact-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;}
+.impact-text{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.ventaja-card{background:linear-gradient(135deg,var(--teal),#0D5A78);border-radius:14px;padding:20px;margin-bottom:12px;}
+.ventaja-card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.ventaja-card p{font-size:12px;color:rgba(255,255,255,.65);line-height:1.5;}
+
+/* ── SLIDE 4: LIMITACIONES ── */
+#s4{background:var(--navy);padding:60px 100px;justify-content:center;}
+.limit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:32px;}
+.limit-card{
+  border:1px solid rgba(200,149,42,.3);border-radius:12px;padding:20px 22px;
+  background:rgba(200,149,42,.05);
+}
+.limit-num{font-family:'Playfair Display',serif;font-size:36px;color:rgba(200,149,42,.3);font-weight:900;line-height:1;margin-bottom:8px;}
+.limit-title{font-size:13px;font-weight:700;color:var(--gold-light);margin-bottom:6px;}
+.limit-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* ── SLIDE 5: PÚBLICO OBJETIVO ── */
+#s5{background:var(--dark);padding:60px 100px;justify-content:center;}
+.pub-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:28px;}
+.pub-segment{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:24px;}
+.pub-segment h4{font-size:14px;font-weight:700;color:var(--white);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.pub-segment ul{list-style:none;}
+.pub-segment ul li{font-size:12px;color:var(--muted);padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);line-height:1.5;}
+.pub-segment ul li:last-child{border-bottom:none;}
+.pub-right{display:flex;flex-direction:column;gap:12px;}
+.pub-stat{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(200,149,42,.08);border-radius:8px;}
+.pub-stat .label{font-size:12px;color:var(--muted);}
+.pub-stat .val{font-size:16px;font-weight:700;color:var(--gold);}
+
+/* ── SLIDE 6: BUYER PERSONA ── */
+#s6{background:var(--navy);padding:60px 100px;justify-content:center;}
+.persona-card{
+  display:grid;grid-template-columns:220px 1fr;gap:40px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:36px;margin-top:24px;
+}
+.persona-avatar{text-align:center;}
+.avatar-circle{
+  width:120px;height:120px;border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),var(--navy));
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;margin:0 auto 16px;border:3px solid var(--gold);
+}
+.persona-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);font-weight:700;}
+.persona-role{font-size:12px;color:var(--gold);margin-top:4px;}
+.persona-details{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pd-block h5{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-weight:600;}
+.pd-block ul{list-style:none;}
+.pd-block ul li{font-size:12px;color:var(--muted);padding:3px 0;line-height:1.5;}
+.pd-block ul li::before{content:'→ ';color:var(--gold);font-size:10px;}
+
+/* ── SLIDE 7: LANDING PAGE ── */
+#s7{background:var(--dark);padding:40px 80px;justify-content:center;}
+.lp-frame{
+  border:1.5px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;
+  height:calc(100vh - 120px);display:flex;flex-direction:column;
+  background:#fff;
+}
+.lp-bar{background:#F0F0F0;padding:8px 14px;display:flex;align-items:center;gap:8px;}
+.lp-dot{width:10px;height:10px;border-radius:50%;}
+.lp-url{flex:1;background:#fff;border-radius:4px;padding:3px 10px;font-size:10px;color:#666;margin:0 12px;}
+.lp-body{flex:1;overflow-y:auto;font-family:'DM Sans',sans-serif;}
+.lp-hero{background:linear-gradient(135deg,#0D2B45,#1A6B8A);padding:40px 48px;color:#fff;text-align:center;}
+.lp-hero h1{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;margin-bottom:10px;}
+.lp-hero p{font-size:13px;opacity:.8;max-width:420px;margin:0 auto 24px;}
+.lp-cta-btn{background:#C8952A;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
+.lp-section{padding:28px 48px;}
+.lp-section h2{font-size:18px;font-weight:700;color:#0D2B45;margin-bottom:16px;}
+.lp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.lp-card{background:#F8FBFF;border:1px solid #D6EAF4;border-radius:10px;padding:16px;text-align:center;}
+.lp-card .lc-num{font-size:24px;font-weight:900;color:#1A6B8A;}
+.lp-card p{font-size:11px;color:#666;margin-top:4px;}
+.lp-form-section{background:#F8F9FA;padding:24px 48px;border-top:1px solid #eee;}
+.lp-form-section h3{font-size:15px;font-weight:700;color:#0D2B45;margin-bottom:12px;}
+.lp-input{width:100%;padding:9px 14px;border:1px solid #D0D5DD;border-radius:7px;font-size:13px;margin-bottom:8px;}
+.lp-submit{width:100%;background:#C8952A;color:#fff;border:none;padding:11px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* ── SLIDE 8-10: EMBUDO ── */
+#s8,#s9,#s10{background:var(--dark);padding:60px 100px;justify-content:center;}
+.funnel-stage{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:28px 32px;margin-top:24px;
+}
+.stage-header{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+.stage-badge{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;font-family:'Playfair Display',serif;
+  flex-shrink:0;
+}
+.b-atrac{background:linear-gradient(135deg,#2D9CDB,#1A6B8A);color:#fff;}
+.b-inter{background:linear-gradient(135deg,#27AE60,#1A8A4A);color:#fff;}
+.b-conv{background:linear-gradient(135deg,var(--gold),#A07020);color:#fff;}
+.b-fidel{background:linear-gradient(135deg,#9B59B6,#7D3C98);color:#fff;}
+.stage-title{font-size:20px;font-weight:700;color:var(--white);}
+.stage-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.action-item{
+  background:rgba(255,255,255,.06);border-radius:10px;padding:14px 16px;
+  border-left:3px solid var(--gold);
+}
+.action-item h5{font-size:12px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.action-item p{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* ── SLIDE 11: EMBUDO VISUAL ── */
+#s11{background:var(--navy);padding:60px 100px;justify-content:center;align-items:center;}
+.funnel-visual{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;max-width:600px;}
+.fv-stage{
+  width:100%;padding:18px 24px;text-align:center;cursor:pointer;
+  transition:all .25s;position:relative;color:var(--white);font-weight:700;
+  clip-path:polygon(5% 0%, 95% 0%, 100% 100%, 0% 100%);
+}
+.fv-stage:nth-child(1){background:linear-gradient(90deg,#2D9CDB,#1A6B8A);clip-path:polygon(0% 0%,100% 0%,97% 100%,3% 100%);}
+.fv-stage:nth-child(2){background:linear-gradient(90deg,#27AE60,#1A8A4A);clip-path:polygon(3% 0%,97% 0%,94% 100%,6% 100%);margin-top:-2px;}
+.fv-stage:nth-child(3){background:linear-gradient(90deg,#C8952A,#A07020);clip-path:polygon(6% 0%,94% 0%,90% 100%,10% 100%);margin-top:-2px;}
+.fv-stage:nth-child(4){background:linear-gradient(90deg,#9B59B6,#7D3C98);clip-path:polygon(10% 0%,90% 0%,85% 100%,15% 100%);margin-top:-2px;}
+.fv-stage:hover{filter:brightness(1.15);}
+.fv-label{font-size:15px;font-weight:700;}
+.fv-sub{font-size:11px;opacity:.8;margin-top:2px;}
+.fv-tooltip{
+  position:absolute;left:calc(100% + 16px);top:50%;transform:translateY(-50%);
+  background:var(--dark);border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:14px 18px;width:220px;
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;
+}
+.fv-stage:hover .fv-tooltip{opacity:1;}
+.fv-tooltip p{font-size:11px;color:var(--muted);line-height:1.6;font-weight:400;}
+
+/* ── SLIDE 12: CIERRE ── */
+#s12{background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;}
+.cierre-title{font-family:'Playfair Display',serif;font-size:clamp(36px,5vw,64px);color:var(--white);font-weight:900;max-width:700px;margin:0 auto 20px;}
+.cierre-title em{color:var(--gold);font-style:normal;}
+.cierre-sub{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto 40px;line-height:1.7;}
+.cierre-btn{
+  display:inline-block;background:var(--gold);color:var(--navy);
+  padding:14px 40px;border-radius:8px;font-weight:700;font-size:15px;
+  text-decoration:none;cursor:pointer;transition:all .2s;
+}
+.cierre-btn:hover{background:var(--gold-light);transform:translateY(-2px);}
+
+/* ── SLIDE 13: BIBLIOGRAFÍA ── */
+#s13{background:var(--navy);padding:60px 100px;justify-content:flex-start;overflow-y:auto;}
+.ref-list{list-style:none;margin-top:24px;display:flex;flex-direction:column;gap:14px;}
+.ref-list li{
+  font-size:12.5px;color:var(--muted);line-height:1.75;
+  padding-left:24px;text-indent:-24px;
+  border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:12px;
+}
+.ref-list li em{color:rgba(255,255,255,.6);}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .s1-grid,.two-col,.features-grid,.limit-grid,.persona-details,.stage-actions{grid-template-columns:1fr;}
+  .persona-card{grid-template-columns:1fr;}
+  #s0{padding:60px 40px;}
+}
+</style>
+</head>
+<body>
+<div id="prog-bar" style="width:0%"></div>
+<div id="slide-num">1 / 14</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+
+<div class="deck">
+
+<!-- SLIDE 0: PORTADA -->
+<div class="slide active" id="s0">
+  <div class="s0-kicker anim d1">Electiva Marketing Digital · UNIMINUTO · 2026</div>
+  <div class="s0-title anim d2">Riesgo<span>Calc</span></div>
+  <p class="s0-sub anim d3">Un simulador digital que le muestra a cada empresa cuánto le cuesta no tener salud ocupacional — antes de que decida contratar.</p>
+  <div class="s0-meta anim d4">
+    <span><strong>Presentado por:</strong> Óscar Andrés Bastidas Bolaños — ID: 370618</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Docente:</strong> Óscar Javier Cardona Tovar</span>
+    <span><strong>Pasto, Nariño — Mayo 2026</strong></span>
+  </div>
+  <div class="s0-badge anim d5">
+    <span class="big">SaaS</span>
+    <span class="small">Negocio Digital</span>
+  </div>
+</div>
+
+<!-- SLIDE 1: INTRODUCCIÓN -->
+<div class="slide" id="s1">
+  <div class="s1-grid">
+    <div class="s1-left">
+      <div class="tag tag-gold anim d1">Introducción</div>
+      <h2 class="anim d2">El problema que nadie está resolviendo <em>bien</em></h2>
+      <div class="accent-line anim d3"></div>
+      <p class="anim d4">En Colombia, más de 600.000 trabajadores sufren accidentes laborales cada año. Las empresas saben que deben tener salud ocupacional, pero no contratan porque no ven el costo de no tenerla. RiesgoCalc cambia esa conversación: en tres minutos, cualquier gerente puede ver en números concretos cuánto le cuesta el riesgo que ya tiene.</p>
+    </div>
+    <div class="s1-stats">
+      <div class="stat-card anim d2">
+        <div class="num">+600K</div>
+        <div class="lbl">Accidentes laborales en Colombia por año (MinTrabajo, 2023)</div>
+      </div>
+      <div class="stat-card anim d3">
+        <div class="num">$3B+</div>
+        <div class="lbl">En pérdidas anuales por incidentes laborales en el país</div>
+      </div>
+      <div class="stat-card anim d4">
+        <div class="num">~20%</div>
+        <div class="lbl">Tasa de cierre comercial actual sin herramienta de diagnóstico</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: IDEA DE NEGOCIO -->
+<div class="slide" id="s2">
+  <div class="tag tag-gold anim d1">Idea de Negocio Digital</div>
+  <div class="s2-title anim d2">¿Qué es RiesgoCalc?</div>
+  <div class="accent-line anim d3"></div>
+  <div class="features-grid">
+    <div class="feat-card anim d2">
+      <div class="feat-icon">🖥️</div>
+      <div class="feat-title">Plataforma web SaaS</div>
+      <div class="feat-desc">Accesible desde cualquier dispositivo sin instalación. El asesor comercial lo usa en la reunión con el cliente.</div>
+    </div>
+    <div class="feat-card anim d3">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Diagnóstico en 3 minutos</div>
+      <div class="feat-desc">El asesor ingresa datos básicos de la empresa y el sistema genera automáticamente el reporte de riesgo en pesos colombianos.</div>
+    </div>
+    <div class="feat-card anim d4">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">5 indicadores clave</div>
+      <div class="feat-desc">CAA, ILI, CMN, CTNSO y ROI del servicio. Cada uno calculado con fórmulas basadas en la Resolución 0312 de 2019.</div>
+    </div>
+    <div class="feat-card anim d3">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-title">Propuesta personalizada</div>
+      <div class="feat-desc">El reporte se adapta al sector, tamaño y riesgo de cada empresa. No más propuestas genéricas en PDF.</div>
+    </div>
+    <div class="feat-card anim d4">
+      <div class="feat-icon">🔒</div>
+      <div class="feat-title">Cumplimiento normativo</div>
+      <div class="feat-desc">Usa las multas reales del Decreto 1072 de 2015 y la Resolución 0312 de 2019 como base de cálculo.</div>
+    </div>
+    <div class="feat-card anim d5">
+      <div class="feat-icon">💡</div>
+      <div class="feat-title">Modelo de suscripción</div>
+      <div class="feat-desc">Las IPS y asesores pagan una suscripción mensual por acceso ilimitado al simulador y sus reportes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: IMPACTOS Y VENTAJAS -->
+<div class="slide" id="s3">
+  <div class="tag tag-teal anim d1">Impactos y Ventajas</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:var(--white)" class="anim d2">Lo que cambia cuando se usa RiesgoCalc</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="two-col">
+    <div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px" class="anim d2">Impactos en el mercado</p>
+      <div class="impact-list">
+        <div class="impact-item anim d3"><div class="impact-dot"></div><div class="impact-text">Cambia la conversación de ventas: de «¿cuánto cobra?» a «¿cuánto pierde si no contrata?»</div></div>
+        <div class="impact-item anim d3"><div class="impact-dot"></div><div class="impact-text">Educa al mercado: los gerentes entienden el riesgo financiero de no tener SST</div></div>
+        <div class="impact-item anim d4"><div class="impact-dot"></div><div class="impact-text">Reduce el ciclo de venta de 60-90 días a 35-55 días en promedio</div></div>
+        <div class="impact-item anim d4"><div class="impact-dot"></div><div class="impact-text">Mejora la tasa de cierre del 20% al 35% en el primer semestre de uso</div></div>
+        <div class="impact-item anim d5"><div class="impact-dot"></div><div class="impact-text">Posiciona a las IPS que lo usan como consultoras, no solo como proveedoras de exámenes</div></div>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px" class="anim d2">Ventajas competitivas</p>
+      <div class="anim d3"><div class="ventaja-card"><h4>🏆 Diferenciación real</h4><p>Ninguna otra IPS en Colombia ofrece un simulador de diagnóstico personalizado en la visita comercial</p></div></div>
+      <div class="anim d4"><div class="ventaja-card"><h4>📈 Escalable</h4><p>Un solo desarrollo sirve para múltiples IPS y asesores en todo el país con costo marginal casi cero</p></div></div>
+      <div class="anim d5"><div class="ventaja-card"><h4>🔄 Ingresos recurrentes</h4><p>El modelo SaaS genera facturación mensual predecible y creciente sin depender de ventas únicas</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: LIMITACIONES -->
+<div class="slide" id="s4">
+  <div class="tag tag-gold anim d1">Limitaciones — Ser honestos importa</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:var(--white)" class="anim d2">Los retos que hay que superar</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="limit-grid">
+    <div class="limit-card anim d2">
+      <div class="limit-num">01</div>
+      <div class="limit-title">Adopción tecnológica del cliente</div>
+      <div class="limit-desc">Muchas empresas pequeñas no están familiarizadas con herramientas digitales. La resistencia al cambio puede hacer más lento el proceso de adopción inicial.</div>
+    </div>
+    <div class="limit-card anim d3">
+      <div class="limit-num">02</div>
+      <div class="limit-title">Dependencia de datos del cliente</div>
+      <div class="limit-desc">El simulador solo funciona bien si el cliente tiene datos de accidentalidad disponibles. Empresas sin registros históricos limitan la precisión del diagnóstico.</div>
+    </div>
+    <div class="limit-card anim d4">
+      <div class="limit-num">03</div>
+      <div class="limit-title">Facilidad de imitación</div>
+      <div class="limit-desc">Un competidor con recursos puede replicar la herramienta. La ventaja sostenible depende de quién la implemente mejor, no de la herramienta en sí.</div>
+    </div>
+    <div class="limit-card anim d5">
+      <div class="limit-num">04</div>
+      <div class="limit-title">Regulación normativa cambiante</div>
+      <div class="limit-desc">Las multas y fórmulas del simulador deben actualizarse cada vez que el Ministerio de Trabajo modifique la normativa vigente. Requiere mantenimiento constante.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: PÚBLICO OBJETIVO -->
+<div class="slide" id="s5">
+  <div class="tag tag-teal anim d1">Público Objetivo</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:var(--white)" class="anim d2">¿A quiénes les habla RiesgoCalc?</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="pub-grid">
+    <div class="pub-segment anim d3">
+      <h4>🏢 Empresas cliente objetivo</h4>
+      <ul>
+        <li>Pymes colombianas de 20 a 200 trabajadores</li>
+        <li>Sectores: construcción, manufactura, logística, servicios</li>
+        <li>Tienen SG-SST incompleto o desactualizado</li>
+        <li>Responsable de la decisión: gerente, director RRHH o coord. SST</li>
+        <li>Ubicadas en ciudades con IPS activas (44+ ciudades)</li>
+        <li>Han tenido al menos un accidente en el último año</li>
+      </ul>
+    </div>
+    <div class="pub-right">
+      <div class="pub-stat anim d3">
+        <span class="label">Empresas con riesgo III-V en Colombia</span>
+        <span class="val">~280.000</span>
+      </div>
+      <div class="pub-stat anim d4">
+        <span class="label">% sin SG-SST completo (pymes)</span>
+        <span class="val">68%</span>
+      </div>
+      <div class="pub-stat anim d4">
+        <span class="label">Costo promedio CTNSO por empresa</span>
+        <span class="val">$88M/año</span>
+      </div>
+      <div class="pub-stat anim d5">
+        <span class="label">ROI del servicio para el cliente</span>
+        <span class="val">514%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: BUYER PERSONA -->
+<div class="slide" id="s6">
+  <div class="tag tag-gold anim d1">Buyer Persona</div>
+  <div class="persona-card anim d2">
+    <div class="persona-avatar">
+      <div class="avatar-circle">👨‍💼</div>
+      <div class="persona-name">Carlos Mendoza</div>
+      <div class="persona-role">Director de Recursos Humanos</div>
+      <br>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">42 años · Bogotá<br>Casado, 2 hijos<br>Empresa de construcción<br>150 trabajadores</div>
+    </div>
+    <div class="persona-details">
+      <div class="pd-block">
+        <h5>¿Qué hace?</h5>
+        <ul>
+          <li>Gestiona el personal operativo</li>
+          <li>Reporta cumplimiento al gerente general</li>
+          <li>Coordina ARL y afiliaciones</li>
+          <li>Maneja procesos disciplinarios</li>
+        </ul>
+      </div>
+      <div class="pd-block">
+        <h5>¿Qué le preocupa?</h5>
+        <ul>
+          <li>Las multas del Ministerio de Trabajo</li>
+          <li>Los accidentes en obra que se repiten</li>
+          <li>No tener los exámenes médicos al día</li>
+          <li>Justificar el gasto en SST ante su jefe</li>
+        </ul>
+      </div>
+      <div class="pd-block">
+        <h5>¿Qué busca?</h5>
+        <ul>
+          <li>Una solución que le ahorre tiempo</li>
+          <li>Cumplir sin gastar más de lo necesario</li>
+          <li>Datos que le ayuden a convencer a su jefe</li>
+          <li>Un proveedor que lo asesore de verdad</li>
+        </ul>
+      </div>
+      <div class="pd-block">
+        <h5>¿Qué lo frena?</h5>
+        <ul>
+          <li>No sabe cuánto le cuesta el riesgo actual</li>
+          <li>Cree que el SST es un gasto, no una inversión</li>
+          <li>Ha tenido malas experiencias con proveedores</li>
+          <li>No tiene tiempo para evaluar opciones</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: LANDING PAGE -->
+<div class="slide" id="s7">
+  <div class="tag tag-teal anim d1" style="margin-bottom:8px">Maqueta Landing Page</div>
+  <div class="lp-frame anim d2">
+    <div class="lp-bar">
+      <div class="lp-dot" style="background:#FF5F57"></div>
+      <div class="lp-dot" style="background:#FFBD2E"></div>
+      <div class="lp-dot" style="background:#28CA42"></div>
+      <div class="lp-url">🔒 www.riesgocalc.co</div>
+    </div>
+    <div class="lp-body">
+      <div class="lp-hero">
+        <h1>¿Cuánto le cuesta no tener salud ocupacional?</h1>
+        <p>Descúbralo en 3 minutos con el simulador gratuito que ya usan más de 200 empresas colombianas</p>
+        <button class="lp-cta-btn">Calcular mi riesgo gratis →</button>
+      </div>
+      <div class="lp-section">
+        <h2>Lo que el simulador calcula para su empresa</h2>
+        <div class="lp-cards">
+          <div class="lp-card"><div class="lc-num">$88M</div><p>Costo promedio anual de no tener SST para una pyme</p></div>
+          <div class="lp-card"><div class="lc-num">514%</div><p>ROI promedio del servicio de salud ocupacional contratado</p></div>
+          <div class="lp-card"><div class="lc-num">3 min</div><p>Tiempo que tarda el diagnóstico personalizado de su empresa</p></div>
+        </div>
+      </div>
+      <div class="lp-form-section">
+        <h3>Haga el diagnóstico ahora — es gratuito</h3>
+        <input class="lp-input" placeholder="Nombre de la empresa" readonly>
+        <input class="lp-input" placeholder="Sector económico" readonly>
+        <input class="lp-input" placeholder="Número de trabajadores" readonly>
+        <button class="lp-submit">Calcular mi riesgo →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: EMBUDO ATRACCIÓN -->
+<div class="slide" id="s8">
+  <div class="tag tag-gold anim d1">Embudo de Ventas — Etapa 1</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:var(--white)" class="anim d2">Atracción: que nos encuentren primero</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="funnel-stage anim d3">
+    <div class="stage-header">
+      <div class="stage-badge b-atrac">1</div>
+      <div class="stage-title">Estrategia de Atracción</div>
+    </div>
+    <div class="stage-actions">
+      <div class="action-item"><h5>📝 Blog educativo</h5><p>Artículos semanales sobre accidentalidad por sector, multas del MinTrabajo y cómo prepararse para una visita de inspección</p></div>
+      <div class="action-item"><h5>🔍 SEO estratégico</h5><p>Posicionar en Google términos como «salud ocupacional pymes Colombia», «multas SST 2025» y «simulador riesgos laborales»</p></div>
+      <div class="action-item"><h5>📱 Redes sociales</h5><p>LinkedIn e Instagram con estadísticas de accidentalidad por industria, infografías del Decreto 1072 y casos de éxito de empresas</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: INTERACCIÓN Y CONVERSIÓN -->
+<div class="slide" id="s9">
+  <div class="tag tag-teal anim d1">Embudo de Ventas — Etapas 2 y 3</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:32px;color:var(--white)" class="anim d2">Interacción y Conversión</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="funnel-stage anim d3" style="margin-bottom:16px">
+    <div class="stage-header">
+      <div class="stage-badge b-inter">2</div>
+      <div class="stage-title">Interacción — Que se queden y exploren</div>
+    </div>
+    <div class="stage-actions">
+      <div class="action-item"><h5>🎯 Calculadora gratuita</h5><p>El simulador de diagnóstico gratuito en la landing page activa el interés sin fricción</p></div>
+      <div class="action-item"><h5>📧 Lead magnet</h5><p>«Guía gratuita: 5 multas que su empresa podría estar arriesgando ahora mismo»</p></div>
+      <div class="action-item"><h5>💬 Chat en línea</h5><p>WhatsApp Business para responder preguntas inmediatas y agendar la visita comercial</p></div>
+    </div>
+  </div>
+  <div class="funnel-stage anim d4">
+    <div class="stage-header">
+      <div class="stage-badge b-conv">3</div>
+      <div class="stage-title">Conversión — Que firmen el contrato</div>
+    </div>
+    <div class="stage-actions">
+      <div class="action-item"><h5>📊 Demo personalizada</h5><p>El asesor usa el simulador en la visita con los datos reales de la empresa para mostrar el costo exacto</p></div>
+      <div class="action-item"><h5>💰 Propuesta ROI</h5><p>Se entrega un informe con el retorno de inversión calculado específicamente para esa empresa</p></div>
+      <div class="action-item"><h5>⏰ Urgencia real</h5><p>Se muestra la fecha de la próxima auditoría del MinTrabajo en el sector del cliente</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: FIDELIZACIÓN -->
+<div class="slide" id="s10">
+  <div class="tag tag-gold anim d1">Embudo de Ventas — Etapa 4</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:var(--white)" class="anim d2">Fidelización: que se queden y nos recomienden</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="funnel-stage anim d3">
+    <div class="stage-header">
+      <div class="stage-badge b-fidel">4</div>
+      <div class="stage-title">Estrategia de Fidelización</div>
+    </div>
+    <div class="stage-actions">
+      <div class="action-item"><h5>📈 Dashboard de progreso</h5><p>El cliente tiene acceso a un panel que muestra la evolución de su ILI mes a mes durante el programa de 8 semanas</p></div>
+      <div class="action-item"><h5>🔔 Alertas automáticas</h5><p>60 días antes del vencimiento del contrato, el sistema envía un reporte actualizado del riesgo para argumentar la renovación</p></div>
+      <div class="action-item"><h5>🤝 Programa de referidos</h5><p>Las empresas clientes reciben un mes gratuito por cada empresa que refieran y contrate el servicio</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: EMBUDO VISUAL -->
+<div class="slide" id="s11">
+  <div class="tag tag-teal anim d1" style="text-align:center;display:block">Embudo de Ventas — Visión Completa</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:32px;color:var(--white);text-align:center;margin-bottom:24px" class="anim d2">Las 4 etapas del recorrido del cliente</h2>
+  <div style="display:flex;justify-content:center" class="anim d3">
+    <div class="funnel-visual">
+      <div class="fv-stage">
+        <div class="fv-label">🔵 ATRACCIÓN</div>
+        <div class="fv-sub">Blog · SEO · Redes sociales</div>
+        <div class="fv-tooltip"><p>Contenido educativo sobre riesgos laborales y normativa que atrae a los gerentes antes de que sepan que necesitan el servicio</p></div>
+      </div>
+      <div class="fv-stage">
+        <div class="fv-label">🟢 INTERACCIÓN</div>
+        <div class="fv-sub">Simulador gratuito · Lead magnet · WhatsApp</div>
+        <div class="fv-tooltip"><p>El cliente usa el simulador gratuitamente y deja sus datos a cambio de ver su diagnóstico personalizado</p></div>
+      </div>
+      <div class="fv-stage">
+        <div class="fv-label">🟡 CONVERSIÓN</div>
+        <div class="fv-sub">Demo en visita · Propuesta ROI · Urgencia</div>
+        <div class="fv-tooltip"><p>El asesor cierra la venta mostrando en números reales cuánto ahorra la empresa al contratar el servicio</p></div>
+      </div>
+      <div class="fv-stage">
+        <div class="fv-label">🟣 FIDELIZACIÓN</div>
+        <div class="fv-sub">Dashboard · Alertas · Referidos</div>
+        <div class="fv-tooltip"><p>El cliente renueva porque ve mes a mes la mejora de sus indicadores y recibe beneficios por referir a otros</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: CIERRE -->
+<div class="slide" id="s12">
+  <div class="tag tag-gold anim d1" style="display:inline-block">Cierre</div>
+  <div class="cierre-title anim d2">Cuando el cliente entiende el riesgo, <em>la decisión se toma sola</em></div>
+  <p class="cierre-sub anim d3">RiesgoCalc no vende salud ocupacional. Le muestra a cada empresa, con sus propios números, cuánto pierde cada día que pasa sin tenerla. Esa es la diferencia entre una propuesta que se archiva y una que se firma.</p>
+  <div class="anim d4">
+    <span class="cierre-btn">www.riesgocalc.co → Diagnóstico gratuito</span>
+  </div>
+</div>
+
+<!-- SLIDE 13: BIBLIOGRAFÍA -->
+<div class="slide" id="s13">
+  <div class="tag tag-teal anim d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list">
+    <li class="anim d2">Carrasco Barea, P. (Ed.). (2019). <em>Inbound marketing como filosofía de atracción al nuevo usuario digital y engagement. Un estudio de caso de éxito: Netflix</em> (pp. 5-17). [Trabajo de grado, Universidad de Sevilla]. Repositorio Universidad de Sevilla. https://idus.us.es/handle/11441/93413</li>
+    <li class="anim d3">Coll Rubio, P., & Micó Sanz, J. L. (Eds.). (2019). <em>Marketing y comunicación en la nueva economía</em> (pp. 125-185). Ecoe Ediciones.</li>
+    <li class="anim d3">Durán Flores, R. M. (Ed.). (2018). <em>El inbound marketing y la importancia del marketing de contenidos</em> (pp. 9-19). [Trabajo de grado, Universidad de Sevilla]. Repositorio Universidad de Sevilla. https://idus.us.es/handle/11441/88357</li>
+    <li class="anim d4">Gómez, B. (2018). El influencer: herramienta clave en el contexto digital de la publicidad engañosa. <em>Methaodos, 6</em>(1), 149-156. https://www.redalyc.org/journal/4415/441556240010/html/</li>
+    <li class="anim d4">Aljohani, H. (2020). A review of research on inbound marketing. <em>Journal for Research on Business and Social Science, 3</em>(4), 1-8. http://www.jrbssonline.com/wp-content/uploads/2021/05/Volume3Issue4Paper1.pdf</li>
+    <li class="anim d5">Ministerio de Trabajo de Colombia. (2023). <em>Informe de accidentalidad laboral en Colombia 2023</em>. Mintrabajo.</li>
+  </ul>
+</div>
+
+</div><!-- end deck -->
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let cur = 0;
+
+function goTo(n) {
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('exit');
+  setTimeout(() => slides[cur < n ? cur : cur].classList.remove('exit'), 600);
+  cur = ((n % total) + total) % total;
+  slides[cur].classList.add('active');
+  // reset exit
+  setTimeout(() => document.querySelectorAll('.slide.exit').forEach(s => s.classList.remove('exit')), 700);
+  document.getElementById('prog-bar').style.width = ((cur+1)/total*100)+'%';
+  document.getElementById('slide-num').textContent = (cur+1)+' / '+total;
+}
+
+document.getElementById('next').addEventListener('click', () => goTo(cur+1));
+document.getElementById('prev').addEventListener('click', () => goTo(cur-1));
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(cur+1); }
+  if(e.key === 'ArrowLeft') { e.preventDefault(); goTo(cur-1); }
+});
+
+// Touch swipe
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if(Math.abs(dx) > 50) dx < 0 ? goTo(cur+1) : goTo(cur-1);
+});
+
+// Init
+document.getElementById('prog-bar').style.width = (1/total*100)+'%';
+</script>
+</body>
+</html>
