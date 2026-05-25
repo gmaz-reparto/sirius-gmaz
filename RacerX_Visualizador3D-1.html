@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RACER X — Visualizador 3D Ingeniería</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070c12;--panel:#0d1928;--panel2:#111f30;--border:#1e3248;
+  --accent:#e06010;--accent2:#0099bb;--text:#ccd8e8;--text2:#7a9ab8;
+  --green:#22aa66;--red:#cc2222;--yellow:#ddaa00;--purple:#9944cc;
+  --steel:#4a6878;--steel-hi:#6a8898;--steel-sel:#e06010;
+}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;
+  height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#topbar{
+  display:flex;align-items:center;gap:12px;padding:8px 16px;
+  background:var(--panel);border-bottom:1px solid var(--border);
+  flex-shrink:0;z-index:10;flex-wrap:wrap
+}
+.logo{font-size:1.2rem;font-weight:700;color:var(--accent);letter-spacing:3px;
+  font-family:'Share Tech Mono',monospace;white-space:nowrap}
+.logo span{color:var(--accent2)}
+.mode-group{display:flex;gap:4px;background:#050b14;border-radius:6px;padding:3px}
+.mode-btn{padding:5px 14px;border:none;border-radius:4px;cursor:pointer;
+  font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.85rem;
+  background:transparent;color:var(--text2);transition:all .2s}
+.mode-btn.active{background:var(--accent);color:#fff}
+.sep{width:1px;height:28px;background:var(--border)}
+.acc-group{display:flex;gap:6px;align-items:center}
+.acc-label{font-size:.75rem;color:var(--text2);font-family:'Share Tech Mono',monospace}
+.toggle{display:flex;align-items:center;gap:5px;cursor:pointer;
+  padding:4px 8px;border-radius:4px;border:1px solid var(--border);
+  background:var(--panel2);font-size:.8rem;transition:all .2s;white-space:nowrap}
+.toggle.on{border-color:var(--accent2);color:var(--accent2)}
+.toggle .dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.2s}
+.toggle.on .dot{background:var(--accent2)}
+.info-bar{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge{padding:3px 8px;border-radius:3px;font-size:.7rem;
+  font-family:'Share Tech Mono',monospace;letter-spacing:1px}
+.badge-conf{background:#0a2510;color:var(--green);border:1px solid var(--green)}
+.badge-est{background:#180e30;color:var(--purple);border:1px solid var(--purple)}
+#main{display:flex;flex:1;overflow:hidden}
+#left-panel{
+  width:240px;flex-shrink:0;background:var(--panel);
+  border-right:1px solid var(--border);overflow-y:auto;
+  display:flex;flex-direction:column
+}
+#left-panel::-webkit-scrollbar{width:4px}
+#left-panel::-webkit-scrollbar-track{background:var(--panel)}
+#left-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.cat-header{padding:8px 14px;font-size:.7rem;font-family:'Share Tech Mono',monospace;
+  color:var(--accent2);letter-spacing:2px;border-bottom:1px solid var(--border);
+  background:var(--panel2);text-transform:uppercase}
+.part-item{
+  padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(30,50,72,.5);
+  transition:all .15s;display:flex;flex-direction:column;gap:2px
+}
+.part-item:hover{background:var(--panel2)}
+.part-item.active{background:rgba(224,96,16,.12);border-left:3px solid var(--accent)}
+.part-item:not(.active){border-left:3px solid transparent}
+.part-name{font-weight:600;font-size:.88rem;color:var(--text)}
+.part-sub{font-size:.72rem;color:var(--text2);font-family:'Share Tech Mono',monospace}
+.part-count{display:inline-flex;align-items:center;gap:3px;
+  background:rgba(0,153,187,.15);color:var(--accent2);
+  padding:1px 5px;border-radius:2px;font-size:.65rem;font-family:'Share Tech Mono',monospace}
+#viewport{flex:1;position:relative;overflow:hidden}
+#canvas3d{width:100%;height:100%;display:block;cursor:grab}
+#canvas3d:active{cursor:grabbing}
+#labels-overlay{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;overflow:hidden
+}
+.dim-label{
+  position:absolute;transform:translate(-50%,-50%);
+  background:rgba(0,153,187,.85);color:#fff;
+  padding:2px 6px;border-radius:3px;font-size:.72rem;
+  font-family:'Share Tech Mono',monospace;white-space:nowrap;
+  pointer-events:none;letter-spacing:0.5px
+}
+.hole-label{
+  position:absolute;transform:translate(-50%,-100%) translateY(-6px);
+  background:rgba(180,30,10,.9);color:#fff;
+  padding:2px 7px;border-radius:3px;font-size:.68rem;
+  font-family:'Share Tech Mono',monospace;white-space:nowrap;
+  pointer-events:none;letter-spacing:0.5px;
+  border:1px solid rgba(255,100,80,.4)
+}
+#hint-bar{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(7,12,18,.85);border:1px solid var(--border);
+  padding:5px 14px;border-radius:20px;font-size:.72rem;
+  color:var(--text2);font-family:'Share Tech Mono',monospace;
+  pointer-events:none;letter-spacing:0.5px
+}
+#part-tag{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  background:rgba(224,96,16,.9);color:#fff;
+  padding:4px 16px;border-radius:20px;font-weight:700;font-size:.85rem;
+  letter-spacing:2px;pointer-events:none;white-space:nowrap;display:none
+}
+#right-panel{
+  width:300px;flex-shrink:0;background:var(--panel);
+  border-left:1px solid var(--border);overflow-y:auto;
+  display:flex;flex-direction:column
+}
+#right-panel::-webkit-scrollbar{width:4px}
+#right-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.rp-header{padding:12px 16px;background:var(--panel2);border-bottom:1px solid var(--border)}
+.rp-title{font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:1px}
+.rp-sub{font-size:.72rem;color:var(--text2);font-family:'Share Tech Mono',monospace;margin-top:2px}
+.rp-empty{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;color:var(--text2);padding:20px;text-align:center
+}
+.rp-empty-icon{font-size:2.5rem;opacity:.4}
+.rp-empty-text{font-size:.8rem;line-height:1.5}
+.rp-section{padding:12px 16px;border-bottom:1px solid var(--border)}
+.rp-sec-title{font-size:.7rem;font-family:'Share Tech Mono',monospace;
+  color:var(--accent2);letter-spacing:2px;margin-bottom:8px}
+.rp-row{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:4px 0;border-bottom:1px solid rgba(30,50,72,.4);gap:8px}
+.rp-row:last-child{border-bottom:none}
+.rp-key{font-size:.78rem;color:var(--text2);flex-shrink:0}
+.rp-val{font-size:.78rem;color:var(--text);text-align:right;
+  font-family:'Share Tech Mono',monospace;word-break:break-all}
+.rp-val.conf{color:var(--green)}
+.rp-val.est{color:var(--purple)}
+.rp-val.accent{color:var(--accent)}
+.screw-card{
+  background:rgba(180,30,10,.08);border:1px solid rgba(180,30,10,.3);
+  border-radius:6px;padding:10px 12px;margin-top:0
+}
+.screw-title{font-size:.8rem;font-weight:700;color:#ff6644;
+  margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.screw-badge{background:rgba(180,30,10,.3);padding:1px 6px;border-radius:3px;
+  font-family:'Share Tech Mono',monospace;font-size:.7rem}
+.hole-list{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.hole-chip{
+  padding:5px 8px;background:rgba(180,30,10,.1);border:1px solid rgba(180,30,10,.2);
+  border-radius:4px;cursor:pointer;transition:all .15s;font-size:.75rem
+}
+.hole-chip:hover{background:rgba(180,30,10,.2);border-color:rgba(180,30,10,.4)}
+.hole-chip.active{background:rgba(180,30,10,.3);border-color:var(--red)}
+.hole-chip-name{color:var(--text);font-weight:500}
+.hole-chip-meta{color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.65rem;margin-top:1px}
+.dim-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px}
+.dim-box{background:rgba(0,153,187,.08);border:1px solid rgba(0,153,187,.2);
+  border-radius:4px;padding:6px;text-align:center}
+.dim-val{font-size:1rem;font-weight:700;color:var(--accent2);
+  font-family:'Share Tech Mono',monospace}
+.dim-unit{font-size:.65rem;color:var(--text2)}
+.dim-axis{font-size:.7rem;color:var(--accent2);opacity:.7}
+#tooltip{
+  position:fixed;background:rgba(7,12,18,.95);border:1px solid var(--accent);
+  border-radius:6px;padding:6px 10px;font-size:.72rem;pointer-events:none;
+  z-index:100;display:none;max-width:200px;font-family:'Share Tech Mono',monospace;
+  color:var(--text);line-height:1.5
+}
+.grid-bg{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;
+  background-image:linear-gradient(rgba(30,50,72,.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,50,72,.15) 1px, transparent 1px);
+  background-size:40px 40px;opacity:.5}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">RACER<span>X</span> <span style="color:var(--text2);font-size:.7rem">3D ENG</span></div>
+  <div class="sep"></div>
+  <div class="mode-group">
+    <button class="mode-btn active" id="btn-pieza" onclick="setMode('pieza')">⬛ PIEZA</button>
+    <button class="mode-btn" id="btn-ens" onclick="setMode('ensamblado')">🔩 ENSAMBLADO</button>
+  </div>
+  <div class="sep"></div>
+  <div class="acc-group">
+    <span class="acc-label">ACCESORIOS:</span>
+    <div class="toggle on" id="tog-shifter" onclick="toggleAcc('shifter')">
+      <div class="dot"></div>SHIFTER
+    </div>
+    <div class="toggle on" id="tog-silla" onclick="toggleAcc('silla')">
+      <div class="dot"></div>SILLA
+    </div>
+    <div class="toggle on" id="tog-teclado" onclick="toggleAcc('teclado')">
+      <div class="dot"></div>TECLADO
+    </div>
+    <div class="toggle on" id="tog-portaobj" onclick="toggleAcc('portaobj')">
+      <div class="dot"></div>PORT.OBJ
+    </div>
+  </div>
+  <div class="info-bar">
+    <span class="badge badge-conf">✅ CONFIRMADA</span>
+    <span class="badge badge-est">📐 ESTIMADA</span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="left-panel">
+    <div class="cat-header">— Estructura Principal —</div>
+    <div class="part-item" id="pi-riel_lateral" onclick="selectPart('riel_lateral')">
+      <div class="part-name">Riel Lateral Base <span class="part-count">×2</span></div>
+      <div class="part-sub">900×60×40 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-travesano" onclick="selectPart('travesano')">
+      <div class="part-name">Travesaño Base <span class="part-count">×2</span></div>
+      <div class="part-sub">560×60×3 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-brazo_diagonal" onclick="selectPart('brazo_diagonal')">
+      <div class="part-name">Brazo Diagonal <span class="part-count">×2</span></div>
+      <div class="part-sub">480×80×50 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-chapa_volante" onclick="selectPart('chapa_volante')">
+      <div class="part-name">Chapa Base Volante <span class="part-count">×1</span></div>
+      <div class="part-sub">560×320×3 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-chapa_pedalera" onclick="selectPart('chapa_pedalera')">
+      <div class="part-name">Chapa Base Pedalera <span class="part-count">×1</span></div>
+      <div class="part-sub">560×500×3 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-brazo_pedalera" onclick="selectPart('brazo_pedalera')">
+      <div class="part-name">Brazo Soporte Pedalera <span class="part-count">×2</span></div>
+      <div class="part-sub">300×60×3 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="cat-header">— Accesorios Opcionales —</div>
+    <div class="part-item" id="pi-bandeja_shifter" onclick="selectPart('bandeja_shifter')">
+      <div class="part-name">Bandeja Shifter <span class="part-count">×1</span></div>
+      <div class="part-sub">200×180×2 mm · 2mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-soporte_shifter" onclick="selectPart('soporte_shifter')">
+      <div class="part-name">Soporte Shifter <span class="part-count">×2</span></div>
+      <div class="part-sub">80×80×180 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-enganche_silla" onclick="selectPart('enganche_silla')">
+      <div class="part-name">Enganche Silla <span class="part-count">×1</span></div>
+      <div class="part-sub">600×40×3 mm · 3mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-bandeja_teclado" onclick="selectPart('bandeja_teclado')">
+      <div class="part-name">Bandeja Teclado <span class="part-count">×1</span></div>
+      <div class="part-sub">380×220×2 mm · 2mm · SAE1010</div>
+    </div>
+    <div class="part-item" id="pi-portaobjetos" onclick="selectPart('portaobjetos')">
+      <div class="part-name">Bandeja Portaobjetos <span class="part-count">×1</span></div>
+      <div class="part-sub">150×120×2 mm · 2mm · SAE1010</div>
+    </div>
+  </div>
+
+  <div id="viewport">
+    <div class="grid-bg"></div>
+    <canvas id="canvas3d"></canvas>
+    <div id="labels-overlay"></div>
+    <div id="hint-bar">🖱️ Arrastrar: rotar · Rueda: zoom · Clic en agujero rojo: ficha tornillo</div>
+    <div id="part-tag"></div>
+  </div>
+
+  <div id="right-panel">
+    <div id="rp-content">
+      <div class="rp-empty">
+        <div class="rp-empty-icon">🔩</div>
+        <div class="rp-empty-text">Selecciona una pieza del panel izquierdo para ver sus especificaciones técnicas de fabricación</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+// ============================================================
+// DATA: PARTS + SCREWS
+// ============================================================
+const SCREWS = {
+  'PATA-M8': {nm:'Pata niveladora de goma', d:8, th:'M8 × 1.25 mm (paso)', ln:'Regulable ±10 mm', hd:'Base de goma antideslizante', ky:'Sin herramienta (manual)', tq:'—', note:'Pieza comercial estándar. No fabricar.'},
+  'B8x50': {nm:'Bulón Allen M8 × 50', d:8, th:'M8 × 1.25 mm (paso)', ln:'50 mm', hd:'Cabeza cilíndrica hex. Allen', ky:'Llave Allen 6 mm + llave boca 13 mm', tq:'~20 Nm', note:'Usar con arandela plana M8 y tuerca M8.'},
+  'B6x40': {nm:'Bulón Allen M6 × 40', d:6, th:'M6 × 1.0 mm (paso)', ln:'40 mm', hd:'Cabeza cilíndrica hex. Allen', ky:'Llave Allen 4 mm', tq:'~8 Nm', note:'Usar con arandela 1/4" en ranuras.'},
+  'B6x16': {nm:'Bulón Allen M6 × 16', d:6, th:'M6 × 1.0 mm (paso)', ln:'16 mm', hd:'Cabeza botón Allen (bajo perfil)', ky:'Llave Allen 4 mm', tq:'~6 Nm', note:'Para montaje directo sin arandela o con arandela grower.'},
+  'B8x12': {nm:'Bulón Allen M8 × 12', d:8, th:'M8 × 1.25 mm (paso)', ln:'12 mm', hd:'Cabeza cilíndrica hex. Allen', ky:'Llave Allen 6 mm + llave boca 13 mm', tq:'~15 Nm', note:'Fijación de accesorios opcionales.'},
+  'PERILLA': {nm:'Perilla anatómica M6', d:6, th:'M6 × 1.0 mm (paso)', ln:'16 mm (rosca)', hd:'Perilla ergonómica plástico/acero', ky:'Sin herramienta (manual)', tq:'Manual', note:'Ajuste rápido sin herramienta. Apretar a mano firme.'},
+  'B6x16G': {nm:'Bulón Allen M6 × 16 + arandela grower', d:6, th:'M6 × 1.0 mm (paso)', ln:'16 mm', hd:'Botón Allen + arandela grower M6', ky:'Llave Allen 4 mm', tq:'~6 Nm', note:'La arandela grower previene aflojamiento por vibración.'},
+};
+
+const PARTS = {
+  riel_lateral:{
+    n:'Riel Lateral Base', cnt:2, cat:0, mat:'Acero SAE 1010', thk:3,
+    wt:'~1.8 kg c/u', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:900, W:60, H:40,
+    desc:'Perfil en L (ala 60mm + alma 40mm) que forma los dos rieles longitudinales de la base. Es la pieza más larga y estructuralmente crítica. Soporta toda la carga del sistema.',
+    proc:'Cortar chapa 3mm en 900×100mm. Doblar a 90° formando L: ala 60mm + alma 40mm. Perforar agujeros según posiciones indicadas.',
+    holes:[
+      {id:'rl1',lbl:'Pata niveladora delantera',x:-400,z:0,d:9,tp:'Pasante',s:'PATA-M8',conf:false},
+      {id:'rl2',lbl:'Pata niveladora central',x:0,z:0,d:9,tp:'Pasante',s:'PATA-M8',conf:false},
+      {id:'rl3',lbl:'Pata niveladora trasera',x:400,z:0,d:9,tp:'Pasante',s:'PATA-M8',conf:false},
+      {id:'rl4',lbl:'Unión travesaño delantero',x:-320,z:-25,d:9,tp:'Pasante',s:'B8x50',conf:false},
+      {id:'rl5',lbl:'Unión travesaño trasero',x:320,z:-25,d:9,tp:'Pasante',s:'B8x50',conf:false},
+    ]
+  },
+  travesano:{
+    n:'Travesaño Base', cnt:2, cat:0, mat:'Acero SAE 1010', thk:3,
+    wt:'~0.8 kg c/u', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:560, W:60, H:3,
+    desc:'Pieza transversal plana que une los dos rieles laterales. Determina el ancho total de 660mm del soporte. Se ubica una delantera y una trasera.',
+    proc:'Cortar chapa 3mm en 560×60mm. Perforar 2 agujeros Ø9mm en cada extremo para unión con rieles.',
+    holes:[
+      {id:'tr1',lbl:'Unión riel lateral izquierdo',x:-240,z:0,d:9,tp:'Pasante',s:'B8x50',conf:false},
+      {id:'tr2',lbl:'Unión riel lateral derecho',x:240,z:0,d:9,tp:'Pasante',s:'B8x50',conf:false},
+    ]
+  },
+  brazo_diagonal:{
+    n:'Brazo Diagonal Superior', cnt:2, cat:0, mat:'Acero SAE 1010', thk:3,
+    wt:'~1.2 kg c/u', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:480, W:80, H:50,
+    desc:'Perfil en U (base 80mm, alas 50mm) que conecta la base con la plataforma del volante. Permite ajuste telescópico de altura mediante ranura. Es la pieza que define la postura ergonómica del conductor.',
+    proc:'Cortar chapa 3mm en 480×180mm. Doblar en U: base 80mm + 2 alas de 50mm. Cortar ranura de ajuste 9×100mm. Perforar agujero pivote Ø9mm en extremo inferior.',
+    holes:[
+      {id:'bd1',lbl:'Pivote inferior en base (M8×50)',x:220,z:0,d:9,tp:'Pasante',s:'B8x50',conf:false},
+      {id:'bd2',lbl:'Fijación telescópica (M6×40)',x:0,z:38,d:7,tp:'Pasante c/ranura 9×100mm',s:'B6x40',conf:false},
+      {id:'bd3',lbl:'Ajuste ángulo — perilla',x:-100,z:38,d:7,tp:'Ranura 7×60mm',s:'PERILLA',conf:true},
+    ]
+  },
+  chapa_volante:{
+    n:'Chapa Superior — Base Volante', cnt:1, cat:0, mat:'Acero SAE 1010', thk:3,
+    wt:'~2.1 kg', fin:'Pintura al horno negra mate', state:'✅ AGUJEROS CONFIRMADOS',
+    L:560, W:320, H:3,
+    desc:'Plataforma superior donde se atornilla el volante Logitech G923/G29/G920. Los 2 agujeros de montaje del volante están confirmados por template oficial Logitech (separación 72mm entre centros, tornillo M6×1mm). Ranuras laterales para ajuste telescópico de altura.',
+    proc:'Cortar chapa 3mm en 560×320mm. Descargar template oficial Logitech (logitech.com/assets/53963/templates.pdf), imprimir 1:1 y usar como plantilla. Perforar 2 agujeros Ø7mm y roscar M6×1. Cortar 4 ranuras telescópicas 9×120mm. Doblar bordes laterales 10mm.',
+    holes:[
+      {id:'cv1',lbl:'Montaje volante G923 — Pto.1 (izq)',x:-36,z:0,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cv2',lbl:'Montaje volante G923 — Pto.2 (der) +72mm',x:36,z:0,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cv3',lbl:'Ranura telescópica izq. delantera',x:-220,z:130,d:9,tp:'Ranura 9×120mm',s:'B6x40',conf:false},
+      {id:'cv4',lbl:'Ranura telescópica der. delantera',x:220,z:130,d:9,tp:'Ranura 9×120mm',s:'B6x40',conf:false},
+      {id:'cv5',lbl:'Ranura telescópica izq. trasera',x:-220,z:-130,d:9,tp:'Ranura 9×120mm',s:'B6x40',conf:false},
+      {id:'cv6',lbl:'Ranura telescópica der. trasera',x:220,z:-130,d:9,tp:'Ranura 9×120mm',s:'B6x40',conf:false},
+    ]
+  },
+  chapa_pedalera:{
+    n:'Chapa Inferior — Base Pedalera', cnt:1, cat:0, mat:'Acero SAE 1010', thk:3,
+    wt:'~2.4 kg', fin:'Pintura al horno negra mate', state:'✅ AGUJEROS CONFIRMADOS',
+    L:560, W:500, H:3,
+    desc:'Plataforma para los pedales Logitech G923. 6 agujeros de montaje según template oficial Logitech en 2 filas de 3. Tiene un doblez de 20mm en el borde trasero como tope antideslizante. Ranuras de inclinación en laterales.',
+    proc:'Cortar chapa 3mm en 560×500mm. Descargar template pedales Logitech (logitech.com/assets/53963/2/templates.pdf), imprimir 1:1, perforar 6 agujeros Ø7mm y roscar M6×1. Doblar borde trasero 20mm a 90°. Cortar ranuras de inclinación 9×80mm.',
+    holes:[
+      {id:'cp1',lbl:'Pedal G923 Fila A Pos.1 (izq)',x:-130,z:-60,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cp2',lbl:'Pedal G923 Fila A Pos.2 (centro)',x:0,z:-60,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cp3',lbl:'Pedal G923 Fila A Pos.3 (der)',x:130,z:-60,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cp4',lbl:'Pedal G923 Fila B Pos.1 (izq)',x:-130,z:60,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cp5',lbl:'Pedal G923 Fila B Pos.2 (centro)',x:0,z:60,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cp6',lbl:'Pedal G923 Fila B Pos.3 (der)',x:130,z:60,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'cp7',lbl:'Ranura inclinación izquierda',x:-240,z:0,d:9,tp:'Ranura 9×80mm',s:'B6x16',conf:false},
+      {id:'cp8',lbl:'Ranura inclinación derecha',x:240,z:0,d:9,tp:'Ranura 9×80mm',s:'B6x16',conf:false},
+    ]
+  },
+  brazo_pedalera:{
+    n:'Brazo Soporte Pedalera', cnt:2, cat:0, mat:'Acero SAE 1010', thk:3,
+    wt:'~0.6 kg c/u', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:300, W:60, H:3,
+    desc:'Brazo de conexión entre el travesaño delantero de la base y la chapa de la pedalera. Permite regular la inclinación de los pedales.',
+    proc:'Cortar chapa 3mm en 300×60mm. Perforar agujeros de pivote Ø9mm en ambos extremos. Cortar ranura de ajuste inclinación 9×60mm a 50mm del extremo superior.',
+    holes:[
+      {id:'bp1',lbl:'Pivote unión travesaño delantero',x:-130,z:0,d:9,tp:'Pasante',s:'B8x50',conf:false},
+      {id:'bp2',lbl:'Ranura ajuste inclinación pedalera',x:80,z:0,d:9,tp:'Ranura 9×60mm',s:'B6x16',conf:false},
+    ]
+  },
+  bandeja_shifter:{
+    n:'Bandeja Palanca de Cambios', cnt:1, cat:1, mat:'Acero SAE 1010', thk:2,
+    wt:'~0.5 kg', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:200, W:180, H:2,
+    desc:'Bandeja lateral para montar la palanca Logitech Driving Force Shifter. Los 2 agujeros de montaje están confirmados por el manual Jaditek (2 bulones M6×16mm). Incluye un taco de goma para el apriete tirabuzón.',
+    proc:'Cortar chapa 2mm en 200×180mm. Perforar 2 agujeros Ø7mm para shifter Logitech según template. Perforar agujero central para tornillo tirabuzón.',
+    holes:[
+      {id:'bs1',lbl:'Montaje shifter Logitech Pto.1',x:-30,z:-50,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'bs2',lbl:'Montaje shifter Logitech Pto.2',x:30,z:-50,d:7,tp:'Roscado M6×1',s:'B6x16',conf:true},
+      {id:'bs3',lbl:'Tornillo tirabuzón apriete manual',x:0,z:60,d:7,tp:'Pasante con taco goma',s:'B6x16',conf:true},
+    ]
+  },
+  soporte_shifter:{
+    n:'Soporte / Escuadra Shifter', cnt:2, cat:1, mat:'Acero SAE 1010', thk:3,
+    wt:'~0.4 kg c/u', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:80, W:180, H:80,
+    desc:'Escuadra triangulada que fija la bandeja del shifter al riel lateral. La geometría triangulada aporta rigidez sin peso excesivo. Se fija con 2 bulones M8×50mm al riel.',
+    proc:'Cortar chapa 3mm formando escuadra triangulada 80×180mm. Perforar 2 agujeros Ø9mm para unión con riel (M8). Perforar 2 agujeros Ø7mm para unión con bandeja (M6).',
+    holes:[
+      {id:'ss1',lbl:'Unión riel lateral Pto.1',x:0,z:80,d:9,tp:'Pasante',s:'B8x50',conf:true},
+      {id:'ss2',lbl:'Unión riel lateral Pto.2',x:0,z:-80,d:9,tp:'Pasante',s:'B8x50',conf:true},
+      {id:'ss3',lbl:'Unión bandeja shifter',x:30,z:0,d:7,tp:'Pasante',s:'B6x16',conf:false},
+    ]
+  },
+  enganche_silla:{
+    n:'Enganche para Silla', cnt:1, cat:1, mat:'Acero SAE 1010', thk:3,
+    wt:'~0.9 kg', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:600, W:40, H:3,
+    desc:'Barra transversal trasera para anclar una silla de oficina o gaming al soporte. Múltiples agujeros cada 20mm permiten ajustar la posición delantera/trasera de la silla según el usuario.',
+    proc:'Cortar chapa 3mm en 600×40mm. Perforar agujeros Ø9mm para fijación en rieles (extremos). Perforar agujeros de enganche de silla a lo largo de la barra cada 20mm.',
+    holes:[
+      {id:'es1',lbl:'Fijación riel izquierdo (M8×50)',x:-260,z:0,d:9,tp:'Pasante',s:'B8x50',conf:true},
+      {id:'es2',lbl:'Fijación riel derecho (M8×50)',x:260,z:0,d:9,tp:'Pasante',s:'B8x50',conf:true},
+    ]
+  },
+  bandeja_teclado:{
+    n:'Bandeja para Teclado', cnt:1, cat:1, mat:'Acero SAE 1010', thk:2,
+    wt:'~0.4 kg', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:380, W:220, H:2,
+    desc:'Bandeja lateral para el teclado. La pieza auxiliar en L tiene ranuras ajustables para adaptarse al ancho del teclado. Se monta en la chapa superior del volante.',
+    proc:'Cortar chapa 2mm en 380×220mm. Perforar agujeros de montaje Ø9mm. Doblar reborde antideslizamiento 10mm en bordes.',
+    holes:[
+      {id:'bt1',lbl:'Montaje en chapa superior Pto.1',x:-150,z:-80,d:9,tp:'Pasante',s:'B8x12',conf:true},
+      {id:'bt2',lbl:'Montaje en chapa superior Pto.2',x:150,z:-80,d:9,tp:'Pasante',s:'B8x12',conf:true},
+    ]
+  },
+  portaobjetos:{
+    n:'Bandeja Portaobjetos', cnt:1, cat:1, mat:'Acero SAE 1010', thk:2,
+    wt:'~0.2 kg', fin:'Pintura al horno negra mate', state:'📐 ESTIMADA',
+    L:150, W:120, H:2,
+    desc:'Bandeja pequeña para bebidas o accesorios. Se fija en la esquina de la chapa superior. Reborde de 20mm en 3 lados para retención de objetos.',
+    proc:'Cortar chapa 2mm en 150×120mm. Doblar rebordes 20mm en 3 lados. Perforar 2 agujeros Ø7mm para montaje.',
+    holes:[
+      {id:'po1',lbl:'Fijación en chapa superior Pto.1',x:-50,z:-40,d:7,tp:'Pasante',s:'B6x16G',conf:true},
+      {id:'po2',lbl:'Fijación en chapa superior Pto.2',x:50,z:-40,d:7,tp:'Pasante',s:'B6x16G',conf:true},
+    ]
+  }
+};
+
+// ============================================================
+// THREE.JS SETUP
+// ============================================================
+const canvas = document.getElementById('canvas3d');
+const overlay = document.getElementById('labels-overlay');
+let W = canvas.clientWidth, H_cv = canvas.clientHeight;
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(W, H_cv);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x070c12, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x070c12, 0.0002);
+
+const camera = new THREE.PerspectiveCamera(45, W/H_cv, 1, 5000);
+camera.position.set(800, 700, 1200);
+camera.lookAt(330, 200, 400);
+
+// Lights
+const ambient = new THREE.AmbientLight(0x334466, 1.2);
+scene.add(ambient);
+const dirL1 = new THREE.DirectionalLight(0xffffff, 0.8);
+dirL1.position.set(800, 1200, 600);
+dirL1.castShadow = true;
+scene.add(dirL1);
+const dirL2 = new THREE.DirectionalLight(0x2244aa, 0.4);
+dirL2.position.set(-600, 400, -400);
+scene.add(dirL2);
+const pointL = new THREE.PointLight(0xe06010, 0.5, 2000);
+pointL.position.set(330, 600, 300);
+scene.add(pointL);
+
+// Floor grid
+const gridHelper = new THREE.GridHelper(2000, 40, 0x1e3248, 0x111f30);
+gridHelper.position.set(330, -2, 400);
+scene.add(gridHelper);
+
+// ============================================================
+// MATERIALS
+// ============================================================
+function steelMat(color=0x4a6878){
+  return new THREE.MeshPhongMaterial({color, shininess:70, specular:0x223344,
+    side:THREE.DoubleSide});
+}
+const MAT_STEEL = steelMat(0x4a6878);
+const MAT_SEL = steelMat(0xc04808);
+const MAT_OPTIONAL = steelMat(0x3a5a6a);
+const MAT_HOLE = new THREE.MeshPhongMaterial({color:0xcc2222, emissive:0x551111, shininess:100});
+const MAT_HOLE_CONF = new THREE.MeshPhongMaterial({color:0x22aa66, emissive:0x115533, shininess:100});
+const MAT_HOLE_ACTIVE = new THREE.MeshPhongMaterial({color:0xff6600, emissive:0x882200, shininess:100});
+const MAT_EDGE = new THREE.LineBasicMaterial({color:0x5a8aaa, linewidth:1});
+const MAT_DIM = new THREE.LineBasicMaterial({color:0x0099bb});
+
+// ============================================================
+// GEOMETRY BUILDERS
+// ============================================================
+function addEdges(group, mesh) {
+  const e = new THREE.EdgesGeometry(mesh.geometry);
+  const line = new THREE.LineSegments(e, MAT_EDGE.clone());
+  line.position.copy(mesh.position);
+  line.rotation.copy(mesh.rotation);
+  group.add(line);
+}
+
+function box(w,h,d,mat,px=0,py=0,pz=0,rx=0,ry=0,rz=0){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat.clone());
+  m.position.set(px,py,pz);m.rotation.set(rx,ry,rz);
+  m.castShadow=true;m.receiveShadow=true;
+  return m;
+}
+
+function buildPart(id) {
+  const p = PARTS[id];
+  const g = new THREE.Group();
+  g.userData = {partId:id, type:'part'};
+  const mat = steelMat(0x4a6878);
+
+  if(id==='riel_lateral'){
+    // L-profile: ala horizontal + alma vertical
+    const ala = box(900,3,60,mat);
+    const alma = box(900,40,3,mat, 0,21.5,-28.5);
+    g.add(ala,alma);[ala,alma].forEach(m=>addEdges(g,m));
+  }
+  else if(id==='travesano'){
+    const m=box(560,3,60,mat);g.add(m);addEdges(g,m);
+  }
+  else if(id==='brazo_diagonal'){
+    // U-channel: base + 2 arms
+    const base=box(480,3,80,mat);
+    const armL=box(480,50,3,mat, 0,25,-38.5);
+    const armR=box(480,50,3,mat, 0,25,38.5);
+    g.add(base,armL,armR);[base,armL,armR].forEach(m=>addEdges(g,m));
+  }
+  else if(id==='chapa_volante'){
+    const plate=box(560,3,320,mat);
+    const fL=box(560,10,3,mat, 0,-6.5,-158.5);
+    const fR=box(560,10,3,mat, 0,-6.5,158.5);
+    g.add(plate,fL,fR);[plate,fL,fR].forEach(m=>addEdges(g,m));
+  }
+  else if(id==='chapa_pedalera'){
+    const plate=box(560,3,500,mat);
+    const stop=box(560,20,3,mat, 0,10,-248.5);
+    g.add(plate,stop);[plate,stop].forEach(m=>addEdges(g,m));
+  }
+  else if(id==='brazo_pedalera'){
+    const m=box(300,3,60,mat);g.add(m);addEdges(g,m);
+  }
+  else if(id==='bandeja_shifter'){
+    const m=box(200,2,180,mat);g.add(m);addEdges(g,m);
+  }
+  else if(id==='soporte_shifter'){
+    // Triangulated bracket simplified
+    const base2=box(80,3,180,mat);
+    const web=box(3,80,180,mat, -38.5,40,0);
+    const diag=box(3,85,180,mat, -19,40,0, 0,0,Math.PI/4);
+    g.add(base2,web,diag);[base2,web].forEach(m=>addEdges(g,m));
+  }
+  else if(id==='enganche_silla'){
+    const m=box(600,3,40,mat);g.add(m);addEdges(g,m);
+  }
+  else if(id==='bandeja_teclado'){
+    const plate=box(380,2,220,mat);
+    const stop=box(380,10,2,mat, 0,5,-109);
+    g.add(plate,stop);[plate,stop].forEach(m=>addEdges(g,m));
+  }
+  else if(id==='portaobjetos'){
+    const plate=box(150,2,120,mat);
+    const fA=box(150,20,2,mat, 0,10,-59);
+    const fL=box(2,20,120,mat, -74,10,0);
+    const fR=box(2,20,120,mat, 74,10,0);
+    g.add(plate,fA,fL,fR);[plate,fA,fL,fR].forEach(m=>addEdges(g,m));
+  }
+
+  // Add hole markers
+  if(p.holes) {
+    p.holes.forEach(h => {
+      const r = h.d/2;
+      const mat2 = h.conf ? MAT_HOLE_CONF.clone() : MAT_HOLE.clone();
+      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(r,r,4,16), mat2);
+      cyl.position.set(h.x, 2, h.z);
+      cyl.userData = {type:'hole', holeData:h, partId:id};
+      g.add(cyl);
+      // Small ring
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(r+2,1,8,20), mat2.clone());
+      ring.rotation.x = Math.PI/2;
+      ring.position.set(h.x,5,h.z);
+      ring.userData = {type:'hole', holeData:h, partId:id};
+      g.add(ring);
+    });
+  }
+
+  g.userData.partData = p;
+  return g;
+}
+
+// ============================================================
+// DIMENSION LINES
+// ============================================================
+const labelElements = [];
+
+function clearLabels(){
+  labelElements.forEach(el=>el.remove());
+  labelElements.length=0;
+}
+
+function makeLabel(text, cls='dim-label'){
+  const el=document.createElement('div');
+  el.className=cls;el.textContent=text;
+  overlay.appendChild(el);labelElements.push(el);
+  return el;
+}
+
+function project3Dto2D(v3){
+  const v=v3.clone().project(camera);
+  return {
+    x:(v.x+1)/2*W,
+    y:(-v.y+1)/2*H_cv,
+    visible:v.z<1
+  };
+}
+
+function addDimLine(group, p1, p2, mid, text, color=0x0099bb){
+  const points=[p1,p2].map(p=>new THREE.Vector3(p[0],p[1],p[2]));
+  const geo=new THREE.BufferGeometry().setFromPoints(points);
+  const line=new THREE.Line(geo,new THREE.LineBasicMaterial({color,linewidth:2}));
+  group.add(line);
+
+  // tick at p1
+  const t1=[new THREE.Vector3(p1[0],p1[1]-5,p1[2]),new THREE.Vector3(p1[0],p1[1]+5,p1[2])];
+  const gt1=new THREE.BufferGeometry().setFromPoints(t1);
+  group.add(new THREE.Line(gt1,new THREE.LineBasicMaterial({color})));
+  const t2=[new THREE.Vector3(p2[0],p2[1]-5,p2[2]),new THREE.Vector3(p2[0],p2[1]+5,p2[2])];
+  const gt2=new THREE.BufferGeometry().setFromPoints(t2);
+  group.add(new THREE.Line(gt2,new THREE.LineBasicMaterial({color})));
+
+  // label
+  const el=makeLabel(text);
+  el._pos3d=new THREE.Vector3(mid[0],mid[1],mid[2]);
+  return el;
+}
+
+function buildDimensions(id, group){
+  const p=PARTS[id];
+  const L=p.L,W2=p.W,H2=p.H;
+  const off=40;
+
+  // Length (X axis)
+  addDimLine(group,
+    [-L/2, off, W2/2+20],[L/2, off, W2/2+20],
+    [0, off+10, W2/2+20], `L: ${L} mm`, 0x0099bb);
+
+  // Width (Z axis)
+  addDimLine(group,
+    [L/2+20, off, -W2/2],[L/2+20, off, W2/2],
+    [L/2+20, off+10, 0], `An: ${W2} mm`, 0x00cc88);
+
+  // Thickness annotation
+  const el=makeLabel(`e: ${p.thk} mm`, 'dim-label');
+  el._pos3d=new THREE.Vector3(-L/2-30, 5, 0);
+  el.style.background='rgba(150,60,0,.85)';
+}
+
+// ============================================================
+// SCENE MANAGEMENT
+// ============================================================
+let currentGroup = new THREE.Group();
+scene.add(currentGroup);
+let currentMode = 'pieza';
+let selectedPart = null;
+let selectedHole = null;
+let activeHoleMesh = null;
+const accState = {shifter:true, silla:true, teclado:true, portaobj:true};
+
+function clearScene(){
+  while(currentGroup.children.length)
+    currentGroup.remove(currentGroup.children[0]);
+  clearLabels();
+  document.getElementById('part-tag').style.display='none';
+}
+
+function selectPart(id){
+  selectedPart = id;
+  selectedHole = null;
+  document.querySelectorAll('.part-item').forEach(el=>el.classList.remove('active'));
+  const pi=document.getElementById('pi-'+id);
+  if(pi)pi.classList.add('active');
+  if(currentMode==='pieza') showPartIndividual(id);
+  else highlightInAssembly(id);
+  updateRightPanel(id, null);
+}
+
+function showPartIndividual(id){
+  clearScene();
+  const g = buildPart(id);
+  currentGroup.add(g);
+  buildDimensions(id, currentGroup);
+
+  // Camera framing
+  const p=PARTS[id];
+  const maxDim=Math.max(p.L,p.W,p.H);
+  const dist=maxDim*1.8;
+  camTarget.set(0,0,0);
+  camSph.radius=Math.max(dist,300);
+  camSph.theta=Math.PI*0.3;camSph.phi=Math.PI*0.35;
+  updateCamera();
+
+  const tag=document.getElementById('part-tag');
+  tag.textContent=p.n.toUpperCase();
+  tag.style.display='block';
+}
+
+function buildAssembly(){
+  clearScene();
+  document.getElementById('part-tag').style.display='none';
+
+  // Base rieles
+  for(let i=0;i<2;i++){
+    const g=buildPart('riel_lateral');
+    g.rotation.y=Math.PI/2;
+    g.position.set(i===0?30:630, 20, 450);
+    g.userData._assemblyId='riel_lateral_'+i;
+    currentGroup.add(g);
+  }
+
+  // Travesaños
+  [100,820].forEach((z,i)=>{
+    const g=buildPart('travesano');
+    g.position.set(330,20,z);
+    g.userData._assemblyId='travesano_'+i;
+    currentGroup.add(g);
+  });
+
+  // Brazos diagonales
+  const armAngle=-Math.atan2(240,440);
+  for(let i=0;i<2;i++){
+    const g=buildPart('brazo_diagonal');
+    g.rotation.set(0,Math.PI/2,0);
+    // After rotating Y: long axis now along Z
+    // We need to tilt in Y-Z plane
+    g.rotation.x=armAngle;
+    g.position.set(i===0?30:630, 250, 510);
+    currentGroup.add(g);
+  }
+
+  // Chapa volante
+  {const g=buildPart('chapa_volante');
+   g.position.set(330,480,340);g.rotation.x=0.22;
+   currentGroup.add(g);}
+
+  // Chapa pedalera
+  {const g=buildPart('chapa_pedalera');
+   g.position.set(330,15,180);g.rotation.x=-0.18;
+   currentGroup.add(g);}
+
+  // Brazos pedalera
+  for(let i=0;i<2;i++){
+    const g=buildPart('brazo_pedalera');
+    g.rotation.y=Math.PI/2;
+    g.position.set(i===0?60:600,20,100);
+    currentGroup.add(g);
+  }
+
+  // OPTIONAL ACCESSORIES
+  if(accState.shifter){
+    const bs=buildPart('bandeja_shifter');
+    bs.position.set(760,200,400);currentGroup.add(bs);
+    for(let i=0;i<2;i++){
+      const ss=buildPart('soporte_shifter');
+      ss.position.set(700,100,380+i*60);
+      ss.rotation.y=Math.PI/2;currentGroup.add(ss);
+    }
+  }
+  if(accState.silla){
+    const es=buildPart('enganche_silla');
+    es.position.set(330,10,860);currentGroup.add(es);
+  }
+  if(accState.teclado){
+    const bt=buildPart('bandeja_teclado');
+    bt.position.set(80,492,330);bt.rotation.x=0.22;
+    currentGroup.add(bt);
+  }
+  if(accState.portaobj){
+    const po=buildPart('portaobjetos');
+    po.position.set(600,492,220);po.rotation.x=0.22;
+    currentGroup.add(po);
+  }
+
+  // Patas niveladoras
+  for(let i=0;i<2;i++){
+    [100,450,800].forEach(z=>{
+      const cyl=new THREE.Mesh(
+        new THREE.CylinderGeometry(10,14,30,12),
+        new THREE.MeshPhongMaterial({color:0x223344})
+      );
+      cyl.position.set(i===0?30:630,-12,z);
+      currentGroup.add(cyl);
+    });
+  }
+
+  camTarget.set(330,200,430);
+  camSph.radius=1400;camSph.theta=-0.4;camSph.phi=0.8;
+  updateCamera();
+}
+
+function highlightInAssembly(id){
+  currentGroup.children.forEach(g=>{
+    if(g.userData.partId===id){
+      g.traverse(c=>{
+        if(c.isMesh&&c.geometry.type.includes('Box'))
+          c.material.color.set(0xc04808);
+      });
+    }
+  });
+}
+
+// ============================================================
+// CAMERA CONTROLS
+// ============================================================
+let isDragging=false, lastMouse={x:0,y:0};
+const camSph={theta:-0.4, phi:0.8, radius:1400};
+const camTarget=new THREE.Vector3(330,200,430);
+
+function updateCamera(){
+  camera.position.set(
+    camTarget.x+camSph.radius*Math.sin(camSph.phi)*Math.sin(camSph.theta),
+    camTarget.y+camSph.radius*Math.cos(camSph.phi),
+    camTarget.z+camSph.radius*Math.sin(camSph.phi)*Math.cos(camSph.theta)
+  );
+  camera.lookAt(camTarget);
+}
+
+canvas.addEventListener('mousedown',e=>{
+  if(e.button===2)return;
+  isDragging=true;lastMouse={x:e.clientX,y:e.clientY};
+  canvas.style.cursor='grabbing';
+});
+window.addEventListener('mouseup',()=>{isDragging=false;canvas.style.cursor='grab';});
+canvas.addEventListener('mousemove',e=>{
+  if(!isDragging)return;
+  const dx=e.clientX-lastMouse.x, dy=e.clientY-lastMouse.y;
+  camSph.theta-=dx*0.007;
+  camSph.phi=Math.max(0.05,Math.min(Math.PI*0.9,camSph.phi+dy*0.007));
+  lastMouse={x:e.clientX,y:e.clientY};
+  updateCamera();
+});
+canvas.addEventListener('wheel',e=>{
+  camSph.radius=Math.max(80,Math.min(3000,camSph.radius+e.deltaY*0.8));
+  updateCamera();e.preventDefault();
+},{passive:false});
+
+// Touch support
+let lastTouch=null;
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===1)lastTouch={x:e.touches[0].clientX,y:e.touches[0].clientY};
+});
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===1&&lastTouch){
+    const dx=e.touches[0].clientX-lastTouch.x, dy=e.touches[0].clientY-lastTouch.y;
+    camSph.theta-=dx*0.007;
+    camSph.phi=Math.max(0.05,Math.min(Math.PI*0.9,camSph.phi+dy*0.007));
+    lastTouch={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    updateCamera();
+  }
+  e.preventDefault();
+},{passive:false});
+
+// ============================================================
+// RAYCASTING
+// ============================================================
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const intersects=raycaster.intersectObjects(currentGroup.children,true);
+  
+  let hitHole=null, hitPart=null;
+  for(const hit of intersects){
+    if(hit.object.userData.type==='hole'){hitHole=hit.object;break;}
+    if(hit.object.isMesh&&!hitHole)hitPart=hit.object;
+  }
+
+  if(hitHole){
+    if(activeHoleMesh)activeHoleMesh.material=
+      activeHoleMesh.userData.holeData.conf?MAT_HOLE_CONF.clone():MAT_HOLE.clone();
+    activeHoleMesh=hitHole;
+    hitHole.material=MAT_HOLE_ACTIVE.clone();
+    selectedHole=hitHole.userData.holeData;
+    const pid=hitHole.userData.partId;
+    updateRightPanel(pid, selectedHole);
+  } else if(hitPart&&currentMode==='ensamblado'){
+    // Find part group
+    let node=hitPart;
+    while(node.parent&&node.parent!==currentGroup)node=node.parent;
+    const pid=node.userData.partId;
+    if(pid){selectPart(pid);updateRightPanel(pid,null);}
+  }
+});
+
+// Tooltip on hover
+canvas.addEventListener('mousemove',e=>{
+  if(isDragging)return;
+  const rect=canvas.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(currentGroup.children,true);
+  const tt=document.getElementById('tooltip');
+  let found=false;
+  for(const h of hits){
+    if(h.object.userData.type==='hole'){
+      const hd=h.object.userData.holeData;
+      tt.innerHTML=`🔴 <b>${hd.lbl}</b><br>Ø${hd.d}mm · ${hd.tp}<br><i>Clic para ficha tornillo</i>`;
+      tt.style.display='block';
+      tt.style.left=(e.clientX+14)+'px';
+      tt.style.top=(e.clientY-10)+'px';
+      canvas.style.cursor='pointer';
+      found=true;break;
+    }
+  }
+  if(!found){tt.style.display='none';if(!isDragging)canvas.style.cursor='grab';}
+});
+
+// ============================================================
+// RIGHT PANEL
+// ============================================================
+function updateRightPanel(partId, holeData){
+  const p=PARTS[partId];
+  if(!p)return;
+  let html='';
+
+  // Part header
+  html+=`<div class="rp-header">
+    <div class="rp-title">${p.n}</div>
+    <div class="rp-sub">${p.cnt>1?p.cnt+'× unidades':'1× unidad'} · ${p.mat} · ${p.thk}mm</div>
+  </div>`;
+
+  // State badge
+  const isConf=p.state.includes('✅');
+  html+=`<div class="rp-section">
+    <div class="rp-sec-title">ESTADO MEDIDAS</div>
+    <div style="padding:4px 8px;border-radius:4px;font-size:.78rem;
+      background:${isConf?'rgba(34,170,102,.1)':'rgba(153,68,204,.1)'};
+      border:1px solid ${isConf?'#22aa66':'#9944cc'};color:${isConf?'#22aa66':'#bb77ee'}">
+      ${p.state}
+    </div>
+  </div>`;
+
+  // Dimensions
+  html+=`<div class="rp-section">
+    <div class="rp-sec-title">DIMENSIONES</div>
+    <div class="dim-grid">
+      <div class="dim-box"><div class="dim-axis">L</div><div class="dim-val">${p.L}</div><div class="dim-unit">mm</div></div>
+      <div class="dim-box"><div class="dim-axis">An</div><div class="dim-val">${p.W}</div><div class="dim-unit">mm</div></div>
+      <div class="dim-box"><div class="dim-axis">e</div><div class="dim-val">${p.thk}</div><div class="dim-unit">mm</div></div>
+    </div>
+  </div>`;
+
+  // Specs
+  html+=`<div class="rp-section">
+    <div class="rp-sec-title">ESPECIFICACIONES</div>
+    <div class="rp-row"><span class="rp-key">Material</span><span class="rp-val">${p.mat}</span></div>
+    <div class="rp-row"><span class="rp-key">Espesor</span><span class="rp-val accent">${p.thk} mm</span></div>
+    <div class="rp-row"><span class="rp-key">Peso aprox.</span><span class="rp-val">${p.wt}</span></div>
+    <div class="rp-row"><span class="rp-key">Acabado</span><span class="rp-val">${p.fin}</span></div>
+    <div class="rp-row"><span class="rp-key">Cantidad</span><span class="rp-val accent">×${p.cnt}</span></div>
+  </div>`;
+
+  // Description
+  html+=`<div class="rp-section">
+    <div class="rp-sec-title">DESCRIPCIÓN</div>
+    <div style="font-size:.78rem;line-height:1.6;color:var(--text2)">${p.desc}</div>
+  </div>`;
+
+  // Process
+  html+=`<div class="rp-section">
+    <div class="rp-sec-title">PROCESO FABRICACIÓN</div>
+    <div style="font-size:.76rem;line-height:1.6;color:var(--text2);font-style:italic">${p.proc}</div>
+  </div>`;
+
+  // Holes list
+  if(p.holes&&p.holes.length){
+    html+=`<div class="rp-section">
+      <div class="rp-sec-title">PERFORACIONES (${p.holes.length})</div>
+      <div style="font-size:.68rem;color:var(--text2);margin-bottom:6px">
+        🟢 Verde = medida confirmada · 🔴 Rojo = estimada
+      </div>
+      <div class="hole-list">`;
+    p.holes.forEach(h=>{
+      const active=holeData&&holeData.id===h.id;
+      html+=`<div class="hole-chip${active?' active':''}" onclick="clickHoleFromPanel('${partId}','${h.id}')">
+        <div class="hole-chip-name">${h.conf?'🟢':'🔴'} ${h.lbl}</div>
+        <div class="hole-chip-meta">Ø${h.d}mm · ${h.tp} · ${SCREWS[h.s].nm}</div>
+      </div>`;
+    });
+    html+='</div></div>';
+  }
+
+  // Screw detail
+  if(holeData){
+    const sc=SCREWS[holeData.s];
+    html+=`<div class="rp-section">
+      <div class="rp-sec-title">🔩 FICHA TÉCNICA TORNILLO</div>
+      <div class="screw-card">
+        <div class="screw-title">${sc.nm}<span class="screw-badge">${holeData.s}</span></div>
+        <div class="rp-row"><span class="rp-key">Diámetro nominal</span><span class="rp-val accent">Ø ${sc.d} mm</span></div>
+        <div class="rp-row"><span class="rp-key">Rosca / Paso</span><span class="rp-val">${sc.th}</span></div>
+        <div class="rp-row"><span class="rp-key">Longitud</span><span class="rp-val accent">${sc.ln}</span></div>
+        <div class="rp-row"><span class="rp-key">Tipo de cabeza</span><span class="rp-val">${sc.hd}</span></div>
+        <div class="rp-row"><span class="rp-key">Herramienta</span><span class="rp-val">${sc.ky}</span></div>
+        <div class="rp-row"><span class="rp-key">Torque aprox.</span><span class="rp-val accent">${sc.tq}</span></div>
+        <div style="margin-top:6px;font-size:.72rem;color:var(--text2);font-style:italic;
+          padding:5px;background:rgba(255,255,255,.03);border-radius:3px">${sc.note}</div>
+        <div style="margin-top:6px;font-size:.72rem;font-weight:700;color:var(--text)">
+          Agujero en chapa: Ø${holeData.d} mm · ${holeData.tp}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('rp-content').innerHTML=html;
+}
+
+function clickHoleFromPanel(partId, holeId){
+  const p=PARTS[partId];
+  const h=p.holes.find(h=>h.id===holeId);
+  if(h){selectedHole=h;updateRightPanel(partId,h);}
+}
+
+// ============================================================
+// MODE + ACCESSORY CONTROLS
+// ============================================================
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('btn-pieza').classList.toggle('active',mode==='pieza');
+  document.getElementById('btn-ens').classList.toggle('active',mode==='ensamblado');
+  if(mode==='ensamblado'){buildAssembly();document.getElementById('rp-content').innerHTML=
+    '<div class="rp-empty"><div class="rp-empty-icon">🔩</div><div class="rp-empty-text">Haz clic en cualquier pieza del ensamblado para ver sus especificaciones</div></div>';}
+  else if(selectedPart)showPartIndividual(selectedPart);
+  else{clearScene();document.getElementById('rp-content').innerHTML=
+    '<div class="rp-empty"><div class="rp-empty-icon">🔩</div><div class="rp-empty-text">Selecciona una pieza del panel izquierdo</div></div>';}
+}
+
+function toggleAcc(key){
+  accState[key]=!accState[key];
+  const el=document.getElementById('tog-'+key);
+  el.classList.toggle('on',accState[key]);
+  if(currentMode==='ensamblado')buildAssembly();
+}
+
+// ============================================================
+// RESIZE
+// ============================================================
+function onResize(){
+  const vp=document.getElementById('viewport');
+  W=vp.clientWidth;H_cv=vp.clientHeight;
+  renderer.setSize(W,H_cv);
+  camera.aspect=W/H_cv;camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',onResize);
+setTimeout(onResize,100);
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+function animate(){
+  requestAnimationFrame(animate);
+  // Update 2D labels
+  labelElements.forEach(el=>{
+    if(el._pos3d){
+      const s=project3Dto2D(el._pos3d);
+      if(s.visible){
+        el.style.left=s.x+'px';el.style.top=s.y+'px';
+        el.style.display='block';
+      } else el.style.display='none';
+    }
+  });
+  renderer.render(scene,camera);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateCamera();
+animate();
+// Default: show assembly
+setMode('ensamblado');
+</script>
+</body>
+</html>
