@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindWork — Ecosistema E-Commerce</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2D6A4F;--emerald:#40916C;--mint:#74C69D;
+  --coral:#E76F51;--peach:#F4A261;--white:#FFFFFF;
+  --dark:#1B2D1F;--muted:#7A9E8E;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Nunito',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .65s ease,transform .65s ease;transform:translateY(40px);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:translateY(0);}
+.slide.exit{opacity:0;transform:translateY(-40px);}
+#prog{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--coral),var(--peach));transition:width .4s ease;z-index:100;}
+#snum{position:fixed;bottom:22px;right:26px;font-size:11px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(231,111,81,.3);border-color:var(--coral);}
+#prev{left:14px;}#next{right:14px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:20px;font-weight:700;margin-bottom:14px;}
+.tag-sage{background:rgba(45,106,79,.25);color:var(--mint);}
+.tag-coral{background:rgba(231,111,81,.2);color:var(--peach);}
+.line{width:44px;height:3px;background:linear-gradient(90deg,var(--coral),var(--peach));border-radius:2px;margin:10px 0 18px;}
+@keyframes rise{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.slide.active .a{animation:rise .7s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.25s;}.d3{animation-delay:.4s;}.d4{animation-delay:.55s;}.d5{animation-delay:.7s;}.d6{animation-delay:.85s;}
+
+/* PORTADA */
+#s0{background:var(--sage);justify-content:center;align-items:flex-start;padding:80px 100px;overflow:hidden;}
+#s0::before{content:'';position:absolute;right:-120px;top:-120px;width:550px;height:550px;border-radius:50%;background:radial-gradient(circle,rgba(116,198,157,.18),transparent 65%);}
+.p0-tag{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mint);font-weight:700;margin-bottom:20px;}
+.p0-title{font-family:'Cormorant Garamond',serif;font-size:clamp(54px,7.5vw,88px);font-weight:700;color:var(--white);line-height:1;margin-bottom:10px;}
+.p0-title span{color:var(--peach);}
+.p0-sub{font-size:17px;color:rgba(255,255,255,.7);margin-bottom:44px;max-width:500px;line-height:1.7;}
+.p0-meta span{display:block;font-size:13px;color:rgba(255,255,255,.5);margin-bottom:4px;}
+.p0-meta strong{color:rgba(255,255,255,.85);}
+.p0-circle{position:absolute;right:90px;top:50%;transform:translateY(-50%);width:180px;height:180px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:16px;}
+.p0-circle .emoji{font-size:44px;}
+.p0-circle .lbl{font-size:11px;color:rgba(255,255,255,.85);font-weight:700;margin-top:6px;line-height:1.3;}
+
+/* GENÉRICO */
+.std{padding:60px 100px;justify-content:center;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,3.2vw,40px);color:var(--white);margin-bottom:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:28px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px 17px;transition:transform .2s,border-color .2s;}
+.card:hover{transform:translateY(-4px);border-color:var(--peach);}
+.card .ico{font-size:24px;margin-bottom:9px;}
+.card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;}
+.stat-row{display:flex;flex-direction:column;gap:11px;}
+.stat-item{display:flex;justify-content:space-between;align-items:center;padding:11px 15px;background:rgba(231,111,81,.08);border-radius:8px;border-left:3px solid var(--coral);}
+.stat-item .lbl{font-size:12px;color:var(--muted);}
+.stat-item .val{font-size:15px;font-weight:700;color:var(--coral);}
+.list-items{display:flex;flex-direction:column;gap:11px;}
+.li-row{display:flex;gap:12px;align-items:flex-start;}
+.li-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);flex-shrink:0;margin-top:5px;}
+.li-row p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.vc{background:linear-gradient(135deg,rgba(45,106,79,.4),rgba(64,145,108,.2));border:1px solid rgba(116,198,157,.2);border-radius:14px;padding:18px;margin-bottom:12px;}
+.vc h4{font-size:13px;font-weight:700;color:var(--mint);margin-bottom:4px;}
+.vc p{font-size:12px;color:rgba(255,255,255,.6);line-height:1.5;}
+
+/* CICLO VENTAS */
+.cycle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:28px;}
+.cycle-card{border-radius:14px;padding:22px;position:relative;overflow:hidden;}
+.cycle-card .num{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:700;opacity:.12;position:absolute;top:8px;right:16px;line-height:1;}
+.cycle-card h4{font-size:14px;font-weight:700;margin-bottom:8px;}
+.cycle-card p{font-size:12px;line-height:1.6;opacity:.85;}
+.c-blue{background:rgba(45,156,219,.12);border:1px solid rgba(45,156,219,.25);}
+.c-blue h4{color:#7DD3E8;}.c-blue p{color:rgba(255,255,255,.75);}
+.c-green{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.25);}
+.c-green h4{color:#6BE6A0;}.c-green p{color:rgba(255,255,255,.75);}
+.c-coral{background:rgba(231,111,81,.1);border:1px solid rgba(231,111,81,.25);}
+.c-coral h4{color:var(--peach);}.c-coral p{color:rgba(255,255,255,.75);}
+.c-purple{background:rgba(155,89,182,.12);border:1px solid rgba(155,89,182,.25);}
+.c-purple h4{color:#C39AE0;}.c-purple p{color:rgba(255,255,255,.75);}
+
+/* ECOSISTEMA */
+.eco-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding-top:16px;}
+.eco-hub{width:120px;height:120px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;box-shadow:0 0 60px rgba(231,111,81,.3);padding:12px;}
+.eco-hub span{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:#fff;line-height:1.3;}
+.eco-ring{display:flex;flex-wrap:wrap;justify-content:center;gap:11px;max-width:680px;margin-top:22px;}
+.eco-node{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px 16px;text-align:center;min-width:135px;}
+.eco-node .en-ico{font-size:20px;margin-bottom:5px;}
+.eco-node h5{font-size:12px;font-weight:700;color:var(--white);}
+.eco-node p{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* PLAN */
+.launch-timeline{display:flex;flex-direction:column;gap:0;margin-top:28px;}
+.lt-item{display:flex;gap:20px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.lt-item:last-child{border-bottom:none;}
+.lt-week{min-width:76px;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--coral);}
+.lt-content h5{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.lt-content p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* CIERRE */
+.ct{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,4.5vw,56px);color:var(--white);font-weight:700;max-width:680px;margin:0 auto 18px;text-align:center;}
+.ct em{color:var(--peach);font-style:normal;}
+.cs{font-size:15px;color:var(--muted);max-width:480px;margin:0 auto 34px;line-height:1.7;text-align:center;}
+.cbtn{display:inline-block;background:var(--coral);color:#fff;padding:13px 38px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+.cbtn:hover{background:var(--peach);transform:translateY(-2px);}
+
+/* REFS */
+.ref-list{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:13px;}
+.ref-list li{font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.75;padding-left:22px;text-indent:-22px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:11px;}
+.ref-list li em{color:rgba(255,255,255,.7);}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="snum">1 / 15</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- 0: PORTADA -->
+<div class="slide active" id="s0">
+  <div class="p0-tag a d1">Electiva Marketing Digital · Segunda parte · UNIMINUTO · 2026</div>
+  <div class="p0-title a d2">Mind<span>Work</span></div>
+  <p class="p0-sub a d3">Ecosistema e-commerce: cómo llevar el bienestar mental al celular de cada trabajador remoto en Colombia — y hacer que se quede.</p>
+  <div class="p0-meta a d4">
+    <span><strong>Presentado por:</strong> Yeisy Anabell Timaná Enríquez — ID: 1101005</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Docente:</strong> Óscar Javier Cardona Tovar</span>
+    <span><strong>Pasto, Nariño — Junio 2026</strong></span>
+  </div>
+  <div class="p0-circle a d5"><div class="emoji">🧠</div><div class="lbl">E-Commerce<br>Segunda Parte</div></div>
+</div>
+
+<!-- 1: INTRODUCCIÓN -->
+<div class="slide std" id="s1" style="background:var(--dark);">
+  <div class="grid2">
+    <div>
+      <div class="tag tag-coral a d1">Introducción</div>
+      <h2 class="sec-title a d2">Del servicio presencial al <em style="color:var(--peach);font-style:normal">negocio digital</em> de bienestar</h2>
+      <div class="line a d3"></div>
+      <p class="a d4" style="font-size:14px;color:var(--muted);line-height:1.8;max-width:440px;">La primera parte de esta estrategia presentó MindWork como una idea de negocio. Esta segunda parte construye el ecosistema digital completo: cómo el cliente nos encuentra, cómo paga, cómo recibe el servicio y por qué se queda mes a mes. El bienestar mental es un mercado que crece, pero solo sobreviven las plataformas que lo hacen fácil, accesible y confiable desde el primer clic.</p>
+    </div>
+    <div class="stat-row a d3">
+      <div class="stat-item"><span class="lbl">Crecimiento del e-commerce de bienestar en Latam (2023)</span><span class="val">+41%</span></div>
+      <div class="stat-item"><span class="lbl">Colombianos que buscan servicios de salud mental en línea</span><span class="val">2.8M</span></div>
+      <div class="stat-item"><span class="lbl">Tasa de retención de apps de bienestar con comunidad activa</span><span class="val">68%</span></div>
+      <div class="stat-item"><span class="lbl">Costo de adquisición digital vs. publicidad tradicional</span><span class="val">-54%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2: CLIENTE DIGITAL — PERFIL -->
+<div class="slide std" id="s2" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Cliente Digital — Investigación de Mercado</div>
+  <h2 class="sec-title a d2">¿Quién es la persona que necesita MindWork?</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">👩‍💻</div>
+        <h4>Valentina Rosas — Diseñadora freelance</h4>
+        <p>29 años · Medellín · Trabaja desde casa hace 3 años · Ingresos $3.5M/mes. Busca contenido sobre bienestar en TikTok e Instagram. Toma decisiones de compra de suscripciones digitales en menos de 48 horas cuando el contenido la toca emocionalmente.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔍</div>
+        <h4>Cómo busca soluciones digitales</h4>
+        <p>Busca en TikTok antes que en Google para temas de salud mental. Lee reseñas en App Store antes de descargar. Prefiere probar antes de pagar: el 83% de los usuarios de apps de bienestar no pagan sin periodo de prueba previo (Ábrego et al., 2022).</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:22px;">
+        <h4 style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:14px;">Necesidades y problemas que MindWork resuelve</h4>
+        <div class="list-items">
+          <div class="li-row"><div class="li-dot"></div><p>Siente agotamiento emocional pero no tiene a quién decírselo sin sentir juicio</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>No puede pagar $120.000 por sesión de psicólogo presencial mes a mes</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Sus horarios irregulares no encajan con los horarios fijos de los centros de atención</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>No tiene comunidad de personas que entiendan lo que es trabajar sola desde casa</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>No sabe medir su nivel de estrés ni si lo que siente es normal o necesita ayuda urgente</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3: INVESTIGACIÓN DE MERCADO -->
+<div class="slide std" id="s3" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Investigación de Mercado</div>
+  <h2 class="sec-title a d2">Lo que los datos dicen del cliente digital de bienestar</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">📱</div>
+      <h4>Canal preferido: TikTok e Instagram</h4>
+      <p>El 67% de los usuarios de apps de bienestar en Colombia descubrió el servicio a través de redes sociales. Los videos cortos sobre salud mental tienen 4× más alcance orgánico que cualquier otro formato en el segmento de 25 a 35 años (Alvarado, 2021).</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">💰</div>
+      <h4>Sensibilidad al precio</h4>
+      <p>El tope de gasto mensual en apps de bienestar para el segmento de ingreso medio en Colombia es de $35.000 COP. Por encima de ese precio, el 61% cancela la suscripción en el primer mes. MindWork a $29.900/mes está diseñado para ese umbral.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🔄</div>
+      <h4>El problema de la retención</h4>
+      <p>El 72% de las apps de bienestar pierde a sus usuarios en los primeros 3 meses. Las que superan ese umbral tienen en común una característica: comunidad activa de pares. MindWork la incorpora como elemento central del servicio (Linero & Botero, 2020).</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🏢</div>
+      <h4>Mercado B2B emergente</h4>
+      <p>El 38% de las empresas colombianas con equipos remotos ya busca activamente beneficios de bienestar digital para sus empleados. El presupuesto promedio es de $15.000 COP por empleado al mes. Canal con mayor potencial de crecimiento en 2026.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">⭐</div>
+      <h4>Confianza y reseñas</h4>
+      <p>El 79% de los usuarios de apps de salud mental en Latinoamérica revisa reseñas antes de descargar. Las apps con más de 50 reseñas positivas tienen una tasa de conversión 3× mayor que las nuevas. Las primeras reseñas son críticas para el lanzamiento.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🌍</div>
+      <h4>Tendencia post pandemia</h4>
+      <p>El e-commerce de servicios de salud mental creció un 41% en América Latina entre 2022 y 2024. Colombia es el tercer mercado más grande de la región para apps de bienestar, después de Brasil y México (Ábrego & Castillo, 2022).</p>
+    </div>
+  </div>
+</div>
+
+<!-- 4: CICLO DE VENTAS -->
+<div class="slide std" id="s4" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Ciclo de Ventas</div>
+  <h2 class="sec-title a d2">Las 4 etapas del ciclo de ventas de MindWork</h2>
+  <div class="line a d3"></div>
+  <div class="cycle-grid">
+    <div class="cycle-card c-blue a d2">
+      <div class="num">1</div>
+      <h4>🔵 Atracción — El contenido que toca</h4>
+      <p>Valentina ve un video en TikTok sobre síntomas de burnout y se identifica. El contenido no vende: explica, normaliza y acompaña. El algoritmo lleva el video a personas con comportamientos similares al perfil de nuestra buyer persona. El clic llega solo.</p>
+    </div>
+    <div class="cycle-card c-green a d3">
+      <div class="num">2</div>
+      <h4>🟢 Interacción — Probar sin pagar</h4>
+      <p>Entra a la landing page, hace el test gratuito de bienestar en 5 minutos y ve su nivel de estrés en una gráfica. Descarga la guía gratuita de manejo del agotamiento laboral. Recibe 5 correos con contenido de valor en los siguientes 10 días sin ninguna presión de venta.</p>
+    </div>
+    <div class="cycle-card c-coral a d3">
+      <div class="num">3</div>
+      <h4>🟠 Conversión — El precio que no duele</h4>
+      <p>Después de los 5 correos, recibe una oferta de 7 días de acceso completo sin tarjeta de crédito. La primera sesión de psicología cuesta $9.900, mucho menos que cualquier alternativa presencial. La barrera de entrada es tan baja que la decisión es fácil.</p>
+    </div>
+    <div class="cycle-card c-purple a d4">
+      <div class="num">4</div>
+      <h4>🟣 Fidelización — El hábito que retiene</h4>
+      <p>Cada lunes recibe su plan semanal de bienestar personalizado. Ve su racha de días activos y sus logros acumulados. Encuentra en la comunidad personas con su misma profesión. MindWork deja de ser una app y se convierte en una rutina que no quiere cancelar.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5: ESTRATEGIAS POR FASE -->
+<div class="slide std" id="s5" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Estrategias por Fase</div>
+  <h2 class="sec-title a d2">Qué hace MindWork en cada etapa para convertir más</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="vc">
+        <h4>🔵 Atracción: contenido que genera empatía</h4>
+        <p>Videos de 30–60 segundos en TikTok e Instagram sobre síntomas de burnout, técnicas de respiración y vida freelance real. Blog con artículos SEO sobre «estrés laboral desde casa Colombia». Podcast semanal con psicólogos y trabajadores remotos colombianos.</p>
+      </div>
+      <div class="vc">
+        <h4>🟢 Interacción: el test como puerta de entrada</h4>
+        <p>Test gratuito de bienestar en 5 minutos sin registro. Primera sesión de meditación y un artículo del blog disponibles sin cuenta. Secuencia de 5 correos con técnicas de bienestar, sin vender directamente. La confianza crece antes del primer peso.</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div class="vc">
+        <h4>🟠 Conversión: la oferta irresistible</h4>
+        <p>7 días de acceso completo sin tarjeta de crédito. Primera sesión de psicología a $9.900 COP. Si el test de bienestar da resultado crítico, se ofrece acceso inmediato a sesión de emergencia. El precio de $29.900/mes se presenta siempre comparado con el costo de una sesión presencial ($120.000).</p>
+      </div>
+      <div class="vc">
+        <h4>🟣 Fidelización: el sistema que engancha</h4>
+        <p>Plan semanal personalizado cada lunes. Sistema de racha de días activos e insignias de logros visibles. Grupos temáticos por profesión (diseñadores, desarrolladores, vendedores remotos). Recordatorio amable cuando la racha lleva más de 3 días sin actividad.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6: PLATAFORMA WEB -->
+<div class="slide std" id="s6" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Ecosistema E-Commerce — Plataforma Web</div>
+  <h2 class="sec-title a d2">La plataforma digital de MindWork</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">🌐</div>
+        <h4>Sitio web y app: www.mindwork.co</h4>
+        <p>Plataforma web progresiva (PWA) que funciona como app en cualquier dispositivo sin instalación desde tienda. Landing page optimizada para conversión con test gratuito visible desde el primer scroll. Panel de usuario con historial de bienestar, sesiones y comunidad.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🎧</div>
+        <h4>Biblioteca de contenido</h4>
+        <p>Más de 50 audios de meditación guiada, 20 sesiones de mindfulness en video y artículos semanales del blog de psicología. El contenido se personaliza según los resultados del test de bienestar de cada usuario y sus preferencias registradas.</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">📊</div>
+        <h4>Panel de seguimiento personal</h4>
+        <p>Gráfica de evolución del nivel de bienestar semana a semana. Racha de días activos, logros desbloqueados y comparativa con el promedio de usuarios con el mismo perfil profesional. El usuario puede compartir su progreso en redes sociales con un clic.</p>
+      </div>
+      <div class="card">
+        <div class="ico">👥</div>
+        <h4>Módulo de comunidad</h4>
+        <p>Grupos cerrados por profesión (diseñadores, desarrolladores, vendedores) moderados por psicólogos del equipo. Hilo de conversación diario con una pregunta de reflexión. Los usuarios pueden pedir sesiones grupales con el psicólogo moderador sin costo adicional.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7: MEDIOS DE PAGO -->
+<div class="slide std" id="s7" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Ecosistema E-Commerce — Medios de Pago</div>
+  <h2 class="sec-title a d2">Cómo paga el usuario de MindWork</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">💳</div>
+      <h4>Tarjeta de crédito y débito</h4>
+      <p>Integración con Wompi y Stripe para cobros con Visa, Mastercard y American Express. Pago recurrente mensual autorizado una sola vez. Factura electrónica automática. Disponible para usuarios en Colombia y para la diáspora colombiana en el exterior.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📲</div>
+      <h4>Nequi y Daviplata</h4>
+      <p>Los dos métodos de pago digital más usados en Colombia para el segmento de 25 a 35 años. Pago en 2 clics sin ingresar datos de tarjeta. El 44% de los primeros pagos de apps B2C en Colombia se hacen con Nequi o Daviplata (Linero & Botero, 2020).</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🏦</div>
+      <h4>PSE — Pago desde el banco</h4>
+      <p>Transferencia directa desde cualquier banco colombiano para usuarios que prefieren no usar tarjeta. Opción disponible para la suscripción mensual y para el pago de sesiones adicionales de psicología por encima del plan básico.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🔄</div>
+      <h4>Suscripción automática mensual</h4>
+      <p>El usuario autoriza el cobro mensual de $29.900 COP al activar la cuenta. Si el pago falla, recibe un aviso amable por WhatsApp con 3 días de gracia antes de que el acceso se suspenda. Cancelación en un clic desde el panel de usuario, sin llamadas ni formularios.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🏢</div>
+      <h4>Plan empresarial — Factura B2B</h4>
+      <p>Las empresas con equipos remotos pagan $15.000 COP por empleado al mes con factura electrónica DIAN. El HR Manager recibe un panel con las métricas agregadas de bienestar del equipo sin acceder a datos individuales privados.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🎁</div>
+      <h4>Primer mes sin costo</h4>
+      <p>Acceso completo durante 30 días sin pago. Al final del mes, el sistema pide el método de pago de forma amable, mostrando el resumen de lo que el usuario usó y vivió durante el periodo de prueba. El 76% de los usuarios que completan el mes de prueba se suscriben.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 8: PROMOCIÓN -->
+<div class="slide std" id="s8" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Ecosistema E-Commerce — Estrategias de Promoción</div>
+  <h2 class="sec-title a d2">Cómo MindWork llega a sus usuarios en el mundo digital</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">🎵</div>
+        <h4>TikTok e Instagram — Contenido orgánico</h4>
+        <p>Videos cortos de 30–60 segundos sobre síntomas de burnout, técnicas de respiración y la realidad del trabajo remoto. Formato que los usuarios comparten porque se sienten identificados. El algoritmo lleva el contenido exactamente a las personas con el perfil de Valentina sin gastar un peso en pauta (Ramos & Hernández, 2021).</p>
+      </div>
+      <div class="card">
+        <div class="ico">✍️</div>
+        <h4>Blog SEO — Contenido que dura</h4>
+        <p>Artículos posicionados en Google para búsquedas como «estrés trabajando desde casa Colombia», «psicólogo online barato Colombia» y «burnout freelance qué hacer». Un artículo bien posicionado trae tráfico gratuito durante años sin mantenimiento adicional.</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">🎙️</div>
+        <h4>Podcast semanal — «Trabajar desde casa»</h4>
+        <p>Episodios de 25 minutos con psicólogos colombianos y trabajadores remotos reales hablando de sus experiencias. Disponible en Spotify y Apple Podcasts. Genera confianza y audiencia calificada sin costo de producción alto. El podcast posiciona a MindWork como referente, no solo como servicio.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🤝</div>
+        <h4>Alianzas con empresas de trabajo remoto</h4>
+        <p>Acuerdos con plataformas de empleo remoto como Workana y Freelancer.co para ofrecer MindWork como beneficio a sus usuarios. Las empresas con equipos remotos distribuidos reciben una propuesta de plan empresarial con prueba de 30 días sin costo para todo el equipo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9: LOGÍSTICA -->
+<div class="slide std" id="s9" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Ecosistema E-Commerce — Logística del Servicio</div>
+  <h2 class="sec-title a d2">Cómo MindWork entrega su servicio</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">⚡</div>
+      <h4>Acceso inmediato al activar</h4>
+      <p>Cuando el usuario crea su cuenta, accede en segundos a todo el contenido de la plataforma. No hay esperas, aprobaciones ni configuraciones complejas. El test de bienestar inicial tarda 5 minutos y personaliza la experiencia desde el primer día.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📅</div>
+      <h4>Agendamiento flexible de sesiones</h4>
+      <p>El usuario agenda su sesión de psicología en el horario que le quede mejor, incluidos fines de semana y noches. Los psicólogos de la plataforma tienen disponibilidad en franjas de 7am a 10pm. La sesión es por videollamada desde la misma app.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🧘</div>
+      <h4>Contenido disponible 24/7</h4>
+      <p>La biblioteca de audios de meditación, los artículos del blog de psicología y los videos de mindfulness están disponibles las 24 horas sin necesidad de conexión continua. Los audios se pueden descargar para escuchar sin internet desde el móvil.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🔔</div>
+      <h4>Rutina semanal automatizada</h4>
+      <p>Cada lunes el usuario recibe por WhatsApp y correo su plan semanal de bienestar: qué meditación hacer, qué artículo leer y cuándo tiene programada su sesión. El plan se genera automáticamente según los resultados de su último test de bienestar.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🛡️</div>
+      <h4>Privacidad garantizada</h4>
+      <p>Las sesiones de psicología son confidenciales y los datos individuales de bienestar nunca se comparten con terceros. El plan empresarial solo entrega métricas agregadas del equipo. La política de privacidad está escrita en lenguaje simple y visible desde la primera pantalla.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🌍</div>
+      <h4>Disponible en todo el país</h4>
+      <p>Al ser un servicio 100% digital, MindWork llega a cualquier ciudad o municipio de Colombia donde haya conexión a internet. Los audios descargables garantizan acceso incluso en zonas con conectividad irregular, que es donde más se necesita el servicio.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 10: PLAN DE LANZAMIENTO -->
+<div class="slide std" id="s10" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Plan de Lanzamiento</div>
+  <h2 class="sec-title a d2">Cómo sale MindWork al mercado digital</h2>
+  <div class="line a d3"></div>
+  <div class="launch-timeline a d3">
+    <div class="lt-item">
+      <div class="lt-week">Mes 1</div>
+      <div class="lt-content"><h5>Construir antes de lanzar</h5><p>Publicar la PWA con el test gratuito y la biblioteca básica de contenido. Crear los perfiles en TikTok, Instagram y Spotify. Publicar los primeros 4 artículos del blog. Grabar los primeros 2 episodios del podcast. Meta: plataforma lista antes del primer usuario.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 2</div>
+      <div class="lt-content"><h5>Lanzamiento orgánico — Audiencia primero</h5><p>Publicar 3 videos diarios en TikTok e Instagram durante las primeras 4 semanas. Meta: primeros 5.000 seguidores en redes y 500 test de bienestar realizados. Los primeros 100 usuarios reciben 3 meses gratis a cambio de reseñas honestas.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 3</div>
+      <div class="lt-content"><h5>Activar pagos y primeras alianzas</h5><p>Activar la pasarela de pagos y el plan de suscripción mensual. Cerrar los primeros 3 acuerdos con empresas de trabajo remoto para el plan empresarial. Meta: primeros 50 suscriptores de pago y primera empresa corporativa activa.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 4–6</div>
+      <div class="lt-content"><h5>Escalar con referidos y comunidad</h5><p>Activar el programa de referidos: un mes gratis por cada amigo que se suscriba. Lanzar los grupos temáticos de la comunidad por profesión. Meta: 200 suscriptores activos, tasa de retención mayor al 65% y primer webinar con más de 300 asistentes.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 11: MARKETING DE CONTENIDO -->
+<div class="slide std" id="s11" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Marketing de Contenidos</div>
+  <h2 class="sec-title a d2">El contenido que educa, conecta y retiene</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">🎵</div>
+      <h4>Videos cortos — Empatía primero</h4>
+      <p>Videos de TikTok e Instagram que muestran síntomas reales del trabajo remoto: «cuando llevas 6 horas sin hablar con nadie», «cuando el trabajo invade tu cama». El contenido que genera identificación tiene alcance orgánico masivo sin necesidad de pauta.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">✍️</div>
+      <h4>Blog — Artículos que posicionan</h4>
+      <p>Un artículo semanal escrito por los psicólogos del equipo sobre temas que el cliente busca activamente: «cómo manejar la ansiedad antes de una presentación de cliente», «por qué me siento mal trabajando en casa si antes quería hacerlo». SEO integrado en cada publicación.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🎙️</div>
+      <h4>Podcast — La voz de los remotos</h4>
+      <p>Episodios semanales con trabajadores remotos colombianos contando su experiencia real. Sin filtros ni perfección. La autenticidad es el diferenciador: el oyente siente que alguien entiende exactamente lo que le pasa. Disponible en Spotify y Apple Podcasts.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📩</div>
+      <h4>Email — La secuencia que convierte</h4>
+      <p>5 correos en 10 días después de que el usuario hace el test gratuito. Correo 1: resultados del test. Correo 2: técnica de respiración para el estrés. Correo 3: caso real de mejora. Correo 4: invitación a la comunidad. Correo 5: oferta de 7 días gratis. Tasa de apertura estimada: 42%.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🎤</div>
+      <h4>Webinar mensual gratuito</h4>
+      <p>Una sesión en línea de 45 minutos cada mes con un psicólogo del equipo sobre un tema urgente: «cómo poner límites al trabajo cuando tu casa es tu oficina». Registro gratuito por correo. Los asistentes reciben acceso al test completo de bienestar como regalo.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🎁</div>
+      <h4>Guías descargables — Lead magnets</h4>
+      <p>Cuatro guías PDF gratuitas descargables a cambio del correo: «Guía para detectar el burnout a tiempo», «5 técnicas de desconexión para freelancers», «Cómo hablar con tu empresa sobre salud mental» y «Plan de bienestar para los primeros 30 días». Cada descarga es un prospecto calificado.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 12: ECOSISTEMA VISUAL -->
+<div class="slide std" id="s12" style="background:var(--sage);align-items:center;">
+  <div class="tag tag-coral a d1" style="text-align:center;display:block;">Ecosistema E-Commerce — Visión Completa</div>
+  <h2 class="sec-title a d2" style="text-align:center;margin-bottom:20px;">Todos los engranajes de MindWork trabajando juntos</h2>
+  <div class="eco-center a d3">
+    <div class="eco-hub"><span>Mind<br>Work</span></div>
+    <div class="eco-ring">
+      <div class="eco-node"><div class="en-ico">🌐</div><h5>PWA</h5><p>www.mindwork.co</p></div>
+      <div class="eco-node"><div class="en-ico">🧪</div><h5>Test gratis</h5><p>Sin registro</p></div>
+      <div class="eco-node"><div class="en-ico">💳</div><h5>Pagos</h5><p>Nequi · Wompi · PSE</p></div>
+      <div class="eco-node"><div class="en-ico">🎵</div><h5>TikTok</h5><p>Contenido orgánico</p></div>
+      <div class="eco-node"><div class="en-ico">📧</div><h5>Email</h5><p>5 correos de valor</p></div>
+      <div class="eco-node"><div class="en-ico">👥</div><h5>Comunidad</h5><p>Por profesión</p></div>
+      <div class="eco-node"><div class="en-ico">🎙️</div><h5>Podcast</h5><p>Spotify · Apple</p></div>
+      <div class="eco-node"><div class="en-ico">🏢</div><h5>Plan B2B</h5><p>Empresas remotas</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 13: CIERRE -->
+<div class="slide" id="s13" style="background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;">
+  <div class="tag tag-coral a d1" style="display:inline-block;">Cierre</div>
+  <div class="ct a d2">El bienestar mental no debería ser un lujo. <em>MindWork lo hace accesible</em> para todos.</div>
+  <p class="cs a d3">Un ecosistema digital que encuentra a las personas cuando más lo necesitan, les cobra lo que pueden pagar y las acompaña hasta que el cuidado de su mente se vuelve un hábito tan normal como tomarse un café en la mañana.</p>
+  <div class="a d4"><span class="cbtn">www.mindwork.co → Empieza gratis</span></div>
+</div>
+
+<!-- 14: BIBLIOGRAFÍA -->
+<div class="slide" id="s14" style="background:var(--sage);padding:60px 100px;justify-content:flex-start;overflow-y:auto;">
+  <div class="tag tag-sage a d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list">
+    <li class="a d2">Ábrego Rodríguez, A., & Castillo, C. F. (Eds.). (2022). <em>Marketing digital e-commerce y las ventajas competitivas</em> (pp. 21-23). Editorial Universitaria Carlos Manuel Gasteazoro.</li>
+    <li class="a d2">Ábrego Rodríguez, A., Castillo, C. F., & Mujica Chirinos, N. (Eds.). (2022). <em>Estrategias de marketing digital y de e-commerce en tiempos de Covid-19</em> (pp. 17-26). Editorial Universitaria Carlos Manuel Gasteazoro.</li>
+    <li class="a d3">Ramos, E., & Hernández, L. (Eds.). (2021). El marketing online. En <em>Manual del comercio electrónico</em> (pp. 95-104). Ecoe Ediciones.</li>
+    <li class="a d3">Alvarado, E. (2021). Determinantes del gasto en e-commerce debido a la COVID-19: un análisis empírico para los micronegocios en Monterrey, México. <em>Paradigma Económico, 13</em>(1), 119-145. https://www.redalyc.org/journal/4315/431566320005/html/</li>
+    <li class="a d4">Linero, J. P., & Botero, L. F. (2020). Hábitos de consumo en plataformas e-commerce en adultos jóvenes de la ciudad de Bogotá. <em>Universidad & Empresa, 22</em>(38), 211-236. https://www.redalyc.org/journal/1872/187263780010/html/index.html</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){
+  slides[cur].classList.remove('active');slides[cur].classList.add('exit');
+  setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),700);
+  cur=((n%total)+total)%total;slides[cur].classList.add('active');
+  document.getElementById('prog').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('snum').textContent=(cur+1)+' / '+total;
+}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>
