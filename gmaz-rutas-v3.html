@@ -84,12 +84,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 /* ══ MAP SCREEN ══ */
 #scr-map{background:var(--negro)}
-#map-container{flex:0 0 60%;position:relative;min-height:0}
+#map-container{flex:0 0 46%;position:relative;min-height:0}
 #gmap{width:100%;height:100%}
 #map-strip{position:absolute;top:6px;left:10px;background:rgba(255,255,255,.92);border-radius:16px;padding:3px 10px;font-size:9px;font-weight:700;color:var(--gris5);box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:1;pointer-events:none}
 #map-legend{position:absolute;bottom:6px;right:8px;display:flex;align-items:center;gap:5px;pointer-events:none}
 .leg-dot{width:7px;height:7px;border-radius:50%}.leg-lbl{font-size:8px;color:var(--gris5);font-weight:600}
-.client-panel{flex:0 0 40%;background:var(--blanco);border-top:1px solid var(--gris2);display:flex;flex-direction:column;min-height:0}
+.client-panel{flex:1;background:var(--blanco);border-top:1px solid var(--gris2);display:flex;flex-direction:column;min-height:0}
 .cp-header{padding:5px 14px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-bottom:.5px solid var(--gris2)}
 .cp-title{font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:.8px}
 .cp-count{font-size:9px;color:var(--gris4)}
@@ -128,7 +128,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ip-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;flex-shrink:0}
 .ip-btn{background:var(--gris1);border:1.5px solid var(--gris2);border-radius:9px;padding:6px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:transform .1s}
 .ip-btn:active{transform:scale(.94)}
-.ip-btn-icon{font-size:19px}
+.ip-btn-azul{background:var(--azul);border-color:var(--azul);box-shadow:0 4px 10px rgba(26,86,219,.3)}
+.ip-btn-icon{font-size:19px;display:flex;align-items:center;justify-content:center;height:24px}
 .ip-btn-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .btn-nav-lbl{color:var(--azul)}.btn-fact-lbl{color:var(--amarillo)}.btn-call-lbl{color:var(--verde)}
 .ip-btn-nov{background:var(--rojo-s);border:1.5px solid rgba(227,6,19,.2);border-radius:9px;padding:9px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:transform .1s;flex-shrink:0}
@@ -407,7 +408,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #rprog .rp-bar i{display:block;height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:20px;transition:width .4s;width:0}
 
 /* ══ TARJETA SIGUIENTE PARADA ══ */
-#next-stop{margin:8px 10px 2px;background:#0F1117;border-radius:14px;padding:11px 12px;color:#fff;display:flex;align-items:center;gap:11px;box-shadow:0 4px 12px rgba(0,0,0,.18);cursor:pointer;flex-shrink:0}
+#next-stop{margin:6px 10px 2px;background:#0F1117;border-radius:13px;padding:8px 11px;color:#fff;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,.18);cursor:pointer;flex-shrink:0}
 #next-stop:active{transform:scale(.98)}
 #next-stop .nsq{width:34px;height:34px;border-radius:10px;background:var(--rojo);display:grid;place-items:center;font-size:14px;font-weight:900;flex-shrink:0;animation:punto1 1.6s infinite}
 #next-stop .nsi{flex:1;min-width:0}
@@ -437,6 +438,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #ent-ovl .ent-si:active{transform:scale(.97)}
 #ent-ovl .ent-no{width:100%;height:46px;border-radius:14px;background:#fff;color:var(--gris4);border:1.5px solid var(--gris2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
 #ent-ovl .ent-fine{font-size:10px;color:var(--gris4);margin-top:12px;line-height:1.5}
+
+/* ══ VISTA ESCRITORIO: app centrada en columna profesional ══ */
+@media(min-width:900px){
+  body{background:linear-gradient(160deg,#10182d 0%,#0B1020 55%,#1a2236 100%)}
+  body::before{content:'GMAZ RUTAS · Sistema de Reparto Coca-Cola';position:fixed;top:26px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.25);font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;z-index:1}
+  .scr,#modal-nov,#panel-coord,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{
+    left:0;right:0;width:430px;margin-left:auto;margin-right:auto;
+    box-shadow:0 0 80px rgba(0,0,0,.55);
+  }
+  .scr{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
+  #modal-nov,#panel-coord,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
+  #ent-ovl .ent-sheet{border-radius:22px 22px 24px 24px}
+}
 </style>
 </head>
 <body>
@@ -625,11 +639,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="ip-name" id="ip-name">—</div>
     <div class="ip-code" id="ip-code">—</div>
     <div class="ip-btns">
-      <div class="ip-btn" onclick="haptic();activateNav()">
-        <div class="ip-btn-icon anim-truck">
-          <svg width="28" height="22" viewBox="0 0 50 40"><rect x="2" y="7" width="27" height="22" rx="3" fill="#1A56DB" stroke="white" stroke-width="2"/><path d="M29 13h13l6 9v11H29V13z" fill="#1040A0" stroke="white" stroke-width="2"/><circle cx="11" cy="33" r="5.5" fill="#0F1117" stroke="#1A56DB" stroke-width="2.5"/><circle cx="36" cy="33" r="5.5" fill="#0F1117" stroke="#1A56DB" stroke-width="2.5"/><rect x="4" y="9" width="15" height="10" rx="2" fill="#7fb3d3" opacity=".85"/><circle cx="11" cy="33" r="2.5" fill="#4A5060"/><circle cx="36" cy="33" r="2.5" fill="#4A5060"/></svg>
-        </div>
-        <div class="ip-btn-lbl btn-nav-lbl">Navegar</div>
+      <div class="ip-btn ip-btn-azul" onclick="haptic();activateNav()">
+        <div class="ip-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
+        <div class="ip-btn-lbl" style="color:#fff">Navegar</div>
       </div>
       <div class="ip-btn" onclick="haptic();verFacturaCliente()">
         <div class="ip-btn-icon anim-doc"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
@@ -1022,12 +1034,15 @@ function actualizarPuntoPrimero(){
 }
 
 function cIconPrimero(){
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-    <circle cx="12" cy="12" r="10" fill="#E30613" stroke="white" stroke-width="2.5"/>
-    <circle cx="12" cy="12" r="5" fill="white" opacity=".5"/>
-    <animateTransform attributeName="transform" type="scale" values="1;1.25;1" dur="1s" repeatCount="indefinite" additive="sum"/>
-  </svg>`;
-  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(28,28),anchor:new google.maps.Point(14,14)};
+  // Globo (gota) parpadeante — coherente con los demás pines, marca el siguiente del orden P PAS
+  const idx=clientes.findIndex(c=>c._st==='pendiente');
+  const num=idx>=0?String(idx+1):'';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="36" height="50" viewBox="0 0 30 42">'+
+    '<path d="M15 1C7.8 1 2 6.8 2 14c0 9.6 11.2 25.4 12.4 26.7a.8.8 0 0 0 1.2 0C16.8 39.4 28 23.6 28 14 28 6.8 22.2 1 15 1z" fill="#E30613" stroke="white" stroke-width="2">'+
+    '<animate attributeName="opacity" values="1;.55;1" dur="1s" repeatCount="indefinite"/></path>'+
+    '<circle cx="15" cy="14" r="9" fill="white" opacity=".25"/>'+
+    '<text x="15" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">'+num+'</text></svg>';
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(36,50),anchor:new google.maps.Point(18,50)};
 }
 
 /* ══ FACTURAS — ESTADO GLOBAL ══ */
@@ -1627,11 +1642,15 @@ function abrirSheetEnt(){
 function cerrarSheetEnt(){document.getElementById('ent-ovl').classList.remove('open');}
 
 function cIconNumero(st,act,num){
+  // Pin tipo globo (gota) — compacto y profesional, no tapa el mapa
   const col={pendiente:'#E30613',entregado:'#059669',novedad:'#D97706'}[st]||'#E30613';
-  const sz=act?22:17;const fs=act?10:8;
+  const w=act?30:24, h=act?42:34, fs=act?11:9;
   const txt=st==='entregado'?'✓':st==='novedad'?'!':num>0?String(num):'';
-  const s='<svg xmlns="http://www.w3.org/2000/svg" width="'+(sz*2)+'" height="'+(sz*2)+'"><circle cx="'+sz+'" cy="'+sz+'" r="'+(sz-2)+'" fill="'+col+'" stroke="white" stroke-width="2"/><text x="'+sz+'" y="'+(sz+fs*0.4)+'" text-anchor="middle" font-size="'+fs+'" font-weight="bold" fill="white" font-family="Arial">'+txt+'</text></svg>';
-  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(sz*2,sz*2),anchor:new google.maps.Point(sz,sz)};
+  const s='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 30 42">'+
+    '<path d="M15 1C7.8 1 2 6.8 2 14c0 9.6 11.2 25.4 12.4 26.7a.8.8 0 0 0 1.2 0C16.8 39.4 28 23.6 28 14 28 6.8 22.2 1 15 1z" fill="'+col+'" stroke="white" stroke-width="2"/>'+
+    '<circle cx="15" cy="14" r="9" fill="white" opacity=".22"/>'+
+    '<text x="15" y="'+(14+fs*0.38)+'" text-anchor="middle" font-size="'+fs+'" font-weight="bold" fill="white" font-family="Arial">'+txt+'</text></svg>';
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(w,h),anchor:new google.maps.Point(w/2,h)};
 }
 
 function optimizarRutaDesdeGPS(posActual){
