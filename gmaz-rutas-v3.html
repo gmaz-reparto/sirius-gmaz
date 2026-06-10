@@ -397,6 +397,46 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 /* ══ PARPADEO PUNTO 1 ══ */
 @keyframes punto1{0%,100%{box-shadow:0 0 0 0 rgba(227,6,19,.7)}50%{box-shadow:0 0 0 8px rgba(227,6,19,0)}}
 .punto-primero{animation:punto1 1s ease-in-out infinite!important}
+
+/* ══ BARRA PROGRESO RUTA (orden P PAS) ══ */
+#rprog{background:var(--blanco);padding:7px 14px 9px;border-bottom:1px solid var(--gris2);flex-shrink:0}
+#rprog .rp-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+#rprog .rp-top b{font-size:11px;font-weight:800;color:var(--negro)}
+#rprog .rp-top span{font-size:10px;font-weight:700;color:var(--gris4)}
+#rprog .rp-bar{height:6px;background:var(--gris2);border-radius:20px;overflow:hidden}
+#rprog .rp-bar i{display:block;height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:20px;transition:width .4s;width:0}
+
+/* ══ TARJETA SIGUIENTE PARADA ══ */
+#next-stop{margin:8px 10px 2px;background:#0F1117;border-radius:14px;padding:11px 12px;color:#fff;display:flex;align-items:center;gap:11px;box-shadow:0 4px 12px rgba(0,0,0,.18);cursor:pointer;flex-shrink:0}
+#next-stop:active{transform:scale(.98)}
+#next-stop .nsq{width:34px;height:34px;border-radius:10px;background:var(--rojo);display:grid;place-items:center;font-size:14px;font-weight:900;flex-shrink:0;animation:punto1 1.6s infinite}
+#next-stop .nsi{flex:1;min-width:0}
+#next-stop .nsi small{font-size:8px;font-weight:800;letter-spacing:1.3px;color:rgba(255,255,255,.5);display:block}
+#next-stop .nsi b{font-size:13px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#next-stop .nsi span{font-size:10px;color:rgba(255,255,255,.6);font-weight:600}
+#next-stop .nsgo{width:36px;height:36px;border-radius:10px;background:var(--azul);display:grid;place-items:center;flex-shrink:0}
+
+/* ══ BOTÓN NOVEDAD: 2 ESTADOS ══ */
+.ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#FEF3E2,#FDE8C8);border-color:rgba(217,119,6,.4);animation:novpulsa 2s infinite}
+.ip-btn-nov.tiene-nov .ip-nov-lbl{color:#B45309}
+@keyframes novpulsa{0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.25)}50%{box-shadow:0 0 14px 2px rgba(217,119,6,.3)}}
+.ip-btn-nov.ya-entregado{background:var(--verde-suave,#ECFDF5);border-color:rgba(5,150,105,.3)}
+.ip-btn-nov.ya-entregado .ip-nov-lbl{color:var(--verde)}
+
+/* ══ SHEET ¿LOGRASTE ENTREGAR? ══ */
+#ent-ovl{position:fixed;inset:0;background:rgba(11,16,32,.5);backdrop-filter:blur(3px);z-index:600;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:.25s}
+#ent-ovl.open{opacity:1;pointer-events:auto}
+#ent-ovl .ent-sheet{width:100%;background:#fff;border-radius:22px 22px 0 0;padding:16px 18px 22px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);text-align:center}
+#ent-ovl.open .ent-sheet{transform:translateY(0)}
+#ent-ovl .ent-grab{width:40px;height:4px;background:var(--gris3);border-radius:3px;margin:0 auto 14px}
+#ent-ovl .ent-ic{width:60px;height:60px;border-radius:18px;background:var(--verde-suave,#ECFDF5);color:var(--verde);display:grid;place-items:center;margin:0 auto 12px}
+#ent-ovl h3{font-size:18px;font-weight:900;letter-spacing:-.3px;color:var(--negro)}
+#ent-ovl p{font-size:12.5px;color:var(--gris5);font-weight:600;margin:8px 0 4px;line-height:1.5}
+#ent-ovl .ent-info{display:inline-flex;align-items:center;gap:6px;background:#FEF3E2;color:#B45309;font-size:11px;font-weight:800;padding:6px 11px;border-radius:9px;margin:9px 0 16px}
+#ent-ovl .ent-si{width:100%;height:52px;border-radius:14px;background:var(--verde);color:#fff;border:none;font-family:inherit;font-size:14.5px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 6px 16px rgba(5,150,105,.3);margin-bottom:9px}
+#ent-ovl .ent-si:active{transform:scale(.97)}
+#ent-ovl .ent-no{width:100%;height:46px;border-radius:14px;background:#fff;color:var(--gris4);border:1.5px solid var(--gris2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+#ent-ovl .ent-fine{font-size:10px;color:var(--gris4);margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -455,6 +495,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <span class="hdr-info" id="map-badge-info">—</span>
     </div>
   </div>
+  <div id="rprog">
+    <div class="rp-top"><b id="rp-lbl">0 de 0 entregados</b><span id="rp-pend">— pendientes · orden P PAS</span></div>
+    <div class="rp-bar"><i id="rp-fill"></i></div>
+  </div>
   <div id="map-container" style="position:relative">
     <div id="gmap"></div>
     <div id="map-strip">Ruta: <span id="map-strip-ruta">—</span></div>
@@ -463,7 +507,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <div id="taco-slide">
   <!-- Pestaña siempre visible -->
   <div class="taco-tab" onclick="toggleTaco()">
-    <div class="taco-tab-icon">📊</div>
+    <div class="taco-tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
     <div class="taco-tab-bar"><div class="taco-tab-fill" id="taco-tab-fill" style="height:100%"></div></div>
     <div class="taco-tab-pct" id="taco-tab-pct">100%</div>
   </div>
@@ -496,22 +540,22 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="taco-divider"></div>
     <div class="taco-stats-col">
       <div class="taco-stat-row">
-        <div class="taco-stat-ico">✅</div>
+        <div class="taco-stat-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="taco-stat-lbl">Entregados</div>
         <div class="taco-stat-val" id="taco-ok" style="color:#4ade80">0</div>
       </div>
       <div class="taco-stat-row">
-        <div class="taco-stat-ico">❌</div>
+        <div class="taco-stat-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
         <div class="taco-stat-lbl">Rechazos</div>
         <div class="taco-stat-val" id="taco-rej" style="color:#f87171">0</div>
       </div>
       <div class="taco-stat-row">
-        <div class="taco-stat-ico">📦</div>
+        <div class="taco-stat-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
         <div class="taco-stat-lbl">Cajas rej.</div>
         <div class="taco-stat-val" id="taco-cajas" style="color:#fbbf24">0</div>
       </div>
       <div class="taco-stat-row">
-        <div class="taco-stat-ico">🏁</div>
+        <div class="taco-stat-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"/></svg></div>
         <div class="taco-stat-lbl">Total</div>
         <div class="taco-stat-val" id="taco-total" style="color:rgba(255,255,255,.6)">0</div>
       </div>
@@ -536,12 +580,17 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
   </div>
   <div class="client-panel">
+    <div id="next-stop" style="display:none" onclick="haptic();abrirSiguiente()">
+      <div class="nsq" id="ns-num">1</div>
+      <div class="nsi"><small>SIGUIENTE PARADA · ORDEN P PAS</small><b id="ns-nom">—</b><span id="ns-dir">—</span></div>
+      <div class="nsgo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
+    </div>
     <div class="cp-header">
       <div class="cp-title" id="cp-title">Clientes de ruta</div>
       <div class="cp-count" id="cp-count">0 puntos</div>
     </div>
     <div class="cp-search-wrap">
-      <input class="cp-search" type="search" id="cp-search" placeholder="🔍 Buscar por código o nombre..." autocomplete="off" oninput="filtrarClientes(this.value)">
+      <input class="cp-search" type="search" id="cp-search" placeholder="Buscar por código o nombre..." autocomplete="off" oninput="filtrarClientes(this.value)">
     </div>
     <div id="client-list"></div>
   </div>
@@ -583,21 +632,35 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="ip-btn-lbl btn-nav-lbl">Navegar</div>
       </div>
       <div class="ip-btn" onclick="haptic();verFacturaCliente()">
-        <div class="ip-btn-icon anim-doc">🧾</div>
+        <div class="ip-btn-icon anim-doc"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div class="ip-btn-lbl btn-fact-lbl">Facturas</div>
       </div>
       <div class="ip-btn" onclick="haptic();llamarVendedor()">
-        <div class="ip-btn-icon anim-phone">📞</div>
+        <div class="ip-btn-icon anim-phone"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
         <div class="ip-btn-lbl btn-call-lbl">Llamar</div>
       </div>
     </div>
-    <div class="ip-btn-nov" onclick="haptic();startOrBorrarNovedad()">
-      <div class="anim-nov" style="font-size:20px">🚨</div>
-      <div class="ip-nov-lbl">Reportar novedad</div>
+    <div class="ip-btn-nov" id="ip-btn-nov" onclick="haptic();startOrBorrarNovedad()">
+      <div class="anim-nov" id="ip-nov-ico" style="display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+      <div class="ip-nov-lbl" id="ip-nov-lbl">Reportar novedad</div>
     </div>
   </div>
 </div>
 
+
+<!-- ══ SHEET ¿LOGRASTE ENTREGAR? ══ -->
+<div id="ent-ovl" onclick="if(event.target===this)cerrarSheetEnt()">
+  <div class="ent-sheet">
+    <div class="ent-grab"></div>
+    <div class="ent-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    <h3>¿Lograste entregar?</h3>
+    <p>Este cliente tiene una <b>novedad registrada</b>.<br>Si volviste a pasar y recibió el pedido, confírmalo aquí.</p>
+    <div class="ent-info" id="ent-info">NOVEDAD REGISTRADA</div>
+    <button class="ent-si" onclick="haptic();cerrarSheetEnt();convertirAEntregado()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Sí, logré entregar</button>
+    <button class="ent-no" onclick="cerrarSheetEnt()">No, mantener la novedad</button>
+    <p class="ent-fine">Al confirmar: se borra la novedad y la foto, el cliente queda ENTREGADO y se avisa al vendedor por WhatsApp.</p>
+  </div>
+</div>
 
 <!-- ══ PANTALLA FACTURAS ══ -->
 <div id="pantalla-facturas" class="oculto">
@@ -726,8 +789,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
   <!-- PESTAÑAS -->
   <div style="display:flex;border-bottom:2px solid var(--gris2);background:var(--blanco);flex-shrink:0">
-    <button id="pctab-1" onclick="haptic();switchPcTab(1)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--rojo);border-bottom:2px solid var(--rojo);margin-bottom:-2px;cursor:pointer">📋 Rutina</button>
-    <button id="pctab-2" onclick="haptic();switchPcTab(2)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">📊 Operación</button>
+    <button id="pctab-1" onclick="haptic();switchPcTab(1)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--rojo);border-bottom:2px solid var(--rojo);margin-bottom:-2px;cursor:pointer">Rutina</button>
+    <button id="pctab-2" onclick="haptic();switchPcTab(2)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">Operación</button>
     <button id="pctab-3" onclick="haptic();switchPcTab(3)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">📥 Histórico</button>
   </div>
   <!-- TAB 1: RUTINA DIARIA -->
@@ -735,7 +798,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="pc-body">
       <div class="pc-date" id="pc-date">📅 Cargando...</div>
       <div class="pc-lbl">Ejecutar cada mañana en orden</div>
-      <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();switchPcTab(3)">📋 Ver histórico</button></div>
+      <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();switchPcTab(3)">Ver histórico</button></div>
       <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
       <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
       <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
@@ -1081,7 +1144,7 @@ function buscarClienteFact(q){
     const sops=cl.paginas.filter(p=>p.tipo==='soporte').length;
     const creds=cl.paginas.filter(p=>p.tipo==='credito').length;
     const div=document.createElement('div');div.className='fact-card';
-    div.innerHTML='<div class="fact-card-nombre">'+cl.nombre+'</div><div class="fact-card-codigo">Código: '+cl.codigo+'</div><div class="fact-badges">'+(sops?'<span class="fact-badge-s">📋 '+sops+' soporte'+(sops>1?'s':'')+'</span>':'')+(creds?'<span class="fact-badge-c">🧾 '+creds+' factura'+(creds>1?'s':'')+'</span>':'')+'</div>';
+    div.innerHTML='<div class="fact-card-nombre">'+cl.nombre+'</div><div class="fact-card-codigo">Código: '+cl.codigo+'</div><div class="fact-badges">'+(sops?'<span class="fact-badge-s">'+sops+' soporte'+(sops>1?'s':'')+'</span>':'')+(creds?'<span class="fact-badge-c">'+creds+' factura'+(creds>1?'s':'')+'</span>':'')+'</div>';
     div.onclick=()=>{haptic();abrirDetalleFactura(cl);};
     cont.appendChild(div);
   });
@@ -1374,6 +1437,7 @@ function renderClientList(){
     div.onclick=()=>{haptic();openClient(i);};
     ul.appendChild(div);
   });
+  actualizarProgresoRuta();
 }
 
 function updateClientItem(i){
@@ -1402,6 +1466,7 @@ async function openClient(i){
   document.getElementById('cl-ruta-rep').textContent=rutaActual;
   document.getElementById('cl-ruta-venta').textContent='Cargando...';
   document.getElementById('ip-rb-g').textContent='...';
+  pintarBtnNov();
   showScr('scr-client');
   // Buscar vendedor
   try{
@@ -1481,7 +1546,85 @@ function renderMarkers(){
     mk.addListener('click',()=>{haptic();openClient(i);});
     markers.push(mk);
   });
+  dibujarLineaPPAS();
 }
+
+/* ══ LÍNEA DE RUTA EN ORDEN P PAS ══ */
+let lineaPPAS=null;
+function dibujarLineaPPAS(){
+  if(!gmap||!clientes.length)return;
+  if(lineaPPAS){lineaPPAS.setMap(null);lineaPPAS=null;}
+  const path=clientes.map(cl=>{
+    const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0),lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+    return(lat&&lng)?{lat,lng}:null;
+  }).filter(Boolean);
+  if(path.length<2)return;
+  lineaPPAS=new google.maps.Polyline({
+    path,map:gmap,strokeColor:'#E30613',strokeOpacity:.45,strokeWeight:3,
+    icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:2,strokeColor:'#E30613',strokeOpacity:.7},offset:'0',repeat:'80px'}]
+  });
+}
+
+/* ══ PROGRESO DE RUTA + SIGUIENTE PARADA ══ */
+function actualizarProgresoRuta(){
+  if(!clientes.length)return;
+  const tot=clientes.length;
+  const ent=clientes.filter(c=>c._st==='entregado').length;
+  const nov=clientes.filter(c=>c._st==='novedad').length;
+  const pend=tot-ent-nov;
+  const pct=Math.round(ent/tot*100);
+  const lbl=document.getElementById('rp-lbl');
+  if(lbl){
+    lbl.textContent=ent+' de '+tot+' entregados';
+    document.getElementById('rp-pend').textContent=pend+' pendientes · orden P PAS';
+    document.getElementById('rp-fill').style.width=pct+'%';
+  }
+  // Tarjeta siguiente parada = primer pendiente en orden P PAS
+  const ns=document.getElementById('next-stop');
+  if(!ns)return;
+  const idx=clientes.findIndex(c=>c._st==='pendiente');
+  if(idx<0){ns.style.display='none';return;}
+  ns.style.display='flex';
+  ns.dataset.idx=idx;
+  document.getElementById('ns-num').textContent=idx+1;
+  document.getElementById('ns-nom').textContent=clientes[idx].nombre||getF(clientes[idx],CFG.COL_NOMBRE)||'(sin nombre)';
+  document.getElementById('ns-dir').textContent=(clientes[idx].direccion||getF(clientes[idx],CFG.COL_DIR)||'—');
+}
+function abrirSiguiente(){
+  const ns=document.getElementById('next-stop');
+  const idx=parseInt(ns?.dataset.idx??-1);
+  if(idx>=0)openClient(idx);
+}
+
+/* ══ BOTÓN NOVEDAD: 2 ESTADOS VISUALES ══ */
+function pintarBtnNov(){
+  const b=document.getElementById('ip-btn-nov');
+  const l=document.getElementById('ip-nov-lbl');
+  const ico=document.getElementById('ip-nov-ico');
+  if(!b||!clientes[clienteIdx])return;
+  const st=clientes[clienteIdx]._st;
+  if(st==='novedad'){
+    b.className='ip-btn-nov tiene-nov';
+    l.textContent='Tiene novedad — ¿Lograste entregar?';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+  }else if(st==='entregado'){
+    b.className='ip-btn-nov ya-entregado';
+    l.textContent='Cliente entregado';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  }else{
+    b.className='ip-btn-nov';
+    l.textContent='Reportar novedad';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  }
+}
+
+/* ══ SHEET ¿LOGRASTE ENTREGAR? ══ */
+function abrirSheetEnt(){
+  const cl=clientes[clienteIdx];
+  document.getElementById('ent-info').textContent='Registrada hoy · '+(cl?.nombre||getF(cl,CFG.COL_NOMBRE)||'');
+  document.getElementById('ent-ovl').classList.add('open');
+}
+function cerrarSheetEnt(){document.getElementById('ent-ovl').classList.remove('open');}
 
 function cIconNumero(st,act,num){
   const col={pendiente:'#E30613',entregado:'#059669',novedad:'#D97706'}[st]||'#E30613';
@@ -1492,25 +1635,9 @@ function cIconNumero(st,act,num){
 }
 
 function optimizarRutaDesdeGPS(posActual){
-  if(!clientes.length||!posActual)return;
-  const getLat=cl=>parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
-  const getLng=cl=>parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
-  const dist=(a,b)=>{const dl=a.lat-b.lat,dn=a.lng-b.lng;return dl*dl+dn*dn;};
-  // Solo optimizar pendientes
-  const procesados=clientes.filter(cl=>cl._st!=='pendiente');
-  const pendientes=clientes.filter(cl=>cl._st==='pendiente');
-  if(pendientes.length<2){renderMarkers();return;}
-  let pos={lat:posActual.lat,lng:posActual.lng};
-  const ordenados=[];const restantes=[...pendientes];
-  while(restantes.length){
-    let minD=Infinity,minI=0;
-    restantes.forEach((cl,i)=>{const d=dist(pos,{lat:getLat(cl),lng:getLng(cl)});if(d<minD){minD=d;minI=i;}});
-    const sig=restantes.splice(minI,1)[0];
-    ordenados.push(sig);
-    pos={lat:getLat(sig),lng:getLng(sig)};
-  }
-  clientes=[...procesados,...ordenados];
-  clienteIdx=0;
+  // ORDEN P PAS: la ruta respeta el orden del archivo del día (Número_de_secuencia_).
+  // Ya NO se reordena por cercanía GPS — solo se refrescan marcadores y lista.
+  if(!clientes.length)return;
   renderMarkers();
   renderClientList();
 }
@@ -1524,6 +1651,8 @@ function setClientSt(i,st){
   actualizarTacoLocal();
   // Actualizar todos los marcadores para reflejar cambios de numeración
   markers.forEach((m,j)=>{if(m)m.setIcon(cIconNumero(clientes[j]._st,j===clienteIdx,j+1));});
+  actualizarProgresoRuta();
+  if(i===clienteIdx)pintarBtnNov();
   guardarEstadoCliente(i,st);
 }
 
@@ -1640,11 +1769,11 @@ function startOrBorrarNovedad(){
   if(!clientes[clienteIdx])return;
   if(clientes[clienteIdx]._st==='novedad'){
     haptic(60);
-    // Opciones: Logré entregar O Borrar para nueva novedad
-    const opc=confirm('⚠️ Este cliente tiene novedad registrada.\n\n✅ Pulsa ACEPTAR si lograste entregar el producto.\n❌ Pulsa CANCELAR para no hacer nada.');
-    if(opc){convertirAEntregado();}
+    // 2do toque: sheet corporativo "¿Lograste entregar?" (antes confirm nativo)
+    abrirSheetEnt();
     return;
   }
+  if(clientes[clienteIdx]._st==='entregado'){toast('✓ Este cliente ya está entregado','ok');return;}
   startNovedad();
 }
 
