@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMAZ Rutas — Propuesta UX/UI (Prototipo)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>window.PPAS9 = [{"r":"KA4V56","s":1,"la":1.23217,"ln":-77.28498,"c":72,"n":"MAS BARATO MORASURCO"},{"r":"KA4V52","s":1,"la":1.19868,"ln":-77.27196,"c":91,"n":"EL CANASTICO"},{"r":"KA4V54","s":1,"la":1.20389,"ln":-77.26723,"c":2,"n":"SUPERTIENDA AHORRAMAS"},{"r":"KA4V55","s":1,"la":1.21641,"ln":-77.27161,"c":2,"n":"TIENDA VALERY"},{"r":"KA4V53","s":1,"la":1.1912,"ln":-77.2769,"c":3,"n":"TIENDA MILAN"},{"r":"KA4V13","s":1,"la":1.23568,"ln":-77.30125,"c":0,"n":"RESTAURANTE TRIBAL"},{"r":"KA4V51","s":1,"la":1.2046,"ln":-77.29564,"c":6,"n":"EL ZIPOTAZO"},{"r":"KA4V50","s":1,"la":1.2115,"ln":-77.2925,"c":4,"n":"BUEN DIA"},{"r":"KA4V12","s":1,"la":1.2089,"ln":-77.287,"c":3,"n":"TIENDA VIESA"},{"r":"KA4V53","s":2,"la":1.19057,"ln":-77.27617,"c":5,"n":"MINI MARKET TODO UNO"},{"r":"KA4V56","s":2,"la":1.30969,"ln":-77.271,"c":5,"n":"TIENDA OMAR"},{"r":"KA4V54","s":2,"la":1.2032,"ln":-77.2633,"c":1,"n":"CALAVERAS BARBER"},{"r":"KA4V51","s":2,"la":1.2055,"ln":-77.2941,"c":0,"n":"VARIEDADES CANDY"},{"r":"KA4V55","s":2,"la":1.2164,"ln":-77.2711,"c":2,"n":"SUPER TIENDA LA MEJOR"},{"r":"KA4V52","s":2,"la":1.19842,"ln":-77.27241,"c":18,"n":"DEPOSITO DAVID"},{"r":"KA4V50","s":2,"la":1.2203,"ln":-77.2919,"c":2,"n":"TIENDA LA CASCADA"},{"r":"KA4V13","s":2,"la":1.2251,"ln":-77.2867,"c":1,"n":"RAPITIENDA DORADO"},{"r":"KA4V12","s":2,"la":1.2093,"ln":-77.2858,"c":3,"n":"CAISAGA"},{"r":"KA4V56","s":3,"la":1.33766,"ln":-77.27706,"c":16,"n":"ASADERO DE AREPAS LAS DE"},{"r":"KA4V54","s":3,"la":1.20233,"ln":-77.26247,"c":4,"n":"EL PALACIO DEL PESCADO S"},{"r":"KA4V52","s":3,"la":1.19826,"ln":-77.27208,"c":73,"n":"DEPOCITO LUCIO"},{"r":"KA4V51","s":3,"la":1.20575,"ln":-77.29372,"c":7,"n":"PIZZA 400 GRADOS DOS SAS"},{"r":"KA4V55","s":3,"la":1.21678,"ln":-77.27085,"c":9,"n":"SUPER TIENDA LA GRADA"},{"r":"KA4V53","s":3,"la":1.1919,"ln":-77.2718,"c":0,"n":"TIENDA MI NEGOCIO"},{"r":"KA4V50","s":3,"la":1.2212,"ln":-77.2945,"c":8,"n":"MERCATODO EL CRCER JCD R"},{"r":"KA4V13","s":3,"la":1.2244,"ln":-77.2861,"c":2,"n":"CAFETERIA Y DESAYUNOS SA"},{"r":"KA4V12","s":3,"la":1.20884,"ln":-77.28069,"c":1,"n":"VIVERES LA 22"},{"r":"KA4V56","s":4,"la":1.36031,"ln":-77.28523,"c":4,"n":"MEGA TIENDA LA PLAZA 2"},{"r":"KA4V54","s":4,"la":1.2018,"ln":-77.2589,"c":2,"n":"RUTA 47 PS"},{"r":"KA4V52","s":4,"la":1.1983,"ln":-77.27176,"c":31,"n":"TIENDA BASTIMAR"},{"r":"KA4V51","s":4,"la":1.2064,"ln":-77.2928,"c":0,"n":"TIENDA LICORES"},{"r":"KA4V55","s":4,"la":1.21548,"ln":-77.26916,"c":1,"n":"TIENDA ALAMEDA"},{"r":"KA4V53","s":4,"la":1.1917,"ln":-77.2716,"c":1,"n":"TDA SAN SEBASTIAN"},{"r":"KA4V50","s":4,"la":1.2212,"ln":-77.293,"c":4,"n":"TIENDA TORRES MARILUZ"},{"r":"KA4V13","s":4,"la":1.22365,"ln":-77.28982,"c":1,"n":"LICORERIA BACO"},{"r":"KA4V12","s":4,"la":1.2089,"ln":-77.2809,"c":4,"n":"DE LOS GEMELOS TIENDA"},{"r":"KA4V56","s":5,"la":1.3605,"ln":-77.285,"c":3,"n":"EL ARRIERO PARRILLA"},{"r":"KA4V52","s":5,"la":1.19785,"ln":-77.27171,"c":49,"n":"GRANERO LA DIFERENCIA"},{"r":"KA4V54","s":5,"la":1.20365,"ln":-77.26246,"c":7,"n":"TIENDA BAHIA 2"},{"r":"KA4V51","s":5,"la":1.20602,"ln":-77.29221,"c":2,"n":"MINITIEND LEITO"},{"r":"KA4V55","s":5,"la":1.2163,"ln":-77.2688,"c":2,"n":"MARKET EXPRESS"},{"r":"KA4V53","s":5,"la":1.1919,"ln":-77.2714,"c":0,"n":"ADRIANA"},{"r":"KA4V50","s":5,"la":1.2215,"ln":-77.2918,"c":6,"n":"TIENDA LUIS"},{"r":"KA4V13","s":5,"la":1.22499,"ln":-77.29079,"c":4,"n":"BROASTERMANIA"},{"r":"KA4V12","s":5,"la":1.2086,"ln":-77.2809,"c":8,"n":"MISCELANEA LA 22"},{"r":"KA4V56","s":6,"la":1.3605,"ln":-77.2849,"c":5,"n":"TIENDA TRANSANDONA"},{"r":"KA4V52","s":6,"la":1.20007,"ln":-77.27055,"c":5,"n":"HOTEL NEFER"},{"r":"KA4V54","s":6,"la":1.2036,"ln":-77.2628,"c":2,"n":"PABLO PORTILLO MORIANO"},{"r":"KA4V51","s":6,"la":1.2061,"ln":-77.29223,"c":2,"n":"MULTIVARIEDADES DEL SUR"},{"r":"KA4V55","s":6,"la":1.2164,"ln":-77.2688,"c":2,"n":"PARE Y COMPRE"},{"r":"KA4V53","s":6,"la":1.19155,"ln":-77.27171,"c":2,"n":"TDA ANDRU"},{"r":"KA4V13","s":6,"la":1.2239,"ln":-77.2901,"c":9,"n":"CENTRO MARKET"},{"r":"KA4V50","s":6,"la":1.2163,"ln":-77.2883,"c":13,"n":"FOOD MAKERS SAS"},{"r":"KA4V12","s":6,"la":1.2085,"ln":-77.2808,"c":2,"n":"TIENDA RAQUEL"},{"r":"KA4V56","s":7,"la":1.36058,"ln":-77.28494,"c":1,"n":"TIENDA LA MONITA"},{"r":"KA4V54","s":7,"la":1.20361,"ln":-77.26315,"c":3,"n":"MALIBU FAST FOOD"},{"r":"KA4V52","s":7,"la":1.2016,"ln":-77.2706,"c":4,"n":"BARATON"},{"r":"KA4V51","s":7,"la":1.20571,"ln":-77.29188,"c":0,"n":"TIENDA JUANJO"},{"r":"KA4V55","s":7,"la":1.2166,"ln":-77.2699,"c":0,"n":"MERCAYA"},{"r":"KA4V53","s":7,"la":1.1913,"ln":-77.2713,"c":0,"n":"TIENDA GLORIA SANTANDER"},{"r":"KA4V13","s":7,"la":1.22313,"ln":-77.29,"c":2,"n":"TIENDA ANA LUCIA"},{"r":"KA4V50","s":7,"la":1.2162,"ln":-77.2881,"c":2,"n":"HAPPY CITY UNICENTRO PAS"},{"r":"KA4V12","s":7,"la":1.2072,"ln":-77.2795,"c":2,"n":"DROGUERIA MAS SALUD PAST"},{"r":"KA4V56","s":8,"la":1.36058,"ln":-77.28493,"c":1,"n":"TIENDA CARLA"},{"r":"KA4V52","s":8,"la":1.20074,"ln":-77.26945,"c":1,"n":"PANADERIA LEMAN"},{"r":"KA4V54","s":8,"la":1.2036,"ln":-77.2634,"c":6,"n":"SPR EXPRESS STA BARBARA"},{"r":"KA4V51","s":8,"la":1.207,"ln":-77.292,"c":1,"n":"CAFETERIA PATY"},{"r":"KA4V55","s":8,"la":1.21686,"ln":-77.26956,"c":2,"n":"QUE RICURAS"},{"r":"KA4V53","s":8,"la":1.1913,"ln":-77.2717,"c":0,"n":"TIENDA NASPIRAN"},{"r":"KA4V13","s":8,"la":1.2238,"ln":-77.2909,"c":1,"n":"CASETA 4 ROJA"},{"r":"KA4V50","s":8,"la":1.2139,"ln":-77.2873,"c":1,"n":"BUNUELOS LA AURORA"},{"r":"KA4V12","s":8,"la":1.2067,"ln":-77.2792,"c":2,"n":"GRANERO BLANCA"},{"r":"KA4V56","s":9,"la":1.3606,"ln":-77.285,"c":12,"n":"EL TABLAZO"},{"r":"KA4V52","s":9,"la":1.20071,"ln":-77.26934,"c":0,"n":"LICORES LA VENIDA"},{"r":"KA4V54","s":9,"la":1.2031,"ln":-77.2641,"c":1,"n":"TIENDA AMPARITO"},{"r":"KA4V51","s":9,"la":1.20806,"ln":-77.29313,"c":1,"n":"LA ESQUINA DEL BOSQUE GR"},{"r":"KA4V55","s":9,"la":1.21694,"ln":-77.26931,"c":3,"n":"MISCELANEA EL BODEGON"},{"r":"KA4V53","s":9,"la":1.1912,"ln":-77.2717,"c":0,"n":"TIENDA SHADDAI"},{"r":"KA4V13","s":9,"la":1.2233,"ln":-77.2911,"c":1,"n":"SUPERTIENDA EL CASTILLO"},{"r":"KA4V50","s":9,"la":1.21359,"ln":-77.28689,"c":3,"n":"EL TAMBEÑO"},{"r":"KA4V12","s":9,"la":1.2052,"ln":-77.28,"c":6,"n":"SHENG LONG"},{"r":"KA4V56","s":10,"la":1.36061,"ln":-77.28486,"c":3,"n":"TIENDA EL PLACER"},{"r":"KA4V52","s":10,"la":1.20071,"ln":-77.26934,"c":1,"n":"EL SUPER ARROZ"},{"r":"KA4V54","s":10,"la":1.2031,"ln":-77.2641,"c":1,"n":"TIENDA OLGA MORENO"},{"r":"KA4V55","s":10,"la":1.2206,"ln":-77.2702,"c":9,"n":"THE BURGERS"},{"r":"KA4V53","s":10,"la":1.191,"ln":-77.2718,"c":1,"n":"TIENDA DANI"},{"r":"KA4V13","s":10,"la":1.2245,"ln":-77.2863,"c":0,"n":"MERKATIENDA EL DORADO"},{"r":"KA4V50","s":10,"la":1.2147,"ln":-77.2856,"c":1,"n":"TIENDA SAN IGANCIO ESQUI"},{"r":"KA4V51","s":10,"la":1.20916,"ln":-77.29417,"c":6,"n":"TIENDA LOS GUADUALES"},{"r":"KA4V12","s":10,"la":1.20657,"ln":-77.27913,"c":1,"n":"LA PAUSA"},{"r":"KA4V56","s":11,"la":1.36069,"ln":-77.28484,"c":1,"n":"QUE BUENA PARRILLA"},{"r":"KA4V52","s":11,"la":1.2003,"ln":-77.2687,"c":0,"n":"RICO ZASIN DEL SUR"},{"r":"KA4V54","s":11,"la":1.2022,"ln":-77.2636,"c":12,"n":"TIENDA LA MERCED"},{"r":"KA4V55","s":11,"la":1.21943,"ln":-77.26741,"c":2,"n":"TIENDA DOÑA MARIA"},{"r":"KA4V53","s":11,"la":1.1917,"ln":-77.2705,"c":2,"n":"TIENDA SURTIECONOMICA"},{"r":"KA4V13","s":11,"la":1.22593,"ln":-77.28548,"c":5,"n":"COMNUTRIR VALLE DE ATRIZ"},{"r":"KA4V50","s":11,"la":1.2145,"ln":-77.2853,"c":6,"n":"LA BARRILLADA"},{"r":"KA4V51","s":11,"la":1.2094,"ln":-77.2932,"c":1,"n":"TIENDA FERNANDO Y BETTY"},{"r":"KA4V12","s":11,"la":1.2101,"ln":-77.2794,"c":1,"n":"HOTEL METRO POOL"},{"r":"KA4V56","s":12,"la":1.36072,"ln":-77.28493,"c":5,"n":"TIENDA SAN JOSE"},{"r":"KA4V52","s":12,"la":1.20023,"ln":-77.26865,"c":4,"n":"TIENDA Y LICORES YULIANI"},{"r":"KA4V54","s":12,"la":1.2015,"ln":-77.2621,"c":2,"n":"TIENDA JESSICA"},{"r":"KA4V55","s":12,"la":1.21991,"ln":-77.26738,"c":2,"n":"TIENDA 8"},{"r":"KA4V51","s":12,"la":1.2,"ln":-77.2815,"c":1,"n":"FRUTAS Y VERDURAS J Y Y"},{"r":"KA4V53","s":12,"la":1.1909,"ln":-77.27,"c":1,"n":"TNDA MILTON MONTENEGRO"},{"r":"KA4V13","s":12,"la":1.22643,"ln":-77.28472,"c":0,"n":"TIENDA PALERMO"},{"r":"KA4V50","s":12,"la":1.2155,"ln":-77.2813,"c":1,"n":"CLUB DE BILLARES LA ACAD"},{"r":"KA4V12","s":12,"la":1.2101,"ln":-77.2783,"c":3,"n":"HOTEL MAX"},{"r":"KA4V56","s":13,"la":1.36073,"ln":-77.28489,"c":11,"n":"TIENDA DEPOSITO LAS PALM"},{"r":"KA4V52","s":13,"la":1.2001,"ln":-77.2686,"c":3,"n":"SURTIMERCAR"},{"r":"KA4V54","s":13,"la":1.202,"ln":-77.2635,"c":2,"n":"PUNTO CLAVE SUPERTIENDA"},{"r":"KA4V51","s":13,"la":1.1977,"ln":-77.2855,"c":3,"n":"TIENDA QUITO LOPEZ 3 REA"},{"r":"KA4V55","s":13,"la":1.2183,"ln":-77.2673,"c":4,"n":"TIENDA NATIZ"},{"r":"KA4V53","s":13,"la":1.191,"ln":-77.2708,"c":1,"n":"TIENDA AMANDA YAMA"},{"r":"KA4V13","s":13,"la":1.2262,"ln":-77.2846,"c":2,"n":"TIENDA BOOM"},{"r":"KA4V50","s":13,"la":1.21596,"ln":-77.28178,"c":3,"n":"BASILEUSS"},{"r":"KA4V12","s":13,"la":1.21006,"ln":-77.27798,"c":4,"n":"DROGUERIA POPULAR PASTO"},{"r":"KA4V56","s":14,"la":1.3606,"ln":-77.28484,"c":3,"n":"TIENDA GOMEZ"},{"r":"KA4V52","s":14,"la":1.20013,"ln":-77.26898,"c":2,"n":"COMA RICO AI LA 18"},{"r":"KA4V54","s":14,"la":1.19896,"ln":-77.26284,"c":1,"n":"JHOJAN JAIR PATIO ARTURO"},{"r":"KA4V55","s":14,"la":1.2181,"ln":-77.2672,"c":7,"n":"LAS AREPAS DE"},{"r":"KA4V51","s":14,"la":1.19827,"ln":-77.28157,"c":2,"n":"MAXITIENDA DISTRIBUCIONE"},{"r":"KA4V53","s":14,"la":1.1889,"ln":-77.2717,"c":4,"n":"TIENDA LOS ANDES"},{"r":"KA4V13","s":14,"la":1.2255,"ln":-77.2854,"c":1,"n":"EL ZIPOTAZO"},{"r":"KA4V50","s":14,"la":1.216,"ln":-77.2816,"c":2,"n":"LICORES TAMYS"},{"r":"KA4V12","s":14,"la":1.2103,"ln":-77.2772,"c":1,"n":"SALPIMIENTA BBQ"},{"r":"KA4V56","s":15,"la":1.35998,"ln":-77.28441,"c":2,"n":"MERCA ECONOMICO CELESTE"},{"r":"KA4V50","s":15,"la":1.2159,"ln":-77.2812,"c":1,"n":"METBALLS BURGER"},{"r":"KA4V52","s":15,"la":1.2002,"ln":-77.2696,"c":1,"n":"RESTAURANTE MERAKY"},{"r":"KA4V54","s":15,"la":1.1997,"ln":-77.2638,"c":8,"n":"TDA Y LICORES FLOR"},{"r":"KA4V55","s":15,"la":1.2205,"ln":-77.2683,"c":5,"n":"TIENDA EL PARQUE DEL AMO"},{"r":"KA4V51","s":15,"la":1.19795,"ln":-77.28112,"c":1,"n":"TIENDA DANIEL"},{"r":"KA4V53","s":15,"la":1.18863,"ln":-77.2713,"c":4,"n":"TIENDA Y VARIEDADES JUAN"},{"r":"KA4V13","s":15,"la":1.2254,"ln":-77.2854,"c":1,"n":"EMPANADITAS PALERMO"},{"r":"KA4V12","s":15,"la":1.2115,"ln":-77.2774,"c":25,"n":"PANADERIA SABROPAN"},{"r":"KA4V55","s":16,"la":1.21564,"ln":-77.26947,"c":1,"n":"TIENDA MATY"},{"r":"KA4V56","s":16,"la":1.36,"ln":-77.2842,"c":14,"n":"EL PROOBEDOR"},{"r":"KA4V52","s":16,"la":1.20027,"ln":-77.26963,"c":3,"n":"TIENDA H Y M"},{"r":"KA4V50","s":16,"la":1.21568,"ln":-77.28131,"c":1,"n":"CLUB DE BILLARES ACADEMI"},{"r":"KA4V12","s":16,"la":1.21479,"ln":-77.28166,"c":0,"n":"CLUB DE BILLARES GABRIEL"},{"r":"KA4V54","s":16,"la":1.2006,"ln":-77.2654,"c":2,"n":"AURA COLE JOSE FELIX"},{"r":"KA4V51","s":16,"la":1.1992,"ln":-77.2816,"c":2,"n":"LICOTIENDA JUANDA"},{"r":"KA4V53","s":16,"la":1.1883,"ln":-77.27104,"c":12,"n":"JYS HOGAR Y MASCOTAS"},{"r":"KA4V13","s":16,"la":1.22761,"ln":-77.28405,"c":1,"n":"MISCELÁNEA HERMANOS"},{"r":"KA4V55","s":17,"la":1.216,"ln":-77.2736,"c":3,"n":"TIENDA MAURITA"},{"r":"KA4V56","s":17,"la":1.35967,"ln":-77.28377,"c":0,"n":"GRANERO SAN SEBASTIAN"},{"r":"KA4V50","s":17,"la":1.216,"ln":-77.2814,"c":1,"n":"EMPANADICTAS"},{"r":"KA4V52","s":17,"la":1.2004,"ln":-77.2699,"c":2,"n":"PANADERIA CHOCO PAN"},{"r":"KA4V54","s":17,"la":1.20066,"ln":-77.26542,"c":1,"n":"CAFETERIA COLEGIO JOSE F"},{"r":"KA4V51","s":17,"la":1.19949,"ln":-77.28155,"c":13,"n":"TIENDA LIBIA"},{"r":"KA4V53","s":17,"la":1.18885,"ln":-77.27041,"c":1,"n":"MINIMARKET JFE"},{"r":"KA4V13","s":17,"la":1.2242,"ln":-77.2843,"c":4,"n":"JUANCHO WINGS"},{"r":"KA4V12","s":17,"la":1.2161,"ln":-77.2807,"c":7,"n":"VARIEDADES VALENTINA"},{"r":"KA4V56","s":18,"la":1.35953,"ln":-77.28365,"c":1,"n":"STAR BUGUER"},{"r":"KA4V50","s":18,"la":1.216,"ln":-77.2814,"c":1,"n":"CAFET JUANCA"},{"r":"KA4V52","s":18,"la":1.1967,"ln":-77.2676,"c":3,"n":"MINEROS SUPERTIENDA"},{"r":"KA4V54","s":18,"la":1.2008,"ln":-77.2656,"c":1,"n":"COMIDA RAPIDAS YOLIMA"},{"r":"KA4V55","s":18,"la":1.22107,"ln":-77.26709,"c":0,"n":"TIENDA PACHITO"},{"r":"KA4V12","s":18,"la":1.21626,"ln":-77.27949,"c":12,"n":"POLLO SORPRESA EXITO"},{"r":"KA4V51","s":18,"la":1.2004,"ln":-77.2809,"c":2,"n":"EL PUNTO DEL PESCADO"},{"r":"KA4V53","s":18,"la":1.1899,"ln":-77.2712,"c":0,"n":"TDA A Y L"},{"r":"KA4V13","s":18,"la":1.2273,"ln":-77.287,"c":2,"n":"TIENDA LA 42"},{"r":"KA4V56","s":19,"la":1.3593,"ln":-77.2834,"c":2,"n":"PANADERIA CENTRAL"},{"r":"KA4V50","s":19,"la":1.2165,"ln":-77.282,"c":2,"n":"RESTAURANTE MI PANA"},{"r":"KA4V12","s":19,"la":1.2163,"ln":-77.2802,"c":12,"n":"RESTAURANTE LA ESPANOLA"},{"r":"KA4V52","s":19,"la":1.1963,"ln":-77.2677,"c":5,"n":"MINIMARKET LA LUPITA"},{"r":"KA4V54","s":19,"la":1.2011,"ln":-77.2653,"c":1,"n":"PASTO VARIEDAD"},{"r":"KA4V55","s":19,"la":1.2227,"ln":-77.2676,"c":1,"n":"TIENDA LA 14"},{"r":"KA4V51","s":19,"la":1.2008,"ln":-77.2811,"c":1,"n":"HELADERIA DE LA CREM"},{"r":"KA4V53","s":19,"la":1.1898,"ln":-77.2711,"c":1,"n":"TIENDA LA VERDE"},{"r":"KA4V13","s":19,"la":1.22746,"ln":-77.28629,"c":4,"n":"ROYAL FILMS PASTO CINEMA"},{"r":"KA4V56","s":20,"la":1.359,"ln":-77.283,"c":8,"n":"MERKA EXPRESS"},{"r":"KA4V50","s":20,"la":1.2158,"ln":-77.2824,"c":1,"n":"CALAFATE DR"},{"r":"KA4V12","s":20,"la":1.2163,"ln":-77.2781,"c":1,"n":"ENSANDUCHADOS SANDWICH Y"},{"r":"KA4V54","s":20,"la":1.2015,"ln":-77.2656,"c":14,"n":"VARIEDADES SOFI"},{"r":"KA4V55","s":20,"la":1.223,"ln":-77.2685,"c":1,"n":"TIENDA LA ESQUINA CORA"},{"r":"KA4V51","s":20,"la":1.20088,"ln":-77.28118,"c":3,"n":"MERKATODO NIZAN"},{"r":"KA4V53","s":20,"la":1.1898,"ln":-77.2713,"c":2,"n":"TIENDA ANDREA JOHANA"},{"r":"KA4V52","s":20,"la":1.1955,"ln":-77.2699,"c":1,"n":"TU MERCADITO MASFRU"},{"r":"KA4V13","s":20,"la":1.22758,"ln":-77.28586,"c":7,"n":"QBANO AV ESTUDIANTES"},{"r":"KA4V56","s":21,"la":1.35915,"ln":-77.283,"c":2,"n":"RESTAURANTE MIS NIETAS"},{"r":"KA4V52","s":21,"la":1.19547,"ln":-77.26976,"c":1,"n":"TIENDA DIAZ"},{"r":"KA4V54","s":21,"la":1.2009,"ln":-77.2661,"c":2,"n":"TIENDA LIVIC II"},{"r":"KA4V55","s":21,"la":1.2227,"ln":-77.2689,"c":1,"n":"PANADERIA CHARLES BRAWM"},{"r":"KA4V51","s":21,"la":1.2006,"ln":-77.2808,"c":1,"n":"KIOSCO AZUL COLEGIO LIBE"},{"r":"KA4V53","s":21,"la":1.1899,"ln":-77.2715,"c":0,"n":"TIENDA ALEIDA YARPAS"},{"r":"KA4V13","s":21,"la":1.2271,"ln":-77.2865,"c":2,"n":"CAFE SAN BLASS"},{"r":"KA4V50","s":21,"la":1.2158,"ln":-77.2878,"c":4,"n":"TIENDA DE UNICENTRO"},{"r":"KA4V12","s":21,"la":1.21224,"ln":-77.2803,"c":7,"n":"HOTEL SENEGA"},{"r":"KA4V56","s":22,"la":1.35924,"ln":-77.28294,"c":3,"n":"FUENTE DE SODA EL PARQUE"},{"r":"KA4V52","s":22,"la":1.1943,"ln":-77.2697,"c":0,"n":"MINIMARKET MADRGAL"},{"r":"KA4V54","s":22,"la":1.20185,"ln":-77.26607,"c":1,"n":"RESTAURANTE LA SAZON DE "},{"r":"KA4V55","s":22,"la":1.2223,"ln":-77.268,"c":3,"n":"TIENDA ROSARIO LA 21"},{"r":"KA4V51","s":22,"la":1.2008,"ln":-77.2805,"c":1,"n":"TIENDA FROVER"},{"r":"KA4V53","s":22,"la":1.1899,"ln":-77.2714,"c":3,"n":"TIENDA MATIS"},{"r":"KA4V13","s":22,"la":1.2255,"ln":-77.2888,"c":1,"n":"RAPITIENDA CORY"},{"r":"KA4V50","s":22,"la":1.2178,"ln":-77.288,"c":3,"n":"UNIPASTO"},{"r":"KA4V12","s":22,"la":1.2111,"ln":-77.2784,"c":1,"n":"EMPANADICTO"},{"r":"KA4V56","s":23,"la":1.36007,"ln":-77.28324,"c":1,"n":"SEVILLANA"},{"r":"KA4V52","s":23,"la":1.1948,"ln":-77.26913,"c":0,"n":"TIENDA CRISTOFER"},{"r":"KA4V54","s":23,"la":1.20219,"ln":-77.26453,"c":4,"n":"AMERICAN CLASS"},{"r":"KA4V12","s":23,"la":1.20285,"ln":-77.28369,"c":1,"n":"TIENDA ALICIA"},{"r":"KA4V55","s":23,"la":1.22251,"ln":-77.26814,"c":2,"n":"POLLOS CAICEDO"},{"r":"KA4V51","s":23,"la":1.20089,"ln":-77.28033,"c":1,"n":"COMIDAS RAPIDAS CIUDAD J"},{"r":"KA4V53","s":23,"la":1.19,"ln":-77.2715,"c":2,"n":"COMIDAS RAPIDAS SANTA MA"},{"r":"KA4V13","s":23,"la":1.2257,"ln":-77.2891,"c":1,"n":"PAPELERIA SOFI LINDURAS"},{"r":"KA4V50","s":23,"la":1.2186,"ln":-77.2911,"c":0,"n":"TIENDA ALEJANDRA"},{"r":"KA4V56","s":24,"la":1.36,"ln":-77.2833,"c":1,"n":"LOS VECINOS SUPERMERCADO"},{"r":"KA4V52","s":24,"la":1.19626,"ln":-77.26914,"c":11,"n":"TIENDA ANGELICA DELGADO"},{"r":"KA4V54","s":24,"la":1.2035,"ln":-77.2635,"c":3,"n":"TIENDA MARTHA BUESAQUILL"},{"r":"KA4V12","s":24,"la":1.2016,"ln":-77.2838,"c":1,"n":"TIENDA GENIT ESPANA"},{"r":"KA4V55","s":24,"la":1.222,"ln":-77.2684,"c":1,"n":"PANADERIA Y PASTELERIA D"},{"r":"KA4V51","s":24,"la":1.2001,"ln":-77.2804,"c":0,"n":"COMIDAS RAPIDAS"},{"r":"KA4V53","s":24,"la":1.1907,"ln":-77.2714,"c":1,"n":"TIENDA NIXA"},{"r":"KA4V13","s":24,"la":1.2247,"ln":-77.2899,"c":2,"n":"MI TIENDITA"},{"r":"KA4V50","s":24,"la":1.21968,"ln":-77.28667,"c":7,"n":"SUPERTIENDA NUEVO DIA"},{"r":"KA4V56","s":25,"la":1.35986,"ln":-77.28341,"c":1,"n":"RESTAURANTE DOÑA AMANDA"},{"r":"KA4V52","s":25,"la":1.19662,"ln":-77.26876,"c":2,"n":"TIENDA DE YENNI"},{"r":"KA4V54","s":25,"la":1.20365,"ln":-77.26361,"c":1,"n":"CAFETERIA PUNTO DEPORTES"},{"r":"KA4V12","s":25,"la":1.2016,"ln":-77.2837,"c":1,"n":"TIENDA ROSARIO MURILLO"},{"r":"KA4V55","s":25,"la":1.2218,"ln":-77.2686,"c":7,"n":"TIENDA LORENS"},{"r":"KA4V51","s":25,"la":1.20108,"ln":-77.28037,"c":1,"n":"COMIDAS RAPIDAS CIUDAD J"},{"r":"KA4V53","s":25,"la":1.1907,"ln":-77.2715,"c":3,"n":"MERCATODO LA 22"},{"r":"KA4V13","s":25,"la":1.2249,"ln":-77.291,"c":5,"n":"MIRADOR DE LA COLINA APT"},{"r":"KA4V50","s":25,"la":1.21701,"ln":-77.28427,"c":3,"n":"CHANCHORNADO"},{"r":"KA4V56","s":26,"la":1.3599,"ln":-77.28344,"c":3,"n":"CAFETERIA CHILITA"},{"r":"KA4V52","s":26,"la":1.19646,"ln":-77.26837,"c":1,"n":"TIENDA DOÑA MICHE"},{"r":"KA4V54","s":26,"la":1.2036,"ln":-77.2639,"c":5,"n":"MINIMARKET CENTRAL"},{"r":"KA4V12","s":26,"la":1.2011,"ln":-77.2835,"c":1,"n":"MERCATODO LAURACALVACHE "},{"r":"KA4V55","s":26,"la":1.22195,"ln":-77.26865,"c":1,"n":"PICADAS MARINA"},{"r":"KA4V50","s":26,"la":1.2169,"ln":-77.2894,"c":121,"n":"JUMBO PASTO UNICENTRO"},{"r":"KA4V51","s":26,"la":1.20061,"ln":-77.2797,"c":4,"n":"CAFETERIA LIBERTAD"},{"r":"KA4V53","s":26,"la":1.19403,"ln":-77.27299,"c":0,"n":"RAPITIENDA ROSSA"},{"r":"KA4V13","s":26,"la":1.22473,"ln":-77.2908,"c":3,"n":"TIENDA GIRASOL"},{"r":"KA4V56","s":27,"la":1.3587,"ln":-77.2824,"c":1,"n":"AUTOSERVICIO MERCAECONOM"},{"r":"KA4V52","s":27,"la":1.1972,"ln":-77.2679,"c":0,"n":"TDA DOLMA"},{"r":"KA4V51","s":27,"la":1.19794,"ln":-77.28092,"c":3,"n":"FRUTAS Y VERDURAS"},{"r":"KA4V54","s":27,"la":1.20373,"ln":-77.26423,"c":1,"n":"TIENDA DONA ANITA"},{"r":"KA4V12","s":27,"la":1.2012,"ln":-77.2836,"c":1,"n":"TIENDA STEFY"},{"r":"KA4V55","s":27,"la":1.22215,"ln":-77.26959,"c":4,"n":"TIENDA RAQUEL"},{"r":"KA4V53","s":27,"la":1.19501,"ln":-77.27453,"c":1,"n":"TIENDA AMPARO"},{"r":"KA4V13","s":27,"la":1.2239,"ln":-77.291,"c":6,"n":"PANADERIA ANGELITA NICOL"},{"r":"KA4V50","s":27,"la":1.221,"ln":-77.2872,"c":23,"n":"LA TAQUIZA DE GABY"},{"r":"KA4V56","s":28,"la":1.35773,"ln":-77.28165,"c":1,"n":"DISTRIBUCIONES S Y P"},{"r":"KA4V52","s":28,"la":1.1965,"ln":-77.2679,"c":2,"n":"TIENDA JENNY"},{"r":"KA4V53","s":28,"la":1.191,"ln":-77.2744,"c":18,"n":"SUPERTIENDA SAN SEBASTIA"},{"r":"KA4V54","s":28,"la":1.2038,"ln":-77.2645,"c":0,"n":"TIENDA BUCHE"},{"r":"KA4V51","s":28,"la":1.16434,"ln":-77.28919,"c":250,"n":"DISTRIBUIDORA SS"},{"r":"KA4V12","s":28,"la":1.20186,"ln":-77.28157,"c":1,"n":"LAVAUTOS NIZA"},{"r":"KA4V55","s":28,"la":1.221,"ln":-77.2684,"c":4,"n":"MINIMERCADO MALIMER"},{"r":"KA4V13","s":28,"la":1.22308,"ln":-77.28996,"c":3,"n":"BROSTERMANIA 1"},{"r":"KA4V50","s":28,"la":1.2231,"ln":-77.2872,"c":1,"n":"FAMILY PIZZA"},{"r":"KA4V52","s":29,"la":1.19878,"ln":-77.26553,"c":235,"n":"INVERSYCON SAS"},{"r":"KA4V56","s":29,"la":1.3573,"ln":-77.28128,"c":1,"n":"TIENDA LIDIA"},{"r":"KA4V53","s":29,"la":1.19123,"ln":-77.27403,"c":6,"n":"PARRILLA LA MEJOR"},{"r":"KA4V54","s":29,"la":1.2037,"ln":-77.2646,"c":3,"n":"TIENDA LORENA"},{"r":"KA4V51","s":29,"la":1.20662,"ln":-77.28639,"c":2,"n":"TIENDA SUMATAMBO 2000"},{"r":"KA4V12","s":29,"la":1.20117,"ln":-77.28201,"c":0,"n":"TIENDA ORLANDO"},{"r":"KA4V55","s":29,"la":1.2211,"ln":-77.2682,"c":2,"n":"INTERNET"},{"r":"KA4V13","s":29,"la":1.22371,"ln":-77.29001,"c":2,"n":"TIENDA T J"},{"r":"KA4V50","s":29,"la":1.22219,"ln":-77.28408,"c":4,"n":"MINI TIENDA LA 17"},{"r":"KA4V13","s":30,"la":1.22784,"ln":-77.28815,"c":2,"n":"TIENDA LA LUPITA PASTO"},{"r":"KA4V56","s":30,"la":1.35692,"ln":-77.28088,"c":1,"n":"LA CASA DE LAS AREPAS"},{"r":"KA4V52","s":30,"la":1.19978,"ln":-77.26757,"c":0,"n":"TIENDA DAVID"},{"r":"KA4V53","s":30,"la":1.19,"ln":-77.2712,"c":13,"n":"TIENDA LA MINGA"},{"r":"KA4V54","s":30,"la":1.2034,"ln":-77.2665,"c":1,"n":"TIENDA LA 14"},{"r":"KA4V12","s":30,"la":1.20164,"ln":-77.28274,"c":6,"n":"TIENDA LA SEXTA"},{"r":"KA4V55","s":30,"la":1.2216,"ln":-77.2682,"c":0,"n":"TIENDA ESTELAR"},{"r":"KA4V51","s":30,"la":1.2072,"ln":-77.287,"c":34,"n":"EXITO PASTO PANAMERICANA"},{"r":"KA4V50","s":30,"la":1.22248,"ln":-77.28739,"c":1,"n":"DELI EMPANADA SANTA ANA"},{"r":"KA4V56","s":31,"la":1.35705,"ln":-77.28061,"c":1,"n":"TIENDA NORA"},{"r":"KA4V54","s":31,"la":1.2035,"ln":-77.26595,"c":5,"n":"KAMALI SORPRESAS"},{"r":"KA4V52","s":31,"la":1.19969,"ln":-77.26761,"c":2,"n":"TIENDA DAVID 2"},{"r":"KA4V53","s":31,"la":1.1907,"ln":-77.2701,"c":1,"n":"TIENDA STIVEN"},{"r":"KA4V12","s":31,"la":1.20142,"ln":-77.2832,"c":2,"n":"DONDE PATYS"},{"r":"KA4V51","s":31,"la":1.20173,"ln":-77.28945,"c":19,"n":"MERCA FAMILIA"},{"r":"KA4V55","s":31,"la":1.2216,"ln":-77.2673,"c":0,"n":"TIENDA LA ESQUINA"},{"r":"KA4V13","s":31,"la":1.23265,"ln":-77.29563,"c":79,"n":"RISTEN BASS TOROBAJO"},{"r":"KA4V50","s":31,"la":1.2223,"ln":-77.2889,"c":1,"n":"EL RINCON DEL CROISSAN Y"},{"r":"KA4V56","s":32,"la":1.35719,"ln":-77.28033,"c":0,"n":"TIENDA VILLA MARIA"},{"r":"KA4V52","s":32,"la":1.199,"ln":-77.2685,"c":1,"n":"HOTEL EL VIAJERO"},{"r":"KA4V53","s":32,"la":1.19049,"ln":-77.26987,"c":1,"n":"ESTANCO POKER"},{"r":"KA4V12","s":32,"la":1.2016,"ln":-77.2833,"c":5,"n":"MERCA PREMIUM"},{"r":"KA4V51","s":32,"la":1.2016,"ln":-77.2908,"c":2,"n":"TIENDA DANNY"},{"r":"KA4V55","s":32,"la":1.2216,"ln":-77.2673,"c":11,"n":"TIENDA LA 30"},{"r":"KA4V54","s":32,"la":1.2059,"ln":-77.26036,"c":17,"n":"METRO PASTO UNICO"},{"r":"KA4V13","s":32,"la":1.22909,"ln":-77.28878,"c":34,"n":"Q BARATO"},{"r":"KA4V50","s":32,"la":1.222,"ln":-77.289,"c":2,"n":"TDA FABIOLA"}];</script>
+</head>
+<body>
+<style>
+:root{
+  --rojo:#E30613; --rojo-o:#B5000F; --rojo-s:#FFF1F2;
+  --ink:#0B1020; --ink2:#1A2236; --muted:#6B7385; --muted2:#9AA1B2;
+  --line:#E7EAF0; --line2:#EEF1F6; --bg:#F4F6FA; --card:#FFFFFF;
+  --verde:#0E9F6E; --verde-s:#E6F7F0; --amber:#F59E0B; --amber-s:#FEF6E7;
+  --azul:#2563EB; --azul-s:#EAF1FE; --viol:#7C3AED;
+  --sh1:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  --sh2:0 4px 12px rgba(16,24,40,.08),0 2px 6px rgba(16,24,40,.04);
+  --sh3:0 12px 32px rgba(16,24,40,.12);
+  --r:14px; --r2:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.hide{display:none!important}
+
+/* ============ TOPBAR ============ */
+.topbar{height:62px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 22px;position:sticky;top:0;z-index:50}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-bar{width:5px;height:30px;background:var(--rojo);border-radius:3px}
+.brand-t b{font-size:19px;font-weight:900;letter-spacing:-.5px;display:block;line-height:1}
+.brand-t span{font-size:8.5px;font-weight:700;color:var(--rojo);letter-spacing:3px}
+.search{flex:1;max-width:420px;position:relative}
+.search input{width:100%;height:40px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 14px 0 38px;font-family:inherit;font-size:13.5px;color:var(--ink)}
+.search input:focus{outline:none;border-color:var(--rojo);background:#fff}
+.search svg{position:absolute;left:12px;top:11px;color:var(--muted2)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.role-pick{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px}
+.role-pick button{border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+.role-pick button.on{background:#fff;color:var(--ink);box-shadow:var(--sh1)}
+.bell{position:relative;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer;color:var(--ink2)}
+.bell .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:var(--rojo);border-radius:50%;border:2px solid #fff}
+.avatar{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#E30613,#B5000F);color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px}
+
+/* ============ LAYOUT ============ */
+.shell{display:flex;min-height:calc(100vh - 62px)}
+.side{width:236px;background:var(--card);border-right:1px solid var(--line);padding:16px 12px;flex-shrink:0;display:flex;flex-direction:column}
+.side-lbl{font-size:10px;font-weight:800;color:var(--muted2);letter-spacing:1.5px;padding:10px 12px 6px}
+.nav-i{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s;margin-bottom:2px}
+.nav-i:hover{background:var(--bg);color:var(--ink)}
+.nav-i.on{background:var(--rojo-s);color:var(--rojo);font-weight:700}
+.nav-i .ic{width:20px;display:grid;place-items:center}
+.nav-i .badge{margin-left:auto;background:var(--rojo);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px}
+.side-foot{margin-top:auto;padding:12px;background:linear-gradient(135deg,#0B1020,#1A2236);border-radius:14px;color:#fff}
+.side-foot .pill{font-size:9px;font-weight:800;letter-spacing:1px;color:#7CF7C0;background:rgba(124,247,192,.12);display:inline-block;padding:3px 8px;border-radius:6px;margin-bottom:8px}
+.side-foot b{font-size:13px;display:block;margin-bottom:3px}
+.side-foot p{font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
+
+.main{flex:1;padding:22px 26px;overflow:auto;max-height:calc(100vh - 62px)}
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.page-h h1{font-size:23px;font-weight:800;letter-spacing:-.6px}
+.page-h .sub{font-size:13px;color:var(--muted);margin-top:3px}
+.h-actions{display:flex;gap:9px}
+.btn{height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:inherit;font-size:13px;font-weight:700;color:var(--ink2);padding:0 15px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;transition:.15s}
+.btn:hover{box-shadow:var(--sh1);border-color:var(--muted2)}
+.btn.primary{background:var(--rojo);color:#fff;border-color:var(--rojo)}
+.btn.primary:hover{background:var(--rojo-o)}
+
+/* ============ KPI ============ */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.kpi .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kpi .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+.kpi .trend{font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:3px}
+.trend.up{color:var(--verde);background:var(--verde-s)}
+.trend.down{color:var(--rojo);background:var(--rojo-s)}
+.kpi .val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kpi .lbl{font-size:12px;color:var(--muted);font-weight:600;margin-top:5px}
+.kpi .spark{position:absolute;right:0;bottom:0;opacity:.5}
+
+/* ============ GRID ============ */
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line2)}
+.card-h h3{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.card-h .meta{font-size:11.5px;color:var(--muted);font-weight:600}
+.card-h .live{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--verde)}
+.card-h .live .pd{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:pp 1.4s infinite}
+@keyframes pp{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+
+/* ============ MAP ============ */
+#map{height:430px;width:100%}
+.map-wrap{position:relative}
+.map-legend{position:absolute;left:14px;bottom:14px;z-index:500;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--sh2);max-width:190px}
+.map-legend b{font-size:10px;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:7px}
+.lg-row{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;margin-bottom:5px;cursor:pointer;padding:2px 4px;border-radius:6px}
+.lg-row:hover{background:var(--bg)}
+.lg-row .sw{width:11px;height:11px;border-radius:3px}
+.lg-row .ct{margin-left:auto;color:var(--muted);font-weight:600}
+.map-stat{position:absolute;right:14px;top:14px;z-index:500;display:flex;gap:8px}
+.map-stat .chip{background:rgba(11,16,32,.86);backdrop-filter:blur(6px);color:#fff;border-radius:10px;padding:8px 12px;text-align:center}
+.map-stat .chip b{font-size:17px;font-weight:800;display:block;line-height:1}
+.map-stat .chip span{font-size:9px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:.5px}
+
+/* ============ ROUTE LIST ============ */
+.rt-list{padding:8px 8px 12px;max-height:430px;overflow:auto}
+.rt{display:flex;align-items:center;gap:13px;padding:12px;border-radius:12px;cursor:pointer;transition:.15s}
+.rt:hover{background:var(--bg)}
+.rt .gauge{position:relative;width:46px;height:46px;flex-shrink:0}
+.rt .gauge svg{transform:rotate(-90deg)}
+.rt .gauge .pct{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:800}
+.rt .info{flex:1;min-width:0}
+.rt .info .nm{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
+.rt .info .nm .drv{font-size:11px;font-weight:600;color:var(--muted)}
+.rt .info .ln{display:flex;gap:12px;margin-top:4px;font-size:11.5px;color:var(--muted);font-weight:600}
+.rt .info .ln b{color:var(--ink2)}
+.rt .stat{text-align:right;flex-shrink:0}
+.rt .stat .rj{font-size:13px;font-weight:800}
+.rt .stat .rj.bad{color:var(--rojo)}.rt .stat .rj.ok{color:var(--verde)}
+.rt .stat .lb{font-size:10px;color:var(--muted2);font-weight:700}
+
+/* ============ ALERTS ============ */
+.alerts{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow:auto}
+.al{display:flex;gap:11px;padding:12px;border-radius:12px;background:var(--bg);border:1px solid var(--line2)}
+.al .ai{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:16px}
+.al.crit .ai{background:var(--rojo-s)}.al.warn .ai{background:var(--amber-s)}.al.info .ai{background:var(--azul-s)}
+.al .ac b{font-size:13px;font-weight:800;display:block}
+.al .ac p{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.al .ac .t{font-size:10px;color:var(--muted2);font-weight:700;margin-top:4px}
+
+/* ============ TABLE ============ */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:10.5px;letter-spacing:.5px;color:var(--muted);font-weight:800;padding:11px 16px;border-bottom:1px solid var(--line2);text-transform:uppercase}
+.tbl td{padding:13px 16px;border-bottom:1px solid var(--line2);font-size:13px;font-weight:600}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg)}
+.tag{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:7px;display:inline-flex;align-items:center;gap:4px}
+.tag.ok{color:var(--verde);background:var(--verde-s)}
+.tag.bad{color:var(--rojo);background:var(--rojo-s)}
+.tag.wr{color:var(--amber);background:var(--amber-s)}
+.bar{height:7px;background:var(--line2);border-radius:20px;overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;border-radius:20px}
+
+/* ============ MOBILE MOCK ============ */
+.mobwrap{display:flex;gap:34px;justify-content:center;flex-wrap:wrap;padding:10px 0 30px}
+.phone{width:300px;height:620px;background:#0B1020;border-radius:38px;padding:11px;box-shadow:var(--sh3);flex-shrink:0}
+.phone .scr{width:100%;height:100%;background:var(--bg);border-radius:28px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:24px;background:#0B1020;border-radius:0 0 16px 16px;z-index:30}
+.m-hd{background:#fff;border-bottom:2px solid var(--rojo);padding:16px 16px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.m-hd .mb{width:3px;height:22px;background:var(--rojo);border-radius:2px}
+.m-hd b{font-size:16px;font-weight:900;letter-spacing:-.5px}
+.m-hd .badge2{margin-left:auto;display:flex;gap:5px}
+.chipr{font-size:9px;font-weight:800;padding:4px 7px;border-radius:6px;background:var(--rojo-s);color:var(--rojo)}
+.chipg{font-size:9px;font-weight:800;padding:4px 7px;border-radius:6px;background:var(--verde-s);color:var(--verde)}
+.m-cap{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted2);padding:14px 16px 6px}
+.phone-lbl{text-align:center;margin-top:14px;font-size:12.5px;font-weight:800;color:var(--ink2)}
+.phone-lbl span{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+
+/* mobile route cards */
+.m-rt{margin:0 12px 9px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;display:flex;align-items:center;gap:11px;position:relative;overflow:hidden}
+.m-rt::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rojo)}
+.m-rt .rg{width:40px;height:40px;flex-shrink:0;position:relative}
+.m-rt .rg .pct{position:absolute;inset:0;display:grid;place-items:center;font-size:10.5px;font-weight:800}
+.m-rt .ri b{font-size:14px;font-weight:900;display:block}
+.m-rt .ri span{font-size:10.5px;color:var(--muted);font-weight:600}
+.m-rt .arr{margin-left:auto;color:var(--muted2)}
+
+/* mobile map mock */
+/* Pantalla MAPA + LISTA (entregador) */
+.m-topmap{height:48%;position:relative;background:#cdd6e2;background-size:cover;background-position:center;flex-shrink:0}
+.m-topmap .taco-tab{position:absolute;right:0;top:18px;width:7px;height:64px;background:rgba(227,6,19,.55);border-radius:6px 0 0 6px;z-index:6}
+.m-topmap .mini-leg{position:absolute;left:10px;bottom:10px;background:rgba(255,255,255,.94);border-radius:9px;padding:6px 9px;font-size:9px;font-weight:800;color:var(--ink2);box-shadow:var(--sh2);display:flex;gap:9px}
+.m-topmap .mini-leg i{display:flex;align-items:center;gap:4px}
+.m-topmap .mini-leg .d{width:8px;height:8px;border-radius:50%}
+.m-list{flex:1;background:var(--bg);overflow:auto;padding:8px}
+.m-search{position:sticky;top:0;background:var(--bg);padding:2px 2px 8px;z-index:3}
+.m-search input{width:100%;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 12px 0 32px;font-family:inherit;font-size:12px;background:#fff}
+.m-search .si{position:absolute;left:11px;top:9px;color:var(--muted2);font-size:13px}
+.m-cli{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:7px}
+.m-cli .num{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.m-cli .ci{flex:1;min-width:0}
+.m-cli .ci b{font-size:12.5px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-cli .ci span{font-size:10.5px;color:var(--muted);font-weight:600}
+.m-cli .st{font-size:14px;flex-shrink:0}
+.m-cli .chev{color:var(--muted2);font-size:15px;flex-shrink:0}
+/* Street View 360 hero (pantalla cliente) */
+.m-sv{flex:1;position:relative;background-size:cover;background-position:center;background-color:#cdd6e2}
+.m-sv .sv-badge{position:absolute;top:12px;left:12px;background:rgba(11,16,32,.82);backdrop-filter:blur(4px);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.5px;padding:6px 10px;border-radius:8px;display:flex;align-items:center;gap:5px}
+.m-sv .sv-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);color:var(--ink2);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;box-shadow:var(--sh2);white-space:nowrap}
+.m-sv .sv-mini{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.94);border-radius:9px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--ink);box-shadow:var(--sh2)}
+.m-sv .sv-mini .dotpin{width:9px;height:9px;border-radius:50%;background:var(--rojo);box-shadow:0 0 0 4px rgba(227,6,19,.2)}
+.m-map{flex:1;position:relative;background:linear-gradient(135deg,#dfe6f0,#eef2f8)}
+.m-map .pin{position:absolute;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;box-shadow:0 2px 5px rgba(0,0,0,.25)}
+.m-map .pin b{transform:rotate(45deg);color:#fff;font-size:10px;font-weight:800}
+.m-truck{position:absolute;width:34px;height:34px;background:var(--rojo);border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 6px rgba(227,6,19,.18),0 3px 8px rgba(0,0,0,.3);font-size:16px;z-index:5}
+.m-panel{background:#fff;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:14px;flex-shrink:0;box-shadow:0 -4px 16px rgba(0,0,0,.06)}
+.m-panel .grab{width:36px;height:4px;background:var(--line);border-radius:3px;margin:0 auto 12px}
+.m-panel .cn{font-size:15px;font-weight:900;letter-spacing:-.3px}
+.m-panel .cd{font-size:11.5px;color:var(--muted);margin:3px 0 12px;font-weight:600}
+.m-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.m-act{height:58px;border-radius:13px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:800;color:var(--ink2)}
+.m-act .e{font-size:18px}
+.m-act.nav{background:var(--azul);color:#fff;border-color:var(--azul)}
+.m-nov{margin-top:8px;height:46px;border-radius:13px;background:var(--rojo);color:#fff;border:none;font-family:inherit;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
+
+/* mobile tacometer */
+.m-taco{margin:4px 12px 0;background:linear-gradient(135deg,#0B1020,#161e33);border-radius:16px;padding:14px;color:#fff}
+.m-taco .th{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.m-taco .th b{font-size:12px;font-weight:800}
+.m-taco .th .lv{font-size:9px;font-weight:800;color:#7CF7C0;display:flex;align-items:center;gap:4px}
+.m-taco .th .lv i{width:6px;height:6px;border-radius:50%;background:#7CF7C0;animation:pp 1.4s infinite}
+.m-gring{display:flex;align-items:center;gap:14px}
+.m-gring .big{position:relative;width:84px;height:84px;flex-shrink:0}
+.m-gring .big .c{position:absolute;inset:0;display:grid;place-items:center;flex-direction:column;text-align:center}
+.m-gring .big .c b{font-size:22px;font-weight:900;line-height:1}
+.m-gring .big .c span{font-size:8px;color:rgba(255,255,255,.5);font-weight:700}
+.m-gst{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.m-gst .s{background:rgba(255,255,255,.06);border-radius:10px;padding:7px 9px}
+.m-gst .s b{font-size:15px;font-weight:900;display:block}
+.m-gst .s span{font-size:8.5px;color:rgba(255,255,255,.5);font-weight:700}
+
+.note{font-size:12px;color:var(--muted);background:var(--amber-s);border:1px solid #F8E3B3;border-radius:12px;padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.note b{color:var(--amber)}
+
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.side{display:none}}
+</style>
+
+<!-- ============ TOPBAR ============ -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-bar"></div>
+    <div class="brand-t"><b>GMAZ</b><span>RUTAS · PASTO</span></div>
+  </div>
+  <div class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input placeholder="Buscar cliente, ruta o conductor…">
+  </div>
+  <div class="top-right">
+    <div class="role-pick" id="rolePick">
+      <button class="on" data-role="coord">Coordinador</button>
+      <button data-role="cond">Entregador</button>
+    </div>
+    <div class="bell"><span class="dot"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+    <div class="avatar">CT</div>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="side">
+    <div class="side-lbl">OPERACIÓN</div>
+    <div class="nav-i on"><span class="ic">▦</span>Dashboard</div>
+    <div class="nav-i"><span class="ic">🗺️</span>Mapa en vivo</div>
+    <div class="nav-i"><span class="ic">🚚</span>Rutas<span class="badge">9</span></div>
+    <div class="nav-i"><span class="ic">⚠️</span>Novedades<span class="badge">14</span></div>
+    <div class="side-lbl">GESTIÓN</div>
+    <div class="nav-i"><span class="ic">👤</span>Conductores</div>
+    <div class="nav-i"><span class="ic">🏪</span>Clientes</div>
+    <div class="nav-i"><span class="ic">📊</span>Reportes</div>
+    <div class="nav-i"><span class="ic">⚙️</span>Configuración</div>
+    <div class="side-foot">
+      <span class="pill">● EN LÍNEA</span>
+      <b>9 rutas activas</b>
+      <p>515 clientes · 2.735 cajas programadas hoy</p>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="note">
+      <span style="font-size:18px">🧪</span>
+      <div><b>Prototipo demostrativo · solo mejoras visuales.</b> Se conservan <b>todas las funciones</b> de tu app actual (Street View 360°, novedades, facturas, tacómetro, panel coordinador, llamar vendedor, GPS, etc.). Datos reales de <b>P PAS 9</b> (515 clientes, 9 rutas). No toca Supabase ni producción. Roles: <b>Coordinador</b> y <b>Entregador</b>.</div>
+    </div>
+
+    <div class="page-h">
+      <div>
+        <h1 id="pgTitle">Panel del Coordinador</h1>
+        <div class="sub" id="pgSub">Control diario · cargas, rutas en vivo y gestión de novedades · Corte 14:32</div>
+      </div>
+      <div class="h-actions">
+        <button class="btn">📅 Hoy</button>
+        <button class="btn">⬇ Exportar</button>
+        <button class="btn primary">＋ Nueva carga</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis" id="kpis"></div>
+
+    <!-- MAP + ROUTES -->
+    <div class="grid2">
+      <div class="card map-wrap">
+        <div class="card-h">
+          <h3>Mapa operativo en vivo</h3>
+          <div class="live"><span class="pd"></span>ACTUALIZADO HACE 12s</div>
+        </div>
+        <div id="map"></div>
+        <div class="map-stat">
+          <div class="chip"><b id="msEnt">—</b><span>ENTREGADOS</span></div>
+          <div class="chip"><b id="msPend">—</b><span>EN RUTA</span></div>
+          <div class="chip"><b id="msRej" style="color:#ff6b6b">—</b><span>RECHAZOS</span></div>
+        </div>
+        <div class="map-legend" id="legend"><b>RUTAS ACTIVAS</b></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h3>Rendimiento por ruta</h3>
+          <span class="meta">% cierre en vivo</span>
+        </div>
+        <div class="rt-list" id="rtList"></div>
+      </div>
+    </div>
+
+    <!-- ALERTS + TABLE -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><h3>Detalle de novedades</h3><span class="meta">14 rechazos · 3 rutas en alerta</span></div>
+        <div style="overflow:auto">
+          <table class="tbl">
+            <thead><tr><th>Cliente</th><th>Ruta</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead>
+            <tbody id="novBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Alertas inteligentes</h3><div class="live"><span class="pd"></span>TIEMPO REAL</div></div>
+        <div class="alerts" id="alerts"></div>
+      </div>
+    </div>
+
+    <!-- MOBILE -->
+    <div class="page-h" style="margin-top:26px">
+      <div><h1>Experiencia del conductor (móvil)</h1><div class="sub">Lo que ve el repartidor en su celular — misma lógica, interfaz renovada</div></div>
+    </div>
+    <div class="mobwrap" id="mobwrap"></div>
+  </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ===== DATOS DERIVADOS DE P PAS 9 (reales) + simulación de avance ===== */
+const RUTAS = [
+  {id:'KA4V12', drv:'Andrés Bastidas',  cli:65, caja:260, cubo:193, ent:54, rej:3, vend:'KA4V21'},
+  {id:'KA4V13', drv:'Yeisy Timaná',     cli:38, caja:221, cubo:205, ent:33, rej:1, vend:'KA4V23'},
+  {id:'KA4V50', drv:'Óscar Bastidas',   cli:53, caja:333, cubo:196, ent:49, rej:2, vend:'KA4V29'},
+  {id:'KA4V51', drv:'Camilo Torres',    cli:54, caja:441, cubo:449, ent:41, rej:5, vend:'KA4V21'},
+  {id:'KA4V52', drv:'Diego Narváez',    cli:36, caja:557, cubo:326, ent:34, rej:0, vend:'KA4V32'},
+  {id:'KA4V53', drv:'Mandy Ruiz',       cli:71, caja:174, cubo:154, ent:66, rej:2, vend:'KA4V23'},
+  {id:'KA4V54', drv:'Jhon Patiño',      cli:55, caja:197, cubo:130, ent:52, rej:0, vend:'KA4V29'},
+  {id:'KA4V55', drv:'Laura Cabrera',    cli:78, caja:276, cubo:195, ent:74, rej:1, vend:'KA4V32'},
+  {id:'KA4V56', drv:'Sergio Andrade',   cli:64, caja:276, cubo:265, ent:58, rej:0, vend:'KA4V21'},
+];
+const COLORS={KA4V12:'#E30613',KA4V13:'#2563EB',KA4V50:'#0E9F6E',KA4V51:'#F59E0B',KA4V52:'#7C3AED',KA4V53:'#0891B2',KA4V54:'#DB2777',KA4V55:'#65A30D',KA4V56:'#EA580C'};
+RUTAS.forEach(r=>{r.pct=Math.round(r.ent/r.cli*100); r.pend=r.cli-r.ent-r.rej; r.cajaRej=Math.round(r.caja*r.rej/r.cli);});
+
+const totCli=RUTAS.reduce((a,r)=>a+r.cli,0);
+const totEnt=RUTAS.reduce((a,r)=>a+r.ent,0);
+const totRej=RUTAS.reduce((a,r)=>a+r.rej,0);
+const totCaja=RUTAS.reduce((a,r)=>a+r.caja,0);
+const cajaEnt=RUTAS.reduce((a,r)=>a+Math.round(r.caja*r.ent/r.cli),0);
+const pctGen=Math.round(totEnt/totCli*100);
+
+/* ===== KPIs ===== */
+const KPI=[
+  {ic:'🎯',bg:'var(--verde-s)',cl:'var(--verde)',val:pctGen+'%',lbl:'Cierre general',tr:'up',td:'+4.2%'},
+  {ic:'📦',bg:'var(--azul-s)',cl:'var(--azul)',val:cajaEnt.toLocaleString(),lbl:'Cajas entregadas',tr:'up',td:'+312'},
+  {ic:'🚚',bg:'var(--rojo-s)',cl:'var(--rojo)',val:'9',lbl:'Rutas activas',tr:'up',td:'9/9'},
+  {ic:'⚠️',bg:'var(--amber-s)',cl:'var(--amber)',val:totRej,lbl:'Rechazos hoy',tr:'down',td:'-2'},
+  {ic:'📍',bg:'#EEF1F6',cl:'var(--ink2)',val:(totCli-totEnt-totRej),lbl:'Clientes en ruta',tr:'down',td:'baja'},
+];
+document.getElementById('kpis').innerHTML=KPI.map(k=>`
+  <div class="kpi">
+    <div class="top">
+      <div class="ico" style="background:${k.bg};color:${k.cl}">${k.ic}</div>
+      <div class="trend ${k.tr}">${k.tr==='up'?'▲':'▼'} ${k.td}</div>
+    </div>
+    <div class="val">${k.val}</div>
+    <div class="lbl">${k.lbl}</div>
+  </div>`).join('');
+
+/* ===== gauge helper ===== */
+function gauge(pct,size,sw){
+  const r=(size-sw)/2, c=2*Math.PI*r, col=pct>=90?'#0E9F6E':pct>=75?'#F59E0B':'#E30613';
+  return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#EEF1F6" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-pct/100)}"/></svg>`;
+}
+
+/* ===== route list ===== */
+document.getElementById('rtList').innerHTML=RUTAS.map(r=>{
+  const col=r.pct>=90?'var(--verde)':r.pct>=75?'var(--amber)':'var(--rojo)';
+  return `<div class="rt">
+    <div class="gauge">${gauge(r.pct,46,5)}<div class="pct" style="color:${col}">${r.pct}%</div></div>
+    <div class="info">
+      <div class="nm">${r.id} <span class="drv">· ${r.drv}</span></div>
+      <div class="ln"><span>📦 <b>${r.caja}</b> cajas</span><span>🏪 <b>${r.ent}</b>/${r.cli}</span><span>📐 <b>${r.cubo}</b> m³</span></div>
+    </div>
+    <div class="stat">
+      <div class="rj ${r.rej>=3?'bad':'ok'}">${r.rej}</div>
+      <div class="lb">RECHAZOS</div>
+    </div>
+  </div>`;
+}).join('');
+
+/* ===== novedades table ===== */
+const NOV=[
+  {c:'PAPEROS STREET FOOD',r:'KA4V51',m:'💸 Sin dinero',v:'KA4V21',cj:4},
+  {c:'SAN FRANCISCO GRANERO',r:'KA4V51',m:'🏪 Cerrado',v:'KA4V21',cj:6},
+  {c:'KIOSKO LA U',r:'KA4V13',m:'🚫 No cargado',v:'KA4V23',cj:2},
+  {c:'TIENDA LOS ALAMOS',r:'KA4V53',m:'🏪 Cerrado',v:'KA4V23',cj:3},
+  {c:'FRUTAS Y VERDURAS',r:'KA4V12',m:'❌ No hizo pedido',v:'KA4V21',cj:1},
+  {c:'PARRILLA DEL OESTE',r:'KA4V51',m:'⚡ Rechazo parcial',v:'KA4V21',cj:5},
+];
+document.getElementById('novBody').innerHTML=NOV.map(n=>`<tr>
+  <td style="font-weight:800">${n.c}</td>
+  <td><span class="tag" style="background:${COLORS[n.r]}1A;color:${COLORS[n.r]}">${n.r}</span></td>
+  <td>${n.m}</td>
+  <td><span class="tag bad">${n.v}</span></td>
+  <td><b>${n.cj}</b></td></tr>`).join('');
+
+/* ===== alerts ===== */
+const AL=[
+  {t:'crit',e:'🔴',b:'KA4V51 bajo meta',p:'Cierre 76% · 5 rechazos. Diego va 13 pts bajo el promedio.',tm:'hace 8 min'},
+  {t:'warn',e:'📦',b:'Carga pesada KA4V52',p:'557 cajas en 36 clientes (15.5 cajas/cliente). Vigilar tiempos.',tm:'hace 22 min'},
+  {t:'info',e:'✅',b:'KA4V55 cerca de meta',p:'Laura va 95% · solo 4 clientes pendientes.',tm:'hace 5 min'},
+  {t:'warn',e:'🕐',b:'Cliente reabierto',p:'SHENG LONG (KA4V12) pasó de rechazo a entregado.',tm:'hace 31 min'},
+];
+document.getElementById('alerts').innerHTML=AL.map(a=>`<div class="al ${a.t}">
+  <div class="ai">${a.e}</div>
+  <div class="ac"><b>${a.b}</b><p>${a.p}</p><div class="t">${a.tm}</div></div></div>`).join('');
+
+/* ===== MAP (Leaflet + OSM, datos reales) ===== */
+const map=L.map('map',{zoomControl:true,attributionControl:false}).setView([1.2136,-77.2811],13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+const PTS=window.PPAS9||[];
+const byRoute={};
+PTS.forEach(p=>{ (byRoute[p.r]=byRoute[p.r]||[]).push(p); });
+// draw polylines + markers per route (ordered by sequence)
+Object.keys(byRoute).forEach(rt=>{
+  const col=COLORS[rt]||'#888';
+  const pts=byRoute[rt].sort((a,b)=>a.s-b.s);
+  const latlngs=pts.map(p=>[p.la,p.ln]);
+  L.polyline(latlngs,{color:col,weight:2.5,opacity:.55}).addTo(map);
+  pts.forEach((p,i)=>{
+    const rinfo=RUTAS.find(r=>r.id===rt)||{ent:0};
+    const delivered = i < Math.round((rinfo.ent/rinfo.cli)*pts.length);
+    const mk=L.circleMarker([p.la,p.ln],{
+      radius:delivered?5:6, color:'#fff', weight:2,
+      fillColor: delivered?'#0E9F6E':col, fillOpacity:delivered?.65:1
+    }).addTo(map);
+    mk.bindPopup(`<b style="font-size:13px">${p.n}</b><br><span style="color:#6B7385;font-size:11px">${rt} · parada ${p.s} · ${p.c} cajas</span><br><span style="color:${delivered?'#0E9F6E':'#E30613'};font-weight:700;font-size:11px">${delivered?'✓ Entregado':'● Pendiente'}</span>`);
+  });
+});
+// legend
+document.getElementById('legend').innerHTML='<b>RUTAS ACTIVAS</b>'+RUTAS.map(r=>`
+  <div class="lg-row"><span class="sw" style="background:${COLORS[r.id]}"></span>${r.id}<span class="ct">${r.cli}</span></div>`).join('');
+document.getElementById('msEnt').textContent=totEnt;
+document.getElementById('msPend').textContent=totCli-totEnt-totRej;
+document.getElementById('msRej').textContent=totRej;
+setTimeout(()=>map.invalidateSize(),300);
+
+/* ===== MOBILE MOCKUPS ===== */
+const phoneRoutes=`
+<div class="phone"><div class="scr"><div class="notch"></div>
+  <div class="m-hd"><div class="mb"></div><b>GMAZ</b><div class="badge2"><span class="chipr">PASTO</span></div></div>
+  <div class="m-cap">SELECCIONA TU RUTA</div>
+  ${RUTAS.slice(0,4).map(r=>{const col=r.pct>=90?'var(--verde)':r.pct>=75?'var(--amber)':'var(--rojo)';return `
+  <div class="m-rt" style="--c:${COLORS[r.id]}">
+    <div class="rg">${gauge(r.pct,40,4)}<div class="pct" style="color:${col}">${r.pct}%</div></div>
+    <div class="ri"><b>${r.id}</b><span>${r.cli} clientes · ${r.caja} cajas</span></div>
+    <div class="arr">›</div>
+  </div>`;}).join('')}
+  <div class="m-taco">
+    <div class="th"><b>📊 Tu avance hoy</b><span class="lv"><i></i>EN VIVO</span></div>
+    <div class="m-gring">
+      <div class="big">${gauge(86,84,8).replace('#EEF1F6','rgba(255,255,255,.12)')}<div class="c"><b>86%</b><span>CIERRE</span></div></div>
+      <div class="m-gst">
+        <div class="s"><b style="color:#7CF7C0">54</b><span>ENTREGADOS</span></div>
+        <div class="s"><b style="color:#ff8a8a">3</b><span>RECHAZOS</span></div>
+        <div class="s"><b>248</b><span>CAJAS OK</span></div>
+        <div class="s"><b>8</b><span>PENDIENTES</span></div>
+      </div>
+    </div>
+  </div>
+</div></div>`;
+
+const SV_KEY='AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI';
+const svUrl='https://maps.googleapis.com/maps/api/streetview?size=560x340&location=1.2086,-77.2809&fov=80&pitch=2&key='+SV_KEY;
+
+/* ---- Pantalla MAPA + LISTA (ruta KA4V12 real) ---- */
+const CLI12=[
+  {n:1,nm:'TIENDA VIESA',d:'CL 18 # 24-10',cj:3,la:1.2089,ln:-77.287,st:'ent'},
+  {n:2,nm:'CAISAGA',d:'CR 24 # 18-05',cj:3,la:1.2093,ln:-77.2858,st:'ent'},
+  {n:3,nm:'VIVERES LA 22',d:'CL 20 # 22-14',cj:1,la:1.20884,ln:-77.28069,st:'ent'},
+  {n:4,nm:'DE LOS GEMELOS TIENDA',d:'CR 22 # 19-30',cj:4,la:1.2089,ln:-77.2809,st:'ent'},
+  {n:5,nm:'MISCELANEA LA 22',d:'CL 22 # 8-14',cj:8,la:1.2086,ln:-77.2809,st:'now'},
+  {n:6,nm:'TIENDA RAQUEL',d:'CR 21 # 20-02',cj:2,la:1.2085,ln:-77.2808,st:'pend'},
+  {n:7,nm:'DROGUERIA MAS SALUD',d:'CL 19 # 23-40',cj:2,la:1.2072,ln:-77.2795,st:'pend'},
+  {n:8,nm:'GRANERO BLANCA',d:'CR 23 # 18-12',cj:2,la:1.2067,ln:-77.2792,st:'pend'},
+  {n:9,nm:'SHENG LONG',d:'CL 17 # 25-08',cj:6,la:1.2052,ln:-77.28,st:'nov'},
+  {n:10,nm:'LA PAUSA',d:'CR 25 # 16-22',cj:1,la:1.20657,ln:-77.27913,st:'pend'},
+];
+const stCol={ent:'0x0E9F6E',now:'0xE30613',pend:'0x8A90A0',nov:'0xF59E0B'};
+const stIco={ent:'✅',now:'📍',pend:'⚪',nov:'⚠️'};
+const stClr={ent:'#0E9F6E',now:'#E30613',pend:'#8A90A0',nov:'#F59E0B'};
+const mk=CLI12.map(c=>`markers=color:${stCol[c.st]}%7Clabel:${c.n>9?'+':c.n}%7C${c.la},${c.ln}`).join('&');
+const mapUrl='https://maps.googleapis.com/maps/api/staticmap?size=330x300&scale=2&maptype=roadmap&'+mk+'&key='+SV_KEY;
+const phoneMap=`
+<div class="phone"><div class="scr"><div class="notch"></div>
+  <div class="m-hd"><div class="mb"></div><b>KA4V12</b><div class="badge2"><span class="chipr">65 CLIENTES</span></div></div>
+  <div class="m-topmap" style="background-image:url('${mapUrl}')">
+    <div class="taco-tab"></div>
+    <div class="mini-leg"><i><span class="d" style="background:#0E9F6E"></span>Entregado</i><i><span class="d" style="background:#E30613"></span>Actual</i><i><span class="d" style="background:#F59E0B"></span>Novedad</i></div>
+  </div>
+  <div class="m-list">
+    <div class="m-search"><span class="si">🔍</span><input placeholder="Buscar cliente por código o nombre…"></div>
+    ${CLI12.map(c=>`<div class="m-cli">
+      <div class="num" style="background:${stClr[c.st]}">${c.n}</div>
+      <div class="ci"><b>${c.nm}</b><span>📍 ${c.d} · 📦 ${c.cj} cajas</span></div>
+      <div class="st">${stIco[c.st]}</div><div class="chev">›</div>
+    </div>`).join('')}
+  </div>
+</div></div>`;
+const phoneClient=`
+<div class="phone"><div class="scr"><div class="notch"></div>
+  <div class="m-hd"><div class="mb"></div><b>KA4V12</b><div class="badge2"><span class="chipr">ENTREGA</span><span class="chipg">KA4V21</span></div></div>
+  <div class="m-sv" style="background-image:url('${svUrl}')">
+    <div class="sv-badge">🧭 VISTA 360° · STREET VIEW</div>
+    <div class="sv-hint">Arrastra para girar la calle</div>
+    <div class="sv-mini">
+      <span class="dotpin"></span>
+      <b>Parada 5 de 65</b>
+    </div>
+  </div>
+  <div class="m-panel">
+    <div class="grab"></div>
+    <div class="cn">MISCELANEA LA 22</div>
+    <div class="cd">📍 CL 22 # 8-14 · parada 5 · 8 cajas · 🚚 KA4V12 · 🟢 KA4V21</div>
+    <div class="m-acts">
+      <div class="m-act nav"><span class="e">🧭</span>Navegar</div>
+      <div class="m-act"><span class="e">📄</span>Facturas</div>
+      <div class="m-act"><span class="e">📞</span>Llamar</div>
+    </div>
+    <button class="m-nov">⚠️ Reportar novedad</button>
+  </div>
+</div></div>`;
+
+document.getElementById('mobwrap').innerHTML=
+  `<div><div>${phoneRoutes}</div><div class="phone-lbl">1 · Selección de ruta<span>Tarjetas con cierre + tacómetro personal</span></div></div>`+
+  `<div><div>${phoneMap}</div><div class="phone-lbl">2 · Mapa + lista de clientes<span>Puntos en el mapa + clientes abajo · toca uno →</span></div></div>`+
+  `<div><div>${phoneClient}</div><div class="phone-lbl">3 · Cliente (Street View 360°)<span>Al tocar el cliente aparece la vista 360°</span></div></div>`;
+
+/* ===== ROLE SWITCHER (solo Coordinador + Entregador) ===== */
+const ROLE={
+  coord:{t:'Panel del Coordinador',s:'Control diario · cargas, rutas en vivo y gestión de novedades'},
+  cond:{t:'Mi Ruta de Hoy',s:'Vista del entregador · clientes, Street View y registro de entregas'},
+};
+document.getElementById('rolePick').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#rolePick button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const r=ROLE[b.dataset.role];
+  document.getElementById('pgTitle').textContent=r.t;
+  document.getElementById('pgSub').textContent=r.s+' · Corte 14:32';
+});
+</script>
+</body>
+</html>

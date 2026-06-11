@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GMAZ Rutas — Prototipo Final (auto-detección)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>window.PPAS9=[{"r":"KA4V56","s":1,"la":1.23217,"ln":-77.28498,"c":72,"n":"MAS BARATO MORASURCO"},{"r":"KA4V52","s":1,"la":1.19868,"ln":-77.27196,"c":91,"n":"EL CANASTICO"},{"r":"KA4V54","s":1,"la":1.20389,"ln":-77.26723,"c":2,"n":"SUPERTIENDA AHORRAMAS"},{"r":"KA4V55","s":1,"la":1.21641,"ln":-77.27161,"c":2,"n":"TIENDA VALERY"},{"r":"KA4V53","s":1,"la":1.1912,"ln":-77.2769,"c":3,"n":"TIENDA MILAN"},{"r":"KA4V13","s":1,"la":1.23568,"ln":-77.30125,"c":0,"n":"RESTAURANTE TRIBAL"},{"r":"KA4V51","s":1,"la":1.2046,"ln":-77.29564,"c":6,"n":"EL ZIPOTAZO"},{"r":"KA4V50","s":1,"la":1.2115,"ln":-77.2925,"c":4,"n":"BUEN DIA"},{"r":"KA4V12","s":1,"la":1.2089,"ln":-77.287,"c":3,"n":"TIENDA VIESA"},{"r":"KA4V53","s":2,"la":1.19057,"ln":-77.27617,"c":5,"n":"MINI MARKET TODO UNO"},{"r":"KA4V56","s":2,"la":1.30969,"ln":-77.271,"c":5,"n":"TIENDA OMAR"},{"r":"KA4V54","s":2,"la":1.2032,"ln":-77.2633,"c":1,"n":"CALAVERAS BARBER"},{"r":"KA4V51","s":2,"la":1.2055,"ln":-77.2941,"c":0,"n":"VARIEDADES CANDY"},{"r":"KA4V55","s":2,"la":1.2164,"ln":-77.2711,"c":2,"n":"SUPER TIENDA LA MEJOR"},{"r":"KA4V52","s":2,"la":1.19842,"ln":-77.27241,"c":18,"n":"DEPOSITO DAVID"},{"r":"KA4V50","s":2,"la":1.2203,"ln":-77.2919,"c":2,"n":"TIENDA LA CASCADA"},{"r":"KA4V13","s":2,"la":1.2251,"ln":-77.2867,"c":1,"n":"RAPITIENDA DORADO"},{"r":"KA4V12","s":2,"la":1.2093,"ln":-77.2858,"c":3,"n":"CAISAGA"},{"r":"KA4V56","s":3,"la":1.33766,"ln":-77.27706,"c":16,"n":"ASADERO DE AREPAS LAS DE"},{"r":"KA4V54","s":3,"la":1.20233,"ln":-77.26247,"c":4,"n":"EL PALACIO DEL PESCADO S"},{"r":"KA4V52","s":3,"la":1.19826,"ln":-77.27208,"c":73,"n":"DEPOCITO LUCIO"},{"r":"KA4V51","s":3,"la":1.20575,"ln":-77.29372,"c":7,"n":"PIZZA 400 GRADOS DOS SAS"},{"r":"KA4V55","s":3,"la":1.21678,"ln":-77.27085,"c":9,"n":"SUPER TIENDA LA GRADA"},{"r":"KA4V53","s":3,"la":1.1919,"ln":-77.2718,"c":0,"n":"TIENDA MI NEGOCIO"},{"r":"KA4V50","s":3,"la":1.2212,"ln":-77.2945,"c":8,"n":"MERCATODO EL CRCER JCD R"},{"r":"KA4V13","s":3,"la":1.2244,"ln":-77.2861,"c":2,"n":"CAFETERIA Y DESAYUNOS SA"},{"r":"KA4V12","s":3,"la":1.20884,"ln":-77.28069,"c":1,"n":"VIVERES LA 22"},{"r":"KA4V56","s":4,"la":1.36031,"ln":-77.28523,"c":4,"n":"MEGA TIENDA LA PLAZA 2"},{"r":"KA4V54","s":4,"la":1.2018,"ln":-77.2589,"c":2,"n":"RUTA 47 PS"},{"r":"KA4V52","s":4,"la":1.1983,"ln":-77.27176,"c":31,"n":"TIENDA BASTIMAR"},{"r":"KA4V51","s":4,"la":1.2064,"ln":-77.2928,"c":0,"n":"TIENDA LICORES"},{"r":"KA4V55","s":4,"la":1.21548,"ln":-77.26916,"c":1,"n":"TIENDA ALAMEDA"},{"r":"KA4V53","s":4,"la":1.1917,"ln":-77.2716,"c":1,"n":"TDA SAN SEBASTIAN"},{"r":"KA4V50","s":4,"la":1.2212,"ln":-77.293,"c":4,"n":"TIENDA TORRES MARILUZ"},{"r":"KA4V13","s":4,"la":1.22365,"ln":-77.28982,"c":1,"n":"LICORERIA BACO"},{"r":"KA4V12","s":4,"la":1.2089,"ln":-77.2809,"c":4,"n":"DE LOS GEMELOS TIENDA"},{"r":"KA4V56","s":5,"la":1.3605,"ln":-77.285,"c":3,"n":"EL ARRIERO PARRILLA"},{"r":"KA4V52","s":5,"la":1.19785,"ln":-77.27171,"c":49,"n":"GRANERO LA DIFERENCIA"},{"r":"KA4V54","s":5,"la":1.20365,"ln":-77.26246,"c":7,"n":"TIENDA BAHIA 2"},{"r":"KA4V51","s":5,"la":1.20602,"ln":-77.29221,"c":2,"n":"MINITIEND LEITO"},{"r":"KA4V55","s":5,"la":1.2163,"ln":-77.2688,"c":2,"n":"MARKET EXPRESS"},{"r":"KA4V53","s":5,"la":1.1919,"ln":-77.2714,"c":0,"n":"ADRIANA"},{"r":"KA4V50","s":5,"la":1.2215,"ln":-77.2918,"c":6,"n":"TIENDA LUIS"},{"r":"KA4V13","s":5,"la":1.22499,"ln":-77.29079,"c":4,"n":"BROASTERMANIA"},{"r":"KA4V12","s":5,"la":1.2086,"ln":-77.2809,"c":8,"n":"MISCELANEA LA 22"},{"r":"KA4V56","s":6,"la":1.3605,"ln":-77.2849,"c":5,"n":"TIENDA TRANSANDONA"},{"r":"KA4V52","s":6,"la":1.20007,"ln":-77.27055,"c":5,"n":"HOTEL NEFER"},{"r":"KA4V54","s":6,"la":1.2036,"ln":-77.2628,"c":2,"n":"PABLO PORTILLO MORIANO"},{"r":"KA4V51","s":6,"la":1.2061,"ln":-77.29223,"c":2,"n":"MULTIVARIEDADES DEL SUR"},{"r":"KA4V55","s":6,"la":1.2164,"ln":-77.2688,"c":2,"n":"PARE Y COMPRE"},{"r":"KA4V53","s":6,"la":1.19155,"ln":-77.27171,"c":2,"n":"TDA ANDRU"},{"r":"KA4V13","s":6,"la":1.2239,"ln":-77.2901,"c":9,"n":"CENTRO MARKET"},{"r":"KA4V50","s":6,"la":1.2163,"ln":-77.2883,"c":13,"n":"FOOD MAKERS SAS"},{"r":"KA4V12","s":6,"la":1.2085,"ln":-77.2808,"c":2,"n":"TIENDA RAQUEL"},{"r":"KA4V56","s":7,"la":1.36058,"ln":-77.28494,"c":1,"n":"TIENDA LA MONITA"},{"r":"KA4V54","s":7,"la":1.20361,"ln":-77.26315,"c":3,"n":"MALIBU FAST FOOD"},{"r":"KA4V52","s":7,"la":1.2016,"ln":-77.2706,"c":4,"n":"BARATON"},{"r":"KA4V51","s":7,"la":1.20571,"ln":-77.29188,"c":0,"n":"TIENDA JUANJO"},{"r":"KA4V55","s":7,"la":1.2166,"ln":-77.2699,"c":0,"n":"MERCAYA"},{"r":"KA4V53","s":7,"la":1.1913,"ln":-77.2713,"c":0,"n":"TIENDA GLORIA SANTANDER"},{"r":"KA4V13","s":7,"la":1.22313,"ln":-77.29,"c":2,"n":"TIENDA ANA LUCIA"},{"r":"KA4V50","s":7,"la":1.2162,"ln":-77.2881,"c":2,"n":"HAPPY CITY UNICENTRO PAS"},{"r":"KA4V12","s":7,"la":1.2072,"ln":-77.2795,"c":2,"n":"DROGUERIA MAS SALUD PAST"},{"r":"KA4V56","s":8,"la":1.36058,"ln":-77.28493,"c":1,"n":"TIENDA CARLA"},{"r":"KA4V52","s":8,"la":1.20074,"ln":-77.26945,"c":1,"n":"PANADERIA LEMAN"},{"r":"KA4V54","s":8,"la":1.2036,"ln":-77.2634,"c":6,"n":"SPR EXPRESS STA BARBARA"},{"r":"KA4V51","s":8,"la":1.207,"ln":-77.292,"c":1,"n":"CAFETERIA PATY"},{"r":"KA4V55","s":8,"la":1.21686,"ln":-77.26956,"c":2,"n":"QUE RICURAS"},{"r":"KA4V53","s":8,"la":1.1913,"ln":-77.2717,"c":0,"n":"TIENDA NASPIRAN"},{"r":"KA4V13","s":8,"la":1.2238,"ln":-77.2909,"c":1,"n":"CASETA 4 ROJA"},{"r":"KA4V50","s":8,"la":1.2139,"ln":-77.2873,"c":1,"n":"BUNUELOS LA AURORA"},{"r":"KA4V12","s":8,"la":1.2067,"ln":-77.2792,"c":2,"n":"GRANERO BLANCA"},{"r":"KA4V56","s":9,"la":1.3606,"ln":-77.285,"c":12,"n":"EL TABLAZO"},{"r":"KA4V52","s":9,"la":1.20071,"ln":-77.26934,"c":0,"n":"LICORES LA VENIDA"},{"r":"KA4V54","s":9,"la":1.2031,"ln":-77.2641,"c":1,"n":"TIENDA AMPARITO"},{"r":"KA4V51","s":9,"la":1.20806,"ln":-77.29313,"c":1,"n":"LA ESQUINA DEL BOSQUE GR"},{"r":"KA4V55","s":9,"la":1.21694,"ln":-77.26931,"c":3,"n":"MISCELANEA EL BODEGON"},{"r":"KA4V53","s":9,"la":1.1912,"ln":-77.2717,"c":0,"n":"TIENDA SHADDAI"},{"r":"KA4V13","s":9,"la":1.2233,"ln":-77.2911,"c":1,"n":"SUPERTIENDA EL CASTILLO"},{"r":"KA4V50","s":9,"la":1.21359,"ln":-77.28689,"c":3,"n":"EL TAMBEÑO"},{"r":"KA4V12","s":9,"la":1.2052,"ln":-77.28,"c":6,"n":"SHENG LONG"},{"r":"KA4V56","s":10,"la":1.36061,"ln":-77.28486,"c":3,"n":"TIENDA EL PLACER"},{"r":"KA4V52","s":10,"la":1.20071,"ln":-77.26934,"c":1,"n":"EL SUPER ARROZ"},{"r":"KA4V54","s":10,"la":1.2031,"ln":-77.2641,"c":1,"n":"TIENDA OLGA MORENO"},{"r":"KA4V55","s":10,"la":1.2206,"ln":-77.2702,"c":9,"n":"THE BURGERS"},{"r":"KA4V53","s":10,"la":1.191,"ln":-77.2718,"c":1,"n":"TIENDA DANI"},{"r":"KA4V13","s":10,"la":1.2245,"ln":-77.2863,"c":0,"n":"MERKATIENDA EL DORADO"},{"r":"KA4V50","s":10,"la":1.2147,"ln":-77.2856,"c":1,"n":"TIENDA SAN IGANCIO ESQUI"},{"r":"KA4V51","s":10,"la":1.20916,"ln":-77.29417,"c":6,"n":"TIENDA LOS GUADUALES"},{"r":"KA4V12","s":10,"la":1.20657,"ln":-77.27913,"c":1,"n":"LA PAUSA"},{"r":"KA4V56","s":11,"la":1.36069,"ln":-77.28484,"c":1,"n":"QUE BUENA PARRILLA"},{"r":"KA4V52","s":11,"la":1.2003,"ln":-77.2687,"c":0,"n":"RICO ZASIN DEL SUR"},{"r":"KA4V54","s":11,"la":1.2022,"ln":-77.2636,"c":12,"n":"TIENDA LA MERCED"},{"r":"KA4V55","s":11,"la":1.21943,"ln":-77.26741,"c":2,"n":"TIENDA DOÑA MARIA"},{"r":"KA4V53","s":11,"la":1.1917,"ln":-77.2705,"c":2,"n":"TIENDA SURTIECONOMICA"},{"r":"KA4V13","s":11,"la":1.22593,"ln":-77.28548,"c":5,"n":"COMNUTRIR VALLE DE ATRIZ"},{"r":"KA4V50","s":11,"la":1.2145,"ln":-77.2853,"c":6,"n":"LA BARRILLADA"},{"r":"KA4V51","s":11,"la":1.2094,"ln":-77.2932,"c":1,"n":"TIENDA FERNANDO Y BETTY"},{"r":"KA4V12","s":11,"la":1.2101,"ln":-77.2794,"c":1,"n":"HOTEL METRO POOL"},{"r":"KA4V56","s":12,"la":1.36072,"ln":-77.28493,"c":5,"n":"TIENDA SAN JOSE"},{"r":"KA4V52","s":12,"la":1.20023,"ln":-77.26865,"c":4,"n":"TIENDA Y LICORES YULIANI"},{"r":"KA4V54","s":12,"la":1.2015,"ln":-77.2621,"c":2,"n":"TIENDA JESSICA"},{"r":"KA4V55","s":12,"la":1.21991,"ln":-77.26738,"c":2,"n":"TIENDA 8"},{"r":"KA4V51","s":12,"la":1.2,"ln":-77.2815,"c":1,"n":"FRUTAS Y VERDURAS J Y Y"},{"r":"KA4V53","s":12,"la":1.1909,"ln":-77.27,"c":1,"n":"TNDA MILTON MONTENEGRO"},{"r":"KA4V13","s":12,"la":1.22643,"ln":-77.28472,"c":0,"n":"TIENDA PALERMO"},{"r":"KA4V50","s":12,"la":1.2155,"ln":-77.2813,"c":1,"n":"CLUB DE BILLARES LA ACAD"},{"r":"KA4V12","s":12,"la":1.2101,"ln":-77.2783,"c":3,"n":"HOTEL MAX"},{"r":"KA4V56","s":13,"la":1.36073,"ln":-77.28489,"c":11,"n":"TIENDA DEPOSITO LAS PALM"},{"r":"KA4V52","s":13,"la":1.2001,"ln":-77.2686,"c":3,"n":"SURTIMERCAR"},{"r":"KA4V54","s":13,"la":1.202,"ln":-77.2635,"c":2,"n":"PUNTO CLAVE SUPERTIENDA"},{"r":"KA4V51","s":13,"la":1.1977,"ln":-77.2855,"c":3,"n":"TIENDA QUITO LOPEZ 3 REA"},{"r":"KA4V55","s":13,"la":1.2183,"ln":-77.2673,"c":4,"n":"TIENDA NATIZ"},{"r":"KA4V53","s":13,"la":1.191,"ln":-77.2708,"c":1,"n":"TIENDA AMANDA YAMA"},{"r":"KA4V13","s":13,"la":1.2262,"ln":-77.2846,"c":2,"n":"TIENDA BOOM"},{"r":"KA4V50","s":13,"la":1.21596,"ln":-77.28178,"c":3,"n":"BASILEUSS"},{"r":"KA4V12","s":13,"la":1.21006,"ln":-77.27798,"c":4,"n":"DROGUERIA POPULAR PASTO"},{"r":"KA4V56","s":14,"la":1.3606,"ln":-77.28484,"c":3,"n":"TIENDA GOMEZ"},{"r":"KA4V52","s":14,"la":1.20013,"ln":-77.26898,"c":2,"n":"COMA RICO AI LA 18"},{"r":"KA4V54","s":14,"la":1.19896,"ln":-77.26284,"c":1,"n":"JHOJAN JAIR PATIO ARTURO"},{"r":"KA4V55","s":14,"la":1.2181,"ln":-77.2672,"c":7,"n":"LAS AREPAS DE"},{"r":"KA4V51","s":14,"la":1.19827,"ln":-77.28157,"c":2,"n":"MAXITIENDA DISTRIBUCIONE"},{"r":"KA4V53","s":14,"la":1.1889,"ln":-77.2717,"c":4,"n":"TIENDA LOS ANDES"},{"r":"KA4V13","s":14,"la":1.2255,"ln":-77.2854,"c":1,"n":"EL ZIPOTAZO"},{"r":"KA4V50","s":14,"la":1.216,"ln":-77.2816,"c":2,"n":"LICORES TAMYS"},{"r":"KA4V12","s":14,"la":1.2103,"ln":-77.2772,"c":1,"n":"SALPIMIENTA BBQ"},{"r":"KA4V56","s":15,"la":1.35998,"ln":-77.28441,"c":2,"n":"MERCA ECONOMICO CELESTE"},{"r":"KA4V50","s":15,"la":1.2159,"ln":-77.2812,"c":1,"n":"METBALLS BURGER"},{"r":"KA4V52","s":15,"la":1.2002,"ln":-77.2696,"c":1,"n":"RESTAURANTE MERAKY"},{"r":"KA4V54","s":15,"la":1.1997,"ln":-77.2638,"c":8,"n":"TDA Y LICORES FLOR"},{"r":"KA4V55","s":15,"la":1.2205,"ln":-77.2683,"c":5,"n":"TIENDA EL PARQUE DEL AMO"},{"r":"KA4V51","s":15,"la":1.19795,"ln":-77.28112,"c":1,"n":"TIENDA DANIEL"},{"r":"KA4V53","s":15,"la":1.18863,"ln":-77.2713,"c":4,"n":"TIENDA Y VARIEDADES JUAN"},{"r":"KA4V13","s":15,"la":1.2254,"ln":-77.2854,"c":1,"n":"EMPANADITAS PALERMO"},{"r":"KA4V12","s":15,"la":1.2115,"ln":-77.2774,"c":25,"n":"PANADERIA SABROPAN"},{"r":"KA4V55","s":16,"la":1.21564,"ln":-77.26947,"c":1,"n":"TIENDA MATY"},{"r":"KA4V56","s":16,"la":1.36,"ln":-77.2842,"c":14,"n":"EL PROOBEDOR"},{"r":"KA4V52","s":16,"la":1.20027,"ln":-77.26963,"c":3,"n":"TIENDA H Y M"},{"r":"KA4V50","s":16,"la":1.21568,"ln":-77.28131,"c":1,"n":"CLUB DE BILLARES ACADEMI"},{"r":"KA4V12","s":16,"la":1.21479,"ln":-77.28166,"c":0,"n":"CLUB DE BILLARES GABRIEL"},{"r":"KA4V54","s":16,"la":1.2006,"ln":-77.2654,"c":2,"n":"AURA COLE JOSE FELIX"},{"r":"KA4V51","s":16,"la":1.1992,"ln":-77.2816,"c":2,"n":"LICOTIENDA JUANDA"},{"r":"KA4V53","s":16,"la":1.1883,"ln":-77.27104,"c":12,"n":"JYS HOGAR Y MASCOTAS"},{"r":"KA4V13","s":16,"la":1.22761,"ln":-77.28405,"c":1,"n":"MISCELÁNEA HERMANOS"},{"r":"KA4V55","s":17,"la":1.216,"ln":-77.2736,"c":3,"n":"TIENDA MAURITA"},{"r":"KA4V56","s":17,"la":1.35967,"ln":-77.28377,"c":0,"n":"GRANERO SAN SEBASTIAN"},{"r":"KA4V50","s":17,"la":1.216,"ln":-77.2814,"c":1,"n":"EMPANADICTAS"},{"r":"KA4V52","s":17,"la":1.2004,"ln":-77.2699,"c":2,"n":"PANADERIA CHOCO PAN"},{"r":"KA4V54","s":17,"la":1.20066,"ln":-77.26542,"c":1,"n":"CAFETERIA COLEGIO JOSE F"},{"r":"KA4V51","s":17,"la":1.19949,"ln":-77.28155,"c":13,"n":"TIENDA LIBIA"},{"r":"KA4V53","s":17,"la":1.18885,"ln":-77.27041,"c":1,"n":"MINIMARKET JFE"},{"r":"KA4V13","s":17,"la":1.2242,"ln":-77.2843,"c":4,"n":"JUANCHO WINGS"},{"r":"KA4V12","s":17,"la":1.2161,"ln":-77.2807,"c":7,"n":"VARIEDADES VALENTINA"},{"r":"KA4V56","s":18,"la":1.35953,"ln":-77.28365,"c":1,"n":"STAR BUGUER"},{"r":"KA4V50","s":18,"la":1.216,"ln":-77.2814,"c":1,"n":"CAFET JUANCA"},{"r":"KA4V52","s":18,"la":1.1967,"ln":-77.2676,"c":3,"n":"MINEROS SUPERTIENDA"},{"r":"KA4V54","s":18,"la":1.2008,"ln":-77.2656,"c":1,"n":"COMIDA RAPIDAS YOLIMA"},{"r":"KA4V55","s":18,"la":1.22107,"ln":-77.26709,"c":0,"n":"TIENDA PACHITO"},{"r":"KA4V12","s":18,"la":1.21626,"ln":-77.27949,"c":12,"n":"POLLO SORPRESA EXITO"},{"r":"KA4V51","s":18,"la":1.2004,"ln":-77.2809,"c":2,"n":"EL PUNTO DEL PESCADO"},{"r":"KA4V53","s":18,"la":1.1899,"ln":-77.2712,"c":0,"n":"TDA A Y L"},{"r":"KA4V13","s":18,"la":1.2273,"ln":-77.287,"c":2,"n":"TIENDA LA 42"},{"r":"KA4V56","s":19,"la":1.3593,"ln":-77.2834,"c":2,"n":"PANADERIA CENTRAL"},{"r":"KA4V50","s":19,"la":1.2165,"ln":-77.282,"c":2,"n":"RESTAURANTE MI PANA"},{"r":"KA4V12","s":19,"la":1.2163,"ln":-77.2802,"c":12,"n":"RESTAURANTE LA ESPANOLA"},{"r":"KA4V52","s":19,"la":1.1963,"ln":-77.2677,"c":5,"n":"MINIMARKET LA LUPITA"},{"r":"KA4V54","s":19,"la":1.2011,"ln":-77.2653,"c":1,"n":"PASTO VARIEDAD"},{"r":"KA4V55","s":19,"la":1.2227,"ln":-77.2676,"c":1,"n":"TIENDA LA 14"},{"r":"KA4V51","s":19,"la":1.2008,"ln":-77.2811,"c":1,"n":"HELADERIA DE LA CREM"},{"r":"KA4V53","s":19,"la":1.1898,"ln":-77.2711,"c":1,"n":"TIENDA LA VERDE"},{"r":"KA4V13","s":19,"la":1.22746,"ln":-77.28629,"c":4,"n":"ROYAL FILMS PASTO CINEMA"},{"r":"KA4V56","s":20,"la":1.359,"ln":-77.283,"c":8,"n":"MERKA EXPRESS"},{"r":"KA4V50","s":20,"la":1.2158,"ln":-77.2824,"c":1,"n":"CALAFATE DR"},{"r":"KA4V12","s":20,"la":1.2163,"ln":-77.2781,"c":1,"n":"ENSANDUCHADOS SANDWICH Y"},{"r":"KA4V54","s":20,"la":1.2015,"ln":-77.2656,"c":14,"n":"VARIEDADES SOFI"},{"r":"KA4V55","s":20,"la":1.223,"ln":-77.2685,"c":1,"n":"TIENDA LA ESQUINA CORA"},{"r":"KA4V51","s":20,"la":1.20088,"ln":-77.28118,"c":3,"n":"MERKATODO NIZAN"},{"r":"KA4V53","s":20,"la":1.1898,"ln":-77.2713,"c":2,"n":"TIENDA ANDREA JOHANA"},{"r":"KA4V52","s":20,"la":1.1955,"ln":-77.2699,"c":1,"n":"TU MERCADITO MASFRU"},{"r":"KA4V13","s":20,"la":1.22758,"ln":-77.28586,"c":7,"n":"QBANO AV ESTUDIANTES"},{"r":"KA4V56","s":21,"la":1.35915,"ln":-77.283,"c":2,"n":"RESTAURANTE MIS NIETAS"},{"r":"KA4V52","s":21,"la":1.19547,"ln":-77.26976,"c":1,"n":"TIENDA DIAZ"},{"r":"KA4V54","s":21,"la":1.2009,"ln":-77.2661,"c":2,"n":"TIENDA LIVIC II"},{"r":"KA4V55","s":21,"la":1.2227,"ln":-77.2689,"c":1,"n":"PANADERIA CHARLES BRAWM"},{"r":"KA4V51","s":21,"la":1.2006,"ln":-77.2808,"c":1,"n":"KIOSCO AZUL COLEGIO LIBE"},{"r":"KA4V53","s":21,"la":1.1899,"ln":-77.2715,"c":0,"n":"TIENDA ALEIDA YARPAS"},{"r":"KA4V13","s":21,"la":1.2271,"ln":-77.2865,"c":2,"n":"CAFE SAN BLASS"},{"r":"KA4V50","s":21,"la":1.2158,"ln":-77.2878,"c":4,"n":"TIENDA DE UNICENTRO"},{"r":"KA4V12","s":21,"la":1.21224,"ln":-77.2803,"c":7,"n":"HOTEL SENEGA"},{"r":"KA4V56","s":22,"la":1.35924,"ln":-77.28294,"c":3,"n":"FUENTE DE SODA EL PARQUE"},{"r":"KA4V52","s":22,"la":1.1943,"ln":-77.2697,"c":0,"n":"MINIMARKET MADRGAL"},{"r":"KA4V54","s":22,"la":1.20185,"ln":-77.26607,"c":1,"n":"RESTAURANTE LA SAZON DE "},{"r":"KA4V55","s":22,"la":1.2223,"ln":-77.268,"c":3,"n":"TIENDA ROSARIO LA 21"},{"r":"KA4V51","s":22,"la":1.2008,"ln":-77.2805,"c":1,"n":"TIENDA FROVER"},{"r":"KA4V53","s":22,"la":1.1899,"ln":-77.2714,"c":3,"n":"TIENDA MATIS"},{"r":"KA4V13","s":22,"la":1.2255,"ln":-77.2888,"c":1,"n":"RAPITIENDA CORY"},{"r":"KA4V50","s":22,"la":1.2178,"ln":-77.288,"c":3,"n":"UNIPASTO"},{"r":"KA4V12","s":22,"la":1.2111,"ln":-77.2784,"c":1,"n":"EMPANADICTO"},{"r":"KA4V56","s":23,"la":1.36007,"ln":-77.28324,"c":1,"n":"SEVILLANA"},{"r":"KA4V52","s":23,"la":1.1948,"ln":-77.26913,"c":0,"n":"TIENDA CRISTOFER"},{"r":"KA4V54","s":23,"la":1.20219,"ln":-77.26453,"c":4,"n":"AMERICAN CLASS"},{"r":"KA4V12","s":23,"la":1.20285,"ln":-77.28369,"c":1,"n":"TIENDA ALICIA"},{"r":"KA4V55","s":23,"la":1.22251,"ln":-77.26814,"c":2,"n":"POLLOS CAICEDO"},{"r":"KA4V51","s":23,"la":1.20089,"ln":-77.28033,"c":1,"n":"COMIDAS RAPIDAS CIUDAD J"},{"r":"KA4V53","s":23,"la":1.19,"ln":-77.2715,"c":2,"n":"COMIDAS RAPIDAS SANTA MA"},{"r":"KA4V13","s":23,"la":1.2257,"ln":-77.2891,"c":1,"n":"PAPELERIA SOFI LINDURAS"},{"r":"KA4V50","s":23,"la":1.2186,"ln":-77.2911,"c":0,"n":"TIENDA ALEJANDRA"},{"r":"KA4V56","s":24,"la":1.36,"ln":-77.2833,"c":1,"n":"LOS VECINOS SUPERMERCADO"},{"r":"KA4V52","s":24,"la":1.19626,"ln":-77.26914,"c":11,"n":"TIENDA ANGELICA DELGADO"},{"r":"KA4V54","s":24,"la":1.2035,"ln":-77.2635,"c":3,"n":"TIENDA MARTHA BUESAQUILL"},{"r":"KA4V12","s":24,"la":1.2016,"ln":-77.2838,"c":1,"n":"TIENDA GENIT ESPANA"},{"r":"KA4V55","s":24,"la":1.222,"ln":-77.2684,"c":1,"n":"PANADERIA Y PASTELERIA D"},{"r":"KA4V51","s":24,"la":1.2001,"ln":-77.2804,"c":0,"n":"COMIDAS RAPIDAS"},{"r":"KA4V53","s":24,"la":1.1907,"ln":-77.2714,"c":1,"n":"TIENDA NIXA"},{"r":"KA4V13","s":24,"la":1.2247,"ln":-77.2899,"c":2,"n":"MI TIENDITA"},{"r":"KA4V50","s":24,"la":1.21968,"ln":-77.28667,"c":7,"n":"SUPERTIENDA NUEVO DIA"},{"r":"KA4V56","s":25,"la":1.35986,"ln":-77.28341,"c":1,"n":"RESTAURANTE DOÑA AMANDA"},{"r":"KA4V52","s":25,"la":1.19662,"ln":-77.26876,"c":2,"n":"TIENDA DE YENNI"},{"r":"KA4V54","s":25,"la":1.20365,"ln":-77.26361,"c":1,"n":"CAFETERIA PUNTO DEPORTES"},{"r":"KA4V12","s":25,"la":1.2016,"ln":-77.2837,"c":1,"n":"TIENDA ROSARIO MURILLO"},{"r":"KA4V55","s":25,"la":1.2218,"ln":-77.2686,"c":7,"n":"TIENDA LORENS"},{"r":"KA4V51","s":25,"la":1.20108,"ln":-77.28037,"c":1,"n":"COMIDAS RAPIDAS CIUDAD J"},{"r":"KA4V53","s":25,"la":1.1907,"ln":-77.2715,"c":3,"n":"MERCATODO LA 22"},{"r":"KA4V13","s":25,"la":1.2249,"ln":-77.291,"c":5,"n":"MIRADOR DE LA COLINA APT"},{"r":"KA4V50","s":25,"la":1.21701,"ln":-77.28427,"c":3,"n":"CHANCHORNADO"},{"r":"KA4V56","s":26,"la":1.3599,"ln":-77.28344,"c":3,"n":"CAFETERIA CHILITA"},{"r":"KA4V52","s":26,"la":1.19646,"ln":-77.26837,"c":1,"n":"TIENDA DOÑA MICHE"},{"r":"KA4V54","s":26,"la":1.2036,"ln":-77.2639,"c":5,"n":"MINIMARKET CENTRAL"},{"r":"KA4V12","s":26,"la":1.2011,"ln":-77.2835,"c":1,"n":"MERCATODO LAURACALVACHE "},{"r":"KA4V55","s":26,"la":1.22195,"ln":-77.26865,"c":1,"n":"PICADAS MARINA"},{"r":"KA4V50","s":26,"la":1.2169,"ln":-77.2894,"c":121,"n":"JUMBO PASTO UNICENTRO"},{"r":"KA4V51","s":26,"la":1.20061,"ln":-77.2797,"c":4,"n":"CAFETERIA LIBERTAD"},{"r":"KA4V53","s":26,"la":1.19403,"ln":-77.27299,"c":0,"n":"RAPITIENDA ROSSA"},{"r":"KA4V13","s":26,"la":1.22473,"ln":-77.2908,"c":3,"n":"TIENDA GIRASOL"},{"r":"KA4V56","s":27,"la":1.3587,"ln":-77.2824,"c":1,"n":"AUTOSERVICIO MERCAECONOM"},{"r":"KA4V52","s":27,"la":1.1972,"ln":-77.2679,"c":0,"n":"TDA DOLMA"},{"r":"KA4V51","s":27,"la":1.19794,"ln":-77.28092,"c":3,"n":"FRUTAS Y VERDURAS"},{"r":"KA4V54","s":27,"la":1.20373,"ln":-77.26423,"c":1,"n":"TIENDA DONA ANITA"},{"r":"KA4V12","s":27,"la":1.2012,"ln":-77.2836,"c":1,"n":"TIENDA STEFY"},{"r":"KA4V55","s":27,"la":1.22215,"ln":-77.26959,"c":4,"n":"TIENDA RAQUEL"},{"r":"KA4V53","s":27,"la":1.19501,"ln":-77.27453,"c":1,"n":"TIENDA AMPARO"},{"r":"KA4V13","s":27,"la":1.2239,"ln":-77.291,"c":6,"n":"PANADERIA ANGELITA NICOL"},{"r":"KA4V50","s":27,"la":1.221,"ln":-77.2872,"c":23,"n":"LA TAQUIZA DE GABY"},{"r":"KA4V56","s":28,"la":1.35773,"ln":-77.28165,"c":1,"n":"DISTRIBUCIONES S Y P"},{"r":"KA4V52","s":28,"la":1.1965,"ln":-77.2679,"c":2,"n":"TIENDA JENNY"},{"r":"KA4V53","s":28,"la":1.191,"ln":-77.2744,"c":18,"n":"SUPERTIENDA SAN SEBASTIA"},{"r":"KA4V54","s":28,"la":1.2038,"ln":-77.2645,"c":0,"n":"TIENDA BUCHE"},{"r":"KA4V51","s":28,"la":1.16434,"ln":-77.28919,"c":250,"n":"DISTRIBUIDORA SS"},{"r":"KA4V12","s":28,"la":1.20186,"ln":-77.28157,"c":1,"n":"LAVAUTOS NIZA"},{"r":"KA4V55","s":28,"la":1.221,"ln":-77.2684,"c":4,"n":"MINIMERCADO MALIMER"},{"r":"KA4V13","s":28,"la":1.22308,"ln":-77.28996,"c":3,"n":"BROSTERMANIA 1"},{"r":"KA4V50","s":28,"la":1.2231,"ln":-77.2872,"c":1,"n":"FAMILY PIZZA"},{"r":"KA4V52","s":29,"la":1.19878,"ln":-77.26553,"c":235,"n":"INVERSYCON SAS"},{"r":"KA4V56","s":29,"la":1.3573,"ln":-77.28128,"c":1,"n":"TIENDA LIDIA"},{"r":"KA4V53","s":29,"la":1.19123,"ln":-77.27403,"c":6,"n":"PARRILLA LA MEJOR"},{"r":"KA4V54","s":29,"la":1.2037,"ln":-77.2646,"c":3,"n":"TIENDA LORENA"},{"r":"KA4V51","s":29,"la":1.20662,"ln":-77.28639,"c":2,"n":"TIENDA SUMATAMBO 2000"},{"r":"KA4V12","s":29,"la":1.20117,"ln":-77.28201,"c":0,"n":"TIENDA ORLANDO"},{"r":"KA4V55","s":29,"la":1.2211,"ln":-77.2682,"c":2,"n":"INTERNET"},{"r":"KA4V13","s":29,"la":1.22371,"ln":-77.29001,"c":2,"n":"TIENDA T J"},{"r":"KA4V50","s":29,"la":1.22219,"ln":-77.28408,"c":4,"n":"MINI TIENDA LA 17"},{"r":"KA4V13","s":30,"la":1.22784,"ln":-77.28815,"c":2,"n":"TIENDA LA LUPITA PASTO"},{"r":"KA4V56","s":30,"la":1.35692,"ln":-77.28088,"c":1,"n":"LA CASA DE LAS AREPAS"},{"r":"KA4V52","s":30,"la":1.19978,"ln":-77.26757,"c":0,"n":"TIENDA DAVID"},{"r":"KA4V53","s":30,"la":1.19,"ln":-77.2712,"c":13,"n":"TIENDA LA MINGA"},{"r":"KA4V54","s":30,"la":1.2034,"ln":-77.2665,"c":1,"n":"TIENDA LA 14"},{"r":"KA4V12","s":30,"la":1.20164,"ln":-77.28274,"c":6,"n":"TIENDA LA SEXTA"},{"r":"KA4V55","s":30,"la":1.2216,"ln":-77.2682,"c":0,"n":"TIENDA ESTELAR"},{"r":"KA4V51","s":30,"la":1.2072,"ln":-77.287,"c":34,"n":"EXITO PASTO PANAMERICANA"},{"r":"KA4V50","s":30,"la":1.22248,"ln":-77.28739,"c":1,"n":"DELI EMPANADA SANTA ANA"},{"r":"KA4V56","s":31,"la":1.35705,"ln":-77.28061,"c":1,"n":"TIENDA NORA"},{"r":"KA4V54","s":31,"la":1.2035,"ln":-77.26595,"c":5,"n":"KAMALI SORPRESAS"},{"r":"KA4V52","s":31,"la":1.19969,"ln":-77.26761,"c":2,"n":"TIENDA DAVID 2"},{"r":"KA4V53","s":31,"la":1.1907,"ln":-77.2701,"c":1,"n":"TIENDA STIVEN"},{"r":"KA4V12","s":31,"la":1.20142,"ln":-77.2832,"c":2,"n":"DONDE PATYS"},{"r":"KA4V51","s":31,"la":1.20173,"ln":-77.28945,"c":19,"n":"MERCA FAMILIA"},{"r":"KA4V55","s":31,"la":1.2216,"ln":-77.2673,"c":0,"n":"TIENDA LA ESQUINA"},{"r":"KA4V13","s":31,"la":1.23265,"ln":-77.29563,"c":79,"n":"RISTEN BASS TOROBAJO"},{"r":"KA4V50","s":31,"la":1.2223,"ln":-77.2889,"c":1,"n":"EL RINCON DEL CROISSAN Y"},{"r":"KA4V56","s":32,"la":1.35719,"ln":-77.28033,"c":0,"n":"TIENDA VILLA MARIA"},{"r":"KA4V52","s":32,"la":1.199,"ln":-77.2685,"c":1,"n":"HOTEL EL VIAJERO"},{"r":"KA4V53","s":32,"la":1.19049,"ln":-77.26987,"c":1,"n":"ESTANCO POKER"},{"r":"KA4V12","s":32,"la":1.2016,"ln":-77.2833,"c":5,"n":"MERCA PREMIUM"},{"r":"KA4V51","s":32,"la":1.2016,"ln":-77.2908,"c":2,"n":"TIENDA DANNY"},{"r":"KA4V55","s":32,"la":1.2216,"ln":-77.2673,"c":11,"n":"TIENDA LA 30"},{"r":"KA4V54","s":32,"la":1.2059,"ln":-77.26036,"c":17,"n":"METRO PASTO UNICO"},{"r":"KA4V13","s":32,"la":1.22909,"ln":-77.28878,"c":34,"n":"Q BARATO"},{"r":"KA4V50","s":32,"la":1.222,"ln":-77.289,"c":2,"n":"TDA FABIOLA"}];</script>
+<style>
+:root{
+  --rojo:#E30613;--rojo-o:#B5000F;--rojo-s:#FFF1F2;
+  --ink:#0B1020;--ink2:#1A2236;--muted:#6B7385;--muted2:#9AA1B2;
+  --line:#E7EAF0;--line2:#EEF1F6;--bg:#F4F6FA;--card:#FFF;
+  --verde:#0E9F6E;--verde-s:#E6F7F0;--amber:#D97706;--amber-s:#FEF3E2;
+  --azul:#2563EB;--azul-s:#EAF1FE;
+  --sh1:0 1px 3px rgba(16,24,40,.08);--sh2:0 6px 18px rgba(16,24,40,.10);--sh3:0 16px 40px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+svg.i{display:inline-block;vertical-align:middle;flex-shrink:0}
+#app-movil,#app-desktop{display:none;height:100%}
+#app-movil.on,#app-desktop.on{display:flex}
+
+/* ════════════ MÓVIL — ENTREGADOR ════════════ */
+#app-movil{flex-direction:column;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;transform:translateX(100%);opacity:0;pointer-events:none;z-index:10}
+.screen.active{transform:translateX(0);opacity:1;pointer-events:auto;z-index:20}
+.hd{background:#fff;border-bottom:2px solid var(--rojo);padding:14px 16px 11px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:30}
+.hd .bk{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--ink2);cursor:pointer}
+.hd .mb{width:3px;height:26px;background:var(--rojo);border-radius:2px}
+.hd .ht{flex:1;min-width:0}
+.hd .ht b{font-size:18px;font-weight:900;letter-spacing:-.5px;display:block;line-height:1}
+.hd .ht span{font-size:9px;font-weight:800;color:var(--rojo);letter-spacing:2.4px}
+.chip{font-size:10px;font-weight:800;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px}
+.chip.r{background:var(--rojo-s);color:var(--rojo)}
+.chip.g{background:var(--verde-s);color:var(--verde)}
+.chip.d{background:var(--ink);color:#fff}
+
+/* — screen 1: selección de ruta nivel dios — */
+.body1{flex:1;overflow:auto;padding:16px 16px 28px}
+.hero{background:linear-gradient(135deg,#E30613 0%,#B5000F 100%);border-radius:20px;padding:20px 18px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:0 10px 26px rgba(227,6,19,.28)}
+.hero::before{content:'';position:absolute;right:-46px;top:-46px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07)}
+.hero::after{content:'';position:absolute;right:-12px;bottom:-58px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero .hg{font-size:11px;font-weight:800;letter-spacing:1.6px;opacity:.85}
+.hero h2{font-size:24px;font-weight:900;letter-spacing:-.7px;margin:5px 0 3px}
+.hero p{font-size:12.5px;opacity:.88;font-weight:600}
+.hero .hstats{display:flex;gap:9px;margin-top:15px;position:relative;z-index:2}
+.hero .hs{flex:1;background:rgba(255,255,255,.13);backdrop-filter:blur(4px);border-radius:13px;padding:9px 6px;text-align:center}
+.hero .hs b{font-size:18px;font-weight:900;display:block;line-height:1.1}
+.hero .hs span{font-size:8.5px;font-weight:700;opacity:.8;letter-spacing:.6px}
+.cap{font-size:10.5px;font-weight:800;letter-spacing:1.6px;color:var(--muted2);margin:2px 4px 12px;display:flex;align-items:center;gap:7px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px 14px;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;box-shadow:var(--sh1)}
+.rcard:active{transform:scale(.96)}
+.rcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.rcard .rt{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px}
+.rcard .rid{font-size:17px;font-weight:900;letter-spacing:-.4px}
+.rcard .rsub{font-size:9.5px;font-weight:700;color:var(--muted2);margin-top:1px}
+.rcard .gg{position:relative;width:42px;height:42px;flex-shrink:0}
+.rcard .gg .p{position:absolute;inset:0;display:grid;place-items:center;font-size:10.5px;font-weight:800}
+.rcard .rw{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:5px}
+.rcard .rw b{color:var(--ink2)}
+.rcard .go{margin-top:10px;height:34px;border-radius:10px;background:var(--ink);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.4px}
+
+/* — screen 2: mapa + lista — */
+.rprog{background:#fff;padding:9px 16px 11px;border-bottom:1px solid var(--line);flex-shrink:0}
+.rprog .rt2{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rprog .rt2 b{font-size:11.5px;font-weight:800}
+.rprog .rt2 span{font-size:10px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:4px}
+.rprog .bar{height:6px;background:var(--line2);border-radius:20px;overflow:hidden}
+.rprog .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--verde),#34d399);border-radius:20px;transition:width .4s;width:0}
+.mapbox{height:40%;position:relative;flex-shrink:0;background:#cdd6e2;background-size:cover;background-position:center}
+.taco-tab{position:absolute;right:0;top:16px;width:9px;height:64px;background:rgba(227,6,19,.6);border-radius:7px 0 0 7px;cursor:pointer;z-index:8;box-shadow:-2px 0 8px rgba(227,6,19,.3)}
+.mleg{position:absolute;left:10px;bottom:10px;background:rgba(255,255,255,.95);border-radius:10px;padding:6px 10px;font-size:9px;font-weight:800;color:var(--ink2);box-shadow:var(--sh2);display:flex;gap:9px}
+.mleg i{display:flex;align-items:center;gap:4px}
+.mleg .d{width:8px;height:8px;border-radius:50%}
+.nextcard{margin:8px 12px 2px;background:var(--ink);border-radius:15px;padding:10px 12px;color:#fff;display:flex;align-items:center;gap:11px;box-shadow:var(--sh2);cursor:pointer;flex-shrink:0}
+.nextcard:active{transform:scale(.98)}
+.nextcard .nq{width:36px;height:36px;border-radius:11px;background:var(--rojo);display:grid;place-items:center;font-size:14px;font-weight:900;flex-shrink:0;animation:npulse 1.6s infinite}
+@keyframes npulse{0%,100%{box-shadow:0 0 0 4px rgba(227,6,19,.25)}50%{box-shadow:0 0 0 8px rgba(227,6,19,.06)}}
+.nextcard .ni{flex:1;min-width:0}
+.nextcard .ni small{font-size:8.5px;font-weight:800;letter-spacing:1.4px;color:rgba(255,255,255,.55);display:block}
+.nextcard .ni b{font-size:13.5px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nextcard .ni span{font-size:10px;color:rgba(255,255,255,.62);font-weight:600}
+.nextcard .ngo{width:40px;height:40px;border-radius:12px;background:var(--azul);display:grid;place-items:center;flex-shrink:0}
+.listwrap{flex:1;background:var(--bg);overflow:auto;padding:8px 12px 16px}
+.srch{position:sticky;top:0;background:var(--bg);padding:4px 0 9px;z-index:5}
+.srch .bx{position:relative}
+.srch input{width:100%;height:42px;border:1px solid var(--line);border-radius:13px;padding:0 14px 0 40px;font-family:inherit;font-size:13px;background:#fff;color:var(--ink)}
+.srch input:focus{outline:none;border-color:var(--rojo)}
+.srch .si{position:absolute;left:13px;top:12px;color:var(--muted2)}
+.cli{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:8px;cursor:pointer;transition:.15s;box-shadow:var(--sh1)}
+.cli:active{transform:scale(.98);background:var(--bg)}
+.cli .num{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.cli.now .num{animation:npulse 1.6s infinite}
+.cli .ci{flex:1;min-width:0}
+.cli .ci b{font-size:13.5px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cli .ci span{font-size:10.5px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:2px}
+.cli .stx{flex-shrink:0;display:grid;place-items:center;width:28px;height:28px;border-radius:9px}
+.cli .stx.ent{background:var(--verde-s);color:var(--verde)}
+.cli .stx.now{background:var(--rojo-s);color:var(--rojo)}
+.cli .stx.nov{background:var(--amber-s);color:var(--amber)}
+.cli .stx.pend{background:var(--line2);color:var(--muted2)}
+
+/* — screen 3: cliente / street view — */
+.sv{height:44%;position:relative;flex-shrink:0;background:#cdd6e2;background-size:cover;background-position:center}
+.sv .b360{position:absolute;top:12px;left:12px;background:rgba(11,16,32,.84);backdrop-filter:blur(4px);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.5px;padding:7px 10px;border-radius:9px;display:flex;align-items:center;gap:6px}
+.sv .stop{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.95);border-radius:10px;padding:6px 10px;font-size:10.5px;font-weight:800;display:flex;align-items:center;gap:6px;box-shadow:var(--sh2)}
+.sv .stop .dp{width:8px;height:8px;border-radius:50%;background:var(--rojo);box-shadow:0 0 0 3px rgba(227,6,19,.2)}
+.cpanel{flex:1;min-height:0;background:#fff;border-radius:22px 22px 0 0;margin-top:-22px;position:relative;z-index:5;padding:14px 16px 18px;box-shadow:0 -6px 20px rgba(0,0,0,.07);display:flex;flex-direction:column;overflow:auto}
+.cpanel .grab{width:42px;height:4px;background:var(--line);border-radius:3px;margin:0 auto 12px;flex-shrink:0}
+.cpanel .cn{font-size:18px;font-weight:900;letter-spacing:-.4px}
+.cpanel .cmeta{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 13px}
+.pill{font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:8px;background:var(--bg);color:var(--ink2);display:inline-flex;align-items:center;gap:5px}
+.pill.r{background:var(--rojo-s);color:var(--rojo)}
+.pill.g{background:var(--verde-s);color:var(--verde)}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex-shrink:0}
+.act{height:64px;border-radius:15px;border:1.5px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:800;color:var(--ink2);cursor:pointer;transition:.15s;box-shadow:var(--sh1)}
+.act:active{transform:scale(.95)}
+.act.nav{background:var(--azul);color:#fff;border-color:var(--azul);box-shadow:0 5px 14px rgba(37,99,235,.32)}
+.nov{margin-top:12px;min-height:54px;border-radius:15px;background:var(--rojo);color:#fff;border:none;font-family:inherit;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 7px 18px rgba(227,6,19,.32);transition:.15s;flex-shrink:0;width:100%}
+.nov:active{transform:scale(.97)}
+.nov.has{background:linear-gradient(135deg,#D97706,#B45309);box-shadow:0 7px 18px rgba(217,119,6,.35);animation:novpulse 2s infinite}
+@keyframes novpulse{0%,100%{box-shadow:0 7px 18px rgba(217,119,6,.35)}50%{box-shadow:0 7px 24px rgba(217,119,6,.55)}}
+.nov.done{background:var(--verde-s);color:var(--verde);box-shadow:none;cursor:default}
+
+/* — tacómetro — */
+.taco{position:absolute;top:0;right:0;bottom:0;width:78%;max-width:340px;background:linear-gradient(160deg,#0B1020,#161e33);z-index:80;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);padding:22px 18px;color:#fff;box-shadow:-10px 0 40px rgba(0,0,0,.4)}
+.taco.open{transform:translateX(0)}
+.taco .tx{position:absolute;top:20px;right:16px;cursor:pointer;color:rgba(255,255,255,.6)}
+.taco h3{font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.taco .lv{font-size:9px;font-weight:800;color:#7CF7C0;display:flex;align-items:center;gap:4px;margin-left:auto;margin-right:26px}
+.taco .lv i{width:6px;height:6px;border-radius:50%;background:#7CF7C0;animation:blink 1.3s infinite}
+@keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+.bigring{width:150px;height:150px;margin:0 auto 20px;position:relative}
+.bigring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bigring .c b{font-size:40px;font-weight:900;line-height:1}
+.bigring .c span{font-size:9px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:1px;margin-top:3px}
+.tstats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tstat{background:rgba(255,255,255,.06);border-radius:13px;padding:13px}
+.tstat b{font-size:24px;font-weight:900;display:block;line-height:1}
+.tstat span{font-size:9.5px;color:rgba(255,255,255,.5);font-weight:700;margin-top:4px;display:block}
+
+/* — sheets — */
+.ovl{position:absolute;inset:0;background:rgba(11,16,32,.5);backdrop-filter:blur(3px);z-index:85;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:.25s}
+.ovl.open{opacity:1;pointer-events:auto}
+.sheet{width:100%;background:#fff;border-radius:22px 22px 0 0;padding:16px 18px 22px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:88%;overflow:auto}
+.ovl.open .sheet{transform:translateY(0)}
+.sheet .grab{width:42px;height:4px;background:var(--line);border-radius:3px;margin:0 auto 14px}
+.sheet h3{font-size:17px;font-weight:900;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.sheet .sub{font-size:12px;color:var(--muted);font-weight:600;margin:3px 0 14px}
+.foto{height:112px;border-radius:15px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:var(--bg);margin-bottom:7px;cursor:pointer;color:var(--muted)}
+.foto.taken{border-style:solid;border-color:var(--verde);background:var(--verde-s);color:var(--verde)}
+.foto small{font-size:11px;font-weight:700}
+.reqlbl{font-size:10.5px;font-weight:800;color:var(--rojo);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.motivos{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:15px}
+.mot{border:1.5px solid var(--line);border-radius:13px;padding:12px 10px;display:flex;align-items:center;gap:9px;font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s;color:var(--ink2)}
+.mot:active{transform:scale(.97)}
+.mot.sel{border-color:var(--rojo);background:var(--rojo-s);color:var(--rojo)}
+.mot .me{width:30px;height:30px;border-radius:9px;background:var(--bg);display:grid;place-items:center;flex-shrink:0}
+.mot.sel .me{background:rgba(227,6,19,.12)}
+.confirm{width:100%;height:54px;border-radius:15px;background:var(--verde);color:#fff;border:none;font-family:inherit;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;box-shadow:0 7px 18px rgba(14,159,110,.3)}
+.confirm:disabled{background:var(--line);color:var(--muted2);box-shadow:none}
+.entx{text-align:center;padding:4px 4px 0}
+.entx .bigic{width:64px;height:64px;border-radius:20px;background:var(--verde-s);color:var(--verde);display:grid;place-items:center;margin:0 auto 12px}
+.entx h3{justify-content:center}
+.entx p{font-size:12.5px;color:var(--muted);font-weight:600;margin:8px 0 4px;line-height:1.5}
+.entx .nvinfo{display:inline-flex;align-items:center;gap:6px;background:var(--amber-s);color:var(--amber);font-size:11px;font-weight:800;padding:6px 11px;border-radius:9px;margin:9px 0 16px}
+.entbtns .si{width:100%;height:54px;border-radius:15px;background:var(--verde);color:#fff;border:none;font-family:inherit;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 7px 18px rgba(14,159,110,.3);margin-bottom:9px}
+.entbtns .no{width:100%;height:48px;border-radius:15px;background:#fff;color:var(--muted);border:1.5px solid var(--line);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.entx .fine{font-size:10px;color:var(--muted2);margin-top:12px;line-height:1.5}
+.toast{position:absolute;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;padding:12px 18px;border-radius:13px;z-index:95;opacity:0;transition:.3s;box-shadow:var(--sh3);white-space:nowrap;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ════════════ DESKTOP — COORDINADOR ════════════ */
+#app-desktop{flex-direction:column;overflow:hidden}
+.topbar{height:60px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 22px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .bb{width:5px;height:30px;background:var(--rojo);border-radius:3px}
+.brand b{font-size:19px;font-weight:900;letter-spacing:-.5px;display:block;line-height:1}
+.brand span{font-size:8.5px;font-weight:700;color:var(--rojo);letter-spacing:3px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.tb-chip{font-size:11px;font-weight:800;padding:7px 12px;border-radius:9px;background:var(--bg);color:var(--ink2);display:flex;align-items:center;gap:6px;border:1px solid var(--line)}
+.tb-live{font-size:10px;font-weight:800;color:var(--verde);display:flex;align-items:center;gap:5px}
+.tb-live i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:blink 1.4s infinite}
+.dmain{flex:1;overflow:auto;padding:20px 24px}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.dhead h1{font-size:21px;font-weight:800;letter-spacing:-.5px}
+.dhead .sub{font-size:12.5px;color:var(--muted);margin-top:2px;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px}
+.kpi .kt{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.kpi .ko{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.kpi .tr{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px}
+.kpi .tr.up{color:var(--verde);background:var(--verde-s)}
+.kpi .tr.dn{color:var(--rojo);background:var(--rojo-s)}
+.kpi .kv{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kpi .kl{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:4px}
+.dgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:15px;margin-bottom:15px}
+.card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid var(--line2)}
+.card-h h3{font-size:14px;font-weight:800;letter-spacing:-.3px}
+.card-h .meta{font-size:11px;color:var(--muted);font-weight:600}
+#dmapa{height:400px;width:100%}
+.maplegend{position:absolute;left:12px;bottom:12px;z-index:500;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:11px;padding:9px 11px;box-shadow:var(--sh2)}
+.maplegend b{font-size:9px;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:6px}
+.lg{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;margin-bottom:4px}
+.lg .sw{width:10px;height:10px;border-radius:3px}
+.lg .ct{margin-left:auto;color:var(--muted);font-weight:600;padding-left:10px}
+.rlist{padding:6px 8px 10px;max-height:400px;overflow:auto}
+.rrow{display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:12px;cursor:default}
+.rrow:hover{background:var(--bg)}
+.rrow .gg{position:relative;width:42px;height:42px;flex-shrink:0}
+.rrow .gg .p{position:absolute;inset:0;display:grid;place-items:center;font-size:10.5px;font-weight:800}
+.rrow .ri{flex:1;min-width:0}
+.rrow .ri b{font-size:13.5px;font-weight:800}
+.rrow .ri small{font-size:10.5px;color:var(--muted);font-weight:600;display:block;margin-top:2px}
+.rrow .rs{text-align:right}
+.rrow .rs b{font-size:13px;font-weight:800}
+.rrow .rs.bad b{color:var(--rojo)}.rrow .rs.ok b{color:var(--verde)}
+.rrow .rs small{font-size:9px;color:var(--muted2);font-weight:700;display:block}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:10px;letter-spacing:.5px;color:var(--muted);font-weight:800;padding:10px 15px;border-bottom:1px solid var(--line2);text-transform:uppercase}
+.tbl td{padding:11px 15px;border-bottom:1px solid var(--line2);font-size:12.5px;font-weight:600}
+.tbl tr:last-child td{border-bottom:none}
+.tag{font-size:10px;font-weight:800;padding:4px 8px;border-radius:7px;display:inline-flex;align-items:center;gap:4px}
+.tag.bad{color:var(--rojo);background:var(--rojo-s)}
+.tag.wr{color:var(--amber);background:var(--amber-s)}
+.alerts{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}
+.al{display:flex;gap:11px;padding:11px;border-radius:12px;background:var(--bg);border:1px solid var(--line2)}
+.al .ai{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center}
+.al.crit .ai{background:var(--rojo-s);color:var(--rojo)}
+.al.warn .ai{background:var(--amber-s);color:var(--amber)}
+.al.info .ai{background:var(--verde-s);color:var(--verde)}
+.al b{font-size:12.5px;font-weight:800;display:block}
+.al p{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;font-weight:600}
+.al .t{font-size:9.5px;color:var(--muted2);font-weight:700;margin-top:3px}
+.demobar{background:var(--amber-s);border-bottom:1px solid #F3DCA8;color:#92600A;font-size:11.5px;font-weight:700;padding:8px 16px;text-align:center;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- ════════ VISTA MÓVIL · ENTREGADOR ════════ -->
+<div id="app-movil">
+  <div class="demobar">PROTOTIPO · vista ENTREGADOR (detectado: celular/tablet)</div>
+
+  <div style="position:relative;flex:1;overflow:hidden">
+  <!-- S1 -->
+  <div class="screen active" id="s1">
+    <div class="hd"><div class="mb"></div><div class="ht"><b>GMAZ</b><span>RUTAS · PASTO</span></div><span class="chip d" id="chFecha"></span></div>
+    <div class="body1">
+      <div class="hero">
+        <div class="hg" id="saludo">BUEN DÍA</div>
+        <h2>Listo para tu ruta</h2>
+        <p>Selecciona tu ruta para comenzar las entregas</p>
+        <div class="hstats">
+          <div class="hs"><b>9</b><span>RUTAS HOY</span></div>
+          <div class="hs"><b>515</b><span>CLIENTES</span></div>
+          <div class="hs"><b>2.735</b><span>CAJAS</span></div>
+        </div>
+      </div>
+      <div class="cap" id="capR">RUTAS DISPONIBLES · ORDEN P PAS</div>
+      <div class="rgrid" id="rgrid"></div>
+    </div>
+  </div>
+
+  <!-- S2 -->
+  <div class="screen" id="s2">
+    <div class="hd"><div class="bk" onclick="vib();go('s1')" id="bk2"></div><div class="mb"></div><div class="ht"><b>KA4V12</b><span>ORDEN SEGÚN P PAS</span></div><span class="chip r">260 CAJAS</span></div>
+    <div class="rprog">
+      <div class="rt2"><b id="pLbl">0 de 10 entregados</b><span id="pPend"></span></div>
+      <div class="bar"><i id="pFill"></i></div>
+    </div>
+    <div class="mapbox" id="mapbox">
+      <div class="taco-tab" onclick="vib();openTaco()"></div>
+      <div class="mleg"><i><span class="d" style="background:#0E9F6E"></span>Entregado</i><i><span class="d" style="background:#E30613"></span>Siguiente</i><i><span class="d" style="background:#D97706"></span>Novedad</i></div>
+    </div>
+    <div class="nextcard" id="nextcard"></div>
+    <div class="listwrap">
+      <div class="srch"><div class="bx"><span class="si" id="siIc"></span><input placeholder="Buscar cliente por código o nombre…" oninput="filtrar(this.value)"></div></div>
+      <div id="cliList"></div>
+    </div>
+    <div class="taco" id="taco">
+      <span class="tx" onclick="vib();closeTaco()" id="tacoX"></span>
+      <h3 id="tacoH"></h3>
+      <div class="bigring" id="bigring"></div>
+      <div class="tstats">
+        <div class="tstat"><b style="color:#7CF7C0" id="tEnt">0</b><span>ENTREGADOS</span></div>
+        <div class="tstat"><b style="color:#ffb38a" id="tNov">0</b><span>NOVEDADES</span></div>
+        <div class="tstat"><b id="tCaja">0</b><span>CAJAS OK</span></div>
+        <div class="tstat"><b id="tPend">0</b><span>PENDIENTES</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S3 -->
+  <div class="screen" id="s3">
+    <div class="hd"><div class="bk" onclick="vib();go('s2')" id="bk3"></div><div class="mb"></div><div class="ht"><b id="cTitle">Cliente</b><span>RUTA KA4V12</span></div><span class="chip r">KA4V12</span><span class="chip g">KA4V21</span></div>
+    <div class="sv" id="svBox">
+      <div class="b360" id="b360"></div>
+      <div class="stop"><span class="dp"></span><span id="cStop">Parada —</span></div>
+    </div>
+    <div class="cpanel">
+      <div class="grab"></div>
+      <div class="cn" id="cName">—</div>
+      <div class="cmeta" id="cMeta"></div>
+      <div class="acts">
+        <div class="act nav" onclick="vib();toastIc('nav','Trazando ruta por calles…')"><span id="iNav"></span>Navegar</div>
+        <div class="act" onclick="vib();toastIc('doc','Abriendo facturas…')"><span id="iDoc"></span>Facturas</div>
+        <div class="act" onclick="vib();toastIc('tel','Llamando al vendedor…')"><span id="iTel"></span>Llamar</div>
+      </div>
+      <button class="nov" id="btnNov" onclick="tapNov()"></button>
+    </div>
+  </div>
+
+  <!-- sheet novedad -->
+  <div class="ovl" id="novOvl">
+    <div class="sheet">
+      <div class="grab"></div>
+      <h3 id="novH"></h3>
+      <div class="sub" id="novCli">—</div>
+      <div class="foto" id="foto" onclick="vib();tomarFoto()"></div>
+      <div class="reqlbl" id="reqLbl"></div>
+      <div class="motivos" id="motivos"></div>
+      <button class="confirm" id="btnConfirm" disabled onclick="vib();enviarNov()"></button>
+    </div>
+  </div>
+  <!-- sheet entregar -->
+  <div class="ovl" id="entOvl">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="entx">
+        <div class="bigic" id="entIc"></div>
+        <h3>¿Lograste entregar?</h3>
+        <p>Este cliente tiene una <b>novedad registrada</b>.<br>Si volviste a pasar y recibió el pedido, confírmalo.</p>
+        <div class="nvinfo" id="entInfo"></div>
+        <div class="entbtns">
+          <button class="si" onclick="vib();confirmarEnt()" id="btnSi"></button>
+          <button class="no" onclick="vib();closeEnt()">No, mantener la novedad</button>
+        </div>
+        <p class="fine">Al confirmar: se borra la novedad y la foto, queda ENTREGADO y se avisa al vendedor por WhatsApp.</p>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<!-- ════════ VISTA ESCRITORIO · COORDINADOR ════════ -->
+<div id="app-desktop">
+  <div class="demobar">PROTOTIPO · vista COORDINADOR (detectado: computador) — encoge la ventana a menos de 900px y verás la vista del entregador</div>
+  <div class="topbar">
+    <div class="brand"><div class="bb"></div><div><b>GMAZ</b><span>RUTAS · CENTRO DE CONTROL</span></div></div>
+    <div class="tb-right">
+      <span class="tb-live"><i></i>OPERACIÓN EN VIVO</span>
+      <span class="tb-chip" id="dFecha"></span>
+      <span class="tb-chip" style="background:var(--rojo);color:#fff;border-color:var(--rojo)">Coordinador</span>
+    </div>
+  </div>
+  <div class="dmain">
+    <div class="dhead">
+      <div><h1>Panel del Coordinador</h1><div class="sub">Operación del día · datos P PAS 9 · 515 clientes · 9 rutas</div></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="dgrid">
+      <div class="card" style="position:relative">
+        <div class="card-h"><h3>Mapa operativo — Pasto</h3><span class="meta">9 rutas · pines por estado</span></div>
+        <div id="dmapa"></div>
+        <div class="maplegend" id="dlegend"><b>RUTAS</b></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Rendimiento por ruta</h3><span class="meta">% cierre en vivo</span></div>
+        <div class="rlist" id="drlist"></div>
+      </div>
+    </div>
+    <div class="dgrid">
+      <div class="card">
+        <div class="card-h"><h3>Novedades del día</h3><span class="meta">14 rechazos · con ruta de vendedor</span></div>
+        <div style="overflow:auto"><table class="tbl"><thead><tr><th>Cliente</th><th>Ruta</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dnov"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Alertas inteligentes</h3><span class="meta">automáticas</span></div>
+        <div class="alerts" id="dalerts"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══ ÍCONOS SVG CORPORATIVOS ═══ */
+const IC={
+  truck:'<rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  pin:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  box:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+  store:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  nav:'<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  tel:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  cam:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  checkc:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  chevL:'<polyline points="15 18 9 12 15 6"/>',
+  search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  refresh:'<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  route:'<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M12 19h4.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H12"/>',
+  money:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  ban:'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
+  zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  eye360:'<circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
+};
+function ic(n,s=18,w=2){return `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${IC[n]}</svg>`;}
+function vib(ms=15){if(navigator.vibrate)navigator.vibrate(ms);}
+
+/* ═══ DETECCIÓN AUTOMÁTICA DE DISPOSITIVO ═══ */
+const esMovilUA=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+function decidirVista(){
+  const movil=esMovilUA||window.innerWidth<900;
+  document.getElementById('app-movil').classList.toggle('on',movil);
+  document.getElementById('app-desktop').classList.toggle('on',!movil);
+  if(!movil&&!window._dashInit){window._dashInit=true;initDashboard();}
+}
+window.addEventListener('resize',()=>decidirVista());
+
+/* ═══ DATOS (P PAS 9 reales) ═══ */
+const KEY='AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI';
+const RUTAS=[
+  {id:'KA4V12',c:'#E30613',cli:65,caja:260,ent:54,rej:3},
+  {id:'KA4V13',c:'#2563EB',cli:38,caja:221,ent:33,rej:1},
+  {id:'KA4V50',c:'#0E9F6E',cli:53,caja:333,ent:49,rej:2},
+  {id:'KA4V51',c:'#D97706',cli:54,caja:441,ent:41,rej:5},
+  {id:'KA4V52',c:'#7C3AED',cli:36,caja:557,ent:34,rej:0},
+  {id:'KA4V53',c:'#0891B2',cli:71,caja:174,ent:66,rej:2},
+  {id:'KA4V54',c:'#DB2777',cli:55,caja:197,ent:52,rej:0},
+  {id:'KA4V55',c:'#65A30D',cli:78,caja:276,ent:74,rej:1},
+  {id:'KA4V56',c:'#EA580C',cli:64,caja:276,ent:58,rej:0},
+];
+RUTAS.forEach(r=>r.pct=Math.round(r.ent/r.cli*100));
+const CLI=[
+  {n:1,nm:'TIENDA VIESA',d:'CL 18 # 24-10',cj:3,la:1.2089,ln:-77.287,st:'ent'},
+  {n:2,nm:'CAISAGA',d:'CR 24 # 18-05',cj:3,la:1.2093,ln:-77.2858,st:'ent'},
+  {n:3,nm:'VIVERES LA 22',d:'CL 20 # 22-14',cj:1,la:1.20884,ln:-77.28069,st:'ent'},
+  {n:4,nm:'DE LOS GEMELOS TIENDA',d:'CR 22 # 19-30',cj:4,la:1.2089,ln:-77.2809,st:'ent'},
+  {n:5,nm:'MISCELANEA LA 22',d:'CL 22 # 8-14',cj:8,la:1.2086,ln:-77.2809,st:'now'},
+  {n:6,nm:'TIENDA RAQUEL',d:'CR 21 # 20-02',cj:2,la:1.2085,ln:-77.2808,st:'pend'},
+  {n:7,nm:'DROGUERIA MAS SALUD',d:'CL 19 # 23-40',cj:2,la:1.2072,ln:-77.2795,st:'pend'},
+  {n:8,nm:'GRANERO BLANCA',d:'CR 23 # 18-12',cj:2,la:1.2067,ln:-77.2792,st:'pend'},
+  {n:9,nm:'SHENG LONG',d:'CL 17 # 25-08',cj:6,la:1.2052,ln:-77.28,st:'nov',motivo:'CLIENTE CERRADO',hora:'09:32'},
+  {n:10,nm:'LA PAUSA',d:'CR 25 # 16-22',cj:1,la:1.20657,ln:-77.27913,st:'pend'},
+];
+const stCol={ent:'0x0E9F6E',now:'0xE30613',pend:'0x8A90A0',nov:'0xD97706'};
+const stClr={ent:'#0E9F6E',now:'#E30613',pend:'#8A90A0',nov:'#D97706'};
+const stIcn={ent:'check',now:'pin',pend:'clock',nov:'alert'};
+const MOT=[['store','Cliente cerrado'],['money','Sin dinero'],['box','Pedido mal elaborado'],['x','No hizo pedido'],['ban','Producto no cargado'],['zap','Rechazo parcial']];
+
+function gauge(p,s,w,t){const r=(s-w)/2,c=2*Math.PI*r,col=p>=90?'#0E9F6E':p>=75?'#D97706':'#E30613';
+return `<svg width="${s}" height="${s}" style="transform:rotate(-90deg)"><circle cx="${s/2}" cy="${s/2}" r="${r}" fill="none" stroke="${t||'#EEF1F6'}" stroke-width="${w}"/><circle cx="${s/2}" cy="${s/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-p/100)}"/></svg>`;}
+
+/* ═══ MÓVIL: estáticos ═══ */
+const hoy=new Date();
+document.getElementById('chFecha').innerHTML=ic('cal',12)+' '+hoy.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+document.getElementById('saludo').textContent=(hoy.getHours()<12?'BUENOS DÍAS':hoy.getHours()<18?'BUENAS TARDES':'BUENAS NOCHES')+', CAMILO';
+document.getElementById('capR').innerHTML=ic('route',13)+' RUTAS DISPONIBLES · ORDEN P PAS';
+document.getElementById('bk2').innerHTML=ic('chevL',18);
+document.getElementById('bk3').innerHTML=ic('chevL',18);
+document.getElementById('siIc').innerHTML=ic('search',16);
+document.getElementById('tacoX').innerHTML=ic('x',20);
+document.getElementById('tacoH').innerHTML=ic('chart',16)+' Tu avance <span class="lv"><i></i>EN VIVO</span>';
+document.getElementById('b360').innerHTML=ic('eye360',14)+' VISTA 360° · STREET VIEW';
+document.getElementById('iNav').innerHTML=ic('nav',20);
+document.getElementById('iDoc').innerHTML=ic('doc',20);
+document.getElementById('iTel').innerHTML=ic('tel',20);
+document.getElementById('novH').innerHTML=ic('alert',17)+' Reportar novedad';
+document.getElementById('reqLbl').innerHTML=ic('cam',13)+' La foto es obligatoria para registrar';
+document.getElementById('btnConfirm').innerHTML=ic('check',17)+' Confirmar y avisar al vendedor';
+document.getElementById('entIc').innerHTML=ic('checkc',30);
+document.getElementById('btnSi').innerHTML=ic('check',17)+' Sí, logré entregar';
+
+/* tarjetas de ruta nivel dios */
+document.getElementById('rgrid').innerHTML=RUTAS.slice(0,6).map(r=>{
+  const col=r.pct>=90?'var(--verde)':r.pct>=75?'var(--amber)':'var(--rojo)';
+  return `<div class="rcard" style="--c:${r.c}" onclick="vib();abrirRuta('${r.id}')">
+    <div class="rt"><div><div class="rid">${r.id}</div><div class="rsub">RUTA DE ENTREGA</div></div>
+    <div class="gg">${gauge(r.pct,42,4.5)}<div class="p" style="color:${col}">${r.pct}%</div></div></div>
+    <div class="rw">${ic('store',13)} <b>${r.cli}</b>&nbsp;clientes</div>
+    <div class="rw">${ic('box',13)} <b>${r.caja}</b>&nbsp;cajas</div>
+    <div class="go">INICIAR RUTA ${ic('nav',12)}</div>
+  </div>`;
+}).join('');
+
+/* mapa móvil LIMPIO: solo pines, SIN líneas cruzadas */
+function buildMap(){
+  const mk=CLI.map(c=>`markers=color:${stCol[c.st]}%7Clabel:${c.n>9?'0':c.n}%7C${c.la},${c.ln}`).join('&');
+  document.getElementById('mapbox').style.backgroundImage=
+    `url('https://maps.googleapis.com/maps/api/staticmap?size=400x320&scale=2&maptype=roadmap&${mk}&key=${KEY}')`;
+}
+function renderNext(){
+  const c=CLI.find(x=>x.st==='now')||CLI.find(x=>x.st==='pend');
+  const ns=document.getElementById('nextcard');
+  if(!c){ns.style.display='none';return;}
+  ns.style.display='flex';
+  ns.innerHTML=`<div class="nq">${c.n}</div>
+    <div class="ni"><small>SIGUIENTE PARADA · ORDEN P PAS</small><b>${c.nm}</b><span>${c.d} · ${c.cj} cajas</span></div>
+    <div class="ngo">${ic('nav',19)}</div>`;
+  ns.onclick=()=>{vib();abrirCliente(c.n);};
+}
+function renderProg(){
+  const tot=CLI.length,ent=CLI.filter(c=>c.st==='ent').length,nov=CLI.filter(c=>c.st==='nov').length;
+  const pct=Math.round(ent/tot*100);
+  document.getElementById('pLbl').textContent=ent+' de '+tot+' entregados';
+  document.getElementById('pPend').innerHTML=ic('clock',11)+' '+(tot-ent-nov)+' pendientes';
+  document.getElementById('pFill').style.width=pct+'%';
+  document.getElementById('tEnt').textContent=ent;
+  document.getElementById('tNov').textContent=nov;
+  document.getElementById('tPend').textContent=tot-ent-nov;
+  document.getElementById('tCaja').textContent=CLI.filter(c=>c.st==='ent').reduce((a,c)=>a+c.cj,0);
+  document.getElementById('bigring').innerHTML=gauge(pct,150,11,'rgba(255,255,255,.12)')+`<div class="c"><b>${pct}%</b><span>CIERRE</span></div>`;
+}
+function renderList(f=''){
+  const q=f.toLowerCase();
+  document.getElementById('cliList').innerHTML=CLI.filter(c=>c.nm.toLowerCase().includes(q)||String(c.n).includes(q)).map(c=>`
+    <div class="cli ${c.st==='now'?'now':''}" onclick="vib();abrirCliente(${c.n})">
+      <div class="num" style="background:${stClr[c.st]}">${c.n}</div>
+      <div class="ci"><b>${c.nm}</b><span>${ic('pin',10)} ${c.d} · ${ic('box',10)} ${c.cj} cajas</span></div>
+      <div class="stx ${c.st}">${ic(stIcn[c.st],14)}</div>
+    </div>`).join('');
+}
+function filtrar(v){renderList(v);}
+function refreshAll(){renderList();renderNext();renderProg();buildMap();}
+
+/* cliente */
+let cliA=null;
+function abrirCliente(n){
+  const c=CLI.find(x=>x.n===n);cliA=c;
+  document.getElementById('cTitle').textContent='Parada '+c.n;
+  document.getElementById('cName').textContent=c.nm;
+  document.getElementById('cStop').textContent='Parada '+c.n+' de '+CLI.length;
+  document.getElementById('cMeta').innerHTML=
+    `<span class="pill">${ic('pin',12)} ${c.d}</span><span class="pill">${ic('box',12)} ${c.cj} cajas</span>`+
+    `<span class="pill r">${ic('truck',12)} KA4V12</span><span class="pill g">${ic('store',12)} KA4V21</span>`;
+  document.getElementById('svBox').style.backgroundImage=
+    `url('https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${c.la},${c.ln}&fov=80&pitch=2&key=${KEY}')`;
+  document.getElementById('novCli').textContent=c.nm;
+  pintarBtn();go('s3');
+}
+function pintarBtn(){
+  const b=document.getElementById('btnNov');
+  if(cliA.st==='nov'){b.className='nov has';b.innerHTML=ic('refresh',17)+' Tiene novedad — ¿Lograste entregar?';}
+  else if(cliA.st==='ent'){b.className='nov done';b.innerHTML=ic('checkc',17)+' Cliente entregado';}
+  else{b.className='nov';b.innerHTML=ic('alert',17)+' Reportar novedad';}
+}
+function tapNov(){
+  vib();
+  if(cliA.st==='ent'){toastIc('checkc','Este cliente ya está entregado');return;}
+  if(cliA.st==='nov'){
+    document.getElementById('entInfo').innerHTML=ic('alert',12)+' '+(cliA.motivo||'NOVEDAD')+' · hoy '+(cliA.hora||'--:--');
+    document.getElementById('entOvl').classList.add('open');return;
+  }
+  openNov();
+}
+function closeEnt(){document.getElementById('entOvl').classList.remove('open');}
+function confirmarEnt(){closeEnt();cliA.st='ent';pintarBtn();refreshAll();toastIc('checkc','ENTREGADO — WhatsApp enviado al vendedor');vib([30,40,30]);}
+document.getElementById('entOvl').addEventListener('click',e=>{if(e.target.id==='entOvl')closeEnt();});
+function go(id){document.querySelectorAll('#app-movil .screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function abrirRuta(){refreshAll();go('s2');}
+function openTaco(){document.getElementById('taco').classList.add('open');}
+function closeTaco(){document.getElementById('taco').classList.remove('open');}
+
+/* novedad */
+let fotoOk=false,motSel=null;
+document.getElementById('motivos').innerHTML=MOT.map((m,i)=>`<div class="mot" onclick="vib();selMot(${i},this)"><span class="me">${ic(m[0],15)}</span>${m[1]}</div>`).join('');
+function resetFoto(){const f=document.getElementById('foto');f.className='foto';f.innerHTML=ic('cam',26)+'<small>Toca para tomar foto</small>';}
+resetFoto();
+function openNov(){fotoOk=false;motSel=null;resetFoto();document.querySelectorAll('.mot').forEach(m=>m.classList.remove('sel'));chk();document.getElementById('novOvl').classList.add('open');}
+function closeNov(){document.getElementById('novOvl').classList.remove('open');}
+function tomarFoto(){fotoOk=true;const f=document.getElementById('foto');f.className='foto taken';f.innerHTML=ic('checkc',26)+'<small>Foto capturada</small>';chk();}
+function selMot(i,el){motSel=i;document.querySelectorAll('.mot').forEach(m=>m.classList.remove('sel'));el.classList.add('sel');chk();}
+function chk(){document.getElementById('btnConfirm').disabled=!(fotoOk&&motSel!==null);}
+function enviarNov(){closeNov();cliA.st='nov';cliA.motivo=MOT[motSel][1].toUpperCase();cliA.hora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});pintarBtn();refreshAll();toastIc('alert','Novedad enviada al vendedor por WhatsApp');vib([20,40,20]);}
+document.getElementById('novOvl').addEventListener('click',e=>{if(e.target.id==='novOvl')closeNov();});
+let tT;
+function toastIc(i,m){const t=document.getElementById('toast');t.innerHTML=ic(i,15)+' '+m;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
+
+/* ═══ DESKTOP: DASHBOARD COORDINADOR ═══ */
+function initDashboard(){
+  document.getElementById('dFecha').innerHTML=ic('cal',13)+' '+hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  const totCli=RUTAS.reduce((a,r)=>a+r.cli,0),totEnt=RUTAS.reduce((a,r)=>a+r.ent,0),totRej=RUTAS.reduce((a,r)=>a+r.rej,0);
+  const cajaEnt=RUTAS.reduce((a,r)=>a+Math.round(r.caja*r.ent/r.cli),0);
+  const pctG=Math.round(totEnt/totCli*100);
+  const K=[
+    {i:'target',bg:'var(--verde-s)',cl:'var(--verde)',v:pctG+'%',l:'Cierre general',t:'up',d:'+4.2%'},
+    {i:'box',bg:'var(--azul-s)',cl:'var(--azul)',v:cajaEnt.toLocaleString('es-CO'),l:'Cajas entregadas',t:'up',d:'+312'},
+    {i:'truck',bg:'var(--rojo-s)',cl:'var(--rojo)',v:'9/9',l:'Rutas activas',t:'up',d:'100%'},
+    {i:'alert',bg:'var(--amber-s)',cl:'var(--amber)',v:totRej,l:'Rechazos hoy',t:'dn',d:'-2'},
+    {i:'clock',bg:'var(--line2)',cl:'var(--ink2)',v:totCli-totEnt-totRej,l:'Clientes en ruta',t:'dn',d:'bajando'},
+  ];
+  document.getElementById('kpis').innerHTML=K.map(k=>`<div class="kpi">
+    <div class="kt"><div class="ko" style="background:${k.bg};color:${k.cl}">${ic(k.i,17)}</div><span class="tr ${k.t}">${k.t==='up'?'▲':'▼'} ${k.d}</span></div>
+    <div class="kv">${k.v}</div><div class="kl">${k.l}</div></div>`).join('');
+
+  document.getElementById('drlist').innerHTML=RUTAS.map(r=>{
+    const col=r.pct>=90?'var(--verde)':r.pct>=75?'var(--amber)':'var(--rojo)';
+    return `<div class="rrow">
+      <div class="gg">${gauge(r.pct,42,4.5)}<div class="p" style="color:${col}">${r.pct}%</div></div>
+      <div class="ri"><b>${r.id}</b><small>${ic('store',10)} ${r.ent}/${r.cli} · ${ic('box',10)} ${r.caja} cajas</small></div>
+      <div class="rs ${r.rej>=3?'bad':'ok'}"><b>${r.rej}</b><small>RECHAZOS</small></div>
+    </div>`;
+  }).join('');
+
+  const NOV=[
+    {c:'PAPEROS STREET FOOD',r:'KA4V51',m:'money',mt:'Sin dinero',v:'KA4V21',cj:4},
+    {c:'SAN FRANCISCO GRANERO',r:'KA4V51',m:'store',mt:'Cerrado',v:'KA4V21',cj:6},
+    {c:'KIOSKO LA U',r:'KA4V13',m:'ban',mt:'No cargado',v:'KA4V23',cj:2},
+    {c:'TIENDA LOS ALAMOS',r:'KA4V53',m:'store',mt:'Cerrado',v:'KA4V23',cj:3},
+    {c:'FRUTAS Y VERDURAS',r:'KA4V12',m:'x',mt:'No hizo pedido',v:'KA4V21',cj:1},
+    {c:'PARRILLA DEL OESTE',r:'KA4V51',m:'zap',mt:'Rechazo parcial',v:'KA4V21',cj:5},
+  ];
+  const COLR=Object.fromEntries(RUTAS.map(r=>[r.id,r.c]));
+  document.getElementById('dnov').innerHTML=NOV.map(n=>`<tr>
+    <td style="font-weight:800">${n.c}</td>
+    <td><span class="tag" style="background:${COLR[n.r]}1A;color:${COLR[n.r]}">${n.r}</span></td>
+    <td>${ic(n.m,13)} ${n.mt}</td>
+    <td><span class="tag bad">${n.v}</span></td><td><b>${n.cj}</b></td></tr>`).join('');
+
+  document.getElementById('dalerts').innerHTML=[
+    {t:'crit',i:'alert',b:'KA4V51 bajo meta',p:'Cierre 76% · 5 rechazos. Va 13 puntos bajo el promedio.',tm:'hace 8 min'},
+    {t:'warn',i:'box',b:'Carga pesada KA4V52',p:'557 cajas en 36 clientes (15.5 c/cliente). Vigilar tiempos.',tm:'hace 22 min'},
+    {t:'info',i:'checkc',b:'KA4V55 cerca de meta',p:'95% de cierre · solo 4 clientes pendientes.',tm:'hace 5 min'},
+    {t:'warn',i:'refresh',b:'Cliente reabierto',p:'SHENG LONG (KA4V12) pasó de rechazo a entregado.',tm:'hace 31 min'},
+  ].map(a=>`<div class="al ${a.t}"><div class="ai">${ic(a.i,16)}</div><div><b>${a.b}</b><p>${a.p}</p><div class="t">${a.tm}</div></div></div>`).join('');
+
+  /* mapa Leaflet con los 288 puntos reales */
+  setTimeout(()=>{
+    const map=L.map('dmapa',{attributionControl:false}).setView([1.2136,-77.2811],13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+    const byR={};(window.PPAS9||[]).forEach(p=>{(byR[p.r]=byR[p.r]||[]).push(p);});
+    Object.keys(byR).forEach(rt=>{
+      const col=COLR[rt]||'#888';
+      byR[rt].sort((a,b)=>a.s-b.s).forEach((p,i)=>{
+        const rinfo=RUTAS.find(r=>r.id===rt)||{ent:0,cli:1};
+        const done=i<Math.round(rinfo.ent/rinfo.cli*byR[rt].length);
+        L.circleMarker([p.la,p.ln],{radius:done?4.5:5.5,color:'#fff',weight:1.5,fillColor:done?'#0E9F6E':col,fillOpacity:done?.6:1})
+          .addTo(map).bindPopup(`<b style="font-size:12px">${p.n}</b><br><span style="color:#6B7385;font-size:11px">${rt} · parada ${p.s} · ${p.c} cajas</span>`);
+      });
+    });
+    document.getElementById('dlegend').innerHTML='<b>RUTAS</b>'+RUTAS.map(r=>`<div class="lg"><span class="sw" style="background:${r.c}"></span>${r.id}<span class="ct">${r.cli}</span></div>`).join('');
+    setTimeout(()=>map.invalidateSize(),200);
+  },80);
+}
+
+decidirVista();
+</script>
+</body>
+</html>
