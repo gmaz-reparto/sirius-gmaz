@@ -1827,9 +1827,87 @@ function renderMarkers(){
     mk.addListener('click',()=>{haptic();openClient(i);});
     markers.push(mk);
   });
+  dibujarLineaPPAS();
 }
 // NOTA: la línea completa de ruta se eliminó — 66 paradas con líneas rectas
 // generaban una telaraña ilegible. La ruta por calles se traza al tocar Navegar.
+
+/* ══ PROGRESO DE RUTA + SIGUIENTE PARADA ══ */
+function actualizarProgresoRuta(){
+  if(!clientes.length)return;
+  const tot=clientes.length;
+  const ent=clientes.filter(c=>c._st==='entregado').length;
+  const nov=clientes.filter(c=>c._st==='novedad').length;
+  const pend=tot-ent-nov;
+  const pct=Math.round(ent/tot*100);
+  const lbl=document.getElementById('rp-lbl');
+  if(lbl){
+    lbl.textContent=ent+' de '+tot+' entregados';
+    document.getElementById('rp-pend').textContent=pend+' pendientes · orden P PAS';
+    document.getElementById('rp-fill').style.width=pct+'%';
+  }
+  // Tarjeta siguiente parada = primer pendiente en orden P PAS
+  const ns=document.getElementById('next-stop');
+  if(!ns)return;
+  const idx=clientes.findIndex(c=>c._st==='pendiente');
+  if(idx<0){ns.style.display='none';return;}
+  ns.style.display='flex';
+  ns.dataset.idx=idx;
+  document.getElementById('ns-num').textContent=idx+1;
+  document.getElementById('ns-nom').textContent=clientes[idx].nombre||getF(clientes[idx],CFG.COL_NOMBRE)||'(sin nombre)';
+  document.getElementById('ns-dir').textContent=(clientes[idx].direccion||getF(clientes[idx],CFG.COL_DIR)||'—');
+}
+function abrirSiguiente(){
+  const ns=document.getElementById('next-stop');
+  const idx=parseInt(ns?.dataset.idx??-1);
+  if(idx>=0)openClient(idx);
+}
+
+/* ══ BOTÓN NOVEDAD: 2 ESTADOS VISUALES ══ */
+function pintarBtnNov(){
+  const b=document.getElementById('ip-btn-nov');
+  const l=document.getElementById('ip-nov-lbl');
+  const ico=document.getElementById('ip-nov-ico');
+  if(!b||!clientes[clienteIdx])return;
+  const st=clientes[clienteIdx]._st;
+  if(st==='novedad'){
+    b.className='ip-btn-nov tiene-nov';
+    l.textContent='Tiene novedad — ¿Lograste entregar?';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+  }else if(st==='entregado'){
+    b.className='ip-btn-nov ya-entregado';
+    l.textContent='Cliente entregado';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  }else{
+    b.className='ip-btn-nov';
+    l.textContent='Reportar novedad';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  }
+}
+
+/* ══ SHEET ¿LOGRASTE ENTREGAR? ══ */
+function abrirSheetEnt(){
+  const cl=clientes[clienteIdx];
+  document.getElementById('ent-info').textContent='Registrada hoy · '+(cl?.nombre||getF(cl,CFG.COL_NOMBRE)||'');
+  document.getElementById('ent-ovl').classList.add('open');
+}
+function cerrarSheetEnt(){document.getElementById('ent-ovl').classList.remove('open');}
+
+/* ══ LÍNEA DE RUTA EN ORDEN P PAS ══ */
+let lineaPPAS=null;
+function dibujarLineaPPAS(){
+  if(!gmap||!clientes.length)return;
+  if(lineaPPAS){lineaPPAS.setMap(null);lineaPPAS=null;}
+  const path=clientes.map(cl=>{
+    const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0),lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+    return(lat&&lng)?{lat,lng}:null;
+  }).filter(Boolean);
+  if(path.length<2)return;
+  lineaPPAS=new google.maps.Polyline({
+    path,map:gmap,strokeColor:'#E30613',strokeOpacity:.45,strokeWeight:3,
+    icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:2,strokeColor:'#E30613',strokeOpacity:.7},offset:'0',repeat:'80px'}]
+  });
+}
 
 /* ══ PROGRESO DE RUTA + SIGUIENTE PARADA ══ */
 function actualizarProgresoRuta(){

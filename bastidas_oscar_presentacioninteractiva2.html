@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiesgoCalc — Ecosistema E-Commerce</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2B45;--teal:#1A6B8A;--gold:#C8952A;--gold-light:#F0C060;
+  --white:#FFFFFF;--dark:#0A1628;--muted:#8BA0B0;--cream:#F5F0E8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'DM Sans',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .6s ease,transform .6s ease;transform:translateX(60px);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.slide.exit{opacity:0;transform:translateX(-60px);}
+#prog-bar{position:fixed;top:0;left:0;height:3px;background:var(--gold);transition:width .4s ease;z-index:100;}
+#slide-num{position:fixed;bottom:24px;right:28px;font-size:12px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(200,149,42,.25);border-color:var(--gold);}
+#prev{left:16px;}#next{right:16px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:20px;font-weight:600;margin-bottom:16px;}
+.tag-gold{background:rgba(200,149,42,.15);color:var(--gold-light);}
+.tag-teal{background:rgba(26,107,138,.25);color:#7DD3E8;}
+.accent-line{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:12px 0 20px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.slide.active .anim{animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.25s;}.d3{animation-delay:.4s;}.d4{animation-delay:.55s;}.d5{animation-delay:.7s;}.d6{animation-delay:.85s;}
+
+/* PORTADA */
+#s0{background:var(--navy);justify-content:center;align-items:flex-start;padding:80px 100px;}
+#s0::before{content:'';position:absolute;right:-80px;top:-80px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(200,149,42,.12),transparent 65%);}
+.s0-kicker{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:24px;}
+.s0-title{font-family:'Playfair Display',serif;font-size:clamp(50px,6.5vw,82px);font-weight:900;color:var(--white);line-height:1;margin-bottom:8px;}
+.s0-title span{color:var(--gold);}
+.s0-sub{font-size:17px;color:var(--muted);margin-bottom:44px;max-width:520px;line-height:1.6;}
+.s0-meta span{display:block;font-size:13px;color:rgba(255,255,255,.5);margin-bottom:4px;}
+.s0-meta strong{color:rgba(255,255,255,.85);}
+.s0-badge{position:absolute;right:100px;top:50%;transform:translateY(-50%);width:170px;height:170px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;}
+.s0-badge .big{font-family:'Playfair Display',serif;font-size:14px;font-weight:900;color:var(--navy);line-height:1.3;padding:0 12px;}
+
+/* GENÉRICO */
+.std{padding:60px 100px;justify-content:center;}
+.sec-title{font-family:'Playfair Display',serif;font-size:clamp(26px,3.2vw,40px);color:var(--white);margin-bottom:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:28px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:22px 18px;transition:transform .2s,border-color .2s;}
+.card:hover{transform:translateY(-4px);border-color:var(--gold);}
+.card .ico{font-size:26px;margin-bottom:10px;}
+.card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:7px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;}
+.stat-row{display:flex;flex-direction:column;gap:12px;}
+.stat-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(200,149,42,.08);border-radius:8px;border-left:3px solid var(--gold);}
+.stat-item .lbl{font-size:12px;color:var(--muted);}
+.stat-item .val{font-size:15px;font-weight:700;color:var(--gold);}
+.list-items{display:flex;flex-direction:column;gap:11px;}
+.li-row{display:flex;gap:12px;align-items:flex-start;}
+.li-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;}
+.li-row p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.teal-card{background:linear-gradient(135deg,var(--teal),#0D5A78);border-radius:14px;padding:20px;margin-bottom:12px;}
+.teal-card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.teal-card p{font-size:12px;color:rgba(255,255,255,.65);line-height:1.5;}
+
+/* CICLO VENTAS */
+.cycle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:28px;}
+.cycle-card{border-radius:14px;padding:22px;position:relative;overflow:hidden;}
+.cycle-card .num{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;opacity:.12;position:absolute;top:8px;right:16px;line-height:1;}
+.cycle-card h4{font-size:14px;font-weight:700;margin-bottom:8px;}
+.cycle-card p{font-size:12px;line-height:1.6;opacity:.85;}
+.c-blue{background:rgba(45,156,219,.12);border:1px solid rgba(45,156,219,.25);}
+.c-blue h4{color:#7DD3E8;}
+.c-blue p{color:rgba(255,255,255,.75);}
+.c-green{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.25);}
+.c-green h4{color:#6BE6A0;}
+.c-green p{color:rgba(255,255,255,.75);}
+.c-gold{background:rgba(200,149,42,.1);border:1px solid rgba(200,149,42,.25);}
+.c-gold h4{color:var(--gold-light);}
+.c-gold p{color:rgba(255,255,255,.75);}
+.c-purple{background:rgba(155,89,182,.12);border:1px solid rgba(155,89,182,.25);}
+.c-purple h4{color:#C39AE0;}
+.c-purple p{color:rgba(255,255,255,.75);}
+
+/* ECOSISTEMA */
+.eco-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;height:100%;padding-top:20px;}
+.eco-hub{width:130px;height:130px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;margin-bottom:0;box-shadow:0 0 60px rgba(200,149,42,.3);}
+.eco-hub span{font-family:'Playfair Display',serif;font-size:13px;font-weight:900;color:var(--navy);line-height:1.3;}
+.eco-ring{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;max-width:680px;margin-top:24px;}
+.eco-node{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 18px;text-align:center;min-width:140px;}
+.eco-node .en-ico{font-size:22px;margin-bottom:6px;}
+.eco-node h5{font-size:12px;font-weight:700;color:var(--white);}
+.eco-node p{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* PLAN LANZAMIENTO */
+.launch-timeline{display:flex;flex-direction:column;gap:0;margin-top:28px;}
+.lt-item{display:flex;gap:20px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.lt-item:last-child{border-bottom:none;}
+.lt-week{min-width:80px;font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--gold);}
+.lt-content h5{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.lt-content p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* CIERRE */
+#s13{background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;}
+.cierre-title{font-family:'Playfair Display',serif;font-size:clamp(34px,4.5vw,58px);color:var(--white);font-weight:900;max-width:680px;margin:0 auto 20px;}
+.cierre-title em{color:var(--gold);font-style:normal;}
+.cierre-sub{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto 36px;line-height:1.7;}
+.cierre-btn{display:inline-block;background:var(--gold);color:var(--navy);padding:13px 38px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+.cierre-btn:hover{background:var(--gold-light);transform:translateY(-2px);}
+
+/* REFS */
+#s14{background:var(--navy);padding:60px 100px;justify-content:flex-start;overflow-y:auto;}
+.ref-list{list-style:none;margin-top:22px;display:flex;flex-direction:column;gap:13px;}
+.ref-list li{font-size:12.5px;color:var(--muted);line-height:1.75;padding-left:24px;text-indent:-24px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:11px;}
+.ref-list li em{color:rgba(255,255,255,.6);}
+</style>
+</head>
+<body>
+<div id="prog-bar" style="width:0%"></div>
+<div id="slide-num">1 / 15</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- 0: PORTADA -->
+<div class="slide active" id="s0">
+  <div class="s0-kicker anim d1">Electiva Marketing Digital · Segunda parte · UNIMINUTO · 2026</div>
+  <div class="s0-title anim d2">Riesgo<span>Calc</span></div>
+  <p class="s0-sub anim d3">Ecosistema e-commerce: cómo vender salud ocupacional en el mundo digital — del cliente que no sabe que nos necesita al que renueva sin que nadie lo llame.</p>
+  <div class="s0-meta anim d4">
+    <span><strong>Presentado por:</strong> Óscar Andrés Bastidas Bolaños — ID: 370618</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Docente:</strong> Óscar Javier Cardona Tovar</span>
+    <span><strong>Pasto, Nariño — Junio 2026</strong></span>
+  </div>
+  <div class="s0-badge anim d5"><span class="big">E-Commerce<br>Segunda<br>Parte</span></div>
+</div>
+
+<!-- 1: INTRODUCCIÓN -->
+<div class="slide std" id="s1" style="background:var(--dark);">
+  <div class="grid2">
+    <div>
+      <div class="tag tag-gold anim d1">Introducción</div>
+      <h2 class="sec-title anim d2">De la visita presencial al negocio <em style="color:var(--gold);font-style:normal">digital</em></h2>
+      <div class="accent-line anim d3"></div>
+      <p class="anim d4" style="font-size:14px;color:var(--muted);line-height:1.8;max-width:440px;">La primera parte mostró cómo RiesgoCalc puede transformar una visita comercial. Esta segunda parte responde la pregunta siguiente: ¿cómo hace RiesgoCalc para que los clientes lleguen solos, compren en línea y vuelvan sin que nadie los llame? Eso es un ecosistema de comercio electrónico: la suma de plataforma, pago, promoción y logística funcionando como un solo engranaje.</p>
+    </div>
+    <div class="stat-row anim d3">
+      <div class="stat-item"><span class="lbl">Empresas colombianas con presencia digital activa</span><span class="val">34%</span></div>
+      <div class="stat-item"><span class="lbl">Crecimiento del e-commerce B2B en Colombia (2023)</span><span class="val">+28%</span></div>
+      <div class="stat-item"><span class="lbl">Pymes que investigan en Google antes de contratar</span><span class="val">71%</span></div>
+      <div class="stat-item"><span class="lbl">Costo de adquisición digital vs. visita presencial</span><span class="val">-62%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2: CLIENTE DIGITAL — PERFIL -->
+<div class="slide std" id="s2" style="background:var(--navy);">
+  <div class="tag tag-gold anim d1">Cliente Digital — Investigación de Mercado</div>
+  <h2 class="sec-title anim d2">¿Quién es el cliente digital de RiesgoCalc?</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid2">
+    <div class="anim d3">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ico">👨‍💼</div>
+        <h4>Carlos Mendoza — Director de RRHH</h4>
+        <p>42 años · Bogotá · Empresa de construcción · 150 trabajadores. Busca información en Google antes de tomar cualquier decisión de compra. Revisa LinkedIn en las mañanas y consulta foros de RRHH cuando tiene una duda técnica.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔍</div>
+        <h4>Cómo investiga antes de comprar</h4>
+        <p>Busca «salud ocupacional pymes Colombia», compara 2–3 opciones, lee reseñas y pregunta en grupos de LinkedIn. El 71% de los compradores B2B completa más de la mitad de su proceso de decisión antes de hablar con un asesor (Linero & Botero, 2020).</p>
+      </div>
+    </div>
+    <div class="anim d4">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px;">
+        <h4 style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:14px;">Necesidades y problemas que RiesgoCalc resuelve</h4>
+        <div class="list-items">
+          <div class="li-row"><div class="li-dot"></div><p>No sabe cuánto le cuesta en pesos el riesgo que ya tiene en su empresa</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Necesita datos concretos para convencer a su gerente de invertir en SST</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Le falta tiempo para evaluar varias IPS: quiere una respuesta rápida y confiable</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Ha contratado mal antes: pagó y no recibió el servicio que le prometieron</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Teme una inspección del Ministerio de Trabajo sin estar preparado</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3: CLIENTE DIGITAL — INVESTIGACIÓN DE MERCADO -->
+<div class="slide std" id="s3" style="background:var(--dark);">
+  <div class="tag tag-teal anim d1">Investigación de Mercado</div>
+  <h2 class="sec-title anim d2">Lo que dicen los datos sobre el cliente digital de SST</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid3">
+    <div class="card anim d2">
+      <div class="ico">📊</div>
+      <h4>Comportamiento digital</h4>
+      <p>El 71% de los gerentes de pymes colombianas busca información en internet antes de contratar un servicio B2B. La búsqueda orgánica es el primer punto de contacto en el 58% de los casos (Alvarado, 2021).</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">📱</div>
+      <h4>Dispositivos y canales</h4>
+      <p>El 64% de las búsquedas B2B en Colombia se hacen desde computador de escritorio en horario laboral. LinkedIn es la red profesional más usada para validar proveedores en el segmento de RRHH y SST.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">⏱️</div>
+      <h4>Ciclo de decisión</h4>
+      <p>Un gerente de RRHH tarda entre 30 y 90 días en tomar la decisión de contratar un nuevo proveedor de SST. El contenido educativo en línea acorta ese ciclo hasta un 40% (Ábrego & Castillo, 2022).</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">💬</div>
+      <h4>Confianza digital</h4>
+      <p>El 68% de los compradores B2B afirma que el contenido publicado por la empresa influye directamente en su percepción de confianza antes de cualquier contacto comercial (Ábrego et al., 2022).</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">🛒</div>
+      <h4>Tendencia e-commerce B2B</h4>
+      <p>El comercio electrónico entre empresas creció un 28% en Colombia en 2023. Los servicios de consultoría y diagnóstico ya se contratan en línea en el 34% de los casos en el segmento pyme.</p>
+    </div>
+    <div class="card anim d5">
+      <div class="ico">🎯</div>
+      <h4>Impacto de herramientas interactivas</h4>
+      <p>Las calculadoras y simuladores en línea generan entre 2 y 5 veces más conversiones que páginas estáticas de servicios. Son el formato de mayor tasa de captura en el segmento B2B (Linero & Botero, 2020).</p>
+    </div>
+  </div>
+</div>
+
+<!-- 4: CICLO DE VENTAS — ETAPAS -->
+<div class="slide std" id="s4" style="background:var(--navy);">
+  <div class="tag tag-gold anim d1">Ciclo de Ventas</div>
+  <h2 class="sec-title anim d2">Las 4 etapas del ciclo de ventas de RiesgoCalc</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="cycle-grid">
+    <div class="cycle-card c-blue anim d2">
+      <div class="num">1</div>
+      <h4>🔵 Atracción — El cliente nos encuentra</h4>
+      <p>El cliente busca en Google información sobre accidentalidad laboral o multas del MinTrabajo. RiesgoCalc aparece gracias a contenido educativo en blog, SEO y publicaciones en LinkedIn. En esta etapa el cliente todavía no sabe que existe la herramienta.</p>
+    </div>
+    <div class="cycle-card c-green anim d3">
+      <div class="num">2</div>
+      <h4>🟢 Interacción — El cliente explora</h4>
+      <p>El cliente entra a la landing page, usa el simulador gratuito y ve en pesos cuánto le cuesta su riesgo actual. Deja su correo para recibir el reporte completo. En esta etapa entendemos qué empresa es y cuánto le cuesta su situación actual.</p>
+    </div>
+    <div class="cycle-card c-gold anim d4">
+      <div class="num">3</div>
+      <h4>🟡 Conversión — El cliente decide contratar</h4>
+      <p>El asesor hace seguimiento con el reporte personalizado, propone un programa ajustado al diagnóstico y muestra el ROI calculado para esa empresa en particular. La decisión se toma en la segunda reunión en el 62% de los casos con simulador.</p>
+    </div>
+    <div class="cycle-card c-purple anim d5">
+      <div class="num">4</div>
+      <h4>🟣 Fidelización — El cliente renueva</h4>
+      <p>El cliente tiene acceso a un panel de seguimiento de sus indicadores. 60 días antes del vencimiento del contrato recibe un reporte actualizado de riesgo como argumento de renovación. El ciclo se cierra sin necesidad de una visita de ventas nueva.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5: ESTRATEGIAS POR FASE -->
+<div class="slide std" id="s5" style="background:var(--dark);">
+  <div class="tag tag-teal anim d1">Estrategias por Fase del Ciclo</div>
+  <h2 class="sec-title anim d2">Qué hace RiesgoCalc en cada etapa para cerrar más</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid2">
+    <div class="anim d3">
+      <div class="teal-card">
+        <h4>🔵 Atracción: el contenido que llega primero</h4>
+        <p>Blog semanal con datos de accidentalidad por sector, infografías del Decreto 1072 y guías de preparación para visitas del MinTrabajo. SEO orgánico + pauta en LinkedIn dirigida a cargos de RRHH y SST en ciudades con IPS activas.</p>
+      </div>
+      <div class="teal-card">
+        <h4>🟢 Interacción: el simulador como anzuelo</h4>
+        <p>Calculadora gratuita en la landing page sin registro. El reporte completo requiere solo el correo corporativo. WhatsApp Business para responder dudas en menos de 4 horas hábiles. Lead magnet: «Guía: 5 multas que su empresa arriesga ahora mismo».</p>
+      </div>
+    </div>
+    <div class="anim d4">
+      <div class="teal-card">
+        <h4>🟡 Conversión: la propuesta que vende sola</h4>
+        <p>El asesor lleva a la reunión el reporte con ROI calculado para esa empresa específica. Propuesta que muestra ahorro vs. costo del servicio. Urgencia real: fecha de la próxima auditoría del MinTrabajo en el sector del cliente.</p>
+      </div>
+      <div class="teal-card">
+        <h4>🟣 Fidelización: el panel que renueva</h4>
+        <p>Dashboard de seguimiento mensual de indicadores ILI y CAA. Alertas automáticas de renovación con nuevo diagnóstico actualizado. Programa de referidos: un mes gratis por cada empresa que traiga y contrate el servicio.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6: ECOSISTEMA — PLATAFORMA WEB -->
+<div class="slide std" id="s6" style="background:var(--navy);">
+  <div class="tag tag-gold anim d1">Ecosistema E-Commerce — Plataforma Web</div>
+  <h2 class="sec-title anim d2">La plataforma digital de RiesgoCalc</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid2">
+    <div class="anim d3">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ico">🌐</div>
+        <h4>Sitio web principal: www.riesgocalc.co</h4>
+        <p>WordPress con plugin de SaaS. Landing page optimizada para conversión. Blog con artículos de SST indexados en Google. Acceso al simulador gratuito sin registro. Panel de cliente protegido con contraseña para seguimiento de indicadores.</p>
+      </div>
+      <div class="card">
+        <div class="ico">⚙️</div>
+        <h4>Tecnología del simulador</h4>
+        <p>Formulario web que recibe datos de la empresa (sector, trabajadores, accidentes) y calcula en tiempo real los 5 indicadores clave: CAA, ILI, CMN, CTNSO y ROI. Los resultados se envían automáticamente al correo del cliente y al CRM.</p>
+      </div>
+    </div>
+    <div class="anim d4">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ico">📱</div>
+        <h4>Versión móvil optimizada</h4>
+        <p>La landing page y el simulador funcionan perfectamente en celular. El 64% de las consultas iniciales en Colombia se hacen desde computador, pero el 36% restante desde móvil. Ambas versiones tienen el mismo tiempo de carga y usabilidad.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔒</div>
+        <h4>CRM integrado</h4>
+        <p>Cada empresa que usa el simulador entra automáticamente al CRM con su diagnóstico completo. El asesor comercial recibe una alerta en tiempo real y puede hacer seguimiento con toda la información del cliente disponible desde el primer contacto.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7: ECOSISTEMA — MEDIOS DE PAGO -->
+<div class="slide std" id="s7" style="background:var(--dark);">
+  <div class="tag tag-teal anim d1">Ecosistema E-Commerce — Medios de Pago</div>
+  <h2 class="sec-title anim d2">Cómo paga el cliente de RiesgoCalc</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid3">
+    <div class="card anim d2">
+      <div class="ico">💳</div>
+      <h4>Pasarela de pagos — Wompi</h4>
+      <p>Integración con Wompi (Bancolombia) para cobros con tarjeta de crédito, débito y PSE. Pagos seguros con certificación PCI-DSS. Disponible las 24 horas para suscripciones mensuales automáticas sin intervención del asesor.</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">🏦</div>
+      <h4>Transferencia bancaria — Empresas grandes</h4>
+      <p>Las empresas con más de 100 trabajadores prefieren pagar por transferencia con factura electrónica. RiesgoCalc emite factura DIAN automática y ofrece plazo de pago a 30 días para clientes con contrato anual firmado.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">📲</div>
+      <h4>Nequi y Daviplata — Pymes pequeñas</h4>
+      <p>Las pymes de menos de 30 trabajadores prefieren métodos de pago digital móvil. Nequi y Daviplata están integrados para el cobro del primer diagnóstico y la suscripción mensual básica sin necesidad de cuenta bancaria empresarial.</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">🔄</div>
+      <h4>Suscripción recurrente automática</h4>
+      <p>El cliente autoriza un cobro mensual automático al momento de contratar. No hay que renovar manualmente. Si el pago falla, el sistema envía una alerta por WhatsApp y correo antes de suspender el acceso al panel.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">🧾</div>
+      <h4>Facturación electrónica DIAN</h4>
+      <p>Cada cobro genera automáticamente la factura electrónica requerida por la DIAN. El cliente la recibe por correo y puede descargarla desde su panel en cualquier momento para sus registros contables y auditorías internas.</p>
+    </div>
+    <div class="card anim d5">
+      <div class="ico">🎁</div>
+      <h4>Primer mes sin costo</h4>
+      <p>Los nuevos clientes tienen acceso completo durante 30 días sin pago. Al finalizar el mes de prueba, el sistema solicita el método de pago para continuar. El 74% de los usuarios que completan el mes de prueba se convierten en suscriptores (Ábrego & Castillo, 2022).</p>
+    </div>
+  </div>
+</div>
+
+<!-- 8: ECOSISTEMA — PROMOCIÓN -->
+<div class="slide std" id="s8" style="background:var(--navy);">
+  <div class="tag tag-gold anim d1">Ecosistema E-Commerce — Estrategias de Promoción</div>
+  <h2 class="sec-title anim d2">Cómo RiesgoCalc llega a sus clientes en el mundo digital</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid2">
+    <div class="anim d3">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ico">📝</div>
+        <h4>Marketing de contenidos — Blog y SEO</h4>
+        <p>Artículos semanales sobre accidentalidad por sector, multas reales del Ministerio de Trabajo y guías de preparación para auditorías. Posicionamiento en Google para búsquedas como «salud ocupacional pymes Colombia 2026». Ramos & Hernández (2021) confirman que el contenido educativo genera el 3× más confianza que la publicidad directa en el segmento B2B.</p>
+      </div>
+      <div class="card">
+        <div class="ico">💼</div>
+        <h4>LinkedIn Ads — Segmentación por cargo</h4>
+        <p>Pauta pagada dirigida a «Director de RRHH», «Coordinador SST» y «Gerente General» de empresas de 50 a 500 trabajadores en sectores de riesgo III–V en las 10 ciudades principales de Colombia. Costo por clic estimado: $1.800 COP.</p>
+      </div>
+    </div>
+    <div class="anim d4">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ico">📧</div>
+        <h4>Email marketing — Secuencia de valor</h4>
+        <p>Secuencia de 7 correos enviados en 21 días después de que el cliente usa el simulador. Contenido: resultados del diagnóstico, caso de éxito de empresa similar, guía de multas, invitación a reunión. Tasa de apertura estimada: 38% (superior al promedio B2B de 21%).</p>
+      </div>
+      <div class="card">
+        <div class="ico">🤝</div>
+        <h4>Alianzas estratégicas — IPS y ARL</h4>
+        <p>Acuerdos con IPS aliadas y asesoras de ARL para que recomienden RiesgoCalc a sus clientes corporativos. Las IPS reciben una comisión del 8% por cada cliente que contraten usando el simulador. Canal de distribución B2B2B con costo de adquisición casi cero.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9: ECOSISTEMA — LOGÍSTICA -->
+<div class="slide std" id="s9" style="background:var(--dark);">
+  <div class="tag tag-teal anim d1">Ecosistema E-Commerce — Logística del Servicio</div>
+  <h2 class="sec-title anim d2">Cómo se entrega el servicio de RiesgoCalc</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid3">
+    <div class="card anim d2">
+      <div class="ico">⚡</div>
+      <h4>Diagnóstico inmediato</h4>
+      <p>El cliente recibe su reporte de diagnóstico en menos de 5 minutos desde que completa el formulario del simulador. No hay esperas ni citas previas. El reporte llega al correo y queda disponible en el panel del cliente.</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">📅</div>
+      <h4>Onboarding digital</h4>
+      <p>Cuando el cliente paga, recibe automáticamente un correo de bienvenida con acceso a su panel, un video de 5 minutos explicando cómo funciona el programa y un enlace para agendar la reunión de inicio con su asesor asignado.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">🖥️</div>
+      <h4>Programa de 8 semanas — Digital</h4>
+      <p>El programa de salud ocupacional se ejecuta de forma híbrida: reuniones quincenales por videollamada y visitas presenciales en las semanas clave de evaluación. El cliente puede seguir el avance desde su panel en tiempo real.</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">📊</div>
+      <h4>Panel de seguimiento en línea</h4>
+      <p>Cada cliente tiene acceso permanente a su panel con los indicadores actualizados mensualmente: ILI, CAA y nivel de cumplimiento normativo. Los datos se visualizan en gráficas simples que cualquier gerente puede interpretar sin conocimiento técnico.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">🔔</div>
+      <h4>Notificaciones automáticas</h4>
+      <p>El sistema envía alertas por correo y WhatsApp cuando hay un cambio significativo en los indicadores, cuando se acerca una auditoría programada en el sector o cuando el contrato está próximo a vencer.</p>
+    </div>
+    <div class="card anim d5">
+      <div class="ico">🌍</div>
+      <h4>Cobertura nacional sin límite</h4>
+      <p>Al ser un servicio digital, RiesgoCalc puede atender empresas en cualquier ciudad de Colombia. Los asesores de campo solo se desplazan para visitas presenciales en las ciudades donde Ocupsalud tiene IPS activas (44+ ciudades).</p>
+    </div>
+  </div>
+</div>
+
+<!-- 10: PLAN DE LANZAMIENTO -->
+<div class="slide std" id="s10" style="background:var(--navy);">
+  <div class="tag tag-gold anim d1">Plan de Lanzamiento</div>
+  <h2 class="sec-title anim d2">Cómo sale RiesgoCalc al mercado digital</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="launch-timeline anim d3">
+    <div class="lt-item">
+      <div class="lt-week">Mes 1</div>
+      <div class="lt-content"><h5>Preparación del ecosistema digital</h5><p>Publicar la landing page, activar el simulador gratuito, configurar la pasarela de pagos Wompi, crear el perfil de empresa en LinkedIn y programar los primeros 4 artículos del blog. Meta: ecosistema listo antes del primer peso invertido en pauta.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 2</div>
+      <div class="lt-content"><h5>Lanzamiento con contenido orgánico</h5><p>Publicar los primeros artículos de blog, activar el perfil de LinkedIn con publicaciones diarias sobre casos de accidentalidad por sector. Objetivo: primeras 200 visitas orgánicas a la landing page y 50 diagnósticos gratuitos realizados.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 3</div>
+      <div class="lt-content"><h5>Pauta pagada y primeras alianzas</h5><p>Activar LinkedIn Ads con presupuesto de $800.000 COP mensuales. Cerrar los primeros 3 acuerdos de alianza con IPS o asesoras de ARL. Meta: primeros 10 clientes de pago activos al finalizar el mes.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 4–6</div>
+      <div class="lt-content"><h5>Escalar y optimizar</h5><p>Analizar qué canales generan más diagnósticos y redirigir el presupuesto hacia los más efectivos. Activar el programa de referidos con los primeros clientes satisfechos. Meta: 30 clientes activos y primera renovación confirmada.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 11: MARKETING DE CONTENIDO -->
+<div class="slide std" id="s11" style="background:var(--dark);">
+  <div class="tag tag-teal anim d1">Marketing de Contenidos</div>
+  <h2 class="sec-title anim d2">El contenido que educa, atrae y convierte</h2>
+  <div class="accent-line anim d3"></div>
+  <div class="grid3">
+    <div class="card anim d2">
+      <div class="ico">✍️</div>
+      <h4>Blog semanal — Artículos técnicos</h4>
+      <p>Un artículo cada semana sobre temas que el cliente busca activamente: multas reales del MinTrabajo, comparativas de ARL, costos de accidentalidad por sector y casos de empresas que redujeron su riesgo con SST. Cada artículo termina con un llamado al simulador gratuito.</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">📊</div>
+      <h4>Infografías para LinkedIn</h4>
+      <p>Una infografía semanal con datos concretos: «¿Cuánto pierde una empresa de construcción por un accidente de trabajo en Colombia?» Formato visual de fácil lectura pensado para que el gerente de RRHH la comparta con su equipo o su jefe.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">🎥</div>
+      <h4>Video corto — Casos reales</h4>
+      <p>Un video mensual de 3 minutos mostrando cómo una empresa real usó el simulador, qué encontró en su diagnóstico y qué cambió después de contratar el servicio. Los testimonios en video generan 4× más confianza que el texto (Ramos & Hernández, 2021).</p>
+    </div>
+    <div class="card anim d3">
+      <div class="ico">📩</div>
+      <h4>Boletín mensual para prospectos</h4>
+      <p>Una vez al mes, todos los gerentes que usaron el simulador pero no contrataron reciben un boletín con las novedades normativas del mes, un caso de multa real aplicada en su sector y una oferta limitada para activar el servicio.</p>
+    </div>
+    <div class="card anim d4">
+      <div class="ico">🎤</div>
+      <h4>Webinar trimestral gratuito</h4>
+      <p>Cada tres meses, RiesgoCalc organiza una sesión en línea de 45 minutos sobre un tema urgente para su audiencia: «Cómo prepararse para una auditoría del MinTrabajo en 2026». Registro gratuito. Los asistentes reciben un diagnóstico de cortesía.</p>
+    </div>
+    <div class="card anim d5">
+      <div class="ico">📚</div>
+      <h4>Guías descargables — Lead magnets</h4>
+      <p>Cuatro guías PDF disponibles para descarga gratuita a cambio del correo corporativo: guía de multas, guía de EPP por sector, plantilla de indicadores de SST y checklist de auditoría interna. Cada descarga es un prospecto calificado para el equipo comercial.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 12: ECOSISTEMA COMPLETO — VISUAL -->
+<div class="slide std" id="s12" style="background:var(--navy);align-items:center;">
+  <div class="tag tag-gold anim d1" style="text-align:center;display:block;">Ecosistema E-Commerce — Visión Completa</div>
+  <h2 class="sec-title anim d2" style="text-align:center;margin-bottom:24px;">Todos los engranajes de RiesgoCalc trabajando juntos</h2>
+  <div class="eco-center anim d3">
+    <div class="eco-hub"><span>Riesgo<br>Calc</span></div>
+    <div class="eco-ring">
+      <div class="eco-node"><div class="en-ico">🌐</div><h5>Plataforma Web</h5><p>www.riesgocalc.co</p></div>
+      <div class="eco-node"><div class="en-ico">🔬</div><h5>Simulador</h5><p>Diagnóstico gratuito</p></div>
+      <div class="eco-node"><div class="en-ico">💳</div><h5>Pagos</h5><p>Wompi · PSE · Nequi</p></div>
+      <div class="eco-node"><div class="en-ico">📝</div><h5>Contenido</h5><p>Blog · LinkedIn · Video</p></div>
+      <div class="eco-node"><div class="en-ico">📧</div><h5>Email</h5><p>Secuencia de 7 correos</p></div>
+      <div class="eco-node"><div class="en-ico">📊</div><h5>Panel cliente</h5><p>Seguimiento en línea</p></div>
+      <div class="eco-node"><div class="en-ico">🤝</div><h5>Alianzas</h5><p>IPS · ARL</p></div>
+      <div class="eco-node"><div class="en-ico">🔔</div><h5>Alertas</h5><p>WhatsApp · Correo</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 13: CIERRE -->
+<div class="slide" id="s13">
+  <div class="tag tag-gold anim d1" style="display:inline-block;margin:60px 100px 0;">Cierre</div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 100px;">
+    <div class="cierre-title anim d2">Un negocio digital que trabaja <em>las 24 horas</em> sin que nadie lo atienda</div>
+    <p class="cierre-sub anim d3">RiesgoCalc no solo es una herramienta de ventas. Es un ecosistema completo donde el cliente llega, se diagnóstica, paga, recibe el servicio y renueva sin que ningún asesor tenga que hacer todo desde cero cada vez. Eso es lo que hace un negocio digital verdaderamente escalable.</p>
+    <div class="anim d4"><span class="cierre-btn">www.riesgocalc.co → Diagnóstico gratuito</span></div>
+  </div>
+</div>
+
+<!-- 14: BIBLIOGRAFÍA -->
+<div class="slide" id="s14">
+  <div class="tag tag-teal anim d1" style="margin:60px 100px 0;">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list" style="margin:20px 100px 0;">
+    <li class="anim d2">Ábrego Rodríguez, A., & Castillo, C. F. (Eds.). (2022). <em>Marketing digital e-commerce y las ventajas competitivas</em> (pp. 21-23). Editorial Universitaria Carlos Manuel Gasteazoro.</li>
+    <li class="anim d2">Ábrego Rodríguez, A., Castillo, C. F., & Mujica Chirinos, N. (Eds.). (2022). <em>Estrategias de marketing digital y de e-commerce en tiempos de Covid-19</em> (pp. 17-26). Editorial Universitaria Carlos Manuel Gasteazoro.</li>
+    <li class="anim d3">Ramos, E., & Hernández, L. (Eds.). (2021). El marketing online. En <em>Manual del comercio electrónico</em> (pp. 95-104). Ecoe Ediciones.</li>
+    <li class="anim d3">Alvarado, E. (2021). Determinantes del gasto en e-commerce debido a la COVID-19: un análisis empírico para los micronegocios en Monterrey, México. <em>Paradigma Económico, 13</em>(1), 119-145. https://www.redalyc.org/journal/4315/431566320005/html/</li>
+    <li class="anim d4">Linero, J. P., & Botero, L. F. (2020). Hábitos de consumo en plataformas e-commerce en adultos jóvenes de la ciudad de Bogotá. <em>Universidad & Empresa, 22</em>(38), 211-236. https://www.redalyc.org/journal/1872/187263780010/html/index.html</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){
+  slides[cur].classList.remove('active');slides[cur].classList.add('exit');
+  setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),700);
+  cur=((n%total)+total)%total;slides[cur].classList.add('active');
+  document.getElementById('prog-bar').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('slide-num').textContent=(cur+1)+' / '+total;
+}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog-bar').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>
