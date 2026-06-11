@@ -439,6 +439,73 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #ent-ovl .ent-no{width:100%;height:46px;border-radius:14px;background:#fff;color:var(--gris4);border:1.5px solid var(--gris2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
 #ent-ovl .ent-fine{font-size:10px;color:var(--gris4);margin-top:12px;line-height:1.5}
 
+/* ══ PANTALLA RUTAS NIVEL DIOS ══ */
+.hero-rutas{margin:12px 14px 4px;background:linear-gradient(135deg,#E30613 0%,#B5000F 100%);border-radius:18px;padding:17px 16px;color:#fff;position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(227,6,19,.26);flex-shrink:0}
+.hero-rutas::before{content:'';position:absolute;right:-42px;top:-42px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.07)}
+.hero-rutas::after{content:'';position:absolute;right:-10px;bottom:-54px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero-rutas .hg{font-size:10px;font-weight:800;letter-spacing:1.6px;opacity:.85}
+.hero-rutas h2{font-size:21px;font-weight:900;letter-spacing:-.6px;margin:4px 0 2px}
+.hero-rutas p{font-size:11.5px;opacity:.88;font-weight:600}
+.hero-rutas .hstats{display:flex;gap:8px;margin-top:13px;position:relative;z-index:2}
+.hero-rutas .hs{flex:1;background:rgba(255,255,255,.13);border-radius:12px;padding:8px 5px;text-align:center}
+.hero-rutas .hs b{font-size:16px;font-weight:900;display:block;line-height:1.1}
+.hero-rutas .hs span{font-size:8px;font-weight:700;opacity:.8;letter-spacing:.5px}
+.route-card{background:var(--blanco);border:1px solid var(--gris2);border-radius:17px;padding:14px 13px;cursor:pointer;position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s;box-shadow:var(--sombra)}
+.route-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rc,#E30613)}
+.rc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.rc-code{font-size:16px;font-weight:900;color:var(--negro);line-height:1}
+.rc-sub{font-size:8.5px;font-weight:700;color:var(--gris4);margin-top:2px;letter-spacing:.4px}
+.rc-gauge{position:relative;width:40px;height:40px;flex-shrink:0}
+.rc-gauge .rcp{position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:800}
+.rc-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gris5);font-weight:600;margin-bottom:4px}
+.rc-row b{color:var(--negro)}
+.rc-row svg{flex-shrink:0}
+.rc-go{margin-top:9px;height:32px;border-radius:9px;background:var(--negro);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.4px}
+
+/* ══ DASHBOARD COORDINADOR (escritorio) ══ */
+#dash{position:fixed;inset:0;background:var(--gris1);z-index:500;display:none;flex-direction:column;overflow:hidden}
+#dash.on{display:flex}
+.dash-top{height:58px;background:#fff;border-bottom:1px solid var(--gris2);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
+.dash-top .db{width:5px;height:28px;background:var(--rojo);border-radius:3px}
+.dash-top .dt b{font-size:18px;font-weight:900;letter-spacing:-.5px;display:block;line-height:1}
+.dash-top .dt span{font-size:8px;font-weight:700;color:var(--rojo);letter-spacing:2.6px}
+.dash-top .dright{margin-left:auto;display:flex;align-items:center;gap:10px}
+.dchip{font-size:11px;font-weight:800;padding:7px 12px;border-radius:9px;background:var(--gris1);color:var(--gris5);border:1px solid var(--gris2);display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit}
+.dchip.rojo{background:var(--rojo);color:#fff;border-color:var(--rojo)}
+.dlive{font-size:10px;font-weight:800;color:var(--verde);display:flex;align-items:center;gap:5px}
+.dlive i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
+@keyframes dblink{0%,100%{opacity:.4}50%{opacity:1}}
+.dash-main{flex:1;overflow:auto;padding:18px 22px}
+.dkpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:15px}
+.dkpi{background:#fff;border:1px solid var(--gris2);border-radius:14px;padding:14px}
+.dkpi .ko{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;margin-bottom:10px}
+.dkpi .kv{font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1}
+.dkpi .kl{font-size:11px;color:var(--gris4);font-weight:600;margin-top:4px}
+.dgrid{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;margin-bottom:14px}
+.dcard{background:#fff;border:1px solid var(--gris2);border-radius:16px;overflow:hidden}
+.dcard-h{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--gris2)}
+.dcard-h h3{font-size:13.5px;font-weight:800;letter-spacing:-.2px}
+.dcard-h .dm{font-size:10.5px;color:var(--gris4);font-weight:600}
+#dash-map{height:380px;width:100%}
+.drk{padding:6px 8px 10px;max-height:380px;overflow:auto}
+.drow{display:flex;align-items:center;gap:11px;padding:9px 9px;border-radius:11px}
+.drow:hover{background:var(--gris1)}
+.drow .dg{position:relative;width:40px;height:40px;flex-shrink:0}
+.drow .dg .dp2{position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:800}
+.drow .di{flex:1;min-width:0}
+.drow .di b{font-size:13px;font-weight:800}
+.drow .di small{font-size:10px;color:var(--gris4);font-weight:600;display:block;margin-top:1px}
+.drow .dr{text-align:right}
+.drow .dr b{font-size:13px;font-weight:800}
+.drow .dr small{font-size:8.5px;color:var(--gris4);font-weight:700;display:block}
+.dtbl{width:100%;border-collapse:collapse}
+.dtbl th{text-align:left;font-size:9.5px;letter-spacing:.5px;color:var(--gris4);font-weight:800;padding:9px 14px;border-bottom:1px solid var(--gris2);text-transform:uppercase}
+.dtbl td{padding:10px 14px;border-bottom:1px solid var(--gris2);font-size:12px;font-weight:600}
+.dtbl tr:last-child td{border-bottom:none}
+.dtag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:7px;display:inline-block}
+#dash-volver{position:fixed;right:18px;bottom:18px;z-index:510;display:none;background:var(--negro);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+#dash-volver.on{display:flex;align-items:center;gap:7px}
+
 /* ══ VISTA ESCRITORIO: app centrada en columna profesional ══ */
 @media(min-width:900px){
   body{background:linear-gradient(160deg,#10182d 0%,#0B1020 55%,#1a2236 100%)}
@@ -486,8 +553,18 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
     <div id="hdr-date" class="routes-date"></div>
   </div>
+  <div class="hero-rutas">
+    <div class="hg" id="hero-saludo">BUEN DÍA</div>
+    <h2>Listo para tu ruta</h2>
+    <p>Selecciona tu ruta para comenzar las entregas</p>
+    <div class="hstats">
+      <div class="hs"><b id="hs-rutas">—</b><span>RUTAS HOY</span></div>
+      <div class="hs"><b id="hs-cli">—</b><span>CLIENTES</span></div>
+      <div class="hs"><b id="hs-cajas">—</b><span>CAJAS</span></div>
+    </div>
+  </div>
   <div class="routes-meta">
-    <div class="routes-title">Selecciona tu ruta</div>
+    <div class="routes-title">Selecciona tu ruta · orden P PAS</div>
   </div>
   <div class="routes-grid" id="routes-grid"></div>
 </div>
@@ -673,6 +750,38 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <p class="ent-fine">Al confirmar: se borra la novedad y la foto, el cliente queda ENTREGADO y se avisa al vendedor por WhatsApp.</p>
   </div>
 </div>
+
+<!-- ══ DASHBOARD COORDINADOR (solo escritorio) ══ -->
+<div id="dash">
+  <div class="dash-top">
+    <div class="db"></div>
+    <div class="dt"><b>GMAZ</b><span>RUTAS · CENTRO DE CONTROL</span></div>
+    <div class="dright">
+      <span class="dlive"><i></i>OPERACIÓN EN VIVO</span>
+      <span class="dchip" id="dash-fecha" style="cursor:default"></span>
+      <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria (cargas)</button>
+      <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+    </div>
+  </div>
+  <div class="dash-main">
+    <div class="dkpis" id="dash-kpis"></div>
+    <div class="dgrid">
+      <div class="dcard">
+        <div class="dcard-h"><h3>Mapa operativo — Pasto</h3><span class="dm" id="dash-map-meta">cargando…</span></div>
+        <div id="dash-map"></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-h"><h3>Rendimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
+        <div class="drk" id="dash-ranking"></div>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-h"><h3>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
+      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
 
 <!-- ══ PANTALLA FACTURAS ══ -->
 <div id="pantalla-facturas" class="oculto">
@@ -1328,7 +1437,7 @@ function showScr(id){
 
 document.addEventListener('click',e=>{
   // Vibración en cualquier elemento interactivo
-  const el=e.target.closest('button,.ab,.ip-btn,.ip-btn-nov,.ruta-card,.ci,.ns-opt,.route-card,.pc-btn,.btn-back,.taco-tab,.det-tab,.sbtn');
+  const el=e.target.closest('button,.ab,.ip-btn,.ip-btn-nov,.ruta-card,.ci,.ns-opt,.route-card,.pc-btn,.btn-back,.taco-tab,.det-tab,.sbtn,#next-stop,.rc-go,.dchip,.mot,.hdr-logo');
   if(el)try{navigator.vibrate&&navigator.vibrate(40);}catch(err){}
 },true);
 
@@ -1370,6 +1479,148 @@ async function restaurarEstadosDia(){
   }catch(e){console.log('Error restaurando:',e);}
 }
 
+/* ══ PALETA POR RUTA + HELPERS VISUALES ══ */
+const PALETA=['#E30613','#2563EB','#0E9F6E','#D97706','#7C3AED','#0891B2','#DB2777','#65A30D','#EA580C','#475569'];
+let rutaColor={};
+let DASH_RUTAS=null;
+const ICONS={
+  store:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  box:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+  nav:'<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+  truck:'<rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
+};
+function icoSvg(n,s=14,w=2,c='currentColor'){return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0">'+ICONS[n]+'</svg>';}
+function gaugeSvg(p,s,w,track){
+  const r=(s-w)/2,c=2*Math.PI*r,col=p>=90?'#059669':p>=75?'#D97706':'#E30613';
+  return '<svg width="'+s+'" height="'+s+'" style="transform:rotate(-90deg)"><circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+r+'" fill="none" stroke="'+(track||'#EEF0F4')+'" stroke-width="'+w+'"/><circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+(c*(1-Math.min(p,100)/100))+'"/></svg>';
+}
+async function actualizarGaugesRutas(rutas){
+  try{
+    const fecha=getColDate();
+    const{data:est}=await sb.from('estados_entrega').select('ruta,estado').eq('fecha',fecha);
+    if(!est)return;
+    const entPorRuta={};
+    est.forEach(e=>{if(e.estado==='entregado')entPorRuta[e.ruta]=(entPorRuta[e.ruta]||0)+1;});
+    Object.keys(rutas).forEach(code=>{
+      const tot=rutas[code].clientes.length,ent=entPorRuta[code]||0;
+      const pct=tot?Math.round(ent/tot*100):0;
+      const g=document.getElementById('rcg-'+code);
+      if(g)g.innerHTML=gaugeSvg(pct,40,4.5)+'<div class="rcp" style="color:'+(pct>=90?'#059669':pct>=75?'#D97706':pct>0?'#E30613':'#8A90A0')+'">'+pct+'%</div>';
+      const e=document.getElementById('rce-'+code);
+      if(e)e.textContent=ent;
+    });
+  }catch(e){}
+}
+
+/* ══ DETECCIÓN AUTOMÁTICA + DASHBOARD COORDINADOR ══ */
+const ES_MOVIL=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+let dashMap=null,dashInterval=null;
+function esEscritorio(){return !ES_MOVIL&&window.innerWidth>=900;}
+function mostrarDashSiEscritorio(){
+  if(!esEscritorio())return;
+  document.getElementById('dash').classList.add('on');
+  document.getElementById('dash-fecha').innerHTML=icoSvg('cal',12)+' '+new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  cargarDash();
+  if(dashInterval)clearInterval(dashInterval);
+  dashInterval=setInterval(()=>{if(document.getElementById('dash').classList.contains('on'))cargarDash();},30000);
+}
+function verComoEntregador(){
+  document.getElementById('dash').classList.remove('on');
+  document.getElementById('dash-volver').classList.add('on');
+}
+function volverAlDash(){
+  document.getElementById('dash-volver').classList.remove('on');
+  document.getElementById('dash').classList.add('on');
+  cargarDash();
+}
+function abrirRutinaDesdeDash(){
+  if(!coordUnlocked){
+    const p=prompt('Contraseña coordinador:');
+    if(p===CFG.COORD_PWD)coordUnlocked=true;else{if(p!==null)toast('Contraseña incorrecta','err');return;}
+  }
+  openCoord();
+}
+async function cargarDash(){
+  try{
+    const fecha=getColDate();
+    const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
+      sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre'),
+      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo').eq('fecha',fecha),
+      sb.from('estados_entrega').select('ruta,estado,codigo_cliente').eq('fecha',fecha),
+      sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
+    ]);
+    const clientes_=todos||[],novedades_=novs||[],estados_=est||[];
+    const rutaVend={};(maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
+    const cajasCod={};clientes_.forEach(c=>cajasCod[String(c.id)]=parseFloat(String(c['CAJA_']||0).replace(',','.')||0));
+    const entSet=new Set(estados_.filter(e=>e.estado==='entregado').map(e=>String(e.codigo_cliente)));
+    const novSet=new Set(novedades_.map(n=>String(n.codigo_cliente)));
+    const totCli=clientes_.length,totEnt=entSet.size,totNov=novedades_.length;
+    const cajasRej=novedades_.reduce((s,n)=>s+(cajasCod[n.codigo_cliente]||0),0);
+    const pctG=totCli?Math.round(totEnt/totCli*100):0;
+    // KPIs
+    const K=[
+      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre general'},
+      {i:'store',bg:'#EFF6FF',cl:'#1A56DB',v:totEnt+' / '+totCli,l:'Clientes entregados'},
+      {i:'truck',bg:'#FFF0F1',cl:'#E30613',v:Object.keys(rutaColor).length,l:'Rutas activas'},
+      {i:'alert',bg:'#FEF3E2',cl:'#D97706',v:totNov,l:'Rechazos hoy'},
+      {i:'box',bg:'#EEF0F4',cl:'#4A5060',v:Math.round(cajasRej),l:'Cajas rechazadas'}
+    ];
+    document.getElementById('dash-kpis').innerHTML=K.map(k=>
+      '<div class="dkpi"><div class="ko" style="background:'+k.bg+';color:'+k.cl+'">'+icoSvg(k.i,16)+'</div>'+
+      '<div class="kv">'+k.v+'</div><div class="kl">'+k.l+'</div></div>').join('');
+    // Ranking por ruta
+    const porRuta={};
+    clientes_.forEach(c=>{const r=c.ruta||'—';if(!porRuta[r])porRuta[r]={tot:0,ent:0,nov:0,cajas:0};porRuta[r].tot++;porRuta[r].cajas+=cajasCod[String(c.id)]||0;
+      if(entSet.has(String(c.id)))porRuta[r].ent++;if(novSet.has(String(c.id)))porRuta[r].nov++;});
+    document.getElementById('dash-ranking').innerHTML=Object.keys(porRuta).sort().map(code=>{
+      const r=porRuta[code],pct=r.tot?Math.round(r.ent/r.tot*100):0;
+      const col=pct>=90?'#059669':pct>=75?'#D97706':pct>0?'#E30613':'#8A90A0';
+      return '<div class="drow"><div class="dg">'+gaugeSvg(pct,40,4.5)+'<div class="dp2" style="color:'+col+'">'+pct+'%</div></div>'+
+        '<div class="di"><b style="color:'+(rutaColor[code]||'#0F1117')+'">'+code+'</b><small>'+r.ent+'/'+r.tot+' clientes · '+Math.round(r.cajas)+' cajas</small></div>'+
+        '<div class="dr"><b style="color:'+(r.nov>=3?'#E30613':'#059669')+'">'+r.nov+'</b><small>RECHAZOS</small></div></div>';
+    }).join('');
+    // Tabla novedades
+    document.getElementById('dash-nov-meta').textContent=totNov+' rechazos · '+Math.round(cajasRej)+' cajas';
+    document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>{
+      const c=rutaColor[n.ruta]||'#4A5060';
+      return '<tr><td style="font-weight:800">'+(n.nombre_cliente||n.codigo_cliente)+'</td>'+
+      '<td><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span></td>'+
+      '<td>'+n.motivo+'</td>'+
+      '<td><span class="dtag" style="background:#FFF0F1;color:#E30613">'+(rutaVend[String(n.codigo_cliente)]||'—')+'</span></td>'+
+      '<td><b>'+Math.round(cajasCod[n.codigo_cliente]||0)+'</b></td></tr>';
+    }).join(''):'<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:18px">Sin novedades registradas hoy ✓</td></tr>';
+    // Mapa
+    document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
+    pintarDashMap(clientes_,entSet,novSet);
+  }catch(e){console.log('dash:',e.message);}
+}
+let dashMarkers=[];
+function pintarDashMap(clientes_,entSet,novSet){
+  if(!window.google||!google.maps)return setTimeout(()=>pintarDashMap(clientes_,entSet,novSet),900);
+  if(!dashMap){
+    dashMap=new google.maps.Map(document.getElementById('dash-map'),{
+      zoom:13,center:{lat:1.2136,lng:-77.2811},disableDefaultUI:true,zoomControl:true,
+      styles:[{featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'transit',elementType:'all',stylers:[{visibility:'off'}]}]
+    });
+  }
+  dashMarkers.forEach(m=>m.setMap(null));dashMarkers=[];
+  const iw=new google.maps.InfoWindow();
+  clientes_.forEach(c=>{
+    const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+    if(!lat||!lng)return;
+    const id=String(c.id);
+    const fill=entSet.has(id)?'#059669':novSet.has(id)?'#D97706':(rutaColor[c.ruta]||'#E30613');
+    const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:fill,fillOpacity:entSet.has(id)?.55:.95,strokeColor:'#fff',strokeWeight:1.5}});
+    mk.addListener('click',()=>{iw.setContent('<div style="font-family:DM Sans,sans-serif"><b style="font-size:12px">'+(c.nombre||id)+'</b><br><span style="font-size:11px;color:#6B7385">'+c.ruta+' · '+Math.round(parseFloat(String(c['CAJA_']||0).replace(',','.'))||0)+' cajas</span></div>');iw.open(dashMap,mk);});
+    dashMarkers.push(mk);
+  });
+}
+
 async function loadRoutes(){
   showLoad('Cargando rutas...');
   try{
@@ -1386,23 +1637,38 @@ async function loadRoutes(){
     });
     const grid=document.getElementById('routes-grid');
     grid.innerHTML='';
-    Object.values(rutas).sort((a,b)=>a.code.localeCompare(b.code)).forEach(r=>{
+    const codes=Object.keys(rutas).sort();
+    codes.forEach((code,ix)=>{rutaColor[code]=PALETA[ix%PALETA.length];});
+    DASH_RUTAS=rutas;
+    // Hero: stats del día
+    const totCli=data.length, totCajas=Math.round(Object.values(rutas).reduce((s,r)=>s+r.totalCajas,0));
+    const hh=new Date().getHours();
+    const sal=document.getElementById('hero-saludo');
+    if(sal)sal.textContent=(hh<12?'BUENOS DÍAS':hh<18?'BUENAS TARDES':'BUENAS NOCHES')+' EQUIPO GMAZ';
+    const e1=document.getElementById('hs-rutas');if(e1)e1.textContent=codes.length;
+    const e2=document.getElementById('hs-cli');if(e2)e2.textContent=totCli;
+    const e3=document.getElementById('hs-cajas');if(e3)e3.textContent=totCajas.toLocaleString('es-CO');
+    codes.forEach(code=>{
+      const r=rutas[code];
       const card=document.createElement('div');
       card.className='route-card';
+      card.style.setProperty('--rc',rutaColor[code]);
       const cajasTot=Math.round(r.totalCajas||0);
       card.innerHTML=`
-        <div class="rc-code">${r.code}</div>
-        <div class="rc-num">${r.clientes.length}</div>
-        <div class="rc-lbl">Clientes</div>
-        <div class="rc-dots">
-          <div class="rc-dot rc-dot-r"></div><span class="rc-dlbl">${r.clientes.length}</span>
-          <div class="rc-dot rc-dot-g" style="margin-left:4px"></div><span class="rc-dlbl">0</span>
+        <div class="rc-top">
+          <div><div class="rc-code">${r.code}</div><div class="rc-sub">RUTA DE ENTREGA</div></div>
+          <div class="rc-gauge" id="rcg-${r.code}">${gaugeSvg(0,40,4.5)}<div class="rcp" style="color:var(--gris4)">0%</div></div>
         </div>
-        ${cajasTot>0?`<div style="margin-top:5px;font-size:9px;font-weight:600;color:#4A5060">📦 ${cajasTot} cajas totales</div>`:''}`;
+        <div class="rc-row">${icoSvg('store',12)} <b>${r.clientes.length}</b>&nbsp;clientes</div>
+        <div class="rc-row">${icoSvg('box',12)} <b id="rce-${r.code}">0</b>&nbsp;entregados · <b>${cajasTot}</b>&nbsp;cajas</div>
+        <div class="rc-go">INICIAR RUTA ${icoSvg('nav',11)}</div>`;
       card.onclick=()=>{haptic();startRoute(r.code,r.clientes);};
       grid.appendChild(card);
     });
+    // Gauges reales desde estados_entrega (asíncrono, no bloquea)
+    actualizarGaugesRutas(rutas);
     hideLoad();showScr('scr-routes');
+    mostrarDashSiEscritorio();
   }catch(e){hideLoad();toast('Error cargando rutas: '+e.message,'err');showScr('scr-routes');}
 }
 
@@ -1561,24 +1827,9 @@ function renderMarkers(){
     mk.addListener('click',()=>{haptic();openClient(i);});
     markers.push(mk);
   });
-  dibujarLineaPPAS();
 }
-
-/* ══ LÍNEA DE RUTA EN ORDEN P PAS ══ */
-let lineaPPAS=null;
-function dibujarLineaPPAS(){
-  if(!gmap||!clientes.length)return;
-  if(lineaPPAS){lineaPPAS.setMap(null);lineaPPAS=null;}
-  const path=clientes.map(cl=>{
-    const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0),lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
-    return(lat&&lng)?{lat,lng}:null;
-  }).filter(Boolean);
-  if(path.length<2)return;
-  lineaPPAS=new google.maps.Polyline({
-    path,map:gmap,strokeColor:'#E30613',strokeOpacity:.45,strokeWeight:3,
-    icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:2,strokeColor:'#E30613',strokeOpacity:.7},offset:'0',repeat:'80px'}]
-  });
-}
+// NOTA: la línea completa de ruta se eliminó — 66 paradas con líneas rectas
+// generaban una telaraña ilegible. La ruta por calles se traza al tocar Navegar.
 
 /* ══ PROGRESO DE RUTA + SIGUIENTE PARADA ══ */
 function actualizarProgresoRuta(){
