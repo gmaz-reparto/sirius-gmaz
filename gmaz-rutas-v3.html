@@ -110,6 +110,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ci-badge-ok{background:var(--verde-s);color:var(--verde);border:1px solid var(--verde)}
 .ci-badge-nov{background:var(--amarillo-s);color:var(--amarillo);border:1px solid var(--amarillo)}
 
+/* ══ LISTA DESLIZABLE (swipe acciones) ══ */
+.ci-wrap{position:relative;overflow:hidden;background:var(--gris1)}
+.ci-wrap .ci{position:relative;z-index:2;background:var(--blanco);transition:transform .22s cubic-bezier(.4,0,.2,1);touch-action:pan-y;will-change:transform}
+.ci-wrap .ci.activo{background:var(--rojo-s)}
+.ci-acts{position:absolute;top:0;bottom:.5px;display:flex;align-items:stretch;z-index:1}
+.ci-acts-l{left:0}.ci-acts-r{right:0}
+.cact{width:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:7.5px;font-weight:800;letter-spacing:.5px;cursor:pointer;user-select:none}
+.cact:active{filter:brightness(.85)}
+.cact-nov{background:var(--rojo)}
+.cact-fact{background:#D97706}
+.cact-nav{background:var(--azul)}
+.cact-tel{background:var(--verde)}
+.cact svg{pointer-events:none}
+
 /* ══ CLIENT SCREEN ══ */
 #scr-client{background:var(--gris-oscuro,#1C1F2A)}
 #sv-wrap{flex:0 0 65%;position:relative;background:#1C1F2A;min-height:0}
@@ -1093,30 +1107,8 @@ function iniciarTacoInterval(){
 
 /* ══ BUSCADOR DE CLIENTES ══ */
 function filtrarClientes(q){
-  q=q.trim().toLowerCase();
-  const lista=document.getElementById('client-list');
-  if(!q){renderClientList();return;}
-  const found=clientes.filter((c,i)=>{
-    const nom=(c.nombre||getF(c,CFG.COL_NOMBRE)||'').toLowerCase();
-    const cod=String(c.id||getF(c,CFG.COL_CODIGO)||'');
-    return nom.includes(q)||cod.includes(q);
-  });
-  lista.innerHTML='';
-  if(!found.length){lista.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--gris4)">Sin resultados</div>';return;}
-  found.forEach(c=>{
-    const idxReal=clientes.indexOf(c);
-    const nom=c.nombre||getF(c,CFG.COL_NOMBRE)||'(sin nombre)';
-    const dir=c.direccion||getF(c,CFG.COL_DIR)||'—';
-    const cod=String(c.id||getF(c,CFG.COL_CODIGO)||'');
-    const st=c._st;
-    const div=document.createElement('div');
-    div.className='ci'+(idxReal===clienteIdx?' activo':'');
-    const numCls=st==='entregado'?'ci-num ci-e':st==='novedad'?'ci-num ci-n':'ci-num ci-p';
-    const numTxt=st==='entregado'?'✓':st==='novedad'?'!':String(idxReal+1);
-    div.innerHTML=`<div class="${numCls}">${numTxt}</div><div class="ci-data"><div class="ci-name">${nom}</div><div class="ci-dir">${cod} · ${dir}</div></div>`;
-    div.onclick=()=>{haptic();document.getElementById('cp-search').value='';renderClientList();openClient(idxReal);};
-    lista.appendChild(div);
-  });
+  // Reusa el render con swipe — una sola fuente de verdad
+  renderClientList(q||'');
 }
 
 /* ══ CLIENTE MÁS CERCANO AL GPS (parpadea) ══ */
@@ -1139,7 +1131,11 @@ function actualizarPuntoPrimero(){
   const cercano=idxMasCercano();
   markers.forEach((m,i)=>{
     if(!m)return;
-    if(i===cercano)m.setIcon(cIconPrimero(i+1));
+    if(i===cercano){m.setIcon(cIconPrimero(i+1));m.setZIndex(200);}
+    else if(clientes[i]&&clientes[i]._st==='pendiente'){
+      // Resetear el que era "más cercano" antes — vuelve a pin normal
+      m.setIcon(cIconNumero('pendiente',i===clienteIdx,i+1));m.setZIndex(10);
+    }
   });
 }
 
@@ -1690,6 +1686,7 @@ function startRoute(ruta,lista){
     (async()=>{
       await restaurarEstadosDia();
       renderClientList();
+      if(!window._hintSwipe){window._hintSwipe=true;setTimeout(()=>toast('Desliza un cliente ← o → para acciones rápidas','ok'),3500);}
       // Precargar índice de facturas en background
       setTimeout(()=>cargarIndiceFacturas(),1000);
       // Iniciar tacómetro
@@ -1700,35 +1697,116 @@ function startRoute(ruta,lista){
   },3000);
 }
 
-function renderClientList(){
-  const ul=document.getElementById('client-list');
-  ul.innerHTML='';
-  clientes.forEach((c,i)=>{
-    const nom=getF(c,CFG.COL_NOMBRE)||'(sin nombre)';
-    const dir=getF(c,CFG.COL_DIR)||'—';
-    const st=c._st;
-    const div=document.createElement('div');
-    div.className='ci'+(i===clienteIdx?' activo':'');
-    div.id='ci-'+i;
-    const numCls=st==='entregado'?'ci-num ci-e':st==='novedad'?'ci-num ci-n':'ci-num ci-p';
-    const numTxt=st==='entregado'?'✓':st==='novedad'?'!':String(i+1);
-    const badge=st==='entregado'?'<span class="ci-badge ci-badge-ok">OK</span>':st==='novedad'?'<span class="ci-badge ci-badge-nov">Nov</span>':'';
-    div.innerHTML=`<div class="${numCls}">${numTxt}</div><div class="ci-data"><div class="ci-name${st==='entregado'?' tachado':''}">${nom}</div><div class="ci-dir">${dir}</div></div>${badge}`;
-    div.onclick=()=>{haptic();openClient(i);};
-    ul.appendChild(div);
-  });
-  actualizarProgresoRuta();
-}
-
-function updateClientItem(i){
-  const c=clientes[i];const st=c._st;
-  const nom=getF(c,CFG.COL_NOMBRE)||'(sin nombre)';
-  const dir=getF(c,CFG.COL_DIR)||'—';
-  const div=document.getElementById('ci-'+i);if(!div)return;
+function ciInnerHTML(c,i){
+  const nom=c.nombre||getF(c,CFG.COL_NOMBRE)||'(sin nombre)';
+  const dir=c.direccion||getF(c,CFG.COL_DIR)||'—';
+  const st=c._st;
   const numCls=st==='entregado'?'ci-num ci-e':st==='novedad'?'ci-num ci-n':'ci-num ci-p';
   const numTxt=st==='entregado'?'✓':st==='novedad'?'!':String(i+1);
   const badge=st==='entregado'?'<span class="ci-badge ci-badge-ok">OK</span>':st==='novedad'?'<span class="ci-badge ci-badge-nov">Nov</span>':'';
-  div.innerHTML=`<div class="${numCls}">${numTxt}</div><div class="ci-data"><div class="ci-name${st==='entregado'?' tachado':''}">${nom}</div><div class="ci-dir">${dir}</div></div>${badge}`;
+  return `<div class="${numCls}">${numTxt}</div><div class="ci-data"><div class="ci-name${st==='entregado'?' tachado':''}">${nom}</div><div class="ci-dir">${dir}</div></div>${badge}`;
+}
+const SW_ICON={
+  nov:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  fact:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  nav:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>',
+  tel:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+};
+function renderClientList(filtro=''){
+  const ul=document.getElementById('client-list');
+  ul.innerHTML='';
+  const q=String(filtro).trim().toLowerCase();
+  let mostrados=0;
+  clientes.forEach((c,i)=>{
+    if(q){
+      const nom=(c.nombre||getF(c,CFG.COL_NOMBRE)||'').toLowerCase();
+      const cod=String(c.id||getF(c,CFG.COL_CODIGO)||'');
+      if(!nom.includes(q)&&!cod.includes(q))return;
+    }
+    mostrados++;
+    const wrap=document.createElement('div');
+    wrap.className='ci-wrap';
+    wrap.innerHTML=
+      `<div class="ci-acts ci-acts-l">`+
+        `<div class="cact cact-nov" onclick="accionFila(${i},'nov',event)">${SW_ICON.nov}NOVEDAD</div>`+
+        `<div class="cact cact-fact" onclick="accionFila(${i},'fact',event)">${SW_ICON.fact}FACTURAS</div>`+
+      `</div>`+
+      `<div class="ci-acts ci-acts-r">`+
+        `<div class="cact cact-nav" onclick="accionFila(${i},'nav',event)">${SW_ICON.nav}NAVEGAR</div>`+
+        `<div class="cact cact-tel" onclick="accionFila(${i},'tel',event)">${SW_ICON.tel}LLAMAR</div>`+
+      `</div>`+
+      `<div class="ci${i===clienteIdx?' activo':''}" id="ci-${i}" data-idx="${i}">${ciInnerHTML(c,i)}</div>`;
+    ul.appendChild(wrap);
+  });
+  if(q&&!mostrados)ul.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--gris4)">Sin resultados</div>';
+  actualizarProgresoRuta();
+  initSwipeList();
+}
+
+/* ══ SWIPE: derecha=Novedad/Facturas · izquierda=Navegar/Llamar ══ */
+const SW_W=136;
+let swAbierto=null;
+function cerrarSwipes(){
+  document.querySelectorAll('#client-list .ci').forEach(el=>el.style.transform='');
+  swAbierto=null;
+}
+function accionFila(i,tipo,ev){
+  if(ev)ev.stopPropagation();
+  haptic(25);
+  cerrarSwipes();
+  clienteIdx=i;
+  if(tipo==='nav'){activateNav();const n=clientes[i].nombre||getF(clientes[i],CFG.COL_NOMBRE)||'';toast('Trazando ruta a '+n,'ok');}
+  else if(tipo==='tel'){vendedorActual=null;llamarVendedor();}
+  else if(tipo==='fact'){verFacturaCliente();}
+  else if(tipo==='nov'){startOrBorrarNovedad();}
+}
+let swInit=false;
+function initSwipeList(){
+  if(swInit)return;swInit=true;
+  const ul=document.getElementById('client-list');
+  let sx=0,sy=0,row=null,dx=0,horiz=null,baseX=0;
+  ul.addEventListener('touchstart',e=>{
+    row=e.target.closest('.ci');
+    if(!row)return;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;dx=0;horiz=null;
+    baseX=(swAbierto===row)?(row.style.transform.includes('-')?-SW_W:SW_W):0;
+    if(swAbierto&&swAbierto!==row)cerrarSwipes();
+    row.style.transition='none';
+  },{passive:true});
+  ul.addEventListener('touchmove',e=>{
+    if(!row)return;
+    const mx=e.touches[0].clientX-sx,my=e.touches[0].clientY-sy;
+    if(horiz===null&&(Math.abs(mx)>8||Math.abs(my)>8))horiz=Math.abs(mx)>Math.abs(my);
+    if(!horiz)return;
+    e.preventDefault();
+    dx=Math.max(-SW_W,Math.min(SW_W,baseX+mx));
+    row.style.transform='translateX('+dx+'px)';
+  },{passive:false});
+  ul.addEventListener('touchend',()=>{
+    if(!row)return;
+    row.style.transition='';
+    if(horiz){
+      if(dx>55){row.style.transform='translateX('+SW_W+'px)';swAbierto=row;haptic(15);}
+      else if(dx<-55){row.style.transform='translateX(-'+SW_W+'px)';swAbierto=row;haptic(15);}
+      else{row.style.transform='';if(swAbierto===row)swAbierto=null;}
+    }
+    row=null;
+  });
+  // Tocar la fila: si hay un swipe abierto lo cierra; si no, abre el cliente
+  ul.addEventListener('click',e=>{
+    const r=e.target.closest('.ci');
+    if(!r)return;
+    if(horiz){horiz=null;return;}
+    if(swAbierto){cerrarSwipes();return;}
+    haptic();
+    openClient(parseInt(r.dataset.idx));
+  });
+}
+
+function updateClientItem(i){
+  const c=clientes[i];if(!c)return;
+  const div=document.getElementById('ci-'+i);if(!div)return;
+  div.innerHTML=ciInnerHTML(c,i);
 }
 
 async function openClient(i){
@@ -1802,8 +1880,8 @@ function initMap(){
       gpsOptimizado=true;
       setTimeout(()=>optimizarRutaDesdeGPS(pos),800);
     }
-    // Re-evaluar cliente más cercano al moverse (marcador + tarjeta)
-    if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();}
+    // Re-evaluar cliente más cercano al moverse (marcador + tarjeta + ruta)
+    if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
   },e=>console.log('GPS:',e.message),{enableHighAccuracy:true,timeout:10000,maximumAge:5000});
 }
 
@@ -1960,6 +2038,7 @@ function activateNav(){
   const lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
   if(!lat||!lng){toast('Sin coordenadas para este cliente','err');return;}
   navMode=true;
+  autoNavActivo=false; // navegación manual: no pisar con re-ruteo automático
   if(!dirRenderer)dirRenderer=new google.maps.DirectionsRenderer({
     map:gmap,suppressMarkers:true,
     polylineOptions:{strokeColor:'#E30613',strokeWeight:5,strokeOpacity:.9}
@@ -1996,24 +2075,42 @@ function calcularRuta(origen,destino){
   });
 }
 
+let autoNavActivo=false,lastNearestIdx=-1;
 function autoNavPrimerCliente(){
   if(!gmap||!navigator.geolocation)return;
-  const primer=clientes.findIndex(cl=>cl._st==='pendiente');
-  if(primer<0)return;
-  const cl=clientes[primer];
-  const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
-  const lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
-  if(!lat||!lng)return;
   if(!dirRenderer)dirRenderer=new google.maps.DirectionsRenderer({
     map:gmap,suppressMarkers:true,
     polylineOptions:{strokeColor:'#E30613',strokeWeight:5,strokeOpacity:.85}
   });
   navigator.geolocation.getCurrentPosition(p=>{
+    // Con GPS real en mano, calcular el MÁS CERCANO y enrutar hacia él
+    posGPS={lat:p.coords.latitude,lng:p.coords.longitude};
+    const idx=idxMasCercano();
+    if(idx<0)return;
+    const cl=clientes[idx];
+    const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
+    const lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+    if(!lat||!lng)return;
+    autoNavActivo=true;lastNearestIdx=idx;
+    actualizarPuntoPrimero();actualizarProgresoRuta();
     new google.maps.DirectionsService().route({
-      origin:{lat:p.coords.latitude,lng:p.coords.longitude},
-      destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
+      origin:posGPS,destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
     },(r,s)=>{if(s==='OK')dirRenderer.setDirections(r);});
   },null,{enableHighAccuracy:true,timeout:8000,maximumAge:10000});
+}
+function reRutearSiCambioCercano(){
+  // Si el más cercano cambió (se movió o entregó), redibujar la ruta automática
+  if(!autoNavActivo||!posGPS||!dirRenderer)return;
+  const idx=idxMasCercano();
+  if(idx<0||idx===lastNearestIdx)return;
+  lastNearestIdx=idx;
+  const cl=clientes[idx];
+  const lat=parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
+  const lng=parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+  if(!lat||!lng)return;
+  new google.maps.DirectionsService().route({
+    origin:posGPS,destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
+  },(r,s)=>{if(s==='OK')dirRenderer.setDirections(r);});
 }
 
 
