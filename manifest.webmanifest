@@ -1,0 +1,17 @@
+{
+  "name": "GMAZ Rutas",
+  "short_name": "GMAZ Rutas",
+  "description": "Sistema de reparto inteligente — Coca-Cola Pasto",
+  "start_url": "./gmaz-rutas-v3.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E30613",
+  "theme_color": "#E30613",
+  "lang": "es",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
