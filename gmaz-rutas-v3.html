@@ -3146,6 +3146,42 @@ function ocultarInstalar(){
 window.addEventListener('appinstalled',()=>{ocultarInstalar();try{toast('✓ App instalada','ok');}catch(e){}});
 // Si ya está instalada/abierta como app, nunca mostrar el botón
 if(yaInstalada){const b=document.getElementById('btn-install');if(b)b.classList.remove('show');}
+
+/* ══ BOTÓN ATRÁS DEL CELULAR: navegar dentro de la app, no cerrar ══ */
+function _capaAbiertaCerrar(){
+  const M=document.getElementById('modal-nov'); if(M&&M.classList.contains('show'))return closeNovModal;
+  const E=document.getElementById('ent-ovl'); if(E&&E.classList.contains('open'))return cerrarSheetEnt;
+  const D=document.getElementById('pantalla-detalle'); if(D&&!D.classList.contains('oculto'))return cerrarDetalle;
+  const F=document.getElementById('pantalla-facturas'); if(F&&!F.classList.contains('oculto'))return cerrarFacturas;
+  const PC=document.getElementById('panel-coord'); if(PC&&PC.classList.contains('show'))return closeCoord;
+  const PW=document.getElementById('pwa-banner'); if(PW&&PW.classList.contains('show'))return cerrarBannerPWA;
+  return null;
+}
+function manejarAtras(){
+  try{
+    // 1) cerrar swipe abierto en la lista
+    if(typeof swAbierto!=='undefined'&&swAbierto){cerrarSwipes();return true;}
+    // 2) cerrar overlay/modal superior
+    const cerrar=_capaAbiertaCerrar(); if(cerrar){cerrar();return true;}
+    // 3) retroceder de pantalla: cliente → mapa → rutas
+    const cli=document.getElementById('scr-client');
+    const map=document.getElementById('scr-map');
+    if(cli&&!cli.classList.contains('hidden')){goToMap();return true;}
+    if(map&&!map.classList.contains('hidden')){volverASeleccion();return true;}
+  }catch(e){}
+  return false; // en pantalla de rutas (inicio)
+}
+function _armarAtras(){try{history.pushState({gmaz:1},'');}catch(e){}}
+let _salirArmado=false,_salirT=null;
+window.addEventListener('load',()=>{ _armarAtras(); });
+window.addEventListener('popstate',()=>{
+  if(manejarAtras()){ _armarAtras(); _salirArmado=false; return; }
+  // Estamos en el inicio (rutas): doble atrás para salir, nunca cierre accidental
+  if(_salirArmado){ return; } // deja salir
+  _salirArmado=true; _armarAtras();
+  try{toast('Pulsa atrás otra vez para salir','ok');}catch(e){}
+  clearTimeout(_salirT); _salirT=setTimeout(()=>{_salirArmado=false;},2000);
+});
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=places,geometry&callback=initMap&language=es&region=CO"></script>
