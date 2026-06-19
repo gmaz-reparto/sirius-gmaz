@@ -116,17 +116,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ci-badge-nov{background:var(--amarillo-s);color:var(--amarillo);border:1px solid var(--amarillo)}
 
 /* ══ LISTA DESLIZABLE (swipe acciones) ══ */
-.ci-wrap{position:relative;overflow:hidden;background:var(--gris1)}
-.ci-wrap .ci{position:relative;z-index:2;background:var(--blanco);transition:transform .22s cubic-bezier(.4,0,.2,1);touch-action:pan-y;will-change:transform}
+.ci-wrap{position:relative;overflow:hidden;background:var(--gris2)}
+.ci-wrap .ci{position:relative;z-index:2;background:var(--blanco);transition:transform .32s cubic-bezier(.22,.61,.36,1);touch-action:pan-y;will-change:transform;box-shadow:0 1px 3px rgba(16,24,40,.05)}
 .ci-wrap .ci.activo{background:var(--rojo-s)}
-.ci-acts{position:absolute;top:0;bottom:.5px;display:flex;align-items:stretch;z-index:1}
-.ci-acts-l{left:0}.ci-acts-r{right:0}
-.cact{width:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:7.5px;font-weight:800;letter-spacing:.5px;cursor:pointer;user-select:none}
-.cact:active{filter:brightness(.85)}
-.cact-nov{background:var(--rojo)}
-.cact-fact{background:#D97706}
-.cact-nav{background:var(--azul)}
-.cact-tel{background:var(--verde)}
+.ci-acts{position:absolute;top:0;bottom:0;display:flex;align-items:center;z-index:1;padding:0 8px;gap:6px}
+.ci-acts-l{left:0;justify-content:flex-start}
+.ci-acts-r{right:0;justify-content:flex-end}
+.cact{width:56px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:8px;font-weight:800;letter-spacing:.2px;color:var(--gris5);cursor:pointer;user-select:none}
+.cact .cbtn{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;box-shadow:0 4px 10px rgba(0,0,0,.18);transition:transform .14s cubic-bezier(.34,1.56,.64,1)}
+.cact:active .cbtn{transform:scale(.85)}
+.cact-nov .cbtn{background:linear-gradient(135deg,#F0263A,#E30613)}
+.cact-fact .cbtn{background:linear-gradient(135deg,#E8920E,#D97706)}
+.cact-nav .cbtn{background:linear-gradient(135deg,#3B72F0,#2563EB)}
+.cact-tel .cbtn{background:linear-gradient(135deg,#14B07C,#0E9F6E)}
 .cact svg{pointer-events:none}
 
 /* ══ CLIENT SCREEN ══ */
@@ -1764,12 +1766,12 @@ function renderClientList(filtro=''){
     wrap.className='ci-wrap';
     wrap.innerHTML=
       `<div class="ci-acts ci-acts-l">`+
-        `<div class="cact cact-nov" onclick="accionFila(${i},'nov',event)">${SW_ICON.nov}NOVEDAD</div>`+
-        `<div class="cact cact-fact" onclick="accionFila(${i},'fact',event)">${SW_ICON.fact}FACTURAS</div>`+
+        `<div class="cact cact-nov" onclick="accionFila(${i},'nov',event)"><span class="cbtn">${SW_ICON.nov}</span>Novedad</div>`+
+        `<div class="cact cact-fact" onclick="accionFila(${i},'fact',event)"><span class="cbtn">${SW_ICON.fact}</span>Facturas</div>`+
       `</div>`+
       `<div class="ci-acts ci-acts-r">`+
-        `<div class="cact cact-nav" onclick="accionFila(${i},'nav',event)">${SW_ICON.nav}NAVEGAR</div>`+
-        `<div class="cact cact-tel" onclick="accionFila(${i},'tel',event)">${SW_ICON.tel}LLAMAR</div>`+
+        `<div class="cact cact-nav" onclick="accionFila(${i},'nav',event)"><span class="cbtn">${SW_ICON.nav}</span>Navegar</div>`+
+        `<div class="cact cact-tel" onclick="accionFila(${i},'tel',event)"><span class="cbtn">${SW_ICON.tel}</span>Llamar</div>`+
       `</div>`+
       `<div class="ci${i===clienteIdx?' activo':''}" id="ci-${i}" data-idx="${i}">${ciInnerHTML(c,i)}</div>`;
     ul.appendChild(wrap);
@@ -1780,7 +1782,7 @@ function renderClientList(filtro=''){
 }
 
 /* ══ SWIPE: derecha=Novedad/Facturas · izquierda=Navegar/Llamar ══ */
-const SW_W=136;
+const SW_W=128;
 let swAbierto=null;
 function cerrarSwipes(){
   document.querySelectorAll('#client-list .ci').forEach(el=>el.style.transform='');
