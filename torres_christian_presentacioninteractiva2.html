@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProtegePyme — Ecosistema E-Commerce</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#E8541A;--amber:#F59E0B;--navy:#0F2337;
+  --steel:#1E3A52;--white:#FFFFFF;--dark:#080F18;--muted:#7A9BB5;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Source Sans 3',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .55s ease,transform .55s ease;transform:scale(.97);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:scale(1);}
+.slide.exit{opacity:0;transform:scale(1.03);}
+#prog{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--orange),var(--amber));transition:width .4s ease;z-index:100;}
+#snum{position:fixed;bottom:20px;right:24px;font-size:11px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:6px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(232,84,26,.3);border-color:var(--orange);}
+#prev{left:12px;}#next{right:12px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:3px;font-weight:700;margin-bottom:14px;}
+.tag-or{background:rgba(232,84,26,.18);color:#FFA07A;}
+.tag-nav{background:rgba(15,35,55,.5);color:var(--muted);border:1px solid rgba(255,255,255,.1);}
+.line{width:40px;height:3px;background:var(--orange);border-radius:1px;margin:10px 0 18px;}
+@keyframes slideR{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+.slide.active .a{animation:slideR .65s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.22s;}.d3{animation-delay:.34s;}.d4{animation-delay:.46s;}.d5{animation-delay:.58s;}.d6{animation-delay:.7s;}
+
+/* PORTADA */
+#s0{background:var(--navy);justify-content:center;align-items:flex-start;padding:80px 100px;overflow:hidden;}
+#s0::before{content:'';position:absolute;right:0;top:0;width:40%;height:100%;background:linear-gradient(135deg,var(--orange),var(--amber));opacity:.08;}
+.p0k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:18px;}
+.p0t{font-family:'Bebas Neue',sans-serif;font-size:clamp(58px,8vw,105px);color:var(--white);line-height:.95;margin-bottom:14px;letter-spacing:.02em;}
+.p0t span{color:var(--orange);}
+.p0s{font-size:17px;color:var(--muted);margin-bottom:44px;max-width:480px;line-height:1.65;}
+.p0m span{display:block;font-size:13px;color:rgba(255,255,255,.45);margin-bottom:4px;}
+.p0m strong{color:rgba(255,255,255,.8);}
+.shield{position:absolute;right:110px;top:50%;transform:translateY(-50%);font-size:130px;opacity:.12;}
+
+/* GENÉRICO */
+.std{padding:60px 100px;justify-content:center;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,3.2vw,40px);color:var(--white);margin-bottom:8px;letter-spacing:.02em;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:26px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:26px;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:20px 17px;transition:transform .2s,border-color .2s;}
+.card:hover{transform:translateY(-3px);border-color:var(--orange);}
+.card .ico{font-size:24px;margin-bottom:9px;}
+.card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;}
+.stat-row{display:flex;flex-direction:column;gap:10px;}
+.stat-item{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:rgba(232,84,26,.08);border-radius:7px;border-left:3px solid var(--orange);}
+.stat-item .lbl{font-size:12px;color:var(--muted);}
+.stat-item .val{font-size:15px;font-weight:700;color:var(--orange);}
+.list-items{display:flex;flex-direction:column;gap:11px;}
+.li-row{display:flex;gap:12px;align-items:flex-start;}
+.li-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;margin-top:6px;}
+.li-row p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.vc{background:linear-gradient(135deg,rgba(15,35,55,.8),rgba(30,58,82,.6));border:1px solid rgba(232,84,26,.2);border-radius:10px;padding:17px;margin-bottom:11px;}
+.vc h4{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px;}
+.vc p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* CICLO VENTAS */
+.cycle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-top:26px;}
+.cycle-card{border-radius:10px;padding:20px;position:relative;overflow:hidden;}
+.cycle-card .num{font-family:'Bebas Neue',sans-serif;font-size:48px;opacity:.1;position:absolute;top:6px;right:14px;line-height:1;}
+.cycle-card h4{font-size:14px;font-weight:700;margin-bottom:7px;}
+.cycle-card p{font-size:12px;line-height:1.6;opacity:.85;}
+.c-blue{background:rgba(45,156,219,.12);border:1px solid rgba(45,156,219,.25);}
+.c-blue h4{color:#7DD3E8;}.c-blue p{color:rgba(255,255,255,.75);}
+.c-green{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.25);}
+.c-green h4{color:#6BE6A0;}.c-green p{color:rgba(255,255,255,.75);}
+.c-amber{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);}
+.c-amber h4{color:var(--amber);}.c-amber p{color:rgba(255,255,255,.75);}
+.c-purple{background:rgba(155,89,182,.12);border:1px solid rgba(155,89,182,.25);}
+.c-purple h4{color:#C39AE0;}.c-purple p{color:rgba(255,255,255,.75);}
+
+/* ECOSISTEMA */
+.eco-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding-top:16px;}
+.eco-hub{width:120px;height:120px;border-radius:10px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;box-shadow:0 0 60px rgba(232,84,26,.3);padding:10px;}
+.eco-hub span{font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;line-height:1.2;letter-spacing:.05em;}
+.eco-ring{display:flex;flex-wrap:wrap;justify-content:center;gap:11px;max-width:680px;margin-top:22px;}
+.eco-node{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 15px;text-align:center;min-width:130px;}
+.eco-node .en-ico{font-size:20px;margin-bottom:5px;}
+.eco-node h5{font-size:12px;font-weight:700;color:var(--white);}
+.eco-node p{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* PLAN */
+.launch-timeline{display:flex;flex-direction:column;gap:0;margin-top:26px;}
+.lt-item{display:flex;gap:20px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.lt-item:last-child{border-bottom:none;}
+.lt-week{min-width:76px;font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--orange);}
+.lt-content h5{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.lt-content p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* CIERRE */
+.ct{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,66px);color:var(--white);font-weight:400;max-width:700px;margin:0 auto 18px;letter-spacing:.03em;text-align:center;}
+.ct em{color:var(--orange);font-style:normal;}
+.cs{font-size:15px;color:var(--muted);max-width:480px;margin:0 auto 34px;line-height:1.7;text-align:center;}
+.cbtn{display:inline-block;background:var(--orange);color:#fff;padding:13px 38px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+.cbtn:hover{background:var(--amber);color:var(--navy);transform:translateY(-2px);}
+
+/* REFS */
+.ref-list{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:12px;}
+.ref-list li{font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.75;padding-left:20px;text-indent:-20px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:11px;}
+.ref-list li em{color:rgba(255,255,255,.65);}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="snum">1 / 15</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- 0: PORTADA -->
+<div class="slide active" id="s0">
+  <div class="shield">🛡️</div>
+  <div class="p0k a d1">Electiva Marketing Digital · Segunda parte · UNIMINUTO · 2026</div>
+  <div class="p0t a d2">Protege<span>Pyme</span></div>
+  <p class="p0s a d3">Ecosistema e-commerce: cómo vender EPP certificado con asesoría normativa en línea — y hacer que las pymes colombianas compren bien, cumplan la norma y vuelvan solos.</p>
+  <div class="p0m a d4">
+    <span><strong>Presentado por:</strong> Christian Camilo Torres Naranjo — ID: 1102118</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Docente:</strong> Óscar Javier Cardona Tovar</span>
+    <span><strong>Pasto, Nariño — Junio 2026</strong></span>
+  </div>
+</div>
+
+<!-- 1: INTRODUCCIÓN -->
+<div class="slide std" id="s1" style="background:var(--dark);">
+  <div class="grid2">
+    <div>
+      <div class="tag tag-or a d1">Introducción</div>
+      <h2 class="sec-title a d2">Del catálogo físico al marketplace digital de EPP</h2>
+      <div class="line a d3"></div>
+      <p class="a d4" style="font-size:14px;color:var(--muted);line-height:1.8;max-width:440px;">La primera parte presentó ProtegePyme como una idea de negocio. Esta segunda parte construye el ecosistema digital completo: cómo el dueño de la pyme encuentra el EPP correcto en línea, cómo paga sin complicaciones, cómo recibe el pedido y por qué vuelve a comprar antes de que se le acabe. El mercado de EPP en Colombia es enorme, pero casi nadie lo vende bien en línea todavía.</p>
+    </div>
+    <div class="stat-row a d3">
+      <div class="stat-item"><span class="lbl">Mercado de EPP en Colombia (valor anual estimado)</span><span class="val">$820B COP</span></div>
+      <div class="stat-item"><span class="lbl">% del mercado que se vende actualmente por canales digitales</span><span class="val">8%</span></div>
+      <div class="stat-item"><span class="lbl">Pymes que buscan proveedores de EPP en Google</span><span class="val">58%</span></div>
+      <div class="stat-item"><span class="lbl">Crecimiento del e-commerce B2B en Colombia (2023)</span><span class="val">+28%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2: CLIENTE DIGITAL — PERFIL -->
+<div class="slide std" id="s2" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Cliente Digital — Investigación de Mercado</div>
+  <h2 class="sec-title a d2">¿Quién es el cliente digital de ProtegePyme?</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">👷</div>
+        <h4>Ricardo Palomino — Dueño de taller metalmecánico</h4>
+        <p>38 años · Cali · 25 empleados · Riesgo ARL clase IV. Busca en Google cuando tiene un problema concreto: una multa que llegó, una auditoría que se acerca, un accidente que ocurrió. Toma decisiones rápido cuando la urgencia es real.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔍</div>
+        <h4>Cómo busca EPP en línea</h4>
+        <p>Busca en Google «EPP para soldadura Colombia precio», entra a 2 o 3 sitios, compara precios y sale sin comprar porque ninguno le dice si el producto cumple la norma de su sector. El 68% de los compradores B2B de EPP abandona el carrito por falta de información normativa (Ábrego & Castillo, 2022).</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:22px;">
+        <h4 style="font-size:13px;font-weight:700;color:var(--white);margin-bottom:14px;">Necesidades y problemas que ProtegePyme resuelve</h4>
+        <div class="list-items">
+          <div class="li-row"><div class="li-dot"></div><p>No sabe qué norma aplica a su sector y qué EPP exacto necesita para cumplirla</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Ha comprado EPP barato que no tiene la certificación ICONTEC y quedó expuesto ante una auditoría</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>No tiene tiempo de ir a una ferretería o esperar a que un vendedor lo visite</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Necesita entrega rápida porque el pedido anterior se le acabó y sus trabajadores están en campo</p></div>
+          <div class="li-row"><div class="li-dot"></div><p>Quiere una factura electrónica para su contabilidad sin tener que pedirla aparte</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3: INVESTIGACIÓN DE MERCADO -->
+<div class="slide std" id="s3" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Investigación de Mercado</div>
+  <h2 class="sec-title a d2">Lo que los datos dicen del comprador digital de EPP</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">🔎</div>
+      <h4>Google primero — Siempre</h4>
+      <p>El 58% de los responsables de compra de EPP en pymes colombianas busca en Google antes de llamar a cualquier proveedor. Las búsquedas más frecuentes son por sector: «EPP construcción Colombia», «dotación industrial norma ICONTEC» (Alvarado, 2021).</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📦</div>
+      <h4>La entrega importa más que el precio</h4>
+      <p>En el segmento de EPP para pymes, el tiempo de entrega es el factor de decisión número 1 por encima del precio. Una pyme con 25 trabajadores no puede esperar 10 días para recibir cascos de seguridad cuando los tiene en campo (Linero & Botero, 2020).</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">📋</div>
+      <h4>La norma como argumento de venta</h4>
+      <p>El 74% de los compradores de EPP en pymes industriales afirma que compraría de un proveedor en línea si ese proveedor garantizara que el producto cumple exactamente la norma que aplica a su sector. Ese argumento elimina la duda principal del cliente.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🔄</div>
+      <h4>La recompra es automática</h4>
+      <p>El EPP tiene vida útil definida: los guantes de nitrilo duran 6 meses, los cascos 5 años, los respiradores 1 año. El 82% de las pymes que tienen un proveedor de confianza le recompran sin buscar alternativas cuando el pedido vence (Ábrego et al., 2022).</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">📱</div>
+      <h4>Compra desde computador</h4>
+      <p>El 71% de las compras B2B de EPP se hace desde computador de escritorio en horario laboral. El responsable de compra usa el celular para consultar precios pero finaliza la compra en escritorio. La plataforma debe funcionar perfectamente en ambos dispositivos.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🏷️</div>
+      <h4>Precio y cantidad mínima</h4>
+      <p>El gasto promedio anual en EPP de una pyme de 25 trabajadores en sector de riesgo IV es de $4.2M COP. Los pedidos se hacen 4 a 6 veces al año. El comprador prefiere pedir por kit (conjunto completo por trabajador) en lugar de producto por producto.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 4: CICLO DE VENTAS -->
+<div class="slide std" id="s4" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Ciclo de Ventas</div>
+  <h2 class="sec-title a d2">Las 4 etapas del ciclo de ventas de ProtegePyme</h2>
+  <div class="line a d3"></div>
+  <div class="cycle-grid">
+    <div class="cycle-card c-blue a d2">
+      <div class="num">1</div>
+      <h4>🔵 Atracción — El cliente busca, nosotros aparecemos</h4>
+      <p>Ricardo busca en Google «EPP para soldadura norma ICONTEC Colombia» después de recibir una multa. ProtegePyme aparece en los primeros resultados con un artículo que explica exactamente qué EPP necesita su sector. El primer contacto es educativo, no comercial.</p>
+    </div>
+    <div class="cycle-card c-green a d3">
+      <div class="num">2</div>
+      <h4>🟢 Interacción — La calculadora que convence</h4>
+      <p>En la landing page encuentra la calculadora gratuita: ingresa su sector y número de trabajadores y recibe en 30 segundos el kit EPP recomendado con la norma que aplica, el precio total y la multa que está evitando. Por primera vez tiene toda la información que necesita para comprar bien.</p>
+    </div>
+    <div class="cycle-card c-amber a d3">
+      <div class="num">3</div>
+      <h4>🟡 Conversión — El carrito que se llena solo</h4>
+      <p>El kit recomendado se agrega al carrito con un clic. El sistema muestra el descuento del 10% en el primer pedido y la garantía de cumplimiento normativo. El proceso de pago toma menos de 3 minutos. La factura electrónica llega automáticamente al correo.</p>
+    </div>
+    <div class="cycle-card c-purple a d4">
+      <div class="num">4</div>
+      <h4>🟣 Fidelización — La alerta que genera la recompra</h4>
+      <p>El sistema registra la vida útil de cada EPP comprado. Cuando queda 1 mes para la renovación, Ricardo recibe un mensaje de WhatsApp con el mismo kit actualizado y un clic directo al carrito. La recompra se hace sin buscar, sin comparar, sin pensar.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5: ESTRATEGIAS POR FASE -->
+<div class="slide std" id="s5" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Estrategias por Fase</div>
+  <h2 class="sec-title a d2">Qué hace ProtegePyme en cada etapa para vender más</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="vc">
+        <h4>🔵 Atracción: SEO y YouTube que llegan antes que la multa</h4>
+        <p>Artículos en blog posicionados en Google por sector y norma. Canal de YouTube con videos cortos: «¿Qué EPP necesita su taller según el Decreto 1072?» Alianzas con IPS y asesores SST que recomiendan ProtegePyme a sus clientes como proveedor certificado.</p>
+      </div>
+      <div class="vc">
+        <h4>🟢 Interacción: la calculadora como anzuelo</h4>
+        <p>Calculadora gratuita de kit EPP por sector en 3 preguntas. Guía normativa descargable sin registro: «Todo lo que necesita saber sobre EPP según el Decreto 1072 de 2015». Chat en vivo con asesor SST para resolver dudas sobre qué norma aplica a cada caso específico.</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div class="vc">
+        <h4>🟡 Conversión: la garantía que elimina la duda</h4>
+        <p>10% de descuento en el primer pedido. Envío gratis para pedidos mayores a $500.000 COP. Kit recomendado automáticamente por el sistema. Garantía de cumplimiento normativo: «Si el MinTrabajo objeta algún producto, devolvemos el dinero». Ese argumento cierra la venta en el momento de mayor duda.</p>
+      </div>
+      <div class="vc">
+        <h4>🟣 Fidelización: el panel que genera lealtad</h4>
+        <p>Panel de cumplimiento normativo: qué EPP tiene vigente, cuál necesita renovar y en qué fecha. Alertas de renovación automáticas por WhatsApp. Cuenta empresarial con crédito a 30 días para clientes frecuentes. Programa de referidos: descuento adicional por cada empresa que traiga.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6: PLATAFORMA WEB -->
+<div class="slide std" id="s6" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Ecosistema E-Commerce — Plataforma Web</div>
+  <h2 class="sec-title a d2">La plataforma digital de ProtegePyme</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">🌐</div>
+        <h4>Marketplace: www.protegepyme.co</h4>
+        <p>Tienda en línea construida sobre WooCommerce con personalización por sector. Catálogo organizado por tipo de riesgo y norma aplicable. Cada producto muestra la norma ICONTEC que cumple, el sector al que aplica y la multa que evita. Búsqueda por sector en la página principal.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🧮</div>
+        <h4>Calculadora de kit EPP por sector</h4>
+        <p>Herramienta interactiva de 3 preguntas: sector económico, número de trabajadores, tipo de riesgo. En 30 segundos genera el kit EPP completo con las normas que aplican, el precio total del pedido y un resumen de las multas que se evitan al cumplir. El resultado se agrega al carrito con un clic.</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">📊</div>
+        <h4>Panel de cumplimiento normativo</h4>
+        <p>Cada empresa cliente tiene un panel personalizado que muestra qué EPP tiene activo, la fecha de vencimiento de cada elemento y el porcentaje de cumplimiento normativo actual. El panel es la razón principal por la que los clientes no buscan otro proveedor: toda su información ya está aquí.</p>
+      </div>
+      <div class="card">
+        <div class="ico">📱</div>
+        <h4>Versión móvil optimizada</h4>
+        <p>La plataforma funciona perfectamente en celular para consultas de catálogo y seguimiento de pedidos. El proceso de compra desde móvil toma menos de 4 minutos con los métodos de pago rápido (Nequi, Daviplata). Los pedidos frecuentes se guardan como «kit favorito» para recompra en un clic.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7: MEDIOS DE PAGO -->
+<div class="slide std" id="s7" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Ecosistema E-Commerce — Medios de Pago</div>
+  <h2 class="sec-title a d2">Cómo paga el cliente de ProtegePyme</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">💳</div>
+      <h4>Tarjeta de crédito y débito — Wompi</h4>
+      <p>Integración con Wompi (Bancolombia) para cobros con Visa, Mastercard y American Express. El pago toma menos de 30 segundos con tarjeta guardada para compras frecuentes. Certificación PCI-DSS garantiza la seguridad de los datos del comprador.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📲</div>
+      <h4>Nequi y Daviplata — Pago rápido</h4>
+      <p>Los métodos de pago móvil más usados por los dueños de pyme en Colombia. El proceso toma 2 clics sin ingresar datos de tarjeta. El 38% de los primeros pedidos de ProtegePyme se pagarán con estos métodos según el perfil del buyer persona.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🏦</div>
+      <h4>PSE y transferencia bancaria</h4>
+      <p>Para pedidos mayores de $1.5M COP, los gerentes de pyme prefieren transferencia bancaria con factura previa. PSE conectado a todos los bancos colombianos. La factura electrónica DIAN se genera automáticamente al confirmar el pago y llega al correo registrado.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📋</div>
+      <h4>Crédito empresarial a 30 días</h4>
+      <p>Las empresas con más de 3 pedidos previos acceden a crédito a 30 días sin trámites bancarios. El límite inicial es de $2M COP y crece con el historial de compra. Es el beneficio más valorado por los clientes frecuentes porque elimina el problema de flujo de caja en el mes de reposición.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🧾</div>
+      <h4>Facturación electrónica DIAN</h4>
+      <p>Cada pedido genera automáticamente la factura electrónica con todos los requisitos legales de la DIAN. El cliente la recibe en el correo y puede descargarla desde su panel en cualquier momento. No hay que pedirla aparte ni esperar que el vendedor la envíe manualmente.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🎁</div>
+      <h4>Descuento en el primer pedido</h4>
+      <p>El 10% de descuento en la primera compra se aplica automáticamente al ingresar el correo corporativo. No hay códigos ni condiciones complicadas. El ahorro se muestra en tiempo real en el carrito. El envío es gratuito para pedidos mayores a $500.000 COP en las principales ciudades.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 8: PROMOCIÓN -->
+<div class="slide std" id="s8" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Ecosistema E-Commerce — Estrategias de Promoción</div>
+  <h2 class="sec-title a d2">Cómo ProtegePyme llega a sus clientes digitales</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="a d3">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">🔍</div>
+        <h4>SEO por sector — El tráfico que no se paga</h4>
+        <p>Artículos posicionados en Google para búsquedas como «EPP construcción Colombia norma ICONTEC», «kit SST metalmecánica precio» y «elementos protección personal decreto 1072». Cada artículo termina con la calculadora de kit EPP como llamado a la acción. El tráfico orgánico bien trabajado trae clientes de forma permanente (Ramos & Hernández, 2021).</p>
+      </div>
+      <div class="card">
+        <div class="ico">🎥</div>
+        <h4>YouTube educativo — Contenido que convierte</h4>
+        <p>Videos cortos de 3–5 minutos respondiendo preguntas reales de los compradores: «¿Qué casco necesita un trabajador en altura?», «¿Qué guantes exige el MinTrabajo para soldadura?». El video termina siempre con un enlace directo al producto correspondiente en la tienda.</p>
+      </div>
+    </div>
+    <div class="a d4">
+      <div class="card" style="margin-bottom:13px;">
+        <div class="ico">📧</div>
+        <h4>Email marketing — La urgencia que vende</h4>
+        <p>Secuencia de 5 correos para los visitantes que usaron la calculadora pero no compraron. Correo 1: kit recomendado con precio. Correo 2: guía de multas por incumplimiento en su sector. Correo 3: caso real de empresa multada. Correo 4: garantía de cumplimiento. Correo 5: oferta de envío gratis por tiempo limitado.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🤝</div>
+        <h4>Alianzas B2B — El canal que no cuesta</h4>
+        <p>Acuerdos con IPS, asesoras de ARL y consultores de SST para que recomienden ProtegePyme como proveedor certificado a sus clientes. Comisión del 6% por cada pedido referido. Las alianzas generan clientes que ya llegan con la confianza construida por el referidor, lo que acorta el ciclo de ventas al mínimo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9: LOGÍSTICA -->
+<div class="slide std" id="s9" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Ecosistema E-Commerce — Logística del Servicio</div>
+  <h2 class="sec-title a d2">Cómo ProtegePyme entrega sus productos</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">📦</div>
+      <h4>Entrega en 48 horas — Ciudades principales</h4>
+      <p>Bodega central en Bogotá con inventario de los 80 productos más vendidos. Alianza con Servientrega y Coordinadora para entrega en 48 horas en las 10 ciudades principales de Colombia. El número de guía llega por WhatsApp automáticamente al confirmar el pedido.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🚚</div>
+      <h4>Envío nacional en 5 días</h4>
+      <p>Los municipios y ciudades intermedias reciben el pedido en 5 días hábiles. El costo de envío se calcula automáticamente según el peso del kit y la ciudad de destino. Envío gratuito para pedidos mayores a $500.000 COP en ciudades principales.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">✅</div>
+      <h4>Verificación de calidad antes del despacho</h4>
+      <p>Cada pedido pasa por un control de calidad antes de salir de bodega: se verifica que los productos tienen las certificaciones activas, que el lote no está vencido y que el kit está completo según el pedido. El operario firma el checklist de despacho que queda en el sistema.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🔔</div>
+      <h4>Alerta automática de renovación</h4>
+      <p>El sistema registra la vida útil de cada producto despachado. Cuando queda un mes para el vencimiento, el cliente recibe un WhatsApp con el mismo kit actualizado y un enlace directo al carrito pre-llenado. La recompra toma menos de 2 minutos desde el celular.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">🔄</div>
+      <h4>Devoluciones sin complicaciones</h4>
+      <p>Si un producto llega dañado o no cumple la norma declarada, el cliente solicita la devolución desde su panel en un clic. El reemplazo se envía en 24 horas sin costo adicional. La garantía de cumplimiento normativo es la promesa central del servicio y se cumple sin excepción.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">📊</div>
+      <h4>Panel de trazabilidad de pedidos</h4>
+      <p>Cada empresa cliente puede ver desde su panel el historial completo de pedidos, las fechas de vencimiento de cada EPP activo y el estado de los envíos en tránsito. No hay que llamar a preguntar: toda la información está disponible las 24 horas desde cualquier dispositivo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 10: PLAN DE LANZAMIENTO -->
+<div class="slide std" id="s10" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Plan de Lanzamiento</div>
+  <h2 class="sec-title a d2">Cómo sale ProtegePyme al mercado digital</h2>
+  <div class="line a d3"></div>
+  <div class="launch-timeline a d3">
+    <div class="lt-item">
+      <div class="lt-week">Mes 1</div>
+      <div class="lt-content"><h5>Construir la base antes de vender</h5><p>Publicar la tienda con el catálogo inicial de los 40 productos más demandados. Activar la calculadora de kit EPP. Publicar los primeros 6 artículos del blog optimizados para Google. Configurar la pasarela de pagos y la facturación electrónica. Meta: plataforma funcional lista para recibir el primer pedido.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 2</div>
+      <div class="lt-content"><h5>Lanzamiento con contenido orgánico</h5><p>Publicar 2 artículos de blog por semana. Subir los primeros 4 videos al canal de YouTube. Enviar la propuesta de alianza a 10 IPS y asesoras de ARL seleccionadas. Meta: primeras 300 visitas orgánicas, 50 calculadoras completadas y 3 alianzas activas.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 3</div>
+      <div class="lt-content"><h5>Primeras ventas y ajuste de operación</h5><p>Activar Google Ads con presupuesto de $600.000 COP mensuales para las búsquedas de mayor conversión. Meta: primeros 20 pedidos, primer cliente con panel de cumplimiento activo y primera reposición automática gestionada por el sistema.</p></div>
+    </div>
+    <div class="lt-item">
+      <div class="lt-week">Mes 4–6</div>
+      <div class="lt-content"><h5>Escalar con alianzas y recompra</h5><p>Activar el crédito a 30 días para los primeros 5 clientes frecuentes. Cerrar alianzas con 10 IPS activas. Lanzar el programa de referidos. Meta: 80 clientes activos, tasa de recompra mayor al 60% y primera empresa corporativa con plan B2B.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 11: MARKETING DE CONTENIDO -->
+<div class="slide std" id="s11" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Marketing de Contenidos</div>
+  <h2 class="sec-title a d2">El contenido que educa al comprador y genera ventas</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2">
+      <div class="ico">✍️</div>
+      <h4>Blog — Contenido por sector</h4>
+      <p>Artículos escritos para cada sector objetivo: «EPP obligatorio para empresas de construcción en Colombia 2026», «Qué guantes exige el Ministerio para trabajo con químicos». Cada artículo incluye la calculadora de kit EPP al final. Un artículo bien posicionado en Google puede traer clientes durante años sin inversión adicional.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">🎥</div>
+      <h4>YouTube — Videos de 3 a 5 minutos</h4>
+      <p>Respuestas en video a las preguntas más buscadas: «¿Qué casco necesita un trabajador en altura?», «¿Cuánto cuesta no usar EPP en una multa?». El video termina siempre con un enlace al producto o kit correspondiente en la tienda. Genera confianza y tráfico calificado sin costo de pauta (Ramos & Hernández, 2021).</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">📑</div>
+      <h4>Guías descargables — Lead magnets</h4>
+      <p>Cuatro guías PDF gratuitas a cambio del correo corporativo: «Guía de EPP por sector según el Decreto 1072», «Checklist de auditoría interna de SST», «Multas reales del MinTrabajo 2026» y «Plantilla de registro de entrega de EPP». Cada descarga es un prospecto calificado listo para recibir la secuencia de correos.</p>
+    </div>
+    <div class="card a d3">
+      <div class="ico">📧</div>
+      <h4>Email — La secuencia que convierte</h4>
+      <p>5 correos automáticos para los visitantes que usaron la calculadora pero no compraron. La secuencia mezcla educación, casos reales de multas y ofertas concretas. La tasa de apertura estimada es del 35% para el segmento de gerentes y coordinadores SST de pymes industriales.</p>
+    </div>
+    <div class="card a d4">
+      <div class="ico">💼</div>
+      <h4>LinkedIn — Para el mercado corporativo</h4>
+      <p>Publicaciones semanales en LinkedIn dirigidas a directores de compras, coordinadores SST y gerentes generales de empresas industriales medianas. Contenido sobre novedades normativas, casos de auditorías reales y actualizaciones del catálogo. El canal B2B con mayor potencial de ticket promedio alto.</p>
+    </div>
+    <div class="card a d5">
+      <div class="ico">🤝</div>
+      <h4>Boletín para aliados IPS y ARL</h4>
+      <p>Boletín mensual exclusivo para los aliados de ProtegePyme (IPS, asesoras ARL, consultores SST) con novedades del catálogo, nuevas normativas y material listo para compartir con sus clientes. Los aliados bien informados generan más referidos. Es el canal de distribución más rentable del ecosistema.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 12: ECOSISTEMA VISUAL -->
+<div class="slide std" id="s12" style="background:var(--navy);align-items:center;">
+  <div class="tag tag-or a d1" style="text-align:center;display:block;">Ecosistema E-Commerce — Visión Completa</div>
+  <h2 class="sec-title a d2" style="text-align:center;margin-bottom:20px;letter-spacing:.03em;">Todos los engranajes de ProtegePyme trabajando juntos</h2>
+  <div class="eco-center a d3">
+    <div class="eco-hub"><span>PROTEGE<br>PYME</span></div>
+    <div class="eco-ring">
+      <div class="eco-node"><div class="en-ico">🌐</div><h5>Tienda Online</h5><p>protegepyme.co</p></div>
+      <div class="eco-node"><div class="en-ico">🧮</div><h5>Calculadora</h5><p>Kit EPP en 30s</p></div>
+      <div class="eco-node"><div class="en-ico">💳</div><h5>Pagos</h5><p>Wompi · Nequi · PSE</p></div>
+      <div class="eco-node"><div class="en-ico">🔍</div><h5>SEO + YouTube</h5><p>Tráfico orgánico</p></div>
+      <div class="eco-node"><div class="en-ico">📧</div><h5>Email</h5><p>5 correos de urgencia</p></div>
+      <div class="eco-node"><div class="en-ico">📊</div><h5>Panel cliente</h5><p>Cumplimiento EPP</p></div>
+      <div class="eco-node"><div class="en-ico">🚚</div><h5>Logística</h5><p>48h ciudades principales</p></div>
+      <div class="eco-node"><div class="en-ico">🤝</div><h5>Alianzas</h5><p>IPS · ARL · SST</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 13: CIERRE -->
+<div class="slide" id="s13" style="background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;">
+  <div class="tag tag-or a d1" style="display:inline-block;">Cierre</div>
+  <div class="ct a d2">Comprar EPP sin saber la norma es como <em>apostar con la seguridad de sus trabajadores</em></div>
+  <p class="cs a d3">ProtegePyme no es una ferretería online. Es el primer ecosistema digital de Colombia donde cada producto viene con la certeza de que cumple exactamente lo que la ley exige — y donde la pyme que compra hoy tiene garantizada su reposición antes de que se le acabe, sin buscar, sin llamar, sin perder tiempo.</p>
+  <div class="a d4"><span class="cbtn">www.protegepyme.co → Ver mi kit EPP</span></div>
+</div>
+
+<!-- 14: BIBLIOGRAFÍA -->
+<div class="slide" id="s14" style="background:var(--navy);padding:60px 100px;justify-content:flex-start;overflow-y:auto;">
+  <div class="tag tag-nav a d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list">
+    <li class="a d2">Ábrego Rodríguez, A., & Castillo, C. F. (Eds.). (2022). <em>Marketing digital e-commerce y las ventajas competitivas</em> (pp. 21-23). Editorial Universitaria Carlos Manuel Gasteazoro.</li>
+    <li class="a d2">Ábrego Rodríguez, A., Castillo, C. F., & Mujica Chirinos, N. (Eds.). (2022). <em>Estrategias de marketing digital y de e-commerce en tiempos de Covid-19</em> (pp. 17-26). Editorial Universitaria Carlos Manuel Gasteazoro.</li>
+    <li class="a d3">Ramos, E., & Hernández, L. (Eds.). (2021). El marketing online. En <em>Manual del comercio electrónico</em> (pp. 95-104). Ecoe Ediciones.</li>
+    <li class="a d3">Alvarado, E. (2021). Determinantes del gasto en e-commerce debido a la COVID-19: un análisis empírico para los micronegocios en Monterrey, México. <em>Paradigma Económico, 13</em>(1), 119-145. https://www.redalyc.org/journal/4315/431566320005/html/</li>
+    <li class="a d4">Linero, J. P., & Botero, L. F. (2020). Hábitos de consumo en plataformas e-commerce en adultos jóvenes de la ciudad de Bogotá. <em>Universidad & Empresa, 22</em>(38), 211-236. https://www.redalyc.org/journal/1872/187263780010/html/index.html</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){
+  slides[cur].classList.remove('active');slides[cur].classList.add('exit');
+  setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),650);
+  cur=((n%total)+total)%total;slides[cur].classList.add('active');
+  document.getElementById('prog').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('snum').textContent=(cur+1)+' / '+total;
+}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>
