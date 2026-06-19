@@ -164,6 +164,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #btn-refresh:active{transform:scale(.9)}
 #btn-refresh.girando svg{animation:rfspin .8s linear infinite}
 @keyframes rfspin{to{transform:rotate(360deg)}}
+#btn-install{position:fixed;left:68px;bottom:16px;z-index:560;width:46px;height:46px;border-radius:50%;background:var(--rojo);border:none;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(227,6,19,.4);cursor:pointer;transition:transform .15s;animation:instpulse 2.2s infinite}
+#btn-install.show{display:flex}
+#btn-install:active{transform:scale(.9)}
+@keyframes instpulse{0%,100%{box-shadow:0 6px 16px rgba(227,6,19,.4)}50%{box-shadow:0 6px 22px rgba(227,6,19,.65)}}
 
 /* ══ BANNER INSTALAR PWA ══ */
 #pwa-banner{position:fixed;right:14px;bottom:16px;z-index:580;width:300px;max-width:calc(100vw - 28px);background:linear-gradient(135deg,#0F1117,#1C1F2A);border-radius:16px;padding:14px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.4);display:none;grid-template-columns:auto 1fr auto;grid-template-areas:'ico txt x' 'go go go';gap:10px 11px;align-items:center}
@@ -352,17 +356,17 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 }
 #taco-slide.visible{display:block;}
 
-/* Franja roja delgada pegada al borde — como la sombra que ves */
+/* Pestaña del tacómetro — pastilla suave centrada, no cuadriculada */
 .taco-tab{
-  position:fixed;right:0;top:10px;
-  height:20vh;max-height:100px;min-height:50px;
-  width:6px;
-  background:rgba(227,6,19,0.55);
-  border-radius:3px 0 0 3px;
-  box-shadow:-2px 0 8px rgba(227,6,19,.4);
+  position:fixed;right:0;top:50%;transform:translateY(-50%);
+  height:74px;width:7px;
+  background:linear-gradient(180deg,rgba(227,6,19,.85),rgba(181,0,15,.7));
+  border-radius:8px 0 0 8px;
+  box-shadow:-3px 0 12px rgba(227,6,19,.35);
   cursor:pointer;pointer-events:auto;z-index:301;
+  transition:width .15s ease;
 }
-.taco-tab:active{width:12px;}
+.taco-tab:active{width:11px;}
 /* Ícono pequeño centrado en la franja */
 .taco-tab-icon{
   position:absolute;top:50%;left:50%;
@@ -415,8 +419,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 @keyframes needle-swing{0%{transform:rotate(-90deg)}100%{transform:rotate(var(--needle-angle))}}
 
 /* ══ BUSCADOR EN LISTA CLIENTES ══ */
-.cp-search-wrap{padding:5px 10px;background:var(--blanco);border-bottom:.5px solid var(--gris2);flex-shrink:0}
-.cp-search{width:100%;background:var(--gris1);border:1.5px solid var(--gris2);border-radius:8px;padding:6px 10px;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--negro);outline:none;transition:border-color .2s}
+.cp-search-wrap{padding:9px 12px;background:var(--blanco);border-bottom:.5px solid var(--gris2);flex-shrink:0}
+.cp-search{width:100%;background:#fff;border:1.5px solid var(--gris3);border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;color:var(--negro);outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.cp-search::placeholder{color:var(--gris4);font-weight:500}
+.cp-search:focus{border-color:var(--rojo);box-shadow:0 0 0 3px rgba(227,6,19,.12)}
 .cp-search:focus{border-color:var(--rojo)}
 
 /* ══ SCROLL INFO-PANEL ══ */
@@ -995,6 +1001,11 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <!-- ══ BOTÓN REFRESH (datos del día) ══ -->
 <button id="btn-refresh" onclick="refrescarDatos()" title="Actualizar datos del día">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+</button>
+
+<!-- ══ BOTÓN INSTALAR APP (redondo, junto al refresh) ══ -->
+<button id="btn-install" onclick="instalarPWA()" title="Instalar aplicación">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 </button>
 
 <!-- ══ BANNER INSTALAR APP (PWA) ══ -->
@@ -1723,11 +1734,21 @@ function startRoute(ruta,lista){
       await restaurarEstadosDia();
       renderClientList();
       if(!window._hintSwipe){window._hintSwipe=true;setTimeout(()=>toast('Desliza un cliente ← o → para acciones rápidas','ok'),3500);}
+      // Numerar 1→2→3 desde la ubicación del entregador (no esperar al watch GPS)
+      setTimeout(()=>{
+        if(posGPS){optimizarRutaDesdeGPS(posGPS);}
+        else if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(
+            p=>{posGPS={lat:p.coords.latitude,lng:p.coords.longitude};optimizarRutaDesdeGPS(posGPS);},
+            ()=>{},{enableHighAccuracy:true,timeout:9000,maximumAge:8000}
+          );
+        }
+      },1200);
       // Precargar índice de facturas en background
       setTimeout(()=>cargarIndiceFacturas(),1000);
       // Iniciar tacómetro
       setTimeout(()=>iniciarTacoInterval(),500);
-      setTimeout(()=>autoNavPrimerCliente(),2000);
+      setTimeout(()=>autoNavPrimerCliente(),2200);
     })();
     if(gmap){renderMarkers();if(clientes.length){const lat=parseFloat(getF(clientes[0],CFG.COL_LAT)),lng=parseFloat(getF(clientes[0],CFG.COL_LNG));if(lat&&lng)gmap.panTo({lat,lng});}}
   },3000);
@@ -1922,8 +1943,20 @@ function initMap(){
 }
 
 function truckIcon(){
-  const s=`<svg xmlns="http://www.w3.org/2000/svg" width="54" height="44" viewBox="0 0 54 44"><rect x="2" y="6" width="29" height="24" rx="3" fill="#E30613" stroke="white" stroke-width="2"/><path d="M31 12h14l7 11v14H31V12z" fill="#B5000F" stroke="white" stroke-width="2"/><circle cx="12" cy="36" r="6" fill="#0F1117" stroke="#E30613" stroke-width="2.5"/><circle cx="39" cy="36" r="6" fill="#0F1117" stroke="#E30613" stroke-width="2.5"/><rect x="4" y="8" width="16" height="11" rx="2" fill="#7fb3d3" opacity=".85"/><circle cx="12" cy="36" r="2.5" fill="#4A5060"/><circle cx="39" cy="36" r="2.5" fill="#4A5060"/><rect x="45" y="12" width="4" height="7" rx="1" fill="#D97706" opacity=".9"/></svg>`;
-  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(54,44),anchor:new google.maps.Point(27,42)};
+  // Camión de reparto profesional: halo suave + furgón limpio con esquinas redondeadas
+  const s=`<svg xmlns="http://www.w3.org/2000/svg" width="60" height="56" viewBox="0 0 60 56">
+    <ellipse cx="30" cy="50" rx="15" ry="3.5" fill="rgba(0,0,0,.18)"/>
+    <circle cx="30" cy="27" r="22" fill="rgba(227,6,19,.14)"/>
+    <g transform="translate(8,12)">
+      <rect x="0" y="3" width="26" height="22" rx="4" fill="#E30613"/>
+      <path d="M26 9 h9 a2 2 0 0 1 1.6 .8 L43 18 a2 2 0 0 1 .9 1.7 V25 a2 2 0 0 1-2 2 H26 Z" fill="#B5000F"/>
+      <rect x="29" y="11" width="8.5" height="6.5" rx="1.6" fill="#cfe3f2"/>
+      <rect x="4" y="7" width="18" height="6" rx="1.5" fill="#fff" opacity=".92"/>
+      <circle cx="11" cy="28.5" r="5.4" fill="#16181f"/><circle cx="11" cy="28.5" r="2.2" fill="#9aa1b2"/>
+      <circle cx="35" cy="28.5" r="5.4" fill="#16181f"/><circle cx="35" cy="28.5" r="2.2" fill="#9aa1b2"/>
+    </g>
+  </svg>`;
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(60,56),anchor:new google.maps.Point(30,48)};
 }
 
 function cIcon(st,act){return cIconNumero(st,act,0);}
@@ -3086,14 +3119,18 @@ const yaInstalada=window.matchMedia('(display-mode: standalone)').matches||windo
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
   pwaPrompt=e;
-  if(!yaInstalada&&localStorage.getItem('pwa-cerrado')!=='1'){
+  if(yaInstalada)return;
+  // Botón redondo de instalar (persistente hasta instalar)
+  const b=document.getElementById('btn-install');if(b)b.classList.add('show');
+  // Banner grande la primera vez
+  if(localStorage.getItem('pwa-cerrado')!=='1'){
     setTimeout(()=>{const el=document.getElementById('pwa-banner');if(el)el.classList.add('show');},1200);
   }
 });
 async function instalarPWA(){
   if(typeof haptic==='function')haptic(25);
-  if(!pwaPrompt){cerrarBannerPWA();return;}
-  document.getElementById('pwa-banner').classList.remove('show');
+  const el=document.getElementById('pwa-banner');if(el)el.classList.remove('show');
+  if(!pwaPrompt){return;}
   pwaPrompt.prompt();
   try{await pwaPrompt.userChoice;}catch(e){}
   pwaPrompt=null;
@@ -3102,7 +3139,13 @@ function cerrarBannerPWA(){
   const el=document.getElementById('pwa-banner');if(el)el.classList.remove('show');
   localStorage.setItem('pwa-cerrado','1');
 }
-window.addEventListener('appinstalled',()=>{cerrarBannerPWA();try{toast('✓ App instalada','ok');}catch(e){}});
+function ocultarInstalar(){
+  const b=document.getElementById('btn-install');if(b)b.classList.remove('show');
+  cerrarBannerPWA();
+}
+window.addEventListener('appinstalled',()=>{ocultarInstalar();try{toast('✓ App instalada','ok');}catch(e){}});
+// Si ya está instalada/abierta como app, nunca mostrar el botón
+if(yaInstalada){const b=document.getElementById('btn-install');if(b)b.classList.remove('show');}
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=places,geometry&callback=initMap&language=es&region=CO"></script>
