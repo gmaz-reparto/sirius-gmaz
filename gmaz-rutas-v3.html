@@ -159,6 +159,24 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 /* ══ ANIMACIONES BOTONES ══ */
 /* Animaciones de íconos eliminadas — botones estáticos nivel profesional */
 
+/* ══ BOTÓN REFRESH ══ */
+#btn-refresh{position:fixed;left:14px;bottom:16px;z-index:560;width:46px;height:46px;border-radius:50%;background:var(--negro);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;transition:transform .15s}
+#btn-refresh:active{transform:scale(.9)}
+#btn-refresh.girando svg{animation:rfspin .8s linear infinite}
+@keyframes rfspin{to{transform:rotate(360deg)}}
+
+/* ══ BANNER INSTALAR PWA ══ */
+#pwa-banner{position:fixed;right:14px;bottom:16px;z-index:580;width:300px;max-width:calc(100vw - 28px);background:linear-gradient(135deg,#0F1117,#1C1F2A);border-radius:16px;padding:14px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.4);display:none;grid-template-columns:auto 1fr auto;grid-template-areas:'ico txt x' 'go go go';gap:10px 11px;align-items:center}
+#pwa-banner.show{display:grid;animation:pwaUp .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pwaUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+#pwa-banner .pwa-ico{grid-area:ico;width:42px;height:42px;border-radius:12px;background:var(--rojo);display:grid;place-items:center}
+#pwa-banner .pwa-txt{grid-area:txt;min-width:0}
+#pwa-banner .pwa-txt b{display:block;font-size:13.5px;font-weight:800;color:#fff;line-height:1.1}
+#pwa-banner .pwa-txt span{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;line-height:1.3}
+#pwa-banner .pwa-x{grid-area:x;background:none;border:none;color:rgba(255,255,255,.5);font-size:15px;cursor:pointer;align-self:start;padding:2px 4px}
+#pwa-banner .pwa-go{grid-area:go;height:42px;border-radius:11px;background:var(--rojo);color:#fff;border:none;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:2px}
+#pwa-banner .pwa-go:active{transform:scale(.97)}
+
 /* ══ ANIMACIONES GENERALES ══ */
 @keyframes pulse{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
 @keyframes truck-drive{from{transform:translateX(-10px)}to{transform:translateX(10px)}}
@@ -973,6 +991,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 <div id="loading"><div class="spin"></div><div class="spin-t" id="load-txt">Cargando...</div></div>
 <div id="toast"></div>
+
+<!-- ══ BOTÓN REFRESH (datos del día) ══ -->
+<button id="btn-refresh" onclick="refrescarDatos()" title="Actualizar datos del día">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+</button>
+
+<!-- ══ BANNER INSTALAR APP (PWA) ══ -->
+<div id="pwa-banner">
+  <div class="pwa-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+  <div class="pwa-txt"><b>Instalar GMAZ Rutas</b><span>Ábrela como aplicación, sin abrir el navegador.</span></div>
+  <button class="pwa-x" onclick="cerrarBannerPWA()">✕</button>
+  <button class="pwa-go" onclick="instalarPWA()">Instalar aplicación</button>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1993,10 +2024,30 @@ function cIconNumero(st,act,num){
   return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(w,h),anchor:new google.maps.Point(w/2,h-3)};
 }
 
+let rutaOptimizada=false;
 function optimizarRutaDesdeGPS(posActual){
-  // ORDEN P PAS: la ruta respeta el orden del archivo del día (Número_de_secuencia_).
-  // Ya NO se reordena por cercanía GPS — solo se refrescan marcadores y lista.
-  if(!clientes.length)return;
+  // Vecino más cercano desde la ubicación del entregador.
+  // Renumera los PENDIENTES 1→2→3... empezando por el más cercano a él.
+  // (La navegación giro a giro respeta sentidos de vía / contravías al tocar Navegar.)
+  if(!clientes.length||!posActual)return;
+  const gLat=cl=>parseFloat(cl.lat||getF(cl,CFG.COL_LAT)||0);
+  const gLng=cl=>parseFloat(cl.lng||getF(cl,CFG.COL_LNG)||0);
+  const d2=(a,b)=>{const dl=a.lat-b.lat,dn=a.lng-b.lng;return dl*dl+dn*dn;};
+  const pend=clientes.filter(c=>c._st==='pendiente');
+  const procesados=clientes.filter(c=>c._st!=='pendiente');
+  if(pend.length<2){rutaOptimizada=true;renderMarkers();renderClientList();return;}
+  let pos={lat:posActual.lat,lng:posActual.lng};
+  const orden=[],resto=[...pend];
+  while(resto.length){
+    let mi=0,md=Infinity;
+    resto.forEach((c,i)=>{const la=gLat(c),ln=gLng(c);if(!la||!ln)return;const d=d2(pos,{lat:la,lng:ln});if(d<md){md=d;mi=i;}});
+    const sig=resto.splice(mi,1)[0];orden.push(sig);
+    pos={lat:gLat(sig)||pos.lat,lng:gLng(sig)||pos.lng};
+  }
+  // Pendientes optimizados primero (numerados 1..k), luego los ya procesados
+  clientes=[...orden,...procesados];
+  clienteIdx=0;
+  rutaOptimizada=true;
   renderMarkers();
   renderClientList();
 }
@@ -2209,25 +2260,48 @@ async function borrarNovedad(){
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
+/* ══ COMPRESIÓN DE FOTO: max 1280px lado largo, JPEG 60% ══ */
+function comprimirFoto(file){
+  return new Promise((resolve)=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1280;
+        let w=img.width,h=img.height;
+        if(w>h&&w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+        else if(h>=w&&h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cv.toBlob(blob=>{
+          // Si por algo la compresión falla o queda más pesada, usar original
+          if(!blob||blob.size>=file.size){resolve({blob:file,url:ev.target.result});return;}
+          const u=URL.createObjectURL(blob);
+          resolve({blob,url:u});
+        },'image/jpeg',0.6);
+      };
+      img.onerror=()=>resolve({blob:file,url:ev.target.result});
+      img.src=ev.target.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
 function startNovedad(){
   if(!clientes[clienteIdx])return;
   if(clientes[clienteIdx]._st==='novedad'){toast('Ya tiene novedad registrada','err');return;}
   // Abrir cámara directamente
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';inp.capture='environment';
-  inp.onchange=e=>{
+  inp.onchange=async e=>{
     const f=e.target.files[0];if(!f)return;
-    photoFile=f;
-    const r=new FileReader();
-    r.onload=ev=>{
-      photoPreviewUrl=ev.target.result;
-      document.getElementById('ns-photo-img').src=photoPreviewUrl;
-      motivo=null;
-      document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
-      document.getElementById('ns-ok').disabled=true;
-      document.getElementById('modal-nov').classList.add('show');
-    };
-    r.readAsDataURL(f);
+    const {blob,url}=await comprimirFoto(f);
+    photoFile=blob;photoPreviewUrl=url;
+    document.getElementById('ns-photo-img').src=url;
+    motivo=null;
+    document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
+    document.getElementById('ns-ok').disabled=true;
+    document.getElementById('modal-nov').classList.add('show');
   };
   inp.click();
 }
@@ -2236,12 +2310,11 @@ function retakePhoto(){
   haptic();
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';inp.capture='environment';
-  inp.onchange=e=>{
+  inp.onchange=async e=>{
     const f=e.target.files[0];if(!f)return;
-    photoFile=f;
-    const r=new FileReader();
-    r.onload=ev=>{photoPreviewUrl=ev.target.result;document.getElementById('ns-photo-img').src=photoPreviewUrl;};
-    r.readAsDataURL(f);
+    const {blob,url}=await comprimirFoto(f);
+    photoFile=blob;photoPreviewUrl=url;
+    document.getElementById('ns-photo-img').src=url;
   };
   inp.click();
 }
@@ -2263,10 +2336,9 @@ async function submitNovedad(){
   const fecha=getColDate();
   showLoad('Subiendo foto y registrando...');
   try{
-    // 1. Subir foto
-    const ext=photoFile.name.split('.').pop()||'jpg';
-    const fn=`${fecha}/${cod}_${Date.now()}.${ext}`;
-    const{error:ue}=await sb.storage.from(CFG.BCK_FOTOS).upload(fn,photoFile,{contentType:photoFile.type,upsert:false});
+    // 1. Subir foto (comprimida a JPEG)
+    const fn=`${fecha}/${cod}_${Date.now()}.jpg`;
+    const{error:ue}=await sb.storage.from(CFG.BCK_FOTOS).upload(fn,photoFile,{contentType:'image/jpeg',upsert:false});
     if(ue)throw ue;
     // Construir URL público manualmente — garantiza formato correcto
     const fotoUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FOTOS+'/'+fn;
@@ -2998,6 +3070,39 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(e=>console.log('SW:',e.message));
   });
 }
+
+/* ══ REFRESH: actualizar datos del día sin salir ══ */
+function refrescarDatos(){
+  if(typeof haptic==='function')haptic(20);
+  const b=document.getElementById('btn-refresh');
+  if(b)b.classList.add('girando');
+  try{toast('Actualizando datos del día...','ok');}catch(e){}
+  setTimeout(()=>location.reload(),350);
+}
+
+/* ══ INSTALAR APP (banner tipo nativo) ══ */
+let pwaPrompt=null;
+const yaInstalada=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  pwaPrompt=e;
+  if(!yaInstalada&&localStorage.getItem('pwa-cerrado')!=='1'){
+    setTimeout(()=>{const el=document.getElementById('pwa-banner');if(el)el.classList.add('show');},1200);
+  }
+});
+async function instalarPWA(){
+  if(typeof haptic==='function')haptic(25);
+  if(!pwaPrompt){cerrarBannerPWA();return;}
+  document.getElementById('pwa-banner').classList.remove('show');
+  pwaPrompt.prompt();
+  try{await pwaPrompt.userChoice;}catch(e){}
+  pwaPrompt=null;
+}
+function cerrarBannerPWA(){
+  const el=document.getElementById('pwa-banner');if(el)el.classList.remove('show');
+  localStorage.setItem('pwa-cerrado','1');
+}
+window.addEventListener('appinstalled',()=>{cerrarBannerPWA();try{toast('✓ App instalada','ok');}catch(e){}});
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=places,geometry&callback=initMap&language=es&region=CO"></script>
