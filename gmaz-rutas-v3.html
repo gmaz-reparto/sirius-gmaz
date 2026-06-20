@@ -1017,8 +1017,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+// XLSX se carga SOLO cuando el coordinador lo necesita (subir/descargar Excel) — no en el arranque del entregador
+let _xlsxCargando=null;
+function cargarXLSX(){
+  if(window.XLSX)return Promise.resolve();
+  if(_xlsxCargando)return _xlsxCargando;
+  _xlsxCargando=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>res();s.onerror=()=>rej(new Error('No se pudo cargar XLSX'));
+    document.head.appendChild(s);
+  });
+  return _xlsxCargando;
+}
 const CFG={
   SUPABASE_URL:'https://arcymdurfmlubtgfyawn.supabase.co',
   SUPABASE_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY3ltZHVyZm1sdWJ0Z2Z5YXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk1MDMsImV4cCI6MjA5MTUxNTUwM30.UpfEw5oZcntnyaS9F6om0dUwPjTvrEyTC4HVd1xYjv8',
@@ -1704,7 +1716,8 @@ async function pintarFlotaEnVivo(){
 async function loadRoutes(){
   showLoad('Cargando rutas...');
   try{
-    const{data,error}=await sb.from(CFG.TBL).select('*');
+    // Solo columnas necesarias (no '*') — payload más liviano = abre más rápido
+    const{data,error}=await sb.from(CFG.TBL).select('id,nombre,ruta,lat,lng,direccion,CAJA_,secuencia');
     if(error)throw error;
     if(!data?.length){hideLoad();showScr('scr-routes');document.getElementById('routes-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#8A90A0;font-size:13px">Sin rutas cargadas hoy</div>';return;}
     // Agrupar por ruta con total de cajas
@@ -2823,6 +2836,7 @@ async function cargarHistoricoNovedades(){
 async function descargarNovedasFecha(fecha){
   showLoad('Generando Excel de '+fecha+'...');
   try{
+    await cargarXLSX();
     // Obtener novedades del día
     const{data:novs}=await sb.from(CFG.TBL_NOV)
       .select('fecha,ruta,nombre_cliente,motivo,codigo_cliente')
@@ -2906,6 +2920,7 @@ async function uploadRoutes(ev){
   openProg('Subiendo rutas del día',file.name);
   logProg('Leyendo: '+file.name,'info');updateProg(10,'Leyendo Excel...');
   try{
+    await cargarXLSX();
     const ab=await file.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
@@ -3064,6 +3079,7 @@ async function uploadMaster(ev){
   openProg('Actualizando maestro de clientes',file.name);
   logProg('Leyendo: '+file.name,'info');updateProg(15,'Leyendo Excel...');
   try{
+    await cargarXLSX();
     const ab=await file.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];

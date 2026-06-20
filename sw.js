@@ -1,32 +1,45 @@
-// GMAZ Rutas — Service Worker (PWA instalable)
-const CACHE = 'gmaz-rutas-v1';
+// GMAZ Rutas — Service Worker (PWA instalable + caché de librerías)
+const CACHE = 'gmaz-rutas-v2';
+const LIBS = 'gmaz-libs-v2';
 const ESENCIALES = [
   './gmaz-rutas-v3.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png'
 ];
+// CDNs de librerías estáticas (seguras para cache-first → aperturas siguientes instantáneas)
+const LIB_HOSTS = ['cdn.jsdelivr.net','cdnjs.cloudflare.com','unpkg.com','fonts.googleapis.com','fonts.gstatic.com'];
 
-// Instalar: precachear lo esencial (la app abre aunque haya señal débil)
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ESENCIALES)).then(() => self.skipWaiting()));
 });
 
-// Activar: limpiar cachés viejos
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== LIBS).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-// Fetch: network-first para datos (Supabase/Maps siempre frescos),
-// cache-first solo para los archivos propios de la app.
 self.addEventListener('fetch', e => {
   const url = e.request.url;
+  let host = '';
+  try { host = new URL(url).hostname; } catch (err) {}
+
+  // 1) Librerías de CDN: cache-first (sirve de caché al instante, descarga solo la 1ª vez)
+  if (LIB_HOSTS.includes(host)) {
+    e.respondWith(
+      caches.open(LIBS).then(c => c.match(e.request).then(hit => {
+        if (hit) return hit;
+        return fetch(e.request).then(r => { if (r && r.status === 200) c.put(e.request, r.clone()); return r; });
+      }))
+    );
+    return;
+  }
+
+  // 2) Archivos propios de la app: red primero, caché de respaldo si no hay señal
   const esApp = ESENCIALES.some(f => url.endsWith(f.replace('./', '')));
   if (esApp) {
-    // archivos propios: red primero, cae a caché si no hay señal
     e.respondWith(
       fetch(e.request).then(r => {
         const copia = r.clone();
@@ -34,6 +47,8 @@ self.addEventListener('fetch', e => {
         return r;
       }).catch(() => caches.match(e.request))
     );
+    return;
   }
-  // todo lo demás (Supabase, Google Maps, fuentes): pasa directo a la red
+
+  // 3) Todo lo demás (Supabase REST, Google Maps API): directo a la red, siempre fresco
 });
