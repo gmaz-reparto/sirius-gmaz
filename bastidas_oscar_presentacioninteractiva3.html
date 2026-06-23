@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiesgoCalc — Google Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2B45;--teal:#1A6B8A;--gold:#C8952A;--gold-light:#F0C060;
+  --white:#FFFFFF;--dark:#0A1628;--muted:#8BA0B0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'DM Sans',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .6s ease,transform .6s ease;transform:translateX(60px);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.slide.exit{opacity:0;transform:translateX(-60px);}
+#prog{position:fixed;top:0;left:0;height:3px;background:var(--gold);transition:width .4s ease;z-index:100;}
+#snum{position:fixed;bottom:24px;right:28px;font-size:12px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(200,149,42,.25);border-color:var(--gold);}
+#prev{left:16px;}#next{right:16px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:20px;font-weight:600;margin-bottom:16px;}
+.tag-gold{background:rgba(200,149,42,.15);color:var(--gold-light);}
+.tag-teal{background:rgba(26,107,138,.25);color:#7DD3E8;}
+.line{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:12px 0 20px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.slide.active .a{animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.25s;}.d3{animation-delay:.4s;}.d4{animation-delay:.55s;}.d5{animation-delay:.7s;}
+
+#s0{background:var(--navy);justify-content:center;align-items:flex-start;padding:80px 100px;}
+#s0::before{content:'';position:absolute;right:-80px;top:-80px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(200,149,42,.12),transparent 65%);}
+.p0k{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:24px;}
+.p0t{font-family:'Playfair Display',serif;font-size:clamp(50px,6.5vw,82px);font-weight:900;color:var(--white);line-height:1;margin-bottom:8px;}
+.p0t span{color:var(--gold);}
+.p0s{font-size:17px;color:var(--muted);margin-bottom:44px;max-width:520px;line-height:1.6;}
+.p0m span{display:block;font-size:13px;color:rgba(255,255,255,.5);margin-bottom:4px;}
+.p0m strong{color:rgba(255,255,255,.85);}
+.p0b{position:absolute;right:100px;top:50%;transform:translateY(-50%);width:170px;height:170px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;}
+.p0b .big{font-family:'Playfair Display',serif;font-size:14px;font-weight:900;color:var(--navy);line-height:1.3;padding:0 12px;}
+
+.std{padding:60px 100px;justify-content:center;}
+.sec-title{font-family:'Playfair Display',serif;font-size:clamp(26px,3.2vw,40px);color:var(--white);margin-bottom:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:28px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:22px 18px;transition:transform .2s,border-color .2s;}
+.card:hover{transform:translateY(-4px);border-color:var(--gold);}
+.card .ico{font-size:26px;margin-bottom:10px;}
+.card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:7px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;}
+.list-items{display:flex;flex-direction:column;gap:11px;}
+.li-row{display:flex;gap:12px;align-items:flex-start;}
+.li-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px;}
+.li-row p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+
+/* PASOS */
+.steps{display:flex;flex-direction:column;gap:0;margin-top:26px;}
+.step{display:flex;gap:20px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,.06);align-items:flex-start;}
+.step:last-child{border-bottom:none;}
+.step-num{min-width:42px;height:42px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:17px;flex-shrink:0;}
+.step-body h5{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.step-body p{font-size:12.5px;color:var(--muted);line-height:1.6;}
+
+/* MÉTRICAS GRID */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px;}
+.metric-box{background:rgba(200,149,42,.08);border:1px solid rgba(200,149,42,.2);border-radius:10px;padding:16px 14px;text-align:center;}
+.metric-box .mval{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--gold-light);}
+.metric-box .mlbl{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+.cierre-title{font-family:'Playfair Display',serif;font-size:clamp(34px,4.5vw,58px);color:var(--white);font-weight:900;max-width:680px;margin:0 auto 20px;}
+.cierre-title em{color:var(--gold);font-style:normal;}
+.cierre-sub{font-size:15px;color:var(--muted);max-width:520px;margin:0 auto 36px;line-height:1.7;}
+.cierre-btn{display:inline-block;background:var(--gold);color:var(--navy);padding:13px 38px;border-radius:8px;font-weight:700;font-size:14px;}
+
+.ref-list{list-style:none;margin-top:22px;display:flex;flex-direction:column;gap:13px;}
+.ref-list li{font-size:12.5px;color:var(--muted);line-height:1.75;padding-left:24px;text-indent:-24px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:11px;}
+.ref-list li em{color:rgba(255,255,255,.6);}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="snum">1 / 12</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- 0 PORTADA -->
+<div class="slide active" id="s0">
+  <div class="p0k a d1">Electiva Marketing Digital · Tercera parte · UNIMINUTO · 2026</div>
+  <div class="p0t a d2">Riesgo<span>Calc</span></div>
+  <p class="p0s a d3">Google Analytics aplicado: cómo medir, entender y mejorar el ecosistema digital de RiesgoCalc con datos reales en lugar de suposiciones.</p>
+  <div class="p0m a d4">
+    <span><strong>Presentado por:</strong> Óscar Andrés Bastidas Bolaños — ID: 370618</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Pasto, Nariño — Junio 2026</strong></span>
+  </div>
+  <div class="p0b a d5"><span class="big">Google<br>Analytics<br>Tercera Parte</span></div>
+</div>
+
+<!-- 1 INTRODUCCIÓN -->
+<div class="slide std" id="s1" style="background:var(--dark);">
+  <div class="tag tag-gold a d1">Introducción</div>
+  <h2 class="sec-title a d2">De vender por intuición a vender con datos</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <p class="a d4" style="font-size:14px;color:var(--muted);line-height:1.8;">Las dos partes anteriores diseñaron el negocio digital de RiesgoCalc y su ecosistema e-commerce completo. Esta tercera parte responde la pregunta que falta: ¿cómo sabemos si todo eso realmente está funcionando? Google Analytics es la herramienta que convierte cada clic, cada visita y cada formulario lleno en información que se puede usar para decidir mejor (Gorostiza & Barainca, 2017).</p>
+    <div class="card a d4">
+      <div class="ico">📊</div>
+      <h4>Por qué importa medir</h4>
+      <p>Sin datos, cada decisión de marketing es una apuesta. Con Google Analytics, RiesgoCalc puede ver exactamente qué contenido atrae clientes, qué página los hace abandonar y qué canal trae los diagnósticos que terminan en contrato.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 2 DATOS A RECUPERAR -->
+<div class="slide std" id="s2" style="background:var(--navy);">
+  <div class="tag tag-gold a d1">Datos por Recuperar</div>
+  <h2 class="sec-title a d2">Qué información recoge Google Analytics del ecosistema RiesgoCalc</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2"><div class="ico">👥</div><h4>Origen del visitante</h4><p>De dónde llega cada persona: búsqueda en Google, LinkedIn, correo, o enlace directo. Permite saber qué canal trae más clientes potenciales (Macía & Santoja, 2018).</p></div>
+    <div class="card a d3"><div class="ico">🧮</div><h4>Uso del simulador</h4><p>Cuántas personas inician el cálculo de riesgo, cuántas lo terminan y en qué pregunta abandonan. Es el dato más importante porque es el corazón del ecosistema.</p></div>
+    <div class="card a d4"><div class="ico">⏱️</div><h4>Tiempo en el sitio</h4><p>Cuánto tiempo pasa un visitante leyendo el blog o explorando la landing page antes de irse o de pedir el diagnóstico.</p></div>
+    <div class="card a d3"><div class="ico">📍</div><h4>Ubicación geográfica</h4><p>Ciudad y sector de las empresas que visitan el sitio, útil para saber dónde concentrar la pauta y las alianzas con IPS.</p></div>
+    <div class="card a d4"><div class="ico">📱</div><h4>Dispositivo usado</h4><p>Si el cliente entra desde computador o celular, lo que ayuda a decidir en qué versión invertir más esfuerzo de diseño.</p></div>
+    <div class="card a d5"><div class="ico">🎯</div><h4>Conversiones</h4><p>Cuántos formularios de cotización se completan y cuántos de esos se convierten finalmente en clientes pagos.</p></div>
+  </div>
+</div>
+
+<!-- 3 PASOS PARA RECABAR/PROCESAR/ANALIZAR -->
+<div class="slide std" id="s3" style="background:var(--dark);">
+  <div class="tag tag-teal a d1">Ruta de Trabajo en Google Analytics</div>
+  <h2 class="sec-title a d2">Pasos para recabar, procesar y analizar la información</h2>
+  <div class="line a d3"></div>
+  <div class="steps a d3">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h5>Crear la cuenta y la propiedad GA4</h5><p>Registrar www.riesgocalc.co como propiedad en Google Analytics 4 e instalar la etiqueta de seguimiento en cada página del sitio.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h5>Configurar eventos clave</h5><p>Marcar como eventos importantes: inicio del simulador, finalización del simulador, descarga de guía y envío del formulario de contacto.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h5>Vincular con Google Search Console</h5><p>Conectar la cuenta para ver qué términos de búsqueda traen visitas y qué posición ocupa cada artículo del blog en Google.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h5>Crear paneles personalizados</h5><p>Diseñar un panel con las métricas que más importan a RiesgoCalc: visitas, uso del simulador y formularios completados, todo en una sola vista.</p></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h5>Revisar y analizar resultados</h5><p>Comparar periodos, identificar qué contenido funciona mejor y compartir hallazgos con el equipo comercial cada mes.</p></div></div>
+  </div>
+</div>
+
+<!-- 4 SEGUIMIENTO PERMANENTE -->
+<div class="slide std" id="s4" style="background:var(--navy);">
+  <div class="tag tag-gold a d1">Seguimiento Permanente</div>
+  <h2 class="sec-title a d2">Cómo se vigila el negocio mes a mes en Google Analytics</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="card a d3"><div class="ico">📅</div><h4>Revisión semanal</h4><p>Cada lunes se revisa el número de diagnósticos completados y se compara con la semana anterior para detectar caídas tempranas.</p></div>
+    <div class="card a d4"><div class="ico">🎯</div><h4>Objetivos configurados en GA4</h4><p>Se definen metas concretas: 50 diagnósticos al mes, tasa de conversión del simulador mayor al 30%, y tiempo promedio en el sitio mayor a 2 minutos.</p></div>
+    <div class="card a d3"><div class="ico">🚨</div><h4>Alertas automáticas</h4><p>Google Analytics se configura para avisar por correo si las visitas caen más del 20% en una semana, permitiendo reaccionar a tiempo.</p></div>
+    <div class="card a d4"><div class="ico">📈</div><h4>Informe mensual al equipo</h4><p>Un resumen simple cada mes con los 3 datos que más importan: de dónde vinieron los clientes, qué contenido funcionó y cuántos diagnósticos se completaron.</p></div>
+  </div>
+</div>
+
+<!-- 5 MÉTRICAS CLAVE -->
+<div class="slide std" id="s5" style="background:var(--dark);">
+  <div class="tag tag-teal a d1">Indicadores Clave de Rendimiento (KPI)</div>
+  <h2 class="sec-title a d2">Las métricas que RiesgoCalc vigila en su panel</h2>
+  <div class="line a d3"></div>
+  <div class="metric-grid a d3">
+    <div class="metric-box"><div class="mval">30%</div><div class="mlbl">Tasa de conversión meta del simulador</div></div>
+    <div class="metric-box"><div class="mval">2 min</div><div class="mlbl">Tiempo promedio en el sitio</div></div>
+    <div class="metric-box"><div class="mval">50</div><div class="mlbl">Diagnósticos completados al mes</div></div>
+    <div class="metric-box"><div class="mval">35%</div><div class="mlbl">Tráfico orgánico desde el blog</div></div>
+  </div>
+  <p class="a d4" style="font-size:13px;color:var(--muted);margin-top:30px;max-width:680px;">Estas métricas, recomendadas por Gorostiza y Barainca (2017) como base de cualquier estrategia de analítica web, permiten que el equipo de RiesgoCalc tome decisiones basadas en evidencia y no en percepciones.</p>
+</div>
+
+<!-- 6 ESTRATEGIAS A PARTIR DE LOS INFORMES -->
+<div class="slide std" id="s6" style="background:var(--navy);">
+  <div class="tag tag-gold a d1">Estrategias de Marketing a Partir de los Informes</div>
+  <h2 class="sec-title a d2">Qué decisiones toma RiesgoCalc según lo que muestra Google Analytics</h2>
+  <div class="line a d3"></div>
+  <div class="list-items a d3">
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si el simulador tiene alto abandono en la pregunta 2:</strong> se simplifica esa pregunta o se agrega una explicación visual.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si un artículo del blog trae mucho tráfico pero pocas conversiones:</strong> se agrega un llamado a la acción más visible hacia el simulador.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si LinkedIn genera más visitas que conversiones reales:</strong> se ajusta la segmentación de la pauta a cargos más específicos.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si una ciudad concentra mucho tráfico sin clientes:</strong> se evalúa si falta una alianza local con una IPS de esa zona.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si el tráfico móvil crece pero la conversión móvil es baja:</strong> se prioriza el rediseño del simulador para celular.</p></div>
+  </div>
+</div>
+
+<!-- 7 BENEFICIOS -->
+<div class="slide std" id="s7" style="background:var(--dark);">
+  <div class="tag tag-teal a d1">Reflexión — Beneficios de Google Analytics</div>
+  <h2 class="sec-title a d2">Lo que esta herramienta le da a un emprendedor</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2"><div class="ico">🔍</div><h4>Visibilidad real</h4><p>Permite ver con datos reales si el negocio funciona, en lugar de adivinar a partir de sensaciones.</p></div>
+    <div class="card a d3"><div class="ico">💰</div><h4>Mejor uso del presupuesto</h4><p>Evita gastar dinero en canales que no traen clientes, dirigiendo la inversión a lo que sí funciona.</p></div>
+    <div class="card a d4"><div class="ico">⚡</div><h4>Decisiones más rápidas</h4><p>Un emprendedor con datos a la mano corrige errores en días, no en meses, antes de que afecten las ventas.</p></div>
+  </div>
+</div>
+
+<!-- 8 CIERRE -->
+<div class="slide" id="s8" style="background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;">
+  <div class="tag tag-gold a d1" style="display:inline-block;">Cierre</div>
+  <div class="cierre-title a d2">Lo que no se mide, <em>no se puede mejorar</em></div>
+  <p class="cierre-sub a d3">Google Analytics convierte cada visita al simulador de RiesgoCalc en una pista sobre lo que está funcionando y lo que necesita cambiar. Para un negocio que apenas comienza, esa información vale más que cualquier intuición.</p>
+  <div class="a d4"><span class="cierre-btn">analytics.google.com → RiesgoCalc</span></div>
+</div>
+
+<!-- 9 BIBLIOGRAFÍA -->
+<div class="slide" id="s9" style="background:var(--navy);padding:60px 100px;justify-content:flex-start;overflow-y:auto;">
+  <div class="tag tag-teal a d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list">
+    <li class="a d2">Gorostiza Esquerdeiro, I., & Barainca Fontao, A. (Eds.). (2017). <em>Google Analytics: mide y vencerás</em> (pp. 40-53, 87-94). Difusora Larousse - Anaya Multimedia.</li>
+    <li class="a d2">Macía, F., & Santoja, M. (Eds.). (2018). <em>Marketing en redes sociales</em> (pp. 225-242). Anaya Multimedia.</li>
+    <li class="a d3">Palomino, F. (Ed.). (2020). <em>Investigación de los métodos de evaluación de la experiencia de usuario que aplican analítica web: una revisión sistemática</em> [Trabajo de grado, Pontificia Universidad Católica del Perú] (pp. 1-25). Repositorio de Tesis PUCP.</li>
+    <li class="a d3">Blanco, E. (2023, 23 de junio). Google Analytics: qué es y cómo hacer la configuración inicial. <em>RD Station</em>. https://www.rdstation.com/blog/es/google-analytics/</li>
+    <li class="a d4">Campos, R., & López, S. (2020). Grandes datos, Google y desempleo. <em>Estudios Económicos, 35</em>(1), 125-151. https://www.redalyc.org/journal/597/59763854004/html/index.html</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){
+  slides[cur].classList.remove('active');slides[cur].classList.add('exit');
+  setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),700);
+  cur=((n%total)+total)%total;slides[cur].classList.add('active');
+  document.getElementById('prog').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('snum').textContent=(cur+1)+' / '+total;
+}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>
