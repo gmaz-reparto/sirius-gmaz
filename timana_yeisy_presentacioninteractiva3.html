@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindWork — Google Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2D6A4F;--emerald:#40916C;--mint:#74C69D;
+  --coral:#E76F51;--peach:#F4A261;--white:#FFFFFF;--dark:#1B2D1F;--muted:#7A9E8E;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Nunito',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .65s ease,transform .65s ease;transform:translateY(40px);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:translateY(0);}
+.slide.exit{opacity:0;transform:translateY(-40px);}
+#prog{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--coral),var(--peach));transition:width .4s ease;z-index:100;}
+#snum{position:fixed;bottom:22px;right:26px;font-size:11px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(231,111,81,.3);border-color:var(--coral);}
+#prev{left:14px;}#next{right:14px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:20px;font-weight:700;margin-bottom:14px;}
+.tag-sage{background:rgba(45,106,79,.25);color:var(--mint);}
+.tag-coral{background:rgba(231,111,81,.2);color:var(--peach);}
+.line{width:44px;height:3px;background:linear-gradient(90deg,var(--coral),var(--peach));border-radius:2px;margin:10px 0 18px;}
+@keyframes rise{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.slide.active .a{animation:rise .7s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.25s;}.d3{animation-delay:.4s;}.d4{animation-delay:.55s;}.d5{animation-delay:.7s;}
+
+#s0{background:var(--sage);justify-content:center;align-items:flex-start;padding:80px 100px;overflow:hidden;}
+#s0::before{content:'';position:absolute;right:-120px;top:-120px;width:550px;height:550px;border-radius:50%;background:radial-gradient(circle,rgba(116,198,157,.18),transparent 65%);}
+.p0t{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mint);font-weight:700;margin-bottom:20px;}
+.p0title{font-family:'Cormorant Garamond',serif;font-size:clamp(54px,7.5vw,88px);font-weight:700;color:var(--white);line-height:1;margin-bottom:10px;}
+.p0title span{color:var(--peach);}
+.p0sub{font-size:17px;color:rgba(255,255,255,.7);margin-bottom:44px;max-width:500px;line-height:1.7;}
+.p0meta span{display:block;font-size:13px;color:rgba(255,255,255,.5);margin-bottom:4px;}
+.p0meta strong{color:rgba(255,255,255,.85);}
+.p0c{position:absolute;right:90px;top:50%;transform:translateY(-50%);width:180px;height:180px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:16px;}
+.p0c .em{font-size:44px;}
+.p0c .lbl{font-size:11px;color:rgba(255,255,255,.85);font-weight:700;margin-top:6px;line-height:1.3;}
+
+.std{padding:60px 100px;justify-content:center;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,3.2vw,40px);color:var(--white);margin-bottom:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:28px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px 17px;transition:transform .2s,border-color .2s;}
+.card:hover{transform:translateY(-4px);border-color:var(--peach);}
+.card .ico{font-size:24px;margin-bottom:9px;}
+.card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;}
+.list-items{display:flex;flex-direction:column;gap:11px;}
+.li-row{display:flex;gap:12px;align-items:flex-start;}
+.li-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);flex-shrink:0;margin-top:5px;}
+.li-row p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+
+.steps{display:flex;flex-direction:column;gap:0;margin-top:26px;}
+.step{display:flex;gap:20px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,.06);align-items:flex-start;}
+.step:last-child{border-bottom:none;}
+.step-num{min-width:42px;height:42px;border-radius:50%;background:var(--coral);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;flex-shrink:0;}
+.step-body h5{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.step-body p{font-size:12.5px;color:var(--muted);line-height:1.6;}
+
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px;}
+.metric-box{background:rgba(231,111,81,.08);border:1px solid rgba(231,111,81,.2);border-radius:10px;padding:16px 14px;text-align:center;}
+.metric-box .mval{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--peach);}
+.metric-box .mlbl{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+.ct{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,4.5vw,56px);color:var(--white);font-weight:700;max-width:680px;margin:0 auto 18px;text-align:center;}
+.ct em{color:var(--peach);font-style:normal;}
+.cs{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto 34px;line-height:1.7;text-align:center;}
+.cbtn{display:inline-block;background:var(--coral);color:#fff;padding:13px 38px;border-radius:8px;font-weight:700;font-size:14px;}
+
+.ref-list{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:13px;}
+.ref-list li{font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.75;padding-left:22px;text-indent:-22px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:11px;}
+.ref-list li em{color:rgba(255,255,255,.7);}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="snum">1 / 12</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- 0 PORTADA -->
+<div class="slide active" id="s0">
+  <div class="p0t a d1">Electiva Marketing Digital · Tercera parte · UNIMINUTO · 2026</div>
+  <div class="p0title a d2">Mind<span>Work</span></div>
+  <p class="p0sub a d3">Google Analytics aplicado: cómo medir, entender y mejorar el ecosistema digital de MindWork con datos reales sobre el comportamiento de cada usuario.</p>
+  <div class="p0meta a d4">
+    <span><strong>Presentado por:</strong> Yeisy Anabell Timaná Enríquez — ID: 1101005</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Pasto, Nariño — Junio 2026</strong></span>
+  </div>
+  <div class="p0c a d5"><div class="em">📈</div><div class="lbl">Google Analytics<br>Tercera Parte</div></div>
+</div>
+
+<!-- 1 INTRODUCCIÓN -->
+<div class="slide std" id="s1" style="background:var(--dark);">
+  <div class="tag tag-coral a d1">Introducción</div>
+  <h2 class="sec-title a d2">De confiar en la intuición a confiar en los datos</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <p class="a d4" style="font-size:14px;color:var(--muted);line-height:1.8;">Las partes anteriores diseñaron MindWork como negocio digital y construyeron su ecosistema e-commerce completo. Esta tercera parte responde algo esencial: ¿cómo sabe MindWork si realmente está ayudando a las personas y si el negocio está creciendo? Google Analytics convierte cada visita, cada test completado y cada suscripción en información medible (Gorostiza & Barainca, 2017).</p>
+    <div class="card a d4">
+      <div class="ico">📊</div>
+      <h4>Por qué importa medir el bienestar digital</h4>
+      <p>MindWork vende confianza. Sin datos, es imposible saber si el contenido de TikTok realmente trae usuarios comprometidos o solo curiosos que nunca regresan.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 2 DATOS A RECUPERAR -->
+<div class="slide std" id="s2" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Datos por Recuperar</div>
+  <h2 class="sec-title a d2">Qué información recoge Google Analytics del ecosistema MindWork</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2"><div class="ico">👥</div><h4>Origen del visitante</h4><p>Si llega desde TikTok, Instagram, el blog o el podcast. Permite ver qué red social realmente convierte, no solo cuál tiene más vistas (Macía & Santoja, 2018).</p></div>
+    <div class="card a d3"><div class="ico">🧪</div><h4>Uso del test de bienestar</h4><p>Cuántas personas inician el test gratuito, cuántas lo completan y qué resultado obtuvieron, el dato más valioso para entender a la audiencia.</p></div>
+    <div class="card a d4"><div class="ico">⏱️</div><h4>Tiempo de permanencia</h4><p>Cuánto tiempo pasa un usuario explorando la biblioteca de meditaciones antes de decidir suscribirse o salir del sitio.</p></div>
+    <div class="card a d3"><div class="ico">📍</div><h4>Ciudad del usuario</h4><p>Permite identificar en qué ciudades de Colombia crece más la comunidad y dónde enfocar futuras alianzas con empresas remotas.</p></div>
+    <div class="card a d4"><div class="ico">📱</div><h4>Dispositivo de acceso</h4><p>Si los usuarios entran desde celular o computador, dato clave porque MindWork funciona como app web (PWA).</p></div>
+    <div class="card a d5"><div class="ico">💳</div><h4>Tasa de conversión a pago</h4><p>Cuántos usuarios del mes de prueba gratuito terminan pagando la suscripción mensual.</p></div>
+  </div>
+</div>
+
+<!-- 3 PASOS -->
+<div class="slide std" id="s3" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Ruta de Trabajo en Google Analytics</div>
+  <h2 class="sec-title a d2">Pasos para recabar, procesar y analizar la información</h2>
+  <div class="line a d3"></div>
+  <div class="steps a d3">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h5>Crear la propiedad GA4 de MindWork</h5><p>Registrar www.mindwork.co en Google Analytics 4 e instalar la etiqueta en cada pantalla de la plataforma.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h5>Configurar eventos de comportamiento</h5><p>Marcar como eventos: inicio del test, finalización del test, primera meditación escuchada y suscripción activada.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h5>Conectar con TikTok e Instagram Insights</h5><p>Cruzar los datos de redes sociales con Google Analytics para ver qué contenido específico trae más usuarios que se quedan.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h5>Construir un panel personalizado</h5><p>Diseñar un panel con las métricas más importantes: nuevos usuarios, test completados y tasa de conversión a suscripción.</p></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h5>Analizar y compartir hallazgos</h5><p>Revisar resultados cada semana y compartir lo aprendido con el equipo de contenido para ajustar el siguiente video.</p></div></div>
+  </div>
+</div>
+
+<!-- 4 SEGUIMIENTO PERMANENTE -->
+<div class="slide std" id="s4" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Seguimiento Permanente</div>
+  <h2 class="sec-title a d2">Cómo se vigila el negocio mes a mes en Google Analytics</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="card a d3"><div class="ico">📅</div><h4>Revisión semanal de retención</h4><p>Cada semana se revisa cuántos usuarios siguen activos después de 7 días, el indicador más crítico en una app de bienestar.</p></div>
+    <div class="card a d4"><div class="ico">🎯</div><h4>Objetivos configurados en GA4</h4><p>Metas claras: 500 test completados al mes, retención mayor al 60% a los 30 días y conversión a pago mayor al 70%.</p></div>
+    <div class="card a d3"><div class="ico">🚨</div><h4>Alertas de caída</h4><p>Notificación automática si las descargas del test caen más del 25% en una semana, para reaccionar antes de perder tracción.</p></div>
+    <div class="card a d4"><div class="ico">📈</div><h4>Informe mensual de comunidad</h4><p>Resumen con los 3 datos esenciales: de dónde vienen los usuarios, qué contenido retuvo más gente y cuántos se suscribieron.</p></div>
+  </div>
+</div>
+
+<!-- 5 MÉTRICAS -->
+<div class="slide std" id="s5" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Indicadores Clave de Rendimiento (KPI)</div>
+  <h2 class="sec-title a d2">Las métricas que MindWork vigila en su panel</h2>
+  <div class="line a d3"></div>
+  <div class="metric-grid a d3">
+    <div class="metric-box"><div class="mval">60%</div><div class="mlbl">Retención meta a 30 días</div></div>
+    <div class="metric-box"><div class="mval">5 min</div><div class="mlbl">Duración promedio de sesión</div></div>
+    <div class="metric-box"><div class="mval">500</div><div class="mlbl">Test de bienestar al mes</div></div>
+    <div class="metric-box"><div class="mval">70%</div><div class="mlbl">Conversión de prueba a pago</div></div>
+  </div>
+  <p class="a d4" style="font-size:13px;color:var(--muted);margin-top:30px;max-width:680px;">Estas métricas permiten que MindWork sepa, con evidencia y no con sensaciones, si su contenido en redes está generando comunidad real (Gorostiza & Barainca, 2017).</p>
+</div>
+
+<!-- 6 ESTRATEGIAS -->
+<div class="slide std" id="s6" style="background:var(--sage);">
+  <div class="tag tag-coral a d1">Estrategias de Marketing a Partir de los Informes</div>
+  <h2 class="sec-title a d2">Qué decisiones toma MindWork según lo que muestra Google Analytics</h2>
+  <div class="line a d3"></div>
+  <div class="list-items a d3">
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si un video de TikTok trae muchas visitas pero pocos test completados:</strong> se revisa si el mensaje del video coincide con lo que ofrece la landing page.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si la retención cae después del día 7:</strong> se agregan recordatorios de racha más visibles en esos días críticos.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si una ciudad tiene mucho tráfico pero poca conversión:</strong> se evalúa una alianza con una empresa remota local para esa zona.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si el podcast trae usuarios con mayor tasa de pago que TikTok:</strong> se invierte más tiempo en producir nuevos episodios.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si el plan empresarial tiene baja conversión:</strong> se ajusta el mensaje de la propuesta B2B con datos reales de bienestar laboral.</p></div>
+  </div>
+</div>
+
+<!-- 7 BENEFICIOS -->
+<div class="slide std" id="s7" style="background:var(--dark);">
+  <div class="tag tag-sage a d1">Reflexión — Beneficios de Google Analytics</div>
+  <h2 class="sec-title a d2">Lo que esta herramienta le da a un emprendedor</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2"><div class="ico">🔍</div><h4>Entender a la audiencia real</h4><p>Permite ver con precisión qué necesita la gente que usa la plataforma, más allá de las suposiciones iniciales.</p></div>
+    <div class="card a d3"><div class="ico">💰</div><h4>Invertir mejor el presupuesto</h4><p>Evita gastar en contenido o canales que no generan usuarios comprometidos con el servicio.</p></div>
+    <div class="card a d4"><div class="ico">⚡</div><h4>Mejorar más rápido</h4><p>Un emprendedor con datos corrige su estrategia en días, no después de meses de pérdidas silenciosas.</p></div>
+  </div>
+</div>
+
+<!-- 8 CIERRE -->
+<div class="slide" id="s8" style="background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;">
+  <div class="tag tag-coral a d1" style="display:inline-block;">Cierre</div>
+  <div class="ct a d2">El bienestar se siente, <em>pero también se puede medir</em></div>
+  <p class="cs a d3">Google Analytics le permite a MindWork confirmar con datos reales que su contenido está ayudando a las personas y que el negocio crece de forma sostenible, no solo intuitiva.</p>
+  <div class="a d4"><span class="cbtn">analytics.google.com → MindWork</span></div>
+</div>
+
+<!-- 9 BIBLIOGRAFÍA -->
+<div class="slide" id="s9" style="background:var(--sage);padding:60px 100px;justify-content:flex-start;overflow-y:auto;">
+  <div class="tag tag-sage a d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list">
+    <li class="a d2">Gorostiza Esquerdeiro, I., & Barainca Fontao, A. (Eds.). (2017). <em>Google Analytics: mide y vencerás</em> (pp. 40-53, 87-94). Difusora Larousse - Anaya Multimedia.</li>
+    <li class="a d2">Macía, F., & Santoja, M. (Eds.). (2018). <em>Marketing en redes sociales</em> (pp. 225-242). Anaya Multimedia.</li>
+    <li class="a d3">Palomino, F. (Ed.). (2020). <em>Investigación de los métodos de evaluación de la experiencia de usuario que aplican analítica web: una revisión sistemática</em> [Trabajo de grado, Pontificia Universidad Católica del Perú] (pp. 1-25). Repositorio de Tesis PUCP.</li>
+    <li class="a d3">Blanco, E. (2023, 23 de junio). Google Analytics: qué es y cómo hacer la configuración inicial. <em>RD Station</em>. https://www.rdstation.com/blog/es/google-analytics/</li>
+    <li class="a d4">Campos, R., & López, S. (2020). Grandes datos, Google y desempleo. <em>Estudios Económicos, 35</em>(1), 125-151. https://www.redalyc.org/journal/597/59763854004/html/index.html</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){
+  slides[cur].classList.remove('active');slides[cur].classList.add('exit');
+  setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),700);
+  cur=((n%total)+total)%total;slides[cur].classList.add('active');
+  document.getElementById('prog').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('snum').textContent=(cur+1)+' / '+total;
+}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>

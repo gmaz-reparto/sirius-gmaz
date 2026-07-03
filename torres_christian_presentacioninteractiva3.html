@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProtegePyme — Google Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#E8541A;--amber:#F59E0B;--navy:#0F2337;--white:#FFFFFF;--dark:#080F18;--muted:#7A9BB5;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Source Sans 3',sans-serif;}
+.deck{width:100%;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .55s ease,transform .55s ease;transform:scale(.97);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:scale(1);}
+.slide.exit{opacity:0;transform:scale(1.03);}
+#prog{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--orange),var(--amber));transition:width .4s ease;z-index:100;}
+#snum{position:fixed;bottom:20px;right:24px;font-size:11px;color:var(--muted);letter-spacing:.1em;z-index:100;}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:6px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;backdrop-filter:blur(8px);}
+.nav-btn:hover{background:rgba(232,84,26,.3);border-color:var(--orange);}
+#prev{left:12px;}#next{right:12px;}
+.tag{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:3px;font-weight:700;margin-bottom:14px;}
+.tag-or{background:rgba(232,84,26,.18);color:#FFA07A;}
+.tag-nav{background:rgba(15,35,55,.5);color:var(--muted);border:1px solid rgba(255,255,255,.1);}
+.line{width:40px;height:3px;background:var(--orange);border-radius:1px;margin:10px 0 18px;}
+@keyframes slideR{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+.slide.active .a{animation:slideR .65s cubic-bezier(.22,.68,0,1.2) both;}
+.d1{animation-delay:.1s;}.d2{animation-delay:.22s;}.d3{animation-delay:.34s;}.d4{animation-delay:.46s;}.d5{animation-delay:.58s;}
+
+#s0{background:var(--navy);justify-content:center;align-items:flex-start;padding:80px 100px;overflow:hidden;}
+#s0::before{content:'';position:absolute;right:0;top:0;width:40%;height:100%;background:linear-gradient(135deg,var(--orange),var(--amber));opacity:.08;}
+.p0k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:18px;}
+.p0t{font-family:'Bebas Neue',sans-serif;font-size:clamp(58px,8vw,105px);color:var(--white);line-height:.95;margin-bottom:14px;letter-spacing:.02em;}
+.p0t span{color:var(--orange);}
+.p0s{font-size:17px;color:var(--muted);margin-bottom:44px;max-width:480px;line-height:1.65;}
+.p0m span{display:block;font-size:13px;color:rgba(255,255,255,.45);margin-bottom:4px;}
+.p0m strong{color:rgba(255,255,255,.8);}
+.shield{position:absolute;right:110px;top:50%;transform:translateY(-50%);font-size:130px;opacity:.12;}
+
+.std{padding:60px 100px;justify-content:center;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,3.2vw,40px);color:var(--white);margin-bottom:8px;letter-spacing:.02em;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:26px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:26px;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:20px 17px;transition:transform .2s,border-color .2s;}
+.card:hover{transform:translateY(-3px);border-color:var(--orange);}
+.card .ico{font-size:24px;margin-bottom:9px;}
+.card h4{font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.card p{font-size:12px;color:var(--muted);line-height:1.6;}
+.list-items{display:flex;flex-direction:column;gap:11px;}
+.li-row{display:flex;gap:12px;align-items:flex-start;}
+.li-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;margin-top:6px;}
+.li-row p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+
+.steps{display:flex;flex-direction:column;gap:0;margin-top:26px;}
+.step{display:flex;gap:20px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,.06);align-items:flex-start;}
+.step:last-child{border-bottom:none;}
+.step-num{min-width:42px;height:42px;border-radius:6px;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;flex-shrink:0;}
+.step-body h5{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.step-body p{font-size:12.5px;color:var(--muted);line-height:1.6;}
+
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px;}
+.metric-box{background:rgba(232,84,26,.08);border:1px solid rgba(232,84,26,.2);border-radius:8px;padding:16px 14px;text-align:center;}
+.metric-box .mval{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--amber);}
+.metric-box .mlbl{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+.ct{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,66px);color:var(--white);font-weight:400;max-width:700px;margin:0 auto 18px;letter-spacing:.03em;text-align:center;}
+.ct em{color:var(--orange);font-style:normal;}
+.cs{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto 34px;line-height:1.7;text-align:center;}
+.cbtn{display:inline-block;background:var(--orange);color:#fff;padding:13px 38px;border-radius:6px;font-weight:700;font-size:14px;}
+
+.ref-list{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:12px;}
+.ref-list li{font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.75;padding-left:20px;text-indent:-20px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:11px;}
+.ref-list li em{color:rgba(255,255,255,.65);}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="snum">1 / 12</div>
+<button class="nav-btn" id="prev">‹</button>
+<button class="nav-btn" id="next">›</button>
+<div class="deck">
+
+<!-- 0 PORTADA -->
+<div class="slide active" id="s0">
+  <div class="shield">🛡️</div>
+  <div class="p0k a d1">Electiva Marketing Digital · Tercera parte · UNIMINUTO · 2026</div>
+  <div class="p0t a d2">Protege<span>Pyme</span></div>
+  <p class="p0s a d3">Google Analytics aplicado: cómo medir, entender y mejorar el ecosistema digital de ProtegePyme con datos reales del comprador de EPP.</p>
+  <div class="p0m a d4">
+    <span><strong>Presentado por:</strong> Christian Camilo Torres Naranjo — ID: 1102118</span>
+    <span><strong>Curso:</strong> Electiva Marketing Digital</span>
+    <span><strong>Pasto, Nariño — Junio 2026</strong></span>
+  </div>
+</div>
+
+<!-- 1 INTRODUCCIÓN -->
+<div class="slide std" id="s1" style="background:var(--dark);">
+  <div class="tag tag-or a d1">Introducción</div>
+  <h2 class="sec-title a d2">De vender EPP por suposición a vender con evidencia</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <p class="a d4" style="font-size:14px;color:var(--muted);line-height:1.8;">Las dos partes anteriores construyeron ProtegePyme como marketplace digital de EPP y su ecosistema e-commerce completo. Esta tercera parte responde cómo saber si la tienda realmente está funcionando. Google Analytics convierte cada búsqueda, cada cálculo de kit y cada pedido en datos que ProtegePyme puede usar para vender mejor (Gorostiza & Barainca, 2017).</p>
+    <div class="card a d4">
+      <div class="ico">📊</div>
+      <h4>Por qué importa medir en e-commerce de EPP</h4>
+      <p>Sin datos, ProtegePyme no sabría si el cliente abandona el carrito por el precio del envío o por no encontrar la norma que necesita. Cada dato resuelve una duda concreta del negocio.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 2 DATOS A RECUPERAR -->
+<div class="slide std" id="s2" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Datos por Recuperar</div>
+  <h2 class="sec-title a d2">Qué información recoge Google Analytics del ecosistema ProtegePyme</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2"><div class="ico">👥</div><h4>Origen del visitante</h4><p>Si llega desde Google, YouTube, email o una alianza con una IPS. Permite saber qué canal trae compradores reales (Macía & Santoja, 2018).</p></div>
+    <div class="card a d3"><div class="ico">🧮</div><h4>Uso de la calculadora de kit EPP</h4><p>Cuántas personas calculan su kit, cuántas lo agregan al carrito y en qué sector se concentran las búsquedas.</p></div>
+    <div class="card a d4"><div class="ico">🛒</div><h4>Comportamiento del carrito</h4><p>En qué paso del pago abandonan los compradores: costo de envío, método de pago o falta de información normativa.</p></div>
+    <div class="card a d3"><div class="ico">📍</div><h4>Ciudad y sector del comprador</h4><p>Permite saber en qué ciudades y sectores económicos hay más demanda para priorizar inventario y alianzas.</p></div>
+    <div class="card a d4"><div class="ico">📱</div><h4>Dispositivo de compra</h4><p>Si la compra final se hace desde computador o celular, dato clave para decidir dónde mejorar primero la experiencia.</p></div>
+    <div class="card a d5"><div class="ico">🔄</div><h4>Tasa de recompra</h4><p>Cuántos clientes vuelven a comprar cuando su EPP está por vencer, el indicador más importante de fidelización.</p></div>
+  </div>
+</div>
+
+<!-- 3 PASOS -->
+<div class="slide std" id="s3" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Ruta de Trabajo en Google Analytics</div>
+  <h2 class="sec-title a d2">Pasos para recabar, procesar y analizar la información</h2>
+  <div class="line a d3"></div>
+  <div class="steps a d3">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h5>Crear la propiedad GA4 de ProtegePyme</h5><p>Registrar www.protegepyme.co en Google Analytics 4 e instalar la etiqueta en todo el catálogo y el carrito.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h5>Configurar eventos de e-commerce</h5><p>Activar el seguimiento de comercio electrónico mejorado: vista de producto, agregar al carrito, inicio de pago y compra completada.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h5>Vincular con Google Search Console</h5><p>Conectar la cuenta para ver qué búsquedas por sector y norma traen tráfico a los artículos del blog.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h5>Crear el panel de ventas digitales</h5><p>Diseñar un panel con visitas, kits calculados, carritos abandonados y pedidos completados en una sola vista.</p></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><h5>Analizar y ajustar el catálogo</h5><p>Revisar qué productos se buscan más y no están en el catálogo, para ampliar el inventario según la demanda real.</p></div></div>
+  </div>
+</div>
+
+<!-- 4 SEGUIMIENTO PERMANENTE -->
+<div class="slide std" id="s4" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Seguimiento Permanente</div>
+  <h2 class="sec-title a d2">Cómo se vigila el negocio mes a mes en Google Analytics</h2>
+  <div class="line a d3"></div>
+  <div class="grid2">
+    <div class="card a d3"><div class="ico">📅</div><h4>Revisión semanal de pedidos</h4><p>Cada semana se compara el número de pedidos completados contra la semana anterior para detectar caídas a tiempo.</p></div>
+    <div class="card a d4"><div class="ico">🎯</div><h4>Objetivos configurados en GA4</h4><p>Metas concretas: 80 pedidos al mes, tasa de abandono de carrito menor al 50% y recompra mayor al 60%.</p></div>
+    <div class="card a d3"><div class="ico">🚨</div><h4>Alertas automáticas</h4><p>Aviso por correo si las visitas a la calculadora de kit caen más del 20% en una semana.</p></div>
+    <div class="card a d4"><div class="ico">📈</div><h4>Informe mensual al equipo</h4><p>Resumen simple con los productos más vendidos, el sector que más compra y el canal que trajo más pedidos.</p></div>
+  </div>
+</div>
+
+<!-- 5 MÉTRICAS -->
+<div class="slide std" id="s5" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Indicadores Clave de Rendimiento (KPI)</div>
+  <h2 class="sec-title a d2">Las métricas que ProtegePyme vigila en su panel</h2>
+  <div class="line a d3"></div>
+  <div class="metric-grid a d3">
+    <div class="metric-box"><div class="mval">80</div><div class="mlbl">Pedidos completados al mes</div></div>
+    <div class="metric-box"><div class="mval">&lt;50%</div><div class="mlbl">Abandono de carrito meta</div></div>
+    <div class="metric-box"><div class="mval">60%</div><div class="mlbl">Tasa de recompra de clientes</div></div>
+    <div class="metric-box"><div class="mval">35%</div><div class="mlbl">Tráfico orgánico desde blog y YouTube</div></div>
+  </div>
+  <p class="a d4" style="font-size:13px;color:var(--muted);margin-top:30px;max-width:680px;">Estas métricas le permiten a ProtegePyme tomar decisiones de inventario, precio y contenido con datos reales en lugar de percepciones del equipo (Gorostiza & Barainca, 2017).</p>
+</div>
+
+<!-- 6 ESTRATEGIAS -->
+<div class="slide std" id="s6" style="background:var(--navy);">
+  <div class="tag tag-or a d1">Estrategias de Marketing a Partir de los Informes</div>
+  <h2 class="sec-title a d2">Qué decisiones toma ProtegePyme según lo que muestra Google Analytics</h2>
+  <div class="line a d3"></div>
+  <div class="list-items a d3">
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si el carrito se abandona en el paso de envío:</strong> se evalúa bajar el umbral de envío gratis o mostrar el costo desde antes.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si un sector busca mucho un producto que no está en catálogo:</strong> se prioriza agregarlo en el siguiente pedido a proveedores.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si YouTube trae más conversión que el blog:</strong> se invierte más tiempo en producir videos por sector.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si una ciudad tiene mucho tráfico pero pocos pedidos:</strong> se revisa si el tiempo de entrega ahí es competitivo.</p></div>
+    <div class="li-row"><div class="li-dot"></div><p><strong style="color:#fff;">Si la recompra automática por WhatsApp tiene baja respuesta:</strong> se ajusta el mensaje o se prueba un canal alternativo como correo.</p></div>
+  </div>
+</div>
+
+<!-- 7 BENEFICIOS -->
+<div class="slide std" id="s7" style="background:var(--dark);">
+  <div class="tag tag-nav a d1">Reflexión — Beneficios de Google Analytics</div>
+  <h2 class="sec-title a d2">Lo que esta herramienta le da a un emprendedor</h2>
+  <div class="line a d3"></div>
+  <div class="grid3">
+    <div class="card a d2"><div class="ico">🔍</div><h4>Conocer al comprador real</h4><p>Permite saber con certeza qué busca el cliente de EPP en línea, más allá de lo que el equipo asume.</p></div>
+    <div class="card a d3"><div class="ico">💰</div><h4>Comprar mejor inventario</h4><p>Evita invertir en productos que nadie busca y enfoca el catálogo en lo que el mercado realmente demanda.</p></div>
+    <div class="card a d4"><div class="ico">⚡</div><h4>Corregir a tiempo</h4><p>Un emprendedor con datos identifica un problema de carrito o de catálogo en días, no después de meses de bajas ventas.</p></div>
+  </div>
+</div>
+
+<!-- 8 CIERRE -->
+<div class="slide" id="s8" style="background:var(--dark);justify-content:center;align-items:center;padding:60px 100px;text-align:center;">
+  <div class="tag tag-or a d1" style="display:inline-block;">Cierre</div>
+  <div class="ct a d2">Vender EPP sin datos es como <em>trabajar sin casco en el negocio mismo</em></div>
+  <p class="cs a d3">Google Analytics le da a ProtegePyme la certeza de que cada decisión de catálogo, precio y contenido está respaldada por el comportamiento real de sus compradores, no por suposiciones.</p>
+  <div class="a d4"><span class="cbtn">analytics.google.com → ProtegePyme</span></div>
+</div>
+
+<!-- 9 BIBLIOGRAFÍA -->
+<div class="slide" id="s9" style="background:var(--navy);padding:60px 100px;justify-content:flex-start;overflow-y:auto;">
+  <div class="tag tag-nav a d1">Bibliografía — APA 7.ª Edición</div>
+  <ul class="ref-list">
+    <li class="a d2">Gorostiza Esquerdeiro, I., & Barainca Fontao, A. (Eds.). (2017). <em>Google Analytics: mide y vencerás</em> (pp. 40-53, 87-94). Difusora Larousse - Anaya Multimedia.</li>
+    <li class="a d2">Macía, F., & Santoja, M. (Eds.). (2018). <em>Marketing en redes sociales</em> (pp. 225-242). Anaya Multimedia.</li>
+    <li class="a d3">Palomino, F. (Ed.). (2020). <em>Investigación de los métodos de evaluación de la experiencia de usuario que aplican analítica web: una revisión sistemática</em> [Trabajo de grado, Pontificia Universidad Católica del Perú] (pp. 1-25). Repositorio de Tesis PUCP.</li>
+    <li class="a d3">Blanco, E. (2023, 23 de junio). Google Analytics: qué es y cómo hacer la configuración inicial. <em>RD Station</em>. https://www.rdstation.com/blog/es/google-analytics/</li>
+    <li class="a d4">Campos, R., & López, S. (2020). Grandes datos, Google y desempleo. <em>Estudios Económicos, 35</em>(1), 125-151. https://www.redalyc.org/journal/597/59763854004/html/index.html</li>
+  </ul>
+</div>
+
+</div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+function goTo(n){
+  slides[cur].classList.remove('active');slides[cur].classList.add('exit');
+  setTimeout(()=>document.querySelectorAll('.slide.exit').forEach(s=>s.classList.remove('exit')),650);
+  cur=((n%total)+total)%total;slides[cur].classList.add('active');
+  document.getElementById('prog').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('snum').textContent=(cur+1)+' / '+total;
+}
+document.getElementById('next').addEventListener('click',()=>goTo(cur+1));
+document.getElementById('prev').addEventListener('click',()=>goTo(cur-1));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();goTo(cur-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?goTo(cur+1):goTo(cur-1);});
+document.getElementById('prog').style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>
