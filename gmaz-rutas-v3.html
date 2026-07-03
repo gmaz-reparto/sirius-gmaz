@@ -2642,7 +2642,7 @@ async function cargarResumenOperacion(){
     const cajasCod={};
     (todos||[]).forEach(cl=>cajasCod[String(cl.id)]=parseFloat(String(cl['CAJA_']||0).replace(',','.')||0));
     if(!novs||!novs.length){
-      el.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--gris4)">✅ Sin novedades registradas hoy</div>';
+      el.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 24px"><div style="width:72px;height:72px;border-radius:20px;background:#E6F7F0;color:#0E9F6E;display:grid;place-items:center;margin-bottom:16px"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div style="font-size:16px;font-weight:800;color:#0F1117">Todo en orden</div><div style="font-size:12.5px;color:#6B7385;font-weight:500;margin-top:6px;max-width:260px;line-height:1.5">No hay novedades ni rechazos registrados hoy. La operación va sin incidencias.</div></div>';
       return;
     }
     // Totales
@@ -2690,15 +2690,15 @@ async function cargarResumenOperacion(){
         <div style="font-size:8px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Total rechazos</div>
         <div style="font-size:46px;font-weight:900;color:#E30613;line-height:1;margin:8px 0">${totalNov}</div>
         <div style="font-size:8px;color:#bbb">clientes rechazados</div>
-        <div style="margin-top:6px;font-size:8px;color:#D97706">📦 ${Math.round(totalCajas)} cajas rechazadas</div>
+        <div style="margin-top:6px;font-size:8px;color:#D97706">${Math.round(totalCajas)} cajas rechazadas</div>
       </div>
       <div style="padding:14px 10px;text-align:center">
         <div style="font-size:8px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Rutas activas</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px">
-          <div style="background:#F0FDF4;border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:900;color:#059669">${Object.values(porRuta).filter(r=>{const t=totalPorRuta[r.ruta]||0;return t>0&&Math.round(((t-r.rechazos)/t)*100)>=90}).length+Object.keys(totalPorRuta).filter(r=>!porRuta[r]).length}</div><div style="font-size:7px;color:#999">✅ OK</div></div>
-          <div style="background:#FFF5F5;border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:900;color:#E30613">${Object.values(porRuta).filter(r=>{const t=totalPorRuta[r.ruta]||0;return t>0&&Math.round(((t-r.rechazos)/t)*100)<90}).length}</div><div style="font-size:7px;color:#999">⚠️ Alerta</div></div>
+          <div style="background:#F0FDF4;border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:900;color:#059669">${Object.values(porRuta).filter(r=>{const t=totalPorRuta[r.ruta]||0;return t>0&&Math.round(((t-r.rechazos)/t)*100)>=90}).length+Object.keys(totalPorRuta).filter(r=>!porRuta[r]).length}</div><div style="font-size:7px;color:#999">OK</div></div>
+          <div style="background:#FFF5F5;border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:900;color:#E30613">${Object.values(porRuta).filter(r=>{const t=totalPorRuta[r.ruta]||0;return t>0&&Math.round(((t-r.rechazos)/t)*100)<90}).length}</div><div style="font-size:7px;color:#999">Alerta</div></div>
         </div>
-        ${rutaMax?`<div style="margin-top:6px;background:#FFF5F5;border-radius:6px;padding:5px 8px;font-size:8px;font-weight:600;color:#E30613">⚠️ ${rutaMax.ruta} — más rechazos</div>`:''}
+        ${rutaMax?`<div style="margin-top:6px;background:#FFF5F5;border-radius:6px;padding:5px 8px;font-size:8px;font-weight:600;color:#E30613">${rutaMax.ruta} · mayor rechazo</div>`:''}
       </div>
     </div>
     <!-- GRÁFICA BARRAS + DETALLE RECHAZOS -->
@@ -2739,7 +2739,7 @@ async function cargarResumenOperacion(){
           <div style="font-size:8px;color:#9CA3AF">${n.ruta} · ${n.motivo}</div>
         </div>
         <span style="font-size:9px;font-weight:700;color:#E30613;background:#FFF0F0;padding:1px 6px;border-radius:4px;white-space:nowrap">${vend}</span>
-        ${caj>0?`<span style="font-size:9px;font-weight:700;color:#D97706;background:#FEF3C7;padding:1px 6px;border-radius:4px">📦${caj}</span>`:''}
+        ${caj>0?`<span style="font-size:9px;font-weight:700;color:#D97706;background:#FEF3C7;padding:1px 6px;border-radius:4px">${caj} cj</span>`:''}
       </div>`;
     });
     html+=`</div></div>`;
