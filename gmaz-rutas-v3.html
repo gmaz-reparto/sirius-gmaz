@@ -152,19 +152,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ipchip{width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
 .ip-btn-lbl{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
 .btn-nav-lbl{color:var(--azul)}.btn-fact-lbl{color:var(--amarillo)}.btn-call-lbl{color:var(--verde)}
-.ip-btn-nov{background:var(--rojo-s);border:1.5px solid rgba(227,6,19,.2);border-radius:9px;padding:9px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:transform .1s;flex-shrink:0}
+.ip-btn-nov{background:linear-gradient(135deg,#F0263A,#E30613);border:none;border-radius:13px;padding:13px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:transform .1s;flex-shrink:0;box-shadow:0 6px 16px rgba(227,6,19,.28);color:#fff}
 .ip-btn-nov:active{transform:scale(.97)}
-.ip-nov-lbl{font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;letter-spacing:.3px}
+.ip-btn-nov svg{stroke:#fff!important}
+.ip-nov-lbl{font-size:12px;font-weight:800;color:#fff;letter-spacing:.2px}
 
 /* ══ ANIMACIONES BOTONES ══ */
 /* Animaciones de íconos eliminadas — botones estáticos nivel profesional */
 
 /* ══ BOTÓN REFRESH ══ */
-#btn-refresh{position:fixed;left:14px;bottom:16px;z-index:560;width:46px;height:46px;border-radius:50%;background:var(--negro);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;transition:transform .15s}
+#btn-refresh{position:fixed;left:14px;bottom:16px;z-index:390;width:46px;height:46px;border-radius:50%;background:var(--negro);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;transition:transform .15s}
 #btn-refresh:active{transform:scale(.9)}
 #btn-refresh.girando svg{animation:rfspin .8s linear infinite}
 @keyframes rfspin{to{transform:rotate(360deg)}}
-#btn-install{position:fixed;left:68px;bottom:16px;z-index:560;width:46px;height:46px;border-radius:50%;background:var(--rojo);border:none;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(227,6,19,.4);cursor:pointer;transition:transform .15s;animation:instpulse 2.2s infinite}
+#btn-install{position:fixed;left:68px;bottom:16px;z-index:390;width:46px;height:46px;border-radius:50%;background:var(--rojo);border:none;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(227,6,19,.4);cursor:pointer;transition:transform .15s;animation:instpulse 2.2s infinite}
 #btn-install.show{display:flex}
 #btn-install:active{transform:scale(.9)}
 @keyframes instpulse{0%,100%{box-shadow:0 6px 16px rgba(227,6,19,.4)}50%{box-shadow:0 6px 22px rgba(227,6,19,.65)}}
@@ -204,10 +205,11 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ns-photo-badge{position:absolute;top:6px;right:6px;background:var(--verde);color:#fff;font-size:8px;font-weight:700;padding:2px 7px;border-radius:10px}
 .ns-body{padding:10px 16px 0}
 .ns-lbl{font-size:8px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
-.ns-opt{background:var(--gris1);border:1.5px solid var(--gris2);border-radius:9px;padding:10px 11px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .12s,border-color .12s}
-.ns-opt.sel{background:var(--rojo-s);border-color:rgba(227,6,19,.3)}
-.ns-opt-icon{font-size:20px}
-.ns-opt.sel .ns-opt-icon{}
+.ns-opt{background:#fff;border:1.5px solid var(--gris2);border-radius:12px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .12s,border-color .12s,transform .1s;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.ns-opt:active{transform:scale(.98)}
+.ns-opt.sel{background:var(--rojo-s);border-color:rgba(227,6,19,.35)}
+.ns-opt-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;background:#EEF0F4;color:#4A5060}
+.ns-opt.sel .ns-opt-icon{background:rgba(227,6,19,.1);color:var(--rojo)}
 .ns-radio{width:15px;height:15px;border-radius:50%;border:2px solid var(--gris3);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
 .ns-opt.sel .ns-radio{background:var(--rojo);border-color:var(--rojo)}
 .ns-opt.sel .ns-radio::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff}
@@ -307,6 +309,11 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .fact-badge-s{background:var(--verde-s);color:var(--verde);border:1px solid rgba(5,150,105,.2);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
 .fact-badge-c{background:var(--azul-suave);color:var(--azul);border:1px solid rgba(26,86,219,.15);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
 .fact-empty{text-align:center;padding:40px 20px;color:var(--gris4);font-size:13px;line-height:1.6}
+#fact-empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:44px 30px 20px}
+#fact-empty-state.oculto{display:none}
+#fact-empty-state .fes-ic{width:78px;height:78px;border-radius:22px;background:var(--amarillo-s,#FFF8E6);color:var(--amarillo);display:grid;place-items:center;margin-bottom:16px}
+#fact-empty-state .fes-t{font-size:16px;font-weight:800;color:var(--negro);letter-spacing:-.3px}
+#fact-empty-state .fes-p{font-size:12.5px;color:var(--gris5);font-weight:500;line-height:1.55;margin-top:8px;max-width:280px}
 /* ══ PANTALLA DETALLE FACTURA ══ */
 #pantalla-detalle{position:fixed;inset:0;background:var(--gris1);display:flex;flex-direction:column;z-index:500;transition:opacity .3s,transform .3s}
 #pantalla-detalle.oculto{opacity:0;transform:translateX(30px);pointer-events:none}
@@ -452,11 +459,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #next-stop .nsgo{width:36px;height:36px;border-radius:10px;background:var(--azul);display:grid;place-items:center;flex-shrink:0}
 
 /* ══ BOTÓN NOVEDAD: 2 ESTADOS ══ */
-.ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#FEF3E2,#FDE8C8);border-color:rgba(217,119,6,.4);animation:novpulsa 2s infinite}
-.ip-btn-nov.tiene-nov .ip-nov-lbl{color:#B45309}
-@keyframes novpulsa{0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.25)}50%{box-shadow:0 0 14px 2px rgba(217,119,6,.3)}}
-.ip-btn-nov.ya-entregado{background:var(--verde-suave,#ECFDF5);border-color:rgba(5,150,105,.3)}
+.ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#E8920E,#D97706);box-shadow:0 6px 16px rgba(217,119,6,.32);animation:novpulsa 2s infinite}
+.ip-btn-nov.tiene-nov .ip-nov-lbl{color:#fff}
+@keyframes novpulsa{0%,100%{box-shadow:0 6px 16px rgba(217,119,6,.32)}50%{box-shadow:0 6px 22px rgba(217,119,6,.55)}}
+.ip-btn-nov.ya-entregado{background:var(--verde-suave,#ECFDF5);border:1.5px solid rgba(5,150,105,.3);box-shadow:none;color:var(--verde)}
 .ip-btn-nov.ya-entregado .ip-nov-lbl{color:var(--verde)}
+.ip-btn-nov.ya-entregado svg{stroke:var(--verde)!important}
 
 /* ══ SHEET ¿LOGRASTE ENTREGAR? ══ */
 #ent-ovl{position:fixed;inset:0;background:rgba(11,16,32,.5);backdrop-filter:blur(3px);z-index:600;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:.25s}
@@ -472,6 +480,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #ent-ovl .ent-si:active{transform:scale(.97)}
 #ent-ovl .ent-no{width:100%;height:46px;border-radius:14px;background:#fff;color:var(--gris4);border:1.5px solid var(--gris2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
 #ent-ovl .ent-fine{font-size:10px;color:var(--gris4);margin-top:12px;line-height:1.5}
+
+/* ══ ASIGNAR VEHÍCULOS A RUTAS (panel coordinador) ══ */
+.veh-cargando{padding:14px;font-size:12px;color:var(--gris4);font-weight:600}
+.dveh-list{padding:6px 8px 10px;max-height:340px;overflow:auto}
+.dveh-row{display:flex;align-items:center;gap:11px;padding:9px 9px;border-radius:11px}
+.dveh-row:hover{background:var(--gris1)}
+.dveh-code{width:66px;flex-shrink:0;font-size:13px;font-weight:800}
+.dveh-select{flex:1;min-width:0;height:36px;border:1.5px solid var(--gris3);border-radius:9px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;color:var(--negro);background:#fff}
+.dveh-select:focus{outline:none;border-color:var(--azul)}
+.dveh-ok{width:20px;text-align:center;flex-shrink:0;font-size:14px}
 
 /* ══ PANTALLA RUTAS NIVEL DIOS ══ */
 .hero-rutas{margin:12px 14px 4px;background:linear-gradient(135deg,#E30613 0%,#B5000F 100%);border-radius:18px;padding:17px 16px;color:#fff;position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(227,6,19,.26);flex-shrink:0}
@@ -786,6 +804,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 
+<!-- ══ SELECCIONAR VEHÍCULO (una vez al día, antes de iniciar la ruta) ══ -->
 <!-- ══ DASHBOARD COORDINADOR (solo escritorio) ══ -->
 <div id="dash">
   <div class="dash-top">
@@ -809,6 +828,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="dcard-h"><h3>Rendimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
         <div class="drk" id="dash-ranking"></div>
       </div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-h"><h3>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
+      <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
     </div>
     <div class="dcard">
       <div class="dcard-h"><h3>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
@@ -837,6 +860,11 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <span class="fact-count" id="fact-count"></span>
     </div>
     <div id="fact-resultados"></div>
+    <div id="fact-empty-state">
+      <div class="fes-ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></div>
+      <div class="fes-t">Busca la factura del cliente</div>
+      <div class="fes-p">Escribe el código (12xxxxxxxx) o el nombre del cliente en el buscador de arriba para ver sus facturas y soportes del día.</div>
+    </div>
   </div>
 </div>
 
@@ -909,28 +937,28 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div class="ns-body">
     <div class="ns-lbl">Motivo del rechazo</div>
     <div class="ns-opt" onclick="haptic();pickReason('CLIENTE CERRADO',this)">
-      <div class="ns-opt-icon">🏪</div><div class="ns-radio"></div><div class="ns-txt">Cliente cerrado</div>
+      <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Cliente cerrado</div>
     </div>
     <div class="ns-opt" onclick="haptic();pickReason('CLIENTE SIN DINERO',this)">
-      <div class="ns-opt-icon">💸</div><div class="ns-radio"></div><div class="ns-txt">Cliente sin dinero</div>
+      <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Cliente sin dinero</div>
     </div>
     <div class="ns-opt" onclick="haptic();pickReason('PEDIDO MAL ELABORADO',this)">
-      <div class="ns-opt-icon">📦</div><div class="ns-radio"></div><div class="ns-txt">Pedido mal elaborado</div>
+      <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Pedido mal elaborado</div>
     </div>
     <div class="ns-opt" onclick="haptic();pickReason('CLIENTE NO HIZO PEDIDO',this)">
-      <div class="ns-opt-icon">🗓️</div><div class="ns-radio"></div><div class="ns-txt">Cliente no hizo pedido</div>
+      <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="19"/><line x1="15" y1="15" x2="9" y2="19"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Cliente no hizo pedido</div>
     </div>
     <div class="ns-opt" onclick="haptic();pickReason('PRODUCTO NO CARGADO',this)">
-      <div class="ns-opt-icon">🚫</div><div class="ns-radio"></div><div class="ns-txt">Producto no cargado</div>
+      <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Producto no cargado</div>
     </div>
     <div class="ns-opt" onclick="haptic();pickReason('RECHAZO PARCIAL',this)">
-      <div class="ns-opt-icon">⚡</div><div class="ns-radio"></div><div class="ns-txt">Rechazo parcial</div>
+      <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Rechazo parcial</div>
     </div>
   </div>
   <div class="ns-actions">
     <button class="ns-cancel" onclick="haptic();closeNovModal()">Cancelar</button>
     <button class="ns-ok" id="ns-ok" disabled onclick="haptic();submitNovedad()">
-      <span class="ns-ok-icon">✅</span> Confirmar
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Confirmar y avisar
     </button>
   </div>
 </div>
@@ -947,18 +975,18 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div style="display:flex;border-bottom:2px solid var(--gris2);background:var(--blanco);flex-shrink:0">
     <button id="pctab-1" onclick="haptic();switchPcTab(1)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--rojo);border-bottom:2px solid var(--rojo);margin-bottom:-2px;cursor:pointer">Rutina</button>
     <button id="pctab-2" onclick="haptic();switchPcTab(2)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">Operación</button>
-    <button id="pctab-3" onclick="haptic();switchPcTab(3)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">📥 Histórico</button>
+    <button id="pctab-3" onclick="haptic();switchPcTab(3)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">Histórico</button>
   </div>
   <!-- TAB 1: RUTINA DIARIA -->
   <div id="pctab-content-1" style="flex:1;overflow-y:auto">
     <div class="pc-body">
-      <div class="pc-date" id="pc-date">📅 Cargando...</div>
+      <div class="pc-date" id="pc-date">Cargando...</div>
       <div class="pc-lbl">Ejecutar cada mañana en orden</div>
       <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();switchPcTab(3)">Ver histórico</button></div>
-      <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">🗑 Limpiar</button></div>
-      <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">🗑 Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
-      <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">🗑 Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
-      <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">🗑 Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
+      <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">Limpiar fotos</button></div>
+      <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
+      <div class="pc-step ps4"><div class="pc-num pn4">4</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
+      <div class="pc-step ps5"><div class="pc-num pn5">5</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
     </div>
   </div>
   <!-- TAB 2: OPERACIÓN HOY -->
@@ -970,11 +998,11 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <!-- TAB 3: HISTÓRICO -->
   <div id="pctab-content-3" style="flex:1;overflow-y:auto;display:none">
     <div style="padding:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--negro);margin-bottom:12px">📥 Novedades de los últimos 7 días</div>
+      <div style="font-size:11px;font-weight:700;color:var(--negro);margin-bottom:12px">Novedades de los últimos 7 días</div>
       <div id="pc-hist-lista"><div style="font-size:11px;color:var(--gris4)">Cargando...</div></div>
     </div>
   </div>
-  <div class="pc-footer">⏱ Excel generado a las 9:45pm · Actualización automática cada 30s</div>
+  <div class="pc-footer">Excel generado a las 9:45pm · Actualización automática cada 30s</div>
 </div>
 
 <!-- PROGRESS PANEL -->
@@ -1043,7 +1071,11 @@ const CFG={
   COL_LAT:['lat','Latitud_','LAT','Coord. Geocaptura 1','LATITUD'],
   COL_LNG:['lng','Longitud_','LNG','Coord. Geocaptura 2','LONGITUD'],
   COL_DIR:['direccion','Direccion__linea_1_','Dirección__línea_1_','DIRECCION','DIRECCIÓN','Dirección'],
-  COORD_PWD:'gmaz2024',COORD_TAPS:3,UTC_OFFSET:-5
+  COORD_PWD:'gmaz2024',COORD_TAPS:3,UTC_OFFSET:-5,
+  // Plataforma SecuritaGPS (service24gps) — rastreo real de la flota
+  SEC_URL:'https://api.service24gps.com/api/v1/',
+  SEC_APIKEY:'d7e3a9426efaa458518179f8cdea361b',
+  SEC_USER:'GMAZSAS',SEC_PASS:'901436120-6'
 };
 
 let sb,gmap,gpano,svSvc,truckMk,dirRenderer;
@@ -1304,6 +1336,7 @@ function abrirFacturas(){
   if(el)el.textContent=hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
   const si=document.getElementById('fact-search-input');
   if(si){si.value='';document.getElementById('fact-resultados').innerHTML='';}
+  const empty=document.getElementById('fact-empty-state');if(empty)empty.classList.remove('oculto');
   cargarIndiceFacturas();
 }
 
@@ -1313,7 +1346,9 @@ function cerrarDetalle(){document.getElementById('pantalla-detalle').classList.a
 /* ══ BUSCAR CLIENTE EN FACTURAS ══ */
 function buscarClienteFact(q){
   const cont=document.getElementById('fact-resultados');
+  const empty=document.getElementById('fact-empty-state');
   q=q.trim().toLowerCase();
+  if(empty)empty.classList.toggle('oculto',!!(q&&q.length>=2));
   if(!q||q.length<2){cont.innerHTML='';return;}
   if(!Object.keys(factClientes).length){cont.innerHTML='<div class="fact-empty">Espera — cargando índice...</div>';return;}
   const res=Object.values(factClientes).filter(cl=>cl.codigo.includes(q)||cl.nombre.toLowerCase().includes(q));
@@ -1636,6 +1671,7 @@ async function cargarDash(){
         '<div class="di"><b style="color:'+(rutaColor[code]||'#0F1117')+'">'+code+'</b><small>'+r.ent+'/'+r.tot+' clientes · '+Math.round(r.cajas)+' cajas</small></div>'+
         '<div class="dr"><b style="color:'+(r.nov>=3?'#E30613':'#059669')+'">'+r.nov+'</b><small>RECHAZOS</small></div></div>';
     }).join('');
+    renderAsignacionVehiculos(Object.keys(porRuta).sort());
     // Tabla novedades
     document.getElementById('dash-nov-meta').textContent=totNov+' rechazos · '+Math.round(cajasRej)+' cajas';
     document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>{
@@ -1675,15 +1711,46 @@ function pintarDashMap(clientes_,entSet,novSet){
   pintarFlotaEnVivo();
 }
 
-/* ══ FLOTA EN VIVO en el panel del coordinador ══ */
+/* ══ API SECURITAGPS (service24gps) — rastreo real de la flota ══ */
+let secToken=null,secTokenExp=0;
+async function secGetToken(force){
+  if(!force&&secToken&&Date.now()<secTokenExp)return secToken;
+  const fd=new FormData();
+  fd.append('apikey',CFG.SEC_APIKEY);fd.append('token','');
+  fd.append('username',CFG.SEC_USER);fd.append('password',CFG.SEC_PASS);
+  const r=await fetch(CFG.SEC_URL+'gettoken',{method:'POST',body:fd});
+  const j=await r.json();
+  if(j.status!==200)throw new Error('SecuritaGPS auth: '+j.status);
+  secToken=j.data;
+  secTokenExp=Date.now()+5.5*60*60*1000; // el token dura 6h, renovar antes
+  return secToken;
+}
+async function secApi(metodo,params){
+  params=params||{};
+  for(let intento=0;intento<2;intento++){
+    const tok=await secGetToken(intento>0);
+    const fd=new FormData();
+    fd.append('apikey',CFG.SEC_APIKEY);fd.append('token',tok);
+    Object.keys(params).forEach(k=>fd.append(k,params[k]));
+    const r=await fetch(CFG.SEC_URL+metodo,{method:'POST',body:fd});
+    const j=await r.json();
+    if(j.status===30400&&intento===0)continue; // token vencido, reintentar con uno nuevo
+    if(j.status!==200)throw new Error('SecuritaGPS '+metodo+': '+j.status);
+    return j.data;
+  }
+}
+async function secVehiculos(){ return await secApi('vehicleGetAll'); }
+async function secPosiciones(){ return await secApi('getdata',{UseUTCDate:'0',sensores:'0'}); }
+
+/* ══ FLOTA EN VIVO en el panel del coordinador (posición REAL del dispositivo GPS) ══ */
 let flotaMarkers=[];
-function dashTruckIcon(ruta){
+function dashTruckIcon(ruta,encendido){
   const col=rutaColor[ruta]||'#E30613';
   const s='<svg xmlns="http://www.w3.org/2000/svg" width="44" height="42" viewBox="0 0 60 56">'+
     '<ellipse cx="30" cy="50" rx="14" ry="3" fill="rgba(0,0,0,.2)"/>'+
-    '<circle cx="30" cy="27" r="21" fill="'+col+'33"><animate attributeName="r" values="18;23;18" dur="1.6s" repeatCount="indefinite"/></circle>'+
-    '<g transform="translate(8,12)"><rect x="0" y="3" width="26" height="22" rx="4" fill="'+col+'"/>'+
-    '<path d="M26 9 h9 a2 2 0 0 1 1.6 .8 L43 18 a2 2 0 0 1 .9 1.7 V25 a2 2 0 0 1-2 2 H26 Z" fill="'+col+'"/>'+
+    '<circle cx="30" cy="27" r="21" fill="'+col+'33">'+(encendido?'<animate attributeName="r" values="18;23;18" dur="1.6s" repeatCount="indefinite"/>':'')+'</circle>'+
+    '<g transform="translate(8,12)"><rect x="0" y="3" width="26" height="22" rx="4" fill="'+col+'" opacity="'+(encendido?1:.55)+'"/>'+
+    '<path d="M26 9 h9 a2 2 0 0 1 1.6 .8 L43 18 a2 2 0 0 1 .9 1.7 V25 a2 2 0 0 1-2 2 H26 Z" fill="'+col+'" opacity="'+(encendido?1:.55)+'"/>'+
     '<rect x="29" y="11" width="8.5" height="6.5" rx="1.6" fill="#cfe3f2"/>'+
     '<rect x="4" y="7" width="18" height="6" rx="1.5" fill="#fff" opacity=".9"/>'+
     '<circle cx="11" cy="28.5" r="5" fill="#16181f"/><circle cx="35" cy="28.5" r="5" fill="#16181f"/></g></svg>';
@@ -1692,25 +1759,43 @@ function dashTruckIcon(ruta){
 async function pintarFlotaEnVivo(){
   if(!dashMap)return;
   try{
-    // posiciones de los últimos 12 minutos
-    const desde=new Date(Date.now()-12*60000).toISOString();
-    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/ubicaciones_flota?select=*&actualizado=gte.'+desde+'&order=actualizado.desc',{
+    const fecha=getColDate();
+    // Asignación vehículo↔ruta de hoy (la elige el conductor en la mañana)
+    const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=*&fecha=eq.'+fecha,{
       headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
     });
-    if(!r.ok)return;
-    const ubic=await r.json();
+    const asignaciones=rAsig.ok?await rAsig.json():[];
+    if(!asignaciones.length){
+      flotaMarkers.forEach(m=>m.setMap(null));flotaMarkers=[];
+      const meta=document.getElementById('dash-flota-meta');if(meta)meta.textContent='sin vehículos asignados hoy';
+      return;
+    }
+    const rutaPorUnit={};
+    asignaciones.forEach(a=>{rutaPorUnit[a.unit_id]=a.ruta;});
+    // Posición real de cada unidad (dispositivo GPS del furgón)
+    const posiciones=await secPosiciones();
     flotaMarkers.forEach(m=>m.setMap(null));flotaMarkers=[];
     const iw=new google.maps.InfoWindow();
-    ubic.forEach(u=>{
-      const lat=parseFloat(u.lat),lng=parseFloat(u.lng);if(!lat||!lng)return;
-      const mins=Math.round((Date.now()-new Date(u.actualizado).getTime())/60000);
-      const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,icon:dashTruckIcon(u.ruta),zIndex:2000,title:'Entregador '+u.ruta});
-      mk.addListener('click',()=>{iw.setContent('<div style="font-family:DM Sans,sans-serif"><b style="font-size:13px;color:'+(rutaColor[u.ruta]||'#E30613')+'">🚚 '+u.ruta+'</b><br><span style="font-size:11px;color:#6B7385">Visto hace '+(mins<1?'segundos':mins+' min')+'</span></div>');iw.open(dashMap,mk);});
+    let vistos=0;
+    (posiciones||[]).forEach(u=>{
+      const ruta=rutaPorUnit[u.UnitId];
+      if(!ruta)return; // esta unidad no está asignada a ninguna ruta activa hoy
+      const lat=parseFloat(u.Latitude),lng=parseFloat(u.Longitude);if(!lat||!lng)return;
+      vistos++;
+      const enc=u.Ignition==='1';
+      const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+u.UnitId});
+      mk.addListener('click',()=>{iw.setContent(
+        '<div style="font-family:DM Sans,sans-serif">'+
+        '<b style="font-size:13px;color:'+(rutaColor[ruta]||'#E30613')+'">🚚 '+ruta+' · '+u.UnitId+'</b><br>'+
+        '<span style="font-size:11px;color:#6B7385">'+(enc?'🟢 Encendido':'⚪ Apagado')+' · '+(u.GpsSpeed||0)+' km/h</span><br>'+
+        '<span style="font-size:11px;color:#6B7385">'+(u.Domicilio||'')+'</span><br>'+
+        '<span style="font-size:10px;color:#9AA1B2">Reporte: '+(u.ReportDate||'—')+'</span></div>'
+      );iw.open(dashMap,mk);});
       flotaMarkers.push(mk);
     });
     const meta=document.getElementById('dash-flota-meta');
-    if(meta)meta.textContent=ubic.length+' entregadores en vivo';
-  }catch(e){}
+    if(meta)meta.textContent=vistos+' vehículos en vivo';
+  }catch(e){console.log('flota:',e.message);}
 }
 
 async function loadRoutes(){
@@ -1764,6 +1849,64 @@ async function loadRoutes(){
     hideLoad();showScr('scr-routes');
     mostrarDashSiEscritorio();
   }catch(e){hideLoad();toast('Error cargando rutas: '+e.message,'err');showScr('scr-routes');}
+}
+
+/* ══ ASIGNAR VEHÍCULOS A RUTAS — solo el coordinador (panel escritorio) ══ */
+let _vehCache=null;
+async function renderAsignacionVehiculos(rutas){
+  const cont=document.getElementById('dash-veh-list');
+  if(!cont)return;
+  cont.innerHTML='<div class="veh-cargando">Cargando vehículos…</div>';
+  try{
+    const fecha=getColDate();
+    if(!_vehCache)_vehCache=await secVehiculos()||[];
+    const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=*&fecha=eq.'+fecha,{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    const asignadas=rAsig.ok?await rAsig.json():[];
+    const asigPorRuta={};asignadas.forEach(a=>asigPorRuta[a.ruta]=a.unit_id);
+    const opciones=_vehCache.map(v=>'<option value="'+v.nombre+'">'+v.nombre+' · '+(v.marca||'')+' '+(v.modelo||'')+'</option>').join('');
+    cont.innerHTML=rutas.map(ruta=>{
+      const actual=asigPorRuta[ruta]||'';
+      return '<div class="dveh-row">'+
+        '<div class="dveh-code" style="color:'+(rutaColor[ruta]||'#0F1117')+'">'+ruta+'</div>'+
+        '<select class="dveh-select" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
+        '<option value="">— sin asignar —</option>'+opciones.replace('value="'+actual+'"','value="'+actual+'" selected')+
+        '</select>'+
+        '<div class="dveh-ok">'+(actual?'✅':'')+'</div></div>';
+    }).join('');
+  }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
+}
+async function guardarAsignacionRuta(sel){
+  const ruta=sel.dataset.ruta,unitId=sel.value;
+  const fila=sel.closest('.dveh-row');
+  haptic();
+  if(!unitId){
+    // Quitar asignación
+    try{
+      await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?fecha=eq.'+getColDate()+'&ruta=eq.'+encodeURIComponent(ruta),{
+        method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+      });
+      fila.querySelector('.dveh-ok').textContent='';
+      toast(ruta+' sin vehículo asignado','ok');
+      pintarFlotaEnVivo();
+    }catch(e){}
+    return;
+  }
+  const v=_vehCache.find(x=>x.nombre===unitId);
+  try{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo',{
+      method:'POST',
+      headers:{
+        'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,
+        'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'
+      },
+      body:JSON.stringify({fecha:getColDate(),ruta,unit_id:unitId,unit_plate:(v&&v.patente)||unitId})
+    });
+    fila.querySelector('.dveh-ok').textContent='✅';
+    toast(ruta+' → '+unitId+' asignado','ok');
+    pintarFlotaEnVivo();
+  }catch(e){toast('Error asignando vehículo','err');}
 }
 
 function startRoute(ruta,lista){
@@ -1991,28 +2134,7 @@ function initMap(){
     }
     // Re-evaluar cliente más cercano al moverse (marcador + tarjeta + ruta)
     if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
-    // Reportar ubicación al coordinador (flota en vivo)
-    reportarUbicacion(pos);
   },e=>console.log('GPS:',e.message),{enableHighAccuracy:true,timeout:10000,maximumAge:5000});
-}
-
-/* ══ FLOTA EN VIVO: reportar ubicación del entregador al coordinador ══ */
-let _ultReporte=0;
-async function reportarUbicacion(pos){
-  if(!rutaActual||!pos)return;
-  const ahora=Date.now();
-  if(ahora-_ultReporte<15000)return; // máximo cada 15s
-  _ultReporte=ahora;
-  try{
-    await fetch(CFG.SUPABASE_URL+'/rest/v1/ubicaciones_flota',{
-      method:'POST',
-      headers:{
-        'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,
-        'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'
-      },
-      body:JSON.stringify({ruta:rutaActual,lat:pos.lat,lng:pos.lng,actualizado:new Date().toISOString()})
-    });
-  }catch(e){}
 }
 
 function truckIcon(){
