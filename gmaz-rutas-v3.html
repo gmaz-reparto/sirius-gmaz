@@ -316,6 +316,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #fact-empty-state .fes-ic{width:78px;height:78px;border-radius:22px;background:var(--amarillo-s,#FFF8E6);color:var(--amarillo);display:grid;place-items:center;margin-bottom:16px}
 #fact-empty-state .fes-t{font-size:16px;font-weight:800;color:var(--negro);letter-spacing:-.3px}
 #fact-empty-state .fes-p{font-size:12.5px;color:var(--gris5);font-weight:500;line-height:1.55;margin-top:8px;max-width:280px}
+/* ══ COMPONENTE: estado vacío estándar ══ */
+.estado-vacio{display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 24px}
+.estado-vacio .ev-ic{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;margin-bottom:16px}
+.estado-vacio .ev-t{font-size:16px;font-weight:800;color:var(--negro);letter-spacing:-.3px}
+.estado-vacio .ev-p{font-size:12.5px;color:var(--gris5);font-weight:500;line-height:1.55;margin-top:7px;max-width:270px}
+/* ══ COMPONENTE: skeleton loader ══ */
+.skel{border-radius:10px;background:linear-gradient(90deg,#EEF0F4 25%,#F7F8FA 50%,#EEF0F4 75%);background-size:200% 100%;animation:skelShine 1.3s ease infinite;margin-bottom:8px}
+@keyframes skelShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
 /* ══ PANTALLA DETALLE FACTURA ══ */
 #pantalla-detalle{position:fixed;inset:0;background:var(--gris1);display:flex;flex-direction:column;z-index:500;transition:opacity .3s,transform .3s}
 #pantalla-detalle.oculto{opacity:0;transform:translateX(30px);pointer-events:none}
@@ -1586,6 +1594,15 @@ const ICONS={
   cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
 };
 function icoSvg(n,s=14,w=2,c='currentColor'){return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0">'+ICONS[n]+'</svg>';}
+/* ══ COMPONENTE ESTÁNDAR: estado vacío (reutilizable en toda la app) ══ */
+function estadoVacio(icono,titulo,texto,tono){
+  const T={verde:['#E6F7F0','#0E9F6E'],azul:['#EFF6FF','#1A56DB'],ambar:['#FFF8E6','#D97706'],gris:['#EEF0F4','#6B7385'],rojo:['#FFF1F2','#E30613']};
+  const[bg,cl]=T[tono||'gris'];
+  return '<div class="estado-vacio"><div class="ev-ic" style="background:'+bg+';color:'+cl+'">'+icoSvg(icono,32,1.8)+'</div>'+
+    '<div class="ev-t">'+titulo+'</div><div class="ev-p">'+texto+'</div></div>';
+}
+/* ══ COMPONENTE ESTÁNDAR: skeleton loader ══ */
+function skeleton(n,alto){let o='';for(let i=0;i<(n||3);i++)o+='<div class="skel" style="height:'+(alto||44)+'px"></div>';return o;}
 function gaugeSvg(p,s,w,track){
   const r=(s-w)/2,c=2*Math.PI*r,col=p>=90?'#059669':p>=75?'#D97706':'#E30613';
   return '<svg width="'+s+'" height="'+s+'" style="transform:rotate(-90deg)"><circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+r+'" fill="none" stroke="'+(track||'#EEF0F4')+'" stroke-width="'+w+'"/><circle cx="'+(s/2)+'" cy="'+(s/2)+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+(c*(1-Math.min(p,100)/100))+'"/></svg>';
@@ -1634,8 +1651,15 @@ function abrirRutinaDesdeDash(){
   }
   openCoord();
 }
+let _dashCargadoUnaVez=false;
 async function cargarDash(){
   try{
+    // Skeleton solo la primera carga (los refrescos cada 30s no deben parpadear)
+    if(!_dashCargadoUnaVez){
+      const kp=document.getElementById('dash-kpis');if(kp)kp.innerHTML='<div class="skel" style="height:74px;flex:1"></div>'.repeat(5);
+      const rk=document.getElementById('dash-ranking');if(rk)rk.innerHTML=skeleton(6,52);
+      const vl=document.getElementById('dash-veh-list');if(vl)vl.innerHTML=skeleton(5,44);
+    }
     const fecha=getColDate();
     const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
       sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre'),
@@ -1690,6 +1714,7 @@ async function cargarDash(){
     // Mapa
     document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
     pintarDashMap(clientes_,entSet,novSet);
+    _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
 }
 let dashMarkers=[];
@@ -2647,7 +2672,7 @@ async function cargarResumenOperacion(){
     const cajasCod={};
     (todos||[]).forEach(cl=>cajasCod[String(cl.id)]=parseFloat(String(cl['CAJA_']||0).replace(',','.')||0));
     if(!novs||!novs.length){
-      el.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 24px"><div style="width:72px;height:72px;border-radius:20px;background:#E6F7F0;color:#0E9F6E;display:grid;place-items:center;margin-bottom:16px"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div style="font-size:16px;font-weight:800;color:#0F1117">Todo en orden</div><div style="font-size:12.5px;color:#6B7385;font-weight:500;margin-top:6px;max-width:260px;line-height:1.5">No hay novedades ni rechazos registrados hoy. La operación va sin incidencias.</div></div>';
+      el.innerHTML=estadoVacio('checkc','Todo en orden','No hay novedades ni rechazos registrados hoy. La operación va sin incidencias.','verde');
       return;
     }
     // Totales
