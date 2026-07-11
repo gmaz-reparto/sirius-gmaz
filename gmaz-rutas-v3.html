@@ -223,6 +223,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 /* ══ COORDINATOR PANEL ══ */
 #panel-coord{position:fixed;inset:0;z-index:600;background:var(--gris1);display:none;flex-direction:column}
 #panel-coord.show{display:flex}
+.pc-fade{animation:pcFade .28s cubic-bezier(.22,.61,.36,1)}
+@keyframes pcFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .pc-hdr{background:var(--blanco);border-bottom:2px solid var(--rojo);padding:13px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .pc-logo{display:flex;align-items:center;gap:8px}
 .pc-bar{width:3px;height:22px;background:var(--rojo);border-radius:2px}
@@ -1648,14 +1650,17 @@ async function cargarDash(){
     const novSet=new Set(novedades_.map(n=>String(n.codigo_cliente)));
     const totCli=clientes_.length,totEnt=entSet.size,totNov=novedades_.length;
     const cajasRej=novedades_.reduce((s,n)=>s+(cajasCod[n.codigo_cliente]||0),0);
+    const cajasProg=clientes_.reduce((s,c)=>s+(cajasCod[String(c.id)]||0),0);
+    const cajasEnt=clientes_.reduce((s,c)=>s+(entSet.has(String(c.id))?(cajasCod[String(c.id)]||0):0),0);
     const pctG=totCli?Math.round(totEnt/totCli*100):0;
-    // KPIs
+    const pctCajas=cajasProg?Math.round(cajasEnt/cajasProg*100):0;
+    // KPIs — priorizados para decisión operativa
     const K=[
-      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre general'},
-      {i:'store',bg:'#EFF6FF',cl:'#1A56DB',v:totEnt+' / '+totCli,l:'Clientes entregados'},
-      {i:'truck',bg:'#FFF0F1',cl:'#E30613',v:Object.keys(rutaColor).length,l:'Rutas activas'},
-      {i:'alert',bg:'#FEF3E2',cl:'#D97706',v:totNov,l:'Rechazos hoy'},
-      {i:'box',bg:'#EEF0F4',cl:'#4A5060',v:Math.round(cajasRej),l:'Cajas rechazadas'}
+      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre de clientes'},
+      {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:Math.round(cajasEnt).toLocaleString('es-CO')+' / '+Math.round(cajasProg).toLocaleString('es-CO'),l:'Cajas entregadas · '+pctCajas+'%'},
+      {i:'store',bg:'#F5F3FF',cl:'#7C3AED',v:totEnt+' / '+totCli,l:'Clientes entregados'},
+      {i:'truck',bg:'#FFF7ED',cl:'#EA580C',v:Object.keys(rutaColor).length,l:'Rutas activas'},
+      {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov+(cajasRej>0?' · '+Math.round(cajasRej)+' cj':''),l:'Rechazos hoy'}
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
       '<div class="dkpi"><div class="ko" style="background:'+k.bg+';color:'+k.cl+'">'+icoSvg(k.i,16)+'</div>'+
@@ -2911,7 +2916,10 @@ function switchPcTab(n){
       btn.style.borderBottom=activo?'2px solid var(--rojo)':'none';
       btn.style.marginBottom=activo?'-2px':'0';
     }
-    if(content)content.style.display=activo?'block':'none';
+    if(content){
+      content.style.display=activo?'block':'none';
+      if(activo){content.classList.remove('pc-fade');void content.offsetWidth;content.classList.add('pc-fade');}
+    }
   });
   // Cargar contenido según pestaña
   if(n===2)cargarResumenOperacion();
