@@ -32,15 +32,22 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .scr.hidden{opacity:0;pointer-events:none;transform:translateY(16px)}
 
 /* ══ SPLASH ══ */
-#scr-splash{background:var(--rojo);align-items:center;justify-content:center;z-index:200}
+#scr-splash{background:radial-gradient(120% 100% at 50% 0%,#F0263A 0%,#B5000F 55%,#7a0009 100%);align-items:center;justify-content:center;z-index:200;overflow:hidden}
 #scr-splash.hidden{opacity:0;transform:scale(1.04);pointer-events:none}
-.spl-logo{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.spl-bar{width:5px;height:52px;background:rgba(255,255,255,.6);border-radius:3px}
-.spl-g{font-size:42px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1}
-.spl-r{font-size:13px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:4px;text-transform:uppercase}
-.spl-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:8px}
-.spl-dots{margin-top:40px;display:flex;gap:6px}
-.spl-dot{width:8px;height:8px;background:rgba(255,255,255,.4);border-radius:50%;animation:pulse 1.2s ease infinite}
+.spl-orb{position:absolute;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.spl-o1{width:240px;height:240px;top:-70px;right:-60px}
+.spl-o2{width:160px;height:160px;bottom:-40px;left:-55px;background:rgba(255,255,255,.06)}
+.spl-shine{position:absolute;top:0;left:-60%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);transform:skewX(-20deg);animation:splSweep 3.5s ease-in-out infinite;pointer-events:none}
+@keyframes splSweep{0%{left:-60%}55%,100%{left:135%}}
+.spl-card{position:relative;z-index:2;padding:32px 30px;border-radius:26px;background:rgba(255,255,255,.1);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.22);text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:splPop .8s cubic-bezier(.34,1.56,.64,1)}
+@keyframes splPop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.spl-logo{display:flex;align-items:center;gap:13px;justify-content:center}
+.spl-bar{width:5px;height:50px;background:#fff;border-radius:3px}
+.spl-g{font-size:42px;font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1}
+.spl-r{font-size:12px;font-weight:800;color:rgba(255,255,255,.78);letter-spacing:5px;text-transform:uppercase;margin-top:2px}
+.spl-sub{font-size:12px;color:rgba(255,255,255,.82);font-weight:600;margin-top:16px}
+.spl-dots{margin-top:16px;display:flex;gap:6px;justify-content:center}
+.spl-dot{width:7px;height:7px;background:rgba(255,255,255,.45);border-radius:50%;animation:pulse 1.2s ease infinite}
 .spl-dot:nth-child(2){animation-delay:.2s}.spl-dot:nth-child(3){animation-delay:.4s}
 
 /* ══ START TRANSITION ══ */
@@ -500,6 +507,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dveh-select{flex:1;min-width:0;height:36px;border:1.5px solid var(--gris3);border-radius:9px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;color:var(--negro);background:#fff}
 .dveh-select:focus{outline:none;border-color:var(--azul)}
 .dveh-ok{width:20px;text-align:center;flex-shrink:0;font-size:14px}
+/* ══ FLOTA EN VIVO (dashboard) ══ */
+.dlive2{display:inline-flex;align-items:center;gap:6px}
+.dlive2 i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
+.dflota-list{padding:6px 8px 10px;max-height:340px;overflow:auto}
+.dfl-row{display:flex;align-items:center;gap:11px;padding:10px 9px;border-radius:11px;border-bottom:.5px solid var(--gris2)}
+.dfl-row:last-child{border-bottom:none}
+.dfl-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.dfl-i{flex:1;min-width:0}
+.dfl-i b{font-size:13px;font-weight:800}
+.dfl-i small{font-size:11px;color:var(--gris4);font-weight:600;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dfl-st{text-align:right;flex-shrink:0}
+.dfl-badge{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:20px}
+.dfl-st small{font-size:9px;color:var(--gris4);font-weight:600;display:block;margin-top:3px}
 
 /* ══ PANTALLA RUTAS NIVEL DIOS ══ */
 .hero-rutas{margin:12px 14px 4px;background:linear-gradient(135deg,#E30613 0%,#B5000F 100%);border-radius:18px;padding:17px 16px;color:#fff;position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(227,6,19,.26);flex-shrink:0}
@@ -539,7 +559,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dlive i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
 @keyframes dblink{0%,100%{opacity:.4}50%{opacity:1}}
 .dash-main{flex:1;overflow:auto;padding:18px 22px}
-.dkpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:15px}
+.dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:15px}
+@media(max-width:1100px){.dkpis{grid-template-columns:repeat(3,1fr)}}
 .dkpi{background:#fff;border:1px solid var(--gris2);border-radius:14px;padding:14px}
 .dkpi .ko{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;margin-bottom:10px}
 .dkpi .kv{font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1}
@@ -587,9 +608,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
 <!-- SPLASH -->
 <div id="scr-splash" class="scr">
-  <div class="spl-logo"><div class="spl-bar"></div><div><div class="spl-g">GMAZ</div><div class="spl-r">Rutas</div></div></div>
-  <div class="spl-sub">Coca-Cola · Pasto, Nariño</div>
-  <div class="spl-dots"><div class="spl-dot"></div><div class="spl-dot"></div><div class="spl-dot"></div></div>
+  <div class="spl-orb spl-o1"></div><div class="spl-orb spl-o2"></div><div class="spl-shine"></div>
+  <div class="spl-card">
+    <div class="spl-logo"><div class="spl-bar"></div><div><div class="spl-g">GMAZ</div><div class="spl-r">Rutas</div></div></div>
+    <div class="spl-sub">Coca-Cola · Pasto, Nariño</div>
+    <div class="spl-dots"><div class="spl-dot"></div><div class="spl-dot"></div><div class="spl-dot"></div></div>
+  </div>
 </div>
 
 <!-- START TRANSITION -->
@@ -839,9 +863,15 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="drk" id="dash-ranking"></div>
       </div>
     </div>
-    <div class="dcard">
-      <div class="dcard-h"><h3>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
-      <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
+    <div class="dgrid">
+      <div class="dcard">
+        <div class="dcard-h"><h3>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
+        <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-h"><h3>Flota en vivo</h3><span class="dm dlive2"><i></i>SecuritaGPS · <span id="dash-flota-meta2">—</span></span></div>
+        <div class="dflota-list" id="dash-flota-list"><div class="veh-cargando">Cargando posiciones…</div></div>
+      </div>
     </div>
     <div class="dcard">
       <div class="dcard-h"><h3>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
@@ -1656,7 +1686,7 @@ async function cargarDash(){
   try{
     // Skeleton solo la primera carga (los refrescos cada 30s no deben parpadear)
     if(!_dashCargadoUnaVez){
-      const kp=document.getElementById('dash-kpis');if(kp)kp.innerHTML='<div class="skel" style="height:74px;flex:1"></div>'.repeat(5);
+      const kp=document.getElementById('dash-kpis');if(kp)kp.innerHTML='<div class="skel" style="height:74px"></div>'.repeat(6);
       const rk=document.getElementById('dash-ranking');if(rk)rk.innerHTML=skeleton(6,52);
       const vl=document.getElementById('dash-veh-list');if(vl)vl.innerHTML=skeleton(5,44);
     }
@@ -1664,7 +1694,7 @@ async function cargarDash(){
     const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
       sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre'),
       sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo').eq('fecha',fecha),
-      sb.from('estados_entrega').select('ruta,estado,codigo_cliente').eq('fecha',fecha),
+      sb.from('estados_entrega').select('ruta,estado,codigo_cliente,created_at').eq('fecha',fecha),
       sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
     ]);
     const clientes_=todos||[],novedades_=novs||[],estados_=est||[];
@@ -1678,11 +1708,19 @@ async function cargarDash(){
     const cajasEnt=clientes_.reduce((s,c)=>s+(entSet.has(String(c.id))?(cajasCod[String(c.id)]||0):0),0);
     const pctG=totCli?Math.round(totEnt/totCli*100):0;
     const pctCajas=cajasProg?Math.round(cajasEnt/cajasProg*100):0;
+    // Ritmo de entrega: clientes entregados por hora desde la primera entrega
+    const tiempos=estados_.filter(e=>e.estado==='entregado'&&e.created_at).map(e=>new Date(e.created_at).getTime()).sort((a,b)=>a-b);
+    let ritmo='—';
+    if(tiempos.length>=2){
+      const horas=(Date.now()-tiempos[0])/3600000;
+      if(horas>0.05)ritmo=(totEnt/horas).toFixed(1)+' /h';
+    }
     // KPIs — priorizados para decisión operativa
     const K=[
       {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre de clientes'},
       {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:Math.round(cajasEnt).toLocaleString('es-CO')+' / '+Math.round(cajasProg).toLocaleString('es-CO'),l:'Cajas entregadas · '+pctCajas+'%'},
       {i:'store',bg:'#F5F3FF',cl:'#7C3AED',v:totEnt+' / '+totCli,l:'Clientes entregados'},
+      {i:'clock',bg:'#ECFEFF',cl:'#0891B2',v:ritmo,l:'Ritmo de entrega'},
       {i:'truck',bg:'#FFF7ED',cl:'#EA580C',v:Object.keys(rutaColor).length,l:'Rutas activas'},
       {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov+(cajasRej>0?' · '+Math.round(cajasRej)+' cj':''),l:'Rechazos hoy'}
     ];
@@ -1795,9 +1833,12 @@ async function pintarFlotaEnVivo(){
       headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
     });
     const asignaciones=rAsig.ok?await rAsig.json():[];
+    const lista=document.getElementById('dash-flota-list');
     if(!asignaciones.length){
       flotaMarkers.forEach(m=>m.setMap(null));flotaMarkers=[];
       const meta=document.getElementById('dash-flota-meta');if(meta)meta.textContent='sin vehículos asignados hoy';
+      const m2=document.getElementById('dash-flota-meta2');if(m2)m2.textContent='sin asignar';
+      if(lista)lista.innerHTML=estadoVacio('truck','Sin vehículos asignados','Asigna un vehículo a cada ruta en el panel de la izquierda para ver su posición GPS en tiempo real.','gris');
       return;
     }
     const rutaPorUnit={};
@@ -1806,26 +1847,42 @@ async function pintarFlotaEnVivo(){
     const posiciones=await secPosiciones();
     flotaMarkers.forEach(m=>m.setMap(null));flotaMarkers=[];
     const iw=new google.maps.InfoWindow();
-    let vistos=0;
-    (posiciones||[]).forEach(u=>{
-      const ruta=rutaPorUnit[u.UnitId];
-      if(!ruta)return; // esta unidad no está asignada a ninguna ruta activa hoy
-      const lat=parseFloat(u.Latitude),lng=parseFloat(u.Longitude);if(!lat||!lng)return;
-      vistos++;
+    let vistos=0,filas='';
+    const posPorUnit={};(posiciones||[]).forEach(u=>posPorUnit[u.UnitId]=u);
+    // Marcadores + filas de lista, en el orden de las rutas asignadas
+    Object.keys(rutaPorUnit).sort((a,b)=>rutaPorUnit[a].localeCompare(rutaPorUnit[b])).forEach(unitId=>{
+      const ruta=rutaPorUnit[unitId], u=posPorUnit[unitId];
+      const col=rutaColor[ruta]||'#E30613';
+      if(!u){ // asignado pero sin reporte GPS
+        filas+='<div class="dfl-row"><div class="dfl-ic" style="background:#F1EFE8;color:#9AA1B2">'+icoSvg('truck',18)+'</div>'+
+          '<div class="dfl-i"><b style="color:'+col+'">'+ruta+'</b><small>'+unitId+' · sin reporte</small></div>'+
+          '<div class="dfl-st"><span class="dfl-badge" style="background:#F1EFE8;color:#6B7385">— —</span></div></div>';
+        return;
+      }
+      const lat=parseFloat(u.Latitude),lng=parseFloat(u.Longitude);
       const enc=u.Ignition==='1';
-      const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+u.UnitId});
-      mk.addListener('click',()=>{iw.setContent(
-        '<div style="font-family:DM Sans,sans-serif">'+
-        '<b style="font-size:13px;color:'+(rutaColor[ruta]||'#E30613')+'">🚚 '+ruta+' · '+u.UnitId+'</b><br>'+
-        '<span style="font-size:11px;color:#6B7385">'+(enc?'🟢 Encendido':'⚪ Apagado')+' · '+(u.GpsSpeed||0)+' km/h</span><br>'+
-        '<span style="font-size:11px;color:#6B7385">'+(u.Domicilio||'')+'</span><br>'+
-        '<span style="font-size:10px;color:#9AA1B2">Reporte: '+(u.ReportDate||'—')+'</span></div>'
-      );iw.open(dashMap,mk);});
-      flotaMarkers.push(mk);
+      const bg=enc?'#E6F7F0':'#F1EFE8', cl=enc?'#0E9F6E':'#6B7385';
+      const mins=u.ReportDate?Math.max(0,Math.round((Date.now()-new Date(u.ReportDate.replace(' ','T')).getTime())/60000)):null;
+      filas+='<div class="dfl-row"><div class="dfl-ic" style="background:'+col+'1A;color:'+col+'">'+icoSvg('truck',18)+'</div>'+
+        '<div class="dfl-i"><b style="color:'+col+'">'+ruta+' · '+unitId+'</b><small>'+(u.Domicilio||'—')+'</small></div>'+
+        '<div class="dfl-st"><span class="dfl-badge" style="background:'+bg+';color:'+cl+'">'+(enc?'▶ '+(u.GpsSpeed||0)+' km/h':'⏸ detenido')+'</span>'+
+        '<small>'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+'</small></div></div>';
+      if(lat&&lng){
+        vistos++;
+        const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+unitId});
+        mk.addListener('click',()=>{iw.setContent(
+          '<div style="font-family:DM Sans,sans-serif">'+
+          '<b style="font-size:13px;color:'+col+'">'+ruta+' · '+unitId+'</b><br>'+
+          '<span style="font-size:11px;color:#6B7385">'+(enc?'Encendido':'Apagado')+' · '+(u.GpsSpeed||0)+' km/h</span><br>'+
+          '<span style="font-size:11px;color:#6B7385">'+(u.Domicilio||'')+'</span></div>'
+        );iw.open(dashMap,mk);});
+        flotaMarkers.push(mk);
+      }
     });
-    const meta=document.getElementById('dash-flota-meta');
-    if(meta)meta.textContent=vistos+' vehículos en vivo';
-  }catch(e){console.log('flota:',e.message);}
+    if(lista)lista.innerHTML=filas||estadoVacio('truck','Sin posiciones','Los vehículos asignados aún no reportan ubicación.','gris');
+    const meta=document.getElementById('dash-flota-meta');if(meta)meta.textContent=vistos+' vehículos en vivo';
+    const m2=document.getElementById('dash-flota-meta2');if(m2)m2.textContent=vistos+' en vivo';
+  }catch(e){console.log('flota:',e.message);const l=document.getElementById('dash-flota-list');if(l)l.innerHTML=estadoVacio('alert','No se pudo cargar la flota','Revisa la conexión con SecuritaGPS.','ambar');}
 }
 
 async function loadRoutes(){
@@ -2020,7 +2077,7 @@ function renderClientList(filtro=''){
       `<div class="ci${i===clienteIdx?' activo':''}" id="ci-${i}" data-idx="${i}">${ciInnerHTML(c,i)}</div>`;
     ul.appendChild(wrap);
   });
-  if(q&&!mostrados)ul.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--gris4)">Sin resultados</div>';
+  if(q&&!mostrados)ul.innerHTML=estadoVacio('search','Sin resultados','Ningún cliente coincide con "'+q+'". Revisa el código o el nombre.','gris');
   actualizarProgresoRuta();
   initSwipeList();
 }
