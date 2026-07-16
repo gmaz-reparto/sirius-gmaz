@@ -601,6 +601,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   .scr{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
   #modal-nov,#panel-coord,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
   #ent-ovl .ent-sheet{border-radius:22px 22px 24px 24px}
+  #scr-splash{position:fixed;inset:0;width:100%;left:0;right:0;top:0;bottom:0;margin:0;border-radius:0;box-shadow:none}
 }
 </style>
 </head>
@@ -1939,29 +1940,34 @@ async function loadRoutes(){
 }
 
 /* ══ ASIGNAR VEHÍCULOS A RUTAS — solo el coordinador (panel escritorio) ══ */
-let _vehCache=null;
+let _vehCache=null,_vehListCargada=false;
 async function renderAsignacionVehiculos(rutas){
   const cont=document.getElementById('dash-veh-list');
   if(!cont)return;
-  cont.innerHTML='<div class="veh-cargando">Cargando vehículos…</div>';
+  if(!_vehListCargada)cont.innerHTML='<div class="veh-cargando">Cargando vehículos…</div>';
   try{
     const fecha=getColDate();
     if(!_vehCache)_vehCache=await secVehiculos()||[];
     const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=*&fecha=eq.'+fecha,{
       headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
     });
+    if(!rAsig.ok&&rAsig.status===404){
+      cont.innerHTML='<div class="veh-cargando">⚠ Falta crear la tabla "asignacion_vehiculo" en Supabase. Pide el SQL para crearla.</div>';
+      return;
+    }
     const asignadas=rAsig.ok?await rAsig.json():[];
     const asigPorRuta={};asignadas.forEach(a=>asigPorRuta[a.ruta]=a.unit_id);
-    const opciones=_vehCache.map(v=>'<option value="'+v.nombre+'">'+v.nombre+' · '+(v.marca||'')+' '+(v.modelo||'')+'</option>').join('');
     cont.innerHTML=rutas.map(ruta=>{
       const actual=asigPorRuta[ruta]||'';
+      const opciones=_vehCache.map(v=>'<option value="'+v.nombre+'"'+(v.nombre===actual?' selected':'')+'>'+v.nombre+' · '+(v.marca||'')+' '+(v.modelo||'')+'</option>').join('');
       return '<div class="dveh-row">'+
         '<div class="dveh-code" style="color:'+(rutaColor[ruta]||'#0F1117')+'">'+ruta+'</div>'+
         '<select class="dveh-select" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
-        '<option value="">— sin asignar —</option>'+opciones.replace('value="'+actual+'"','value="'+actual+'" selected')+
+        '<option value="">— sin asignar —</option>'+opciones+
         '</select>'+
         '<div class="dveh-ok">'+(actual?'✅':'')+'</div></div>';
     }).join('');
+    _vehListCargada=true;
   }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
 }
 async function guardarAsignacionRuta(sel){
@@ -1971,18 +1977,19 @@ async function guardarAsignacionRuta(sel){
   if(!unitId){
     // Quitar asignación
     try{
-      await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?fecha=eq.'+getColDate()+'&ruta=eq.'+encodeURIComponent(ruta),{
+      const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?fecha=eq.'+getColDate()+'&ruta=eq.'+encodeURIComponent(ruta),{
         method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
       });
+      if(!r.ok){toast('No se pudo guardar: falta la tabla en Supabase','err');return;}
       fila.querySelector('.dveh-ok').textContent='';
       toast(ruta+' sin vehículo asignado','ok');
       pintarFlotaEnVivo();
-    }catch(e){}
+    }catch(e){toast('Error quitando asignación','err');}
     return;
   }
   const v=_vehCache.find(x=>x.nombre===unitId);
   try{
-    await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo',{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo',{
       method:'POST',
       headers:{
         'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,
@@ -1990,6 +1997,7 @@ async function guardarAsignacionRuta(sel){
       },
       body:JSON.stringify({fecha:getColDate(),ruta,unit_id:unitId,unit_plate:(v&&v.patente)||unitId})
     });
+    if(!r.ok){toast('No se pudo guardar: falta la tabla en Supabase','err');return;}
     fila.querySelector('.dveh-ok').textContent='✅';
     toast(ruta+' → '+unitId+' asignado','ok');
     pintarFlotaEnVivo();
