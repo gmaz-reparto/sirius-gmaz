@@ -878,6 +878,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="dcard-h"><h3>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
       <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
     </div>
+    <div class="dcard">
+      <div class="dcard-h"><h3>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
+      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
+    </div>
   </div>
 </div>
 <button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
@@ -1100,11 +1104,24 @@ function cargarXLSX(){
   });
   return _xlsxCargando;
 }
+// Turf.js se carga SOLO en el panel de escritorio del coordinador (motor de geocercas) — el entregador nunca lo descarga
+let _turfCargando=null;
+function cargarTurf(){
+  if(window.turf)return Promise.resolve();
+  if(_turfCargando)return _turfCargando;
+  _turfCargando=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js';
+    s.onload=()=>res();s.onerror=()=>rej(new Error('No se pudo cargar Turf'));
+    document.head.appendChild(s);
+  });
+  return _turfCargando;
+}
 const CFG={
   SUPABASE_URL:'https://arcymdurfmlubtgfyawn.supabase.co',
   SUPABASE_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY3ltZHVyZm1sdWJ0Z2Z5YXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk1MDMsImV4cCI6MjA5MTUxNTUwM30.UpfEw5oZcntnyaS9F6om0dUwPjTvrEyTC4HVd1xYjv8',
   GMAPS_KEY:'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
-  TBL:'clientes_rutas',TBL_NOV:'novedades',TBL_VEND:'maestro_vendedores',
+  TBL:'clientes_rutas',TBL_NOV:'novedades',TBL_VEND:'maestro_vendedores',TBL_GEO:'geocerca_eventos',
   BCK_FOTOS:'fotos-novedades',BCK_REP:'reportes',BCK_FACT:'facturas_Gmaz',
   COL_CODIGO:['id','ID_de_ubicacion_','ID_de_ubicación_','CLIENTE','CODIGO','codigo','ID_CLIENTE'],
   COL_NOMBRE:['nombre','Descripcion_','Descripción_','NOMBRE','nombre_cliente','NOMBRE_CLIENTE','Descripcion'],
@@ -1752,7 +1769,9 @@ async function cargarDash(){
     }).join(''):'<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:18px">Sin novedades registradas hoy ✓</td></tr>';
     // Mapa
     document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
+    await actualizarGeocercas(clientes_); // geocercas listas antes de pintar la flota (no bloquea si ya estaban calculadas)
     pintarDashMap(clientes_,entSet,novSet);
+    cargarEventosGeocerca();
     _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
 }
@@ -1878,12 +1897,176 @@ async function pintarFlotaEnVivo(){
           '<span style="font-size:11px;color:#6B7385">'+(u.Domicilio||'')+'</span></div>'
         );iw.open(dashMap,mk);});
         flotaMarkers.push(mk);
+        evaluarGeocercaVehiculo(unitId,ruta,lat,lng,parseFloat(u.GpsSpeed)||0);
       }
     });
     if(lista)lista.innerHTML=filas||estadoVacio('truck','Sin posiciones','Los vehículos asignados aún no reportan ubicación.','gris');
     const meta=document.getElementById('dash-flota-meta');if(meta)meta.textContent=vistos+' vehículos en vivo';
     const m2=document.getElementById('dash-flota-meta2');if(m2)m2.textContent=vistos+' en vivo';
   }catch(e){console.log('flota:',e.message);const l=document.getElementById('dash-flota-list');if(l)l.innerHTML=estadoVacio('alert','No se pudo cargar la flota','Revisa la conexión con SecuritaGPS.','ambar');}
+}
+
+/* ══ GEOCERCAS DINÁMICAS POR RUTA (Turf.js) ══
+   Por qué Concave Hull (alpha shape) en vez de Convex Hull:
+   un Convex Hull "infla" la zona hacia afuera en cualquier ruta con forma de L, de herradura
+   o con un hueco en el centro (muy común en reparto urbano) — el vehículo podría desviarse varias
+   cuadras dentro del hueco y seguir "dentro" de la geocerca. El Concave Hull sigue el contorno real
+   de los clientes de la ruta. Cuando la ruta tiene muy pocos puntos o están muy dispersos, un
+   Concave Hull no es matemáticamente estable, así que el motor intenta 3 niveles de concavidad y
+   cae a Convex Hull (o a un buffer de línea/punto si hay 1-2 clientes) como red de seguridad —
+   nunca se queda sin geocerca. Turf.js se eligió porque ya trae concave/convex/buffer/point-in-polygon
+   listos, corre 100% en el navegador (sin backend nuevo) y sus polígonos GeoJSON se dibujan directo
+   en Google Maps convirtiendo [lng,lat] → {lat,lng}. */
+let geocercas={};          // { ruta: {poligono:FeaturePolygon, poligonoGoogle} }
+let _geoFirma='';          // firma barata de clientes/ruta — si no cambia, NO se recalcula (evita recomputar cada 30s)
+let geocercaEstado={};     // { unitId: {dentro,trail:[{lat,lng,ts}],salidaEn,puntoSalida,puntoEntrada} }
+let geocercaCapas={};      // { unitId: {polyline,marcadorSalida,marcadorEntrada} }
+
+function firmaClientesPorRuta(porRuta){
+  return Object.keys(porRuta).sort().map(r=>{
+    let suma=0;porRuta[r].forEach(c=>suma+=c.lat+c.lng);
+    return r+':'+porRuta[r].length+':'+suma.toFixed(3);
+  }).join('|');
+}
+async function actualizarGeocercas(clientes_){
+  try{ await cargarTurf(); }catch(e){ console.log('turf:',e.message); return; }
+  const porRuta={};
+  clientes_.forEach(c=>{
+    const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+    if(!lat||!lng)return;
+    const r=c.ruta||'—';(porRuta[r]=porRuta[r]||[]).push({lat,lng});
+  });
+  const firma=firmaClientesPorRuta(porRuta);
+  if(firma===_geoFirma&&Object.keys(geocercas).length)return; // sin cambios en rutas/clientes: no recalcular
+  _geoFirma=firma;
+  Object.values(geocercas).forEach(g=>{if(g.poligonoGoogle)g.poligonoGoogle.setMap(null);});
+  geocercas={};
+  Object.keys(porRuta).forEach(ruta=>{
+    const pts=porRuta[ruta];
+    const puntosTurf=turf.featureCollection(pts.map(p=>turf.point([p.lng,p.lat])));
+    let hull=null;
+    if(pts.length>=4){
+      for(const edge of [1,2,4]){ // km — intenta 3 niveles de concavidad antes de rendirse
+        try{ hull=turf.concave(puntosTurf,{maxEdge:edge,units:'kilometers'}); }catch(e){hull=null;}
+        if(hull)break;
+      }
+    }
+    if(!hull&&pts.length>=3){ try{ hull=turf.convex(puntosTurf); }catch(e){hull=null;} }
+    if(!hull){ // 1-2 clientes: no hay polígono real, geocerca mínima alrededor de ellos
+      try{ hull=turf.buffer(pts.length===1?turf.point([pts[0].lng,pts[0].lat]):turf.lineString(pts.map(p=>[p.lng,p.lat])),0.05,{units:'kilometers'}); }catch(e){hull=null;}
+    }
+    if(!hull)return;
+    let buffered=null;
+    try{ buffered=turf.buffer(hull,0.5,{units:'kilometers'}); }catch(e){buffered=null;} // tolerancia 500m
+    if(!buffered)return;
+    geocercas[ruta]={poligono:buffered,poligonoGoogle:null};
+  });
+  dibujarGeocercas();
+}
+function dibujarGeocercas(){
+  if(!dashMap||!window.google){setTimeout(dibujarGeocercas,900);return;}
+  Object.keys(geocercas).forEach(ruta=>{
+    const g=geocercas[ruta];
+    if(g.poligonoGoogle)g.poligonoGoogle.setMap(null);
+    let coordsGeo=g.poligono.geometry.coordinates[0];
+    if(g.poligono.geometry.type==='MultiPolygon')coordsGeo=g.poligono.geometry.coordinates[0][0];
+    const coords=coordsGeo.map(([lng,lat])=>({lat,lng}));
+    const col=rutaColor[ruta]||'#E30613';
+    g.poligonoGoogle=new google.maps.Polygon({
+      paths:coords,map:dashMap,strokeColor:col,strokeWeight:1.5,strokeOpacity:.5,
+      fillColor:col,fillOpacity:.05,clickable:false,zIndex:1
+    });
+  });
+}
+function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel){
+  const g=geocercas[ruta];
+  if(!g||!window.turf)return;
+  const punto=turf.point([lng,lat]);
+  let dentro=true;
+  try{ dentro=turf.booleanPointInPolygon(punto,g.poligono); }catch(e){return;}
+  let estado=geocercaEstado[unitId];
+  if(!estado){ // primer reporte de este vehículo: fija línea base, no dispara alerta
+    geocercaEstado[unitId]={dentro,trail:[{lat,lng,ts:Date.now()}]};
+    return;
+  }
+  estado.trail.push({lat,lng,ts:Date.now()});
+  if(estado.trail.length>200)estado.trail.shift();
+  if(dentro===estado.dentro)return; // sin cambio de estado
+  let distM=0;
+  try{ distM=Math.round(turf.pointToLineDistance(punto,turf.polygonToLine(g.poligono),{units:'kilometers'})*1000); }catch(e){}
+  if(!dentro){
+    estado.salidaEn=Date.now();
+    estado.puntoSalida={lat,lng};
+    registrarEventoGeocerca(unitId,ruta,'salio',lat,lng,vel,distM,null);
+    toast('🚨 '+unitId+' ('+ruta+') salió de su geocerca','err');
+  }else{
+    const tiempoFuera=estado.salidaEn?Math.round((Date.now()-estado.salidaEn)/1000):null;
+    estado.puntoEntrada={lat,lng};
+    registrarEventoGeocerca(unitId,ruta,'entro',lat,lng,vel,distM,tiempoFuera);
+    toast('✓ '+unitId+' ('+ruta+') volvió a su zona','ok');
+  }
+  estado.dentro=dentro;
+  dibujarTrailVehiculo(unitId,ruta,estado);
+  cargarEventosGeocerca();
+}
+function dibujarTrailVehiculo(unitId,ruta,estado){
+  if(!dashMap)return;
+  const capa=geocercaCapas[unitId]=geocercaCapas[unitId]||{};
+  if(capa.polyline)capa.polyline.setMap(null);
+  const path=estado.trail.map(p=>({lat:p.lat,lng:p.lng}));
+  capa.polyline=new google.maps.Polyline({path,map:dashMap,strokeColor:'#E30613',strokeWeight:3,strokeOpacity:.85,zIndex:1500});
+  if(estado.puntoSalida){
+    if(capa.marcadorSalida)capa.marcadorSalida.setMap(null);
+    capa.marcadorSalida=new google.maps.Marker({position:estado.puntoSalida,map:dashMap,zIndex:1900,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
+      title:unitId+' salió aquí'});
+  }
+  if(estado.puntoEntrada){
+    if(capa.marcadorEntrada)capa.marcadorEntrada.setMap(null);
+    capa.marcadorEntrada=new google.maps.Marker({position:estado.puntoEntrada,map:dashMap,zIndex:1900,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
+      title:unitId+' reingresó aquí'});
+  }
+}
+async function registrarEventoGeocerca(unitId,ruta,tipo,lat,lng,vel,distanciaM,tiempoFueraSeg){
+  try{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO,{
+      method:'POST',
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({
+        fecha:getColDate(),hora:new Date().toISOString(),unit_id:unitId,ruta,tipo,
+        lat,lng,velocidad:vel||0,distancia_limite_m:distanciaM,tiempo_fuera_seg:tiempoFueraSeg
+      })
+    });
+  }catch(e){console.log('geocerca_eventos:',e.message);}
+}
+async function cargarEventosGeocerca(){
+  const tbody=document.getElementById('dash-geo');
+  if(!tbody)return;
+  try{
+    const fecha=getColDate();
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=*&fecha=eq.'+fecha+'&order=hora.desc&limit=40',{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    if(!r.ok){
+      const meta=document.getElementById('dash-geo-meta');if(meta)meta.textContent='tabla pendiente';
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Falta crear la tabla "geocerca_eventos" en Supabase</td></tr>';
+      return;
+    }
+    const eventos=await r.json();
+    const meta=document.getElementById('dash-geo-meta');if(meta)meta.textContent=eventos.length+' eventos hoy';
+    if(!eventos.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Sin salidas de geocerca hoy</td></tr>';return;}
+    tbody.innerHTML=eventos.map(e=>{
+      const col=rutaColor[e.ruta]||'#4A5060';
+      const hora=e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
+      const esSalida=e.tipo==='salio';
+      return '<tr><td>'+hora+'</td><td style="font-weight:800">'+e.unit_id+'</td>'+
+        '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td>'+
+        '<td><span class="dtag" style="background:'+(esSalida?'#FFF1F2':'#E6F7F0')+';color:'+(esSalida?'#E30613':'#0E9F6E')+'">'+(esSalida?'🚨 Salió':'✓ Ingresó')+'</span></td>'+
+        '<td>'+(e.distancia_limite_m!=null?e.distancia_limite_m+' m':'—')+'</td>'+
+        '<td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td></tr>';
+    }).join('');
+  }catch(e){console.log('cargarEventosGeocerca:',e.message);}
 }
 
 async function loadRoutes(){
