@@ -555,6 +555,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dash-top .dright{margin-left:auto;display:flex;align-items:center;gap:10px}
 .dchip{font-size:11px;font-weight:800;padding:7px 12px;border-radius:9px;background:var(--gris1);color:var(--gris5);border:1px solid var(--gris2);display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit}
 .dchip.rojo{background:var(--rojo);color:#fff;border-color:var(--rojo)}
+.dchip.on{background:#0E9F6E;color:#fff;border-color:#0E9F6E}
 .dlive{font-size:10px;font-weight:800;color:var(--verde);display:flex;align-items:center;gap:5px}
 .dlive i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
 @keyframes dblink{0%,100%{opacity:.4}50%{opacity:1}}
@@ -856,7 +857,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="dkpis" id="dash-kpis"></div>
     <div class="dgrid">
       <div class="dcard">
-        <div class="dcard-h"><h3>Mapa operativo — Pasto</h3><span class="dm"><span id="dash-map-meta">cargando…</span> · <b style="color:#E30613" id="dash-flota-meta">flota</b></span></div>
+        <div class="dcard-h"><h3>Mapa operativo — Pasto</h3><span style="display:flex;align-items:center;gap:10px">
+          <button class="dchip" id="btn-trafico" onclick="haptic();toggleTrafico()" style="padding:5px 10px;font-size:10px">🚦 Tráfico</button>
+          <span class="dm"><span id="dash-map-meta">cargando…</span> · <b style="color:#E30613" id="dash-flota-meta">flota</b></span>
+        </span></div>
         <div id="dash-map"></div>
       </div>
       <div class="dcard">
@@ -1674,6 +1678,14 @@ async function actualizarGaugesRutas(rutas){
 /* ══ DETECCIÓN AUTOMÁTICA + DASHBOARD COORDINADOR ══ */
 const ES_MOVIL=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
 let dashMap=null,dashInterval=null;
+let trafficLayer=null,trafficOn=true; // tráfico de Google Maps activado por defecto (como en Securita)
+function toggleTrafico(){
+  if(!dashMap||!trafficLayer)return;
+  trafficOn=!trafficOn;
+  trafficLayer.setMap(trafficOn?dashMap:null);
+  const btn=document.getElementById('btn-trafico');if(btn)btn.classList.toggle('on',trafficOn);
+  toast(trafficOn?'Tráfico activado':'Tráfico desactivado','ok');
+}
 function esEscritorio(){return !ES_MOVIL&&window.innerWidth>=900;}
 function mostrarDashSiEscritorio(){
   if(!esEscritorio())return;
@@ -1783,6 +1795,9 @@ function pintarDashMap(clientes_,entSet,novSet){
       zoom:13,center:{lat:1.2136,lng:-77.2811},disableDefaultUI:true,zoomControl:true,
       styles:[{featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'transit',elementType:'all',stylers:[{visibility:'off'}]}]
     });
+    trafficLayer=new google.maps.TrafficLayer();
+    trafficLayer.setMap(trafficOn?dashMap:null); // tráfico en vivo de Google Maps, igual que Securita
+    const btnTr=document.getElementById('btn-trafico');if(btnTr)btnTr.classList.toggle('on',trafficOn);
   }
   dashMarkers.forEach(m=>m.setMap(null));dashMarkers=[];
   const iw=new google.maps.InfoWindow();
