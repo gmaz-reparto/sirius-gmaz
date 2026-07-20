@@ -1129,7 +1129,7 @@ const CFG={
   SUPABASE_URL:'https://arcymdurfmlubtgfyawn.supabase.co',
   SUPABASE_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY3ltZHVyZm1sdWJ0Z2Z5YXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk1MDMsImV4cCI6MjA5MTUxNTUwM30.UpfEw5oZcntnyaS9F6om0dUwPjTvrEyTC4HVd1xYjv8',
   GMAPS_KEY:'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI',
-  TBL:'clientes_rutas',TBL_NOV:'novedades',TBL_VEND:'maestro_vendedores',TBL_GEO:'geocerca_eventos',
+  TBL:'clientes_rutas',TBL_NOV:'novedades',TBL_VEND:'maestro_vendedores',TBL_GEO:'geocerca_eventos',TBL_VELCFG:'securita_geocercas',
   BCK_FOTOS:'fotos-novedades',BCK_REP:'reportes',BCK_FACT:'facturas_Gmaz',
   COL_CODIGO:['id','ID_de_ubicacion_','ID_de_ubicación_','CLIENTE','CODIGO','codigo','ID_CLIENTE'],
   COL_NOMBRE:['nombre','Descripcion_','Descripción_','NOMBRE','nombre_cliente','NOMBRE_CLIENTE','Descripcion'],
@@ -2065,6 +2065,7 @@ async function actualizarGeocercas(clientes_){
   const firma=firmaClientesPorRuta(porRuta);
   if(firma===_geoFirma&&Object.keys(geocercas).length)return; // sin cambios en rutas/clientes: no recalcular
   _geoFirma=firma;
+  sincronizarLimitesVelocidad(clientes_); // misma cadencia: solo corre cuando de verdad cambian los clientes del día
   Object.values(geocercas).forEach(g=>{if(g.poligonoGoogle)g.poligonoGoogle.setMap(null);});
   geocercas={};
   Object.keys(porRuta).forEach(ruta=>{
@@ -2103,6 +2104,66 @@ function dibujarGeocercas(){
       fillColor:col,fillOpacity:.05,clickable:false,zIndex:1
     });
   });
+}
+/* ══ LÍMITES DE VELOCIDAD REALES EN SECURITAGPS (geocercas con limite_velocidad) ══
+   Securita genera la alarma "Velocidad Maxima" el mismo cuando el veh�culo supera el l�mite
+   de una geocerca — funciona en su plataforma 24/7, sin depender de que GMAZ Rutas est� abierto.
+   Se crean/actualizan 2 geocercas propias de GMAZ (no se tocan las ~20 de corregimientos ya
+   existentes en la cuenta): "Zona urbana" (40 km/h, poligono alrededor de los clientes de hoy) y
+   "Cobertura regional" (60 km/h, circulo grande centrado en Pasto, para v�as nacionales). */
+let _velFirma='';
+async function idCercaGuardada(clave){
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_VELCFG+'?select=id_cerca&clave=eq.'+clave,{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    if(!r.ok)return null;
+    const j=await r.json();
+    return j[0]?j[0].id_cerca:null;
+  }catch(e){return null;}
+}
+async function guardarIdCerca(clave,idCerca){
+  try{
+    await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_VELCFG,{
+      method:'POST',
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({clave,id_cerca:String(idCerca)})
+    });
+  }catch(e){}
+}
+async function crearOActualizarGeocercaVelocidad(clave,nombre,tipoCerca,puntos,radio,limite,color){
+  const payload={nombre,tipo_cerca:String(tipoCerca),color:color||'#1A56DB',radio:String(radio||0),limite_velocidad:String(limite),solo_mi_usuario:'0',visible:'1',puntos:JSON.stringify(puntos)};
+  const idGuardado=await idCercaGuardada(clave);
+  if(idGuardado){
+    await secApi('updateGeofence',{...payload,idCerca:idGuardado});
+    return idGuardado;
+  }
+  await secApi('createGeofence',payload); // no devuelve el idCerca — hay que buscarlo por nombre
+  const todas=await secApi('getGeofences')||[];
+  const creada=todas.find(g=>g.nombre===nombre);
+  if(creada){ await guardarIdCerca(clave,creada.idCerca); return creada.idCerca; }
+  return null;
+}
+async function sincronizarLimitesVelocidad(clientes_){
+  try{
+    const pts=clientes_.map(c=>{
+      const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+      return(lat&&lng)?[lng,lat]:null;
+    }).filter(Boolean);
+    if(pts.length<3)return;
+    const fc=turf.featureCollection(pts.map(p=>turf.point(p)));
+    let hull=null; try{ hull=turf.convex(fc); }catch(e){hull=null;}
+    if(!hull)return;
+    const urbano=turf.buffer(hull,1.5,{units:'kilometers'}); // margen generoso de ciudad sobre el contorno real de clientes
+    let coordsGeo=urbano.geometry.coordinates[0];
+    if(urbano.geometry.type==='MultiPolygon')coordsGeo=urbano.geometry.coordinates[0][0];
+    const puntosUrbano=coordsGeo.map(([lng,lat])=>({lat,lng}));
+    const firma=puntosUrbano.length+':'+puntosUrbano.reduce((s,p)=>s+p.lat+p.lng,0).toFixed(3);
+    if(firma===_velFirma)return; // el área de clientes no cambió: no reescribir en Securita
+    _velFirma=firma;
+    await crearOActualizarGeocercaVelocidad('urbana','GMAZ - Zona urbana (40 km-h)',1,puntosUrbano,0,40,'#1A56DB');
+    await crearOActualizarGeocercaVelocidad('regional','GMAZ - Cobertura regional (60 km-h)',2,[{lat:1.2136,lng:-77.2811}],60000,60,'#0E9F6E');
+  }catch(e){console.log('sincronizarLimitesVelocidad:',e.message);}
 }
 function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel){
   const g=geocercas[ruta];
