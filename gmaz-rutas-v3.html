@@ -886,6 +886,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="dcard-h"><h3>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
       <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
     </div>
+    <div class="dcard">
+      <div class="dcard-h"><h3>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
+      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
+    </div>
   </div>
 </div>
 <button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
@@ -1784,6 +1788,7 @@ async function cargarDash(){
     await actualizarGeocercas(clientes_); // geocercas listas antes de pintar la flota (no bloquea si ya estaban calculadas)
     pintarDashMap(clientes_,entSet,novSet);
     cargarEventosGeocerca();
+    cargarAlarmasSecurita();
     _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
 }
@@ -1843,7 +1848,27 @@ async function secApi(metodo,params){
   }
 }
 async function secVehiculos(){ return await secApi('vehicleGetAll'); }
-async function secPosiciones(){ return await secApi('getdata',{UseUTCDate:'0',sensores:'0'}); }
+async function secPosiciones(){ return await secApi('getdata',{UseUTCDate:'0',sensores:'1'}); }
+async function secConductores(){ return await secApi('driverGetAll'); }
+async function secAlertas(equipo,fecha){ return await secApi('getAlerts',{equipo,fecha}); }
+async function secHistorial(equipo,fechaIni,fechaFin,limite){
+  return await secApi('historyGet',{equipo,fechaIni,fechaFin,format:'DateTime',limite:limite||300});
+}
+function resumenSensores(sensoresJson){
+  if(!sensoresJson)return '';
+  try{
+    const s=JSON.parse(sensoresJson);
+    const partes=[];
+    Object.values(s).forEach(grupo=>{
+      Object.values(grupo).forEach(sn=>{
+        if(/bateria_gps/i.test(sn.nombre))partes.push('🔋'+Math.round(sn.p!=null?sn.p:sn.valor)+'%');
+        else if(/combustible/i.test(sn.nombre))partes.push('⛽'+sn.valor);
+        else if(/temperatura/i.test(sn.nombre))partes.push('🌡️'+sn.valor+'°');
+      });
+    });
+    return partes.join(' · ');
+  }catch(e){return '';}
+}
 
 /* ══ FLOTA EN VIVO en el panel del coordinador (posición REAL del dispositivo GPS) ══ */
 let flotaMarkers=[];
@@ -1878,6 +1903,9 @@ async function pintarFlotaEnVivo(){
     }
     const rutaPorUnit={};
     asignaciones.forEach(a=>{rutaPorUnit[a.unit_id]=a.ruta;});
+    // Catálogos de Securita (vehículos + conductores) — cacheados, no se piden en cada refresco
+    if(!_vehCache)_vehCache=await secVehiculos()||[];
+    if(_driverCache===null){ try{ _driverCache=await secConductores()||[]; }catch(e){ _driverCache=[]; } }
     // Posición real de cada unidad (dispositivo GPS del furgón)
     const posiciones=await secPosiciones();
     flotaMarkers.forEach(m=>m.setMap(null));flotaMarkers=[];
@@ -1888,6 +1916,9 @@ async function pintarFlotaEnVivo(){
     Object.keys(rutaPorUnit).sort((a,b)=>rutaPorUnit[a].localeCompare(rutaPorUnit[b])).forEach(unitId=>{
       const ruta=rutaPorUnit[unitId], u=posPorUnit[unitId];
       const col=rutaColor[ruta]||'#E30613';
+      const veh=_vehCache.find(v=>v.nombre===unitId);
+      const conductor=veh?(_driverCache.find(d=>String(d.idvehiculo)===String(veh.id))||null):null;
+      const nombreCond=conductor?(conductor.nombre+' '+(conductor.apellido||'')).trim():'';
       if(!u){ // asignado pero sin reporte GPS
         filas+='<div class="dfl-row"><div class="dfl-ic" style="background:#F1EFE8;color:#9AA1B2">'+icoSvg('truck',18)+'</div>'+
           '<div class="dfl-i"><b style="color:'+col+'">'+ruta+'</b><small>'+unitId+' · sin reporte</small></div>'+
@@ -1898,10 +1929,13 @@ async function pintarFlotaEnVivo(){
       const enc=u.Ignition==='1';
       const bg=enc?'#E6F7F0':'#F1EFE8', cl=enc?'#0E9F6E':'#6B7385';
       const mins=u.ReportDate?Math.max(0,Math.round((Date.now()-new Date(u.ReportDate.replace(' ','T')).getTime())/60000)):null;
+      const sensoresTxt=resumenSensores(u.Sensores);
+      const domLinea=(nombreCond?nombreCond+' · ':'')+(u.Domicilio||'—');
       filas+='<div class="dfl-row"><div class="dfl-ic" style="background:'+col+'1A;color:'+col+'">'+icoSvg('truck',18)+'</div>'+
-        '<div class="dfl-i"><b style="color:'+col+'">'+ruta+' · '+unitId+'</b><small>'+(u.Domicilio||'—')+'</small></div>'+
+        '<div class="dfl-i"><b style="color:'+col+'">'+ruta+' · '+unitId+'</b><small>'+domLinea+'</small></div>'+
         '<div class="dfl-st"><span class="dfl-badge" style="background:'+bg+';color:'+cl+'">'+(enc?'▶ '+(u.GpsSpeed||0)+' km/h':'⏸ detenido')+'</span>'+
-        '<small>'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+'</small></div></div>';
+        '<small>'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+(sensoresTxt?' · '+sensoresTxt:'')+'</small></div>'+
+        '<button class="dchip" style="padding:5px 8px;font-size:9.5px;margin-left:4px" onclick="haptic();toggleRecorrido(\''+unitId+'\',\''+ruta+'\')" title="Ver recorrido de hoy">🕓</button></div>';
       if(lat&&lng){
         vistos++;
         const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+unitId});
@@ -1909,6 +1943,8 @@ async function pintarFlotaEnVivo(){
           '<div style="font-family:DM Sans,sans-serif">'+
           '<b style="font-size:13px;color:'+col+'">'+ruta+' · '+unitId+'</b><br>'+
           '<span style="font-size:11px;color:#6B7385">'+(enc?'Encendido':'Apagado')+' · '+(u.GpsSpeed||0)+' km/h</span><br>'+
+          (nombreCond?'<span style="font-size:11px;color:#6B7385">👤 '+nombreCond+'</span><br>':'<span style="font-size:11px;color:#B5BAC6">Sin conductor registrado en Securita</span><br>')+
+          (sensoresTxt?'<span style="font-size:11px;color:#6B7385">'+sensoresTxt+'</span><br>':'')+
           '<span style="font-size:11px;color:#6B7385">'+(u.Domicilio||'')+'</span></div>'
         );iw.open(dashMap,mk);});
         flotaMarkers.push(mk);
@@ -1919,6 +1955,81 @@ async function pintarFlotaEnVivo(){
     const meta=document.getElementById('dash-flota-meta');if(meta)meta.textContent=vistos+' vehículos en vivo';
     const m2=document.getElementById('dash-flota-meta2');if(m2)m2.textContent=vistos+' en vivo';
   }catch(e){console.log('flota:',e.message);const l=document.getElementById('dash-flota-list');if(l)l.innerHTML=estadoVacio('alert','No se pudo cargar la flota','Revisa la conexión con SecuritaGPS.','ambar');}
+}
+
+/* ══ RECORRIDO HISTÓRICO (playback) — SecuritaGPS historyGet ══ */
+let recorridoCapa=null;
+function limpiarRecorrido(){
+  if(!recorridoCapa)return;
+  clearInterval(recorridoCapa.timer);
+  [recorridoCapa.polyline,recorridoCapa.marcadorInicio,recorridoCapa.marcadorFin,recorridoCapa.marcadorAnim].forEach(o=>o&&o.setMap(null));
+  recorridoCapa=null;
+}
+async function toggleRecorrido(unitId,ruta){
+  if(recorridoCapa&&recorridoCapa.unitId===unitId){limpiarRecorrido();return;}
+  limpiarRecorrido();
+  if(!_vehCache)_vehCache=await secVehiculos()||[];
+  const v=_vehCache.find(x=>x.nombre===unitId);
+  if(!v){toast('Vehículo no encontrado','err');return;}
+  toast('Cargando recorrido de hoy de '+unitId+'…','ok');
+  try{
+    const fecha=getColDate();
+    const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',300);
+    if(!puntos||!puntos.length){toast('Sin recorrido histórico hoy para '+unitId,'err');return;}
+    const ordenados=puntos.slice().reverse(); // Securita entrega más reciente primero; para animar necesitamos orden cronológico
+    const path=ordenados.map(p=>({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)})).filter(p=>p.lat&&p.lng);
+    if(!path.length){toast('Recorrido sin coordenadas válidas','err');return;}
+    const col=rutaColor[ruta]||'#1A56DB';
+    const polyline=new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.75,strokeWeight:3,
+      icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:1,scale:3},offset:'0',repeat:'14px'}],zIndex:1400});
+    const marcadorInicio=new google.maps.Marker({position:path[0],map:dashMap,zIndex:1900,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:unitId+' — inicio del recorrido'});
+    const marcadorFin=new google.maps.Marker({position:path[path.length-1],map:dashMap,zIndex:1900,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:unitId+' — última posición'});
+    const marcadorAnim=new google.maps.Marker({position:path[0],map:dashMap,icon:dashTruckIcon(ruta,true),zIndex:2100});
+    let i=0;
+    const timer=setInterval(()=>{ i++; if(i>=path.length){clearInterval(timer);return;} marcadorAnim.setPosition(path[i]); },Math.max(30,Math.min(400,4000/path.length)));
+    let km=0;
+    if(window.turf)for(let k=1;k<path.length;k++)km+=turf.distance(turf.point([path[k-1].lng,path[k-1].lat]),turf.point([path[k].lng,path[k].lat]),{units:'kilometers'});
+    const bounds=new google.maps.LatLngBounds();path.forEach(p=>bounds.extend(p));dashMap.fitBounds(bounds);
+    toast('Recorrido de '+unitId+': '+path.length+' puntos'+(km?' · ~'+km.toFixed(1)+' km':''),'ok');
+    recorridoCapa={unitId,polyline,marcadorInicio,marcadorFin,marcadorAnim,timer};
+  }catch(e){toast('Error cargando recorrido: '+e.message,'err');}
+}
+
+/* ══ ALARMAS DEL DÍA (SecuritaGPS getAlerts) — solo de los vehículos asignados hoy ══ */
+async function cargarAlarmasSecurita(){
+  const tbody=document.getElementById('dash-alarmas');
+  if(!tbody)return;
+  try{
+    const fecha=getColDate();
+    const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=*&fecha=eq.'+fecha,{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    const asignaciones=rAsig.ok?await rAsig.json():[];
+    if(!asignaciones.length){
+      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">Asigna vehículos para ver sus alarmas</td></tr>';
+      const meta=document.getElementById('dash-alarmas-meta');if(meta)meta.textContent='—';
+      return;
+    }
+    if(!_vehCache)_vehCache=await secVehiculos()||[];
+    const listas=await Promise.all(asignaciones.map(async a=>{
+      const v=_vehCache.find(x=>x.nombre===a.unit_id);
+      if(!v)return[];
+      try{ const al=await secAlertas(v.idgps,fecha)||[]; return(Array.isArray(al)?al:[al]).map(x=>({...x,_unit:a.unit_id,_ruta:a.ruta})); }catch(e){return[];}
+    }));
+    const eventos=listas.flat().sort((a,b)=>(b.Hora||'').localeCompare(a.Hora||''));
+    const meta=document.getElementById('dash-alarmas-meta');if(meta)meta.textContent=eventos.length+' alarmas hoy';
+    if(!eventos.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">Sin alarmas registradas hoy ✓</td></tr>';return;}
+    tbody.innerHTML=eventos.map(e=>{
+      const col=rutaColor[e._ruta]||'#4A5060';
+      const esCritica=/PANICO|EXCESO|REMOLCADO|VELOCIDAD MAXIMA|IMPACTO|FRENADA|ACELERACION|ALARMA ACTIVADA/i.test(e.TipoAlerta||e.Descripcion||'');
+      return '<tr><td>'+(e.Hora||'—')+'</td><td style="font-weight:800">'+e._unit+'</td>'+
+        '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e._ruta+'</span></td>'+
+        '<td><span class="dtag" style="background:'+(esCritica?'#FFF1F2':'#FFF8E6')+';color:'+(esCritica?'#E30613':'#D97706')+'">'+(e.TipoAlerta||'Alerta')+'</span></td>'+
+        '<td style="font-size:11px;color:#6B7385">'+(e.StatusAlerta||e.Domicilio||'—')+'</td></tr>';
+    }).join('');
+  }catch(e){console.log('alarmas:',e.message);tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">No se pudo cargar alarmas de Securita</td></tr>';}
 }
 
 /* ══ GEOCERCAS DINÁMICAS POR RUTA (Turf.js) ══
@@ -2139,6 +2250,14 @@ async function loadRoutes(){
 
 /* ══ ASIGNAR VEHÍCULOS A RUTAS — solo el coordinador (panel escritorio) ══ */
 let _vehCache=null,_vehListCargada=false;
+let _driverCache=null;
+async function conductorDeVehiculo(vehId){
+  if(_driverCache===null){
+    try{ _driverCache=await secConductores()||[]; }catch(e){ _driverCache=[]; }
+  }
+  const d=_driverCache.find(x=>String(x.idvehiculo)===String(vehId));
+  return d?(d.nombre+' '+(d.apellido||'')).trim():'';
+}
 async function renderAsignacionVehiculos(rutas){
   const cont=document.getElementById('dash-veh-list');
   if(!cont)return;
