@@ -1934,7 +1934,7 @@ function pintarDashMap(clientes_,entSet,novSet){
     (dashMarkersPorRuta[c.ruta]=dashMarkersPorRuta[c.ruta]||[]).push(mk);
   });
   renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort());
-  cargarClusterer().then(()=>aplicarFiltroRutas());
+  aplicarFiltroRutas();
   pintarFlotaEnVivo();
 }
 /* ══ Filtro de rutas (mostrar solo las rutas seleccionadas en el mapa) ══ */
@@ -1962,14 +1962,8 @@ function toggleRutaFiltro(r){
 }
 function rutaVisible(r){ return !rutasVisibles||rutasVisibles.has(r); }
 function aplicarFiltroRutas(){
-  const visibles=dashMarkers.filter(m=>rutaVisible(m._ruta));
-  if(window.markerClusterer){
-    if(!dashCluster)dashCluster=new markerClusterer.MarkerClusterer({map:dashMap});
-    dashCluster.clearMarkers();
-    dashCluster.addMarkers(visibles);
-  }else{
-    dashMarkers.forEach(m=>m.setMap(rutaVisible(m._ruta)?dashMap:null));
-  }
+  // Sin agrupación: cada cliente es un punto individual (las geocercas se mantienen)
+  dashMarkers.forEach(m=>m.setMap(rutaVisible(m._ruta)?dashMap:null));
   // Geocercas y vehículos también respetan el filtro
   Object.keys(geocercas||{}).forEach(r=>{const g=geocercas[r];if(g&&g.poligonoGoogle)g.poligonoGoogle.setMap(rutaVisible(r)?dashMap:null);});
   flotaMarkers.forEach(m=>{if(m._ruta!=null)m.setMap(rutaVisible(m._ruta)?dashMap:null);});
