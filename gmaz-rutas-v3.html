@@ -594,6 +594,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .map-wrap.full{position:fixed;inset:0;z-index:600;background:#fff}
 .map-wrap.full #dash-map{height:100vh}
 .map-wrap.full .map-toolbar{top:16px}
+/* ── Vista múltiple ── */
+#multi-ovl{position:fixed;inset:0;z-index:620;background:var(--gris1);display:none;flex-direction:column}
+#multi-ovl.on{display:flex}
+.multi-top{height:56px;background:#fff;border-bottom:1px solid var(--gris2);display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0}
+.multi-t b{font-size:15px;font-weight:900;letter-spacing:-.3px}
+.multi-t span{font-size:11px;color:var(--gris4);font-weight:700;margin-left:10px}
+.multi-grid{flex:1;overflow:auto;padding:12px;display:grid;gap:12px}
+.multi-cell{background:#fff;border:1px solid var(--gris2);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-height:220px}
+.multi-cell .mc-h{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--gris2)}
+.multi-cell .mc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.multi-cell .mc-code{font-size:13px;font-weight:900}
+.multi-cell .mc-meta{margin-left:auto;font-size:10px;font-weight:700;color:var(--gris4)}
+.multi-cell .mc-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px}
+.multi-cell .mc-map{flex:1;width:100%;min-height:170px}
 /* ── InfoWindow cliente pro ── */
 .iw-cli{font-family:'DM Sans',sans-serif;min-width:210px;max-width:250px}
 .iw-cli .iwh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
@@ -896,6 +910,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
             <div class="rutas-filtro" id="rutas-filtro"></div>
             <div class="map-btns">
               <button class="map-fab on" id="btn-trafico" onclick="haptic();toggleTrafico()" title="Tráfico en vivo">🚦</button>
+              <button class="map-fab" id="btn-multi" onclick="haptic();abrirVistaMultiple()" title="Vista múltiple (un mapa por ruta)">▦</button>
               <button class="map-fab" id="btn-fullmap" onclick="haptic();toggleMapaCompleto()" title="Pantalla completa">⛶</button>
             </div>
           </div>
@@ -932,6 +947,15 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 <button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
+
+<!-- ══ VISTA MÚLTIPLE — un mapa por ruta, bajo demanda ══ -->
+<div id="multi-ovl">
+  <div class="multi-top">
+    <div class="multi-t"><b>Vista múltiple por ruta</b><span id="multi-meta">—</span></div>
+    <button class="dchip rojo" onclick="haptic();cerrarVistaMultiple()">✕ Cerrar</button>
+  </div>
+  <div class="multi-grid" id="multi-grid"></div>
+</div>
 
 <!-- ══ PANTALLA FACTURAS ══ -->
 <div id="pantalla-facturas" class="oculto">
@@ -1863,6 +1887,8 @@ function cargarClusterer(){
 }
 let dashMarkers=[],dashMarkersPorRuta={},dashCluster=null,dashIW=null;
 let rutasVisibles=null; // null = todas visibles
+let _flotaCache=null,_clientesCache=[],_entSetCache=new Set(),_novSetCache=new Set();
+let multiMaps=[]; // instancias de la vista múltiple, creadas/destruidas bajo demanda
 function iwClienteHTML(c,estado){
   const col=rutaColor[c.ruta]||'#E30613';
   const cajas=Math.round(parseFloat(String(c['CAJA_']||0).replace(',','.'))||0);
@@ -1880,6 +1906,7 @@ function iwClienteHTML(c,estado){
 }
 function pintarDashMap(clientes_,entSet,novSet){
   if(!window.google||!google.maps)return setTimeout(()=>pintarDashMap(clientes_,entSet,novSet),900);
+  _clientesCache=clientes_;_entSetCache=entSet;_novSetCache=novSet;
   if(!dashMap){
     dashMap=new google.maps.Map(document.getElementById('dash-map'),{
       zoom:13,center:{lat:1.2136,lng:-77.2811},disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',
@@ -1953,6 +1980,70 @@ function toggleMapaCompleto(){
   const full=w.classList.toggle('full');
   document.getElementById('btn-fullmap').classList.toggle('on',full);
   setTimeout(()=>{if(dashMap){google.maps.event.trigger(dashMap,'resize');}},60);
+}
+/* ══ Vista múltiple: un mini-mapa por ruta (creados al abrir, destruidos al cerrar) ══ */
+function abrirVistaMultiple(){
+  if(!window.google||!google.maps){toast('El mapa aún carga…','err');return;}
+  const rutas=Object.keys(dashMarkersPorRuta).filter(rutaVisible).sort();
+  if(!rutas.length){toast('No hay rutas para mostrar','err');return;}
+  const grid=document.getElementById('multi-grid');
+  const cols=rutas.length<=1?1:rutas.length<=4?2:3;
+  grid.style.gridTemplateColumns='repeat('+cols+',1fr)';
+  document.getElementById('multi-meta').textContent=rutas.length+' rutas · GPS en vivo';
+  // Clientes agrupados por ruta desde el cache (sin llamar de nuevo a la API)
+  const cliPorRuta={};
+  _clientesCache.forEach(c=>{
+    const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+    if(!lat||!lng)return;(cliPorRuta[c.ruta]=cliPorRuta[c.ruta]||[]).push({c,lat,lng});
+  });
+  const fc=_flotaCache||{rutaPorUnit:{},posPorUnit:{}};
+  const unitPorRuta={};Object.keys(fc.rutaPorUnit).forEach(u=>{unitPorRuta[fc.rutaPorUnit[u]]=u;});
+  grid.innerHTML=rutas.map(r=>{
+    const col=rutaColor[r]||'#E30613';
+    const unit=unitPorRuta[r];const pos=unit?fc.posPorUnit[unit]:null;
+    const enc=pos&&pos.Ignition==='1';
+    const badge=pos?'<span class="mc-badge" style="background:'+(enc?'#E6F7F0':'#F1EFE8')+';color:'+(enc?'#0E9F6E':'#6B7385')+'">'+(enc?'▶ '+(pos.GpsSpeed||0)+' km/h':'⏸ detenido')+'</span>':'<span class="mc-badge" style="background:#F1EFE8;color:#8A90A0">sin GPS</span>';
+    return '<div class="multi-cell"><div class="mc-h"><span class="mc-dot" style="background:'+col+'"></span>'+
+      '<span class="mc-code" style="color:'+col+'">'+r+'</span>'+
+      '<span class="mc-meta">'+((cliPorRuta[r]||[]).length)+' clientes'+(unit?' · '+unit:'')+'</span>'+badge+'</div>'+
+      '<div class="mc-map" id="mc-map-'+r+'"></div></div>';
+  }).join('');
+  document.getElementById('multi-ovl').classList.add('on');
+  // Crear los mapas después de que el layout exista
+  multiMaps.forEach(m=>m&&google.maps.event.clearInstanceListeners(m));multiMaps=[];
+  setTimeout(()=>{
+    rutas.forEach(r=>{
+      const el=document.getElementById('mc-map-'+r);if(!el)return;
+      const col=rutaColor[r]||'#E30613';
+      const m=new google.maps.Map(el,{zoom:13,center:{lat:1.2136,lng:-77.2811},disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',styles:MAP_STYLE});
+      multiMaps.push(m);
+      const bounds=new google.maps.LatLngBounds();let hay=false;
+      (cliPorRuta[r]||[]).forEach(({c,lat,lng})=>{
+        const id=String(c.id);
+        const estado=_entSetCache.has(id)?'entregado':_novSetCache.has(id)?'novedad':'pendiente';
+        const fill=estado==='entregado'?'#059669':estado==='novedad'?'#D97706':col;
+        new google.maps.Marker({position:{lat,lng},map:m,icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:fill,fillOpacity:estado==='entregado'?.5:.95,strokeColor:'#fff',strokeWeight:1.4}});
+        bounds.extend({lat,lng});hay=true;
+      });
+      // Geocerca de la ruta
+      const g=geocercas[r];
+      if(g&&g.poligono){
+        let cg=g.poligono.geometry.coordinates[0];
+        if(g.poligono.geometry.type==='MultiPolygon')cg=g.poligono.geometry.coordinates[0][0];
+        new google.maps.Polygon({paths:cg.map(([lng,lat])=>({lat,lng})),map:m,strokeColor:col,strokeWeight:1.4,strokeOpacity:.42,fillColor:col,fillOpacity:.035,clickable:false});
+      }
+      // Vehículo
+      const unit=unitPorRuta[r];const pos=unit?fc.posPorUnit[unit]:null;
+      if(pos){const vlat=parseFloat(pos.Latitude),vlng=parseFloat(pos.Longitude);
+        if(vlat&&vlng){new google.maps.Marker({position:{lat:vlat,lng:vlng},map:m,icon:dashTruckIcon(r,pos.Ignition==='1'),zIndex:2000});bounds.extend({lat:vlat,lng:vlng});hay=true;}}
+      if(hay)m.fitBounds(bounds);
+    });
+  },80);
+}
+function cerrarVistaMultiple(){
+  document.getElementById('multi-ovl').classList.remove('on');
+  multiMaps=[];
+  document.getElementById('multi-grid').innerHTML=''; // libera los mapas para no consumir recursos
 }
 
 /* ══ API SECURITAGPS (service24gps) — rastreo real de la flota ══ */
@@ -2048,6 +2139,7 @@ async function pintarFlotaEnVivo(){
     const iw=new google.maps.InfoWindow();
     let vistos=0,filas='';
     const posPorUnit={};(posiciones||[]).forEach(u=>posPorUnit[u.UnitId]=u);
+    _flotaCache={rutaPorUnit,posPorUnit}; // reutilizado por la vista múltiple sin volver a llamar la API
     // Marcadores + filas de lista, en el orden de las rutas asignadas
     Object.keys(rutaPorUnit).sort((a,b)=>rutaPorUnit[a].localeCompare(rutaPorUnit[b])).forEach(unitId=>{
       const ruta=rutaPorUnit[unitId], u=posPorUnit[unitId];
@@ -3961,6 +4053,8 @@ if(yaInstalada){const b=document.getElementById('btn-install');if(b)b.classList.
 
 /* ══ BOTÓN ATRÁS DEL CELULAR: navegar dentro de la app, no cerrar ══ */
 function _capaAbiertaCerrar(){
+  const MV=document.getElementById('multi-ovl'); if(MV&&MV.classList.contains('on'))return cerrarVistaMultiple;
+  const MW=document.getElementById('map-wrap'); if(MW&&MW.classList.contains('full'))return toggleMapaCompleto;
   const M=document.getElementById('modal-nov'); if(M&&M.classList.contains('show'))return closeNovModal;
   const E=document.getElementById('ent-ovl'); if(E&&E.classList.contains('open'))return cerrarSheetEnt;
   const D=document.getElementById('pantalla-detalle'); if(D&&!D.classList.contains('oculto'))return cerrarDetalle;
