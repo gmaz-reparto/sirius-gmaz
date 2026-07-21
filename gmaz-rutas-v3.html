@@ -559,19 +559,52 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dlive{font-size:10px;font-weight:800;color:var(--verde);display:flex;align-items:center;gap:5px}
 .dlive i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
 @keyframes dblink{0%,100%{opacity:.4}50%{opacity:1}}
-.dash-main{flex:1;overflow:auto;padding:18px 22px}
-.dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:15px}
+.dash-main{flex:1;overflow:auto;padding:18px 22px;background:var(--gris1)}
+.dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1100px){.dkpis{grid-template-columns:repeat(3,1fr)}}
-.dkpi{background:#fff;border:1px solid var(--gris2);border-radius:14px;padding:14px}
-.dkpi .ko{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;margin-bottom:10px}
-.dkpi .kv{font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1}
-.dkpi .kl{font-size:11px;color:var(--gris4);font-weight:600;margin-top:4px}
-.dgrid{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;margin-bottom:14px}
-.dcard{background:#fff;border:1px solid var(--gris2);border-radius:16px;overflow:hidden}
-.dcard-h{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--gris2)}
-.dcard-h h3{font-size:13.5px;font-weight:800;letter-spacing:-.2px}
+.dkpi{background:#fff;border:1px solid var(--gris2);border-radius:16px;padding:15px 16px;position:relative;overflow:hidden;transition:box-shadow .15s,transform .15s}
+.dkpi:hover{box-shadow:0 8px 22px rgba(15,17,23,.07);transform:translateY(-1px)}
+.dkpi::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--kac,transparent)}
+.dkpi .ktop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.dkpi .ko{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.dkpi .ktrend{font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:20px;display:flex;align-items:center;gap:3px}
+.dkpi .kv{font-size:25px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--negro)}
+.dkpi .kl{font-size:10.5px;color:var(--gris4);font-weight:700;margin-top:5px;letter-spacing:.2px}
+.dgrid{display:grid;grid-template-columns:1.62fr 1fr;gap:14px;margin-bottom:14px}
+.dgrid.eq{grid-template-columns:1fr 1fr}
+.dcard{background:#fff;border:1px solid var(--gris2);border-radius:18px;overflow:hidden;box-shadow:0 1px 3px rgba(15,17,23,.03)}
+.dcard-h{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid var(--gris2)}
+.dcard-h h3{font-size:14px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.dcard-h h3 .h3ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--gris1)}
 .dcard-h .dm{font-size:10.5px;color:var(--gris4);font-weight:600}
-#dash-map{height:380px;width:100%}
+/* ── Mapa centro de control ── */
+.map-wrap{position:relative}
+#dash-map{height:460px;width:100%}
+.map-toolbar{position:absolute;top:12px;left:12px;right:12px;z-index:5;display:flex;align-items:flex-start;gap:8px;pointer-events:none}
+.map-toolbar>*{pointer-events:auto}
+.rutas-filtro{display:flex;flex-wrap:wrap;gap:6px;flex:1;max-width:calc(100% - 96px)}
+.rfil-chip{font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.94);border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.12);user-select:none;transition:opacity .12s}
+.rfil-chip .rfdot{width:8px;height:8px;border-radius:50%}
+.rfil-chip.off{opacity:.4}
+.rfil-chip.all{background:var(--negro);color:#fff}
+.map-btns{display:flex;gap:6px;flex-shrink:0}
+.map-fab{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.94);border:none;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.14);color:var(--gris6)}
+.map-fab.on{background:#0E9F6E;color:#fff}
+.map-fab:hover{background:#fff}
+.map-wrap.full{position:fixed;inset:0;z-index:600;background:#fff}
+.map-wrap.full #dash-map{height:100vh}
+.map-wrap.full .map-toolbar{top:16px}
+/* ── InfoWindow cliente pro ── */
+.iw-cli{font-family:'DM Sans',sans-serif;min-width:210px;max-width:250px}
+.iw-cli .iwh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.iw-cli .iwdot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.iw-cli .iwn{font-size:13.5px;font-weight:800;color:#0F1117;line-height:1.15}
+.iw-cli .iwcod{font-size:10px;font-weight:700;color:#8A90A0}
+.iw-cli .iwrow{display:flex;align-items:center;gap:7px;font-size:11px;color:#4A5060;font-weight:600;padding:3px 0}
+.iw-cli .iwrow svg{flex-shrink:0;opacity:.7}
+.iw-cli .iwrow b{color:#0F1117;font-weight:800}
+.iw-cli .iwtag{display:inline-block;font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:7px;margin-top:8px}
+.iw-cli .iwsep{height:1px;background:#EEF0F4;margin:8px 0}
 .drk{padding:6px 8px 10px;max-height:380px;overflow:auto}
 .drow{display:flex;align-items:center;gap:11px;padding:9px 9px;border-radius:11px}
 .drow:hover{background:var(--gris1)}
@@ -857,37 +890,43 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="dkpis" id="dash-kpis"></div>
     <div class="dgrid">
       <div class="dcard">
-        <div class="dcard-h"><h3>Mapa operativo — Pasto</h3><span style="display:flex;align-items:center;gap:10px">
-          <button class="dchip" id="btn-trafico" onclick="haptic();toggleTrafico()" style="padding:5px 10px;font-size:10px">🚦 Tráfico</button>
-          <span class="dm"><span id="dash-map-meta">cargando…</span> · <b style="color:#E30613" id="dash-flota-meta">flota</b></span>
-        </span></div>
-        <div id="dash-map"></div>
+        <div class="dcard-h"><h3><span class="h3ic">🗺️</span>Centro de control — Pasto</h3><span class="dm"><span id="dash-map-meta">cargando…</span> · <b style="color:#E30613" id="dash-flota-meta">flota</b></span></div>
+        <div class="map-wrap" id="map-wrap">
+          <div class="map-toolbar">
+            <div class="rutas-filtro" id="rutas-filtro"></div>
+            <div class="map-btns">
+              <button class="map-fab on" id="btn-trafico" onclick="haptic();toggleTrafico()" title="Tráfico en vivo">🚦</button>
+              <button class="map-fab" id="btn-fullmap" onclick="haptic();toggleMapaCompleto()" title="Pantalla completa">⛶</button>
+            </div>
+          </div>
+          <div id="dash-map"></div>
+        </div>
       </div>
       <div class="dcard">
-        <div class="dcard-h"><h3>Rendimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
-        <div class="drk" id="dash-ranking"></div>
+        <div class="dcard-h"><h3><span class="h3ic">🚚</span>Flota en vivo</h3><span class="dm dlive2"><i></i>SecuritaGPS · <span id="dash-flota-meta2">—</span></span></div>
+        <div class="dflota-list" id="dash-flota-list" style="max-height:392px"><div class="veh-cargando">Cargando posiciones…</div></div>
       </div>
     </div>
-    <div class="dgrid">
+    <div class="dgrid eq">
       <div class="dcard">
-        <div class="dcard-h"><h3>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
-        <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
+        <div class="dcard-h"><h3><span class="h3ic">📊</span>Rendimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
+        <div class="drk" id="dash-ranking"></div>
       </div>
       <div class="dcard">
-        <div class="dcard-h"><h3>Flota en vivo</h3><span class="dm dlive2"><i></i>SecuritaGPS · <span id="dash-flota-meta2">—</span></span></div>
-        <div class="dflota-list" id="dash-flota-list"><div class="veh-cargando">Cargando posiciones…</div></div>
+        <div class="dcard-h"><h3><span class="h3ic">🔑</span>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
+        <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
       </div>
     </div>
     <div class="dcard">
-      <div class="dcard-h"><h3>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
+      <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
       <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
     </div>
     <div class="dcard">
-      <div class="dcard-h"><h3>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
+      <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
       <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
     </div>
     <div class="dcard">
-      <div class="dcard-h"><h3>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
+      <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
       <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
     </div>
   </div>
@@ -1726,7 +1765,7 @@ async function cargarDash(){
     }
     const fecha=getColDate();
     const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
-      sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre'),
+      sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia'),
       sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo').eq('fecha',fecha),
       sb.from('estados_entrega').select('ruta,estado,codigo_cliente,created_at').eq('fecha',fecha),
       sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
@@ -1750,16 +1789,19 @@ async function cargarDash(){
       if(horas>0.05)ritmo=(totEnt/horas).toFixed(1)+' /h';
     }
     // KPIs — priorizados para decisión operativa
+    const pend=totCli-totEnt;
+    const chip=(txt,cl,bg)=>({t:txt,tc:cl,tb:bg});
     const K=[
-      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre de clientes'},
-      {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:Math.round(cajasEnt).toLocaleString('es-CO')+' / '+Math.round(cajasProg).toLocaleString('es-CO'),l:'Cajas entregadas · '+pctCajas+'%'},
+      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre de clientes',c:chip(pctG>=75?'● en meta':pctG>=40?'● en curso':'● atrás',pctG>=75?'#059669':pctG>=40?'#D97706':'#E30613',pctG>=75?'#ECFDF5':pctG>=40?'#FFF7ED':'#FEF2F2')},
+      {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:Math.round(cajasEnt).toLocaleString('es-CO'),l:'Cajas · '+pctCajas+'% de '+Math.round(cajasProg).toLocaleString('es-CO')},
       {i:'store',bg:'#F5F3FF',cl:'#7C3AED',v:totEnt+' / '+totCli,l:'Clientes entregados'},
       {i:'clock',bg:'#ECFEFF',cl:'#0891B2',v:ritmo,l:'Ritmo de entrega'},
       {i:'truck',bg:'#FFF7ED',cl:'#EA580C',v:Object.keys(rutaColor).length,l:'Rutas activas'},
-      {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov+(cajasRej>0?' · '+Math.round(cajasRej)+' cj':''),l:'Rechazos hoy'}
+      {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov,l:'Rechazos'+(cajasRej>0?' · '+Math.round(cajasRej)+' cj':' hoy'),c:totNov>0?chip('● revisar','#E30613','#FEF2F2'):chip('● sin novedad','#059669','#ECFDF5')}
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
-      '<div class="dkpi"><div class="ko" style="background:'+k.bg+';color:'+k.cl+'">'+icoSvg(k.i,16)+'</div>'+
+      '<div class="dkpi" style="--kac:'+k.cl+'"><div class="ktop"><div class="ko" style="background:'+k.bg+';color:'+k.cl+'">'+icoSvg(k.i,17)+'</div>'+
+      (k.c?'<span class="ktrend" style="color:'+k.c.tc+';background:'+k.c.tb+'">'+k.c.t+'</span>':'')+'</div>'+
       '<div class="kv">'+k.v+'</div><div class="kl">'+k.l+'</div></div>').join('');
     // Ranking por ruta
     const porRuta={};
@@ -1792,31 +1834,125 @@ async function cargarDash(){
     _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
 }
-let dashMarkers=[];
+/* ══ Estilo de mapa profesional (monocromo suave para que resalten los colores de ruta) ══ */
+const MAP_STYLE=[
+  {elementType:'geometry',stylers:[{color:'#f4f5f7'}]},
+  {elementType:'labels.text.fill',stylers:[{color:'#8a90a0'}]},
+  {elementType:'labels.text.stroke',stylers:[{color:'#ffffff'},{weight:2}]},
+  {featureType:'poi',stylers:[{visibility:'off'}]},
+  {featureType:'transit',stylers:[{visibility:'off'}]},
+  {featureType:'administrative',elementType:'geometry',stylers:[{visibility:'off'}]},
+  {featureType:'landscape',elementType:'geometry',stylers:[{color:'#eef0f4'}]},
+  {featureType:'water',elementType:'geometry',stylers:[{color:'#d7e6f0'}]},
+  {featureType:'road',elementType:'geometry',stylers:[{color:'#ffffff'}]},
+  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#ffffff'}]},
+  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#ffe9b0'}]},
+  {featureType:'road',elementType:'labels.icon',stylers:[{visibility:'off'}]}
+];
+let _clustererCargando=null;
+function cargarClusterer(){
+  if(window.markerClusterer)return Promise.resolve();
+  if(_clustererCargando)return _clustererCargando;
+  _clustererCargando=new Promise((res)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@googlemaps/markerclusterer@2.5.3/dist/index.min.js';
+    s.onload=()=>res();s.onerror=()=>res(); // si falla, seguimos con marcadores sueltos
+    document.head.appendChild(s);
+  });
+  return _clustererCargando;
+}
+let dashMarkers=[],dashMarkersPorRuta={},dashCluster=null,dashIW=null;
+let rutasVisibles=null; // null = todas visibles
+function iwClienteHTML(c,estado){
+  const col=rutaColor[c.ruta]||'#E30613';
+  const cajas=Math.round(parseFloat(String(c['CAJA_']||0).replace(',','.'))||0);
+  const est=estado==='entregado'?['Entregado','#059669','#ECFDF5']:estado==='novedad'?['Con novedad','#D97706','#FFF7ED']:['Pendiente','#6B7385','#EEF0F4'];
+  const dir=c.direccion?String(c.direccion).replace(/&ntilde;/gi,'ñ'):'';
+  const orden=(c.secuencia!=null&&c.secuencia!=='')?c.secuencia:null;
+  const ico=(p)=>'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A90A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+  return '<div class="iw-cli"><div class="iwh"><span class="iwdot" style="background:'+col+'"></span>'+
+    '<div><div class="iwn">'+(c.nombre||c.id)+'</div><div class="iwcod">Código '+c.id+'</div></div></div>'+
+    (dir?'<div class="iwrow">'+ico('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>')+'<span>'+dir+'</span></div>':'')+
+    '<div class="iwsep"></div>'+
+    '<div class="iwrow">'+ico('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')+'Ruta <b style="color:'+col+'">'+c.ruta+'</b>'+(orden!=null?' · Orden de visita <b>#'+orden+'</b>':'')+'</div>'+
+    '<div class="iwrow">'+ico('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>')+'<b>'+cajas+'</b> cajas programadas</div>'+
+    '<span class="iwtag" style="color:'+est[1]+';background:'+est[2]+'">'+est[0]+'</span></div>';
+}
 function pintarDashMap(clientes_,entSet,novSet){
   if(!window.google||!google.maps)return setTimeout(()=>pintarDashMap(clientes_,entSet,novSet),900);
   if(!dashMap){
     dashMap=new google.maps.Map(document.getElementById('dash-map'),{
-      zoom:13,center:{lat:1.2136,lng:-77.2811},disableDefaultUI:true,zoomControl:true,
-      styles:[{featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},{featureType:'transit',elementType:'all',stylers:[{visibility:'off'}]}]
+      zoom:13,center:{lat:1.2136,lng:-77.2811},disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',
+      styles:MAP_STYLE
     });
     trafficLayer=new google.maps.TrafficLayer();
     trafficLayer.setMap(trafficOn?dashMap:null); // tráfico en vivo de Google Maps, igual que Securita
     const btnTr=document.getElementById('btn-trafico');if(btnTr)btnTr.classList.toggle('on',trafficOn);
   }
-  dashMarkers.forEach(m=>m.setMap(null));dashMarkers=[];
-  const iw=new google.maps.InfoWindow();
+  if(!dashIW)dashIW=new google.maps.InfoWindow();
+  dashMarkers.forEach(m=>m.setMap(null));
+  if(dashCluster)dashCluster.clearMarkers();
+  dashMarkers=[];dashMarkersPorRuta={};
   clientes_.forEach(c=>{
     const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
     if(!lat||!lng)return;
     const id=String(c.id);
-    const fill=entSet.has(id)?'#059669':novSet.has(id)?'#D97706':(rutaColor[c.ruta]||'#E30613');
-    const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:fill,fillOpacity:entSet.has(id)?.55:.95,strokeColor:'#fff',strokeWeight:1.5}});
-    mk.addListener('click',()=>{iw.setContent('<div style="font-family:DM Sans,sans-serif"><b style="font-size:12px">'+(c.nombre||id)+'</b><br><span style="font-size:11px;color:#6B7385">'+c.ruta+' · '+Math.round(parseFloat(String(c['CAJA_']||0).replace(',','.'))||0)+' cajas</span></div>');iw.open(dashMap,mk);});
+    const estado=entSet.has(id)?'entregado':novSet.has(id)?'novedad':'pendiente';
+    const fill=estado==='entregado'?'#059669':estado==='novedad'?'#D97706':(rutaColor[c.ruta]||'#E30613');
+    const mk=new google.maps.Marker({position:{lat,lng},
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:5.5,fillColor:fill,fillOpacity:estado==='entregado'?.5:.95,strokeColor:'#fff',strokeWeight:1.5}});
+    mk._ruta=c.ruta;
+    mk.addListener('click',()=>{dashIW.setContent(iwClienteHTML(c,estado));dashIW.open(dashMap,mk);});
     dashMarkers.push(mk);
+    (dashMarkersPorRuta[c.ruta]=dashMarkersPorRuta[c.ruta]||[]).push(mk);
   });
+  renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort());
+  cargarClusterer().then(()=>aplicarFiltroRutas());
   pintarFlotaEnVivo();
+}
+/* ══ Filtro de rutas (mostrar solo las rutas seleccionadas en el mapa) ══ */
+function renderRutasFiltro(rutas){
+  const cont=document.getElementById('rutas-filtro');
+  if(!cont)return;
+  const todasOn=!rutasVisibles;
+  let h='<span class="rfil-chip all" onclick="haptic();filtroTodas()">'+(todasOn?'✓ ':'')+'Todas</span>';
+  rutas.forEach(r=>{
+    const col=rutaColor[r]||'#E30613';
+    const on=!rutasVisibles||rutasVisibles.has(r);
+    h+='<span class="rfil-chip'+(on?'':' off')+'" onclick="haptic();toggleRutaFiltro(\''+r+'\')"><span class="rfdot" style="background:'+col+'"></span>'+r+'</span>';
+  });
+  cont.innerHTML=h;
+}
+function filtroTodas(){ rutasVisibles=null; renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort()); aplicarFiltroRutas(); }
+function toggleRutaFiltro(r){
+  const todas=Object.keys(dashMarkersPorRuta);
+  if(!rutasVisibles)rutasVisibles=new Set(todas); // partir de "todas" y quitar
+  if(rutasVisibles.has(r))rutasVisibles.delete(r);else rutasVisibles.add(r);
+  if(rutasVisibles.size===todas.length)rutasVisibles=null; // todas otra vez
+  if(rutasVisibles&&rutasVisibles.size===0)rutasVisibles=new Set(todas); // no dejar el mapa vacío
+  renderRutasFiltro(todas.sort());
+  aplicarFiltroRutas();
+}
+function rutaVisible(r){ return !rutasVisibles||rutasVisibles.has(r); }
+function aplicarFiltroRutas(){
+  const visibles=dashMarkers.filter(m=>rutaVisible(m._ruta));
+  if(window.markerClusterer){
+    if(!dashCluster)dashCluster=new markerClusterer.MarkerClusterer({map:dashMap});
+    dashCluster.clearMarkers();
+    dashCluster.addMarkers(visibles);
+  }else{
+    dashMarkers.forEach(m=>m.setMap(rutaVisible(m._ruta)?dashMap:null));
+  }
+  // Geocercas y vehículos también respetan el filtro
+  Object.keys(geocercas||{}).forEach(r=>{const g=geocercas[r];if(g&&g.poligonoGoogle)g.poligonoGoogle.setMap(rutaVisible(r)?dashMap:null);});
+  flotaMarkers.forEach(m=>{if(m._ruta!=null)m.setMap(rutaVisible(m._ruta)?dashMap:null);});
+}
+/* ══ Pantalla completa del mapa ══ */
+function toggleMapaCompleto(){
+  const w=document.getElementById('map-wrap');if(!w)return;
+  const full=w.classList.toggle('full');
+  document.getElementById('btn-fullmap').classList.toggle('on',full);
+  setTimeout(()=>{if(dashMap){google.maps.event.trigger(dashMap,'resize');}},60);
 }
 
 /* ══ API SECURITAGPS (service24gps) — rastreo real de la flota ══ */
@@ -1938,7 +2074,8 @@ async function pintarFlotaEnVivo(){
         '<button class="dchip" style="padding:5px 8px;font-size:9.5px;margin-left:4px" onclick="haptic();toggleRecorrido(\''+unitId+'\',\''+ruta+'\')" title="Ver recorrido de hoy">🕓</button></div>';
       if(lat&&lng){
         vistos++;
-        const mk=new google.maps.Marker({position:{lat,lng},map:dashMap,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+unitId});
+        const mk=new google.maps.Marker({position:{lat,lng},map:rutaVisible(ruta)?dashMap:null,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+unitId});
+        mk._ruta=ruta;
         mk.addListener('click',()=>{iw.setContent(
           '<div style="font-family:DM Sans,sans-serif">'+
           '<b style="font-size:13px;color:'+col+'">'+ruta+' · '+unitId+'</b><br>'+
@@ -2099,9 +2236,10 @@ function dibujarGeocercas(){
     if(g.poligono.geometry.type==='MultiPolygon')coordsGeo=g.poligono.geometry.coordinates[0][0];
     const coords=coordsGeo.map(([lng,lat])=>({lat,lng}));
     const col=rutaColor[ruta]||'#E30613';
+    const vis=(typeof rutaVisible==='function')?rutaVisible(ruta):true;
     g.poligonoGoogle=new google.maps.Polygon({
-      paths:coords,map:dashMap,strokeColor:col,strokeWeight:1.5,strokeOpacity:.5,
-      fillColor:col,fillOpacity:.05,clickable:false,zIndex:1
+      paths:coords,map:vis?dashMap:null,strokeColor:col,strokeWeight:1.4,strokeOpacity:.42,
+      fillColor:col,fillOpacity:.035,clickable:false,zIndex:1
     });
   });
 }
