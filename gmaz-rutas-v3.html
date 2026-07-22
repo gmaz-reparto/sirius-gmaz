@@ -594,6 +594,39 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .map-wrap.full{position:fixed;inset:0;z-index:600;background:#fff}
 .map-wrap.full #dash-map{height:100vh}
 .map-wrap.full .map-toolbar{top:16px}
+/* ── Controles de mapa (tipo + medir) ── */
+.map-typebar{position:absolute;bottom:12px;left:12px;z-index:5;display:flex;gap:6px;background:rgba(255,255,255,.94);border-radius:11px;padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.14)}
+.mtb-btn{font-size:10.5px;font-weight:800;padding:6px 11px;border-radius:8px;border:none;background:transparent;color:var(--gris5);cursor:pointer;font-family:inherit}
+.mtb-btn.on{background:var(--negro);color:#fff}
+.medir-info{position:absolute;bottom:56px;left:12px;z-index:6;background:var(--negro);color:#fff;font-size:12px;font-weight:800;padding:8px 13px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.3);display:none}
+.medir-info.on{display:block}
+.medir-info button{margin-left:10px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:3px 8px;font-family:inherit;font-weight:800;cursor:pointer;font-size:11px}
+/* ── Panel de vehículo (slide-in) ── */
+#veh-panel{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:92vw;background:#fff;z-index:640;box-shadow:-8px 0 40px rgba(0,0,0,.22);transform:translateX(105%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+#veh-panel.on{transform:translateX(0)}
+.vp-head{padding:16px 18px;color:#fff;position:relative;flex-shrink:0}
+.vp-head .vph-r{font-size:10px;font-weight:800;letter-spacing:1.5px;opacity:.85}
+.vp-head .vph-u{font-size:22px;font-weight:900;letter-spacing:-.5px;margin-top:2px}
+.vp-head .vph-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:16px;cursor:pointer}
+.vp-body{flex:1;overflow-y:auto;padding:14px 16px}
+.vp-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.vp-stat{background:var(--gris1);border-radius:12px;padding:11px 12px}
+.vp-stat .vs-l{font-size:9.5px;font-weight:800;color:var(--gris4);letter-spacing:.4px;text-transform:uppercase}
+.vp-stat .vs-v{font-size:17px;font-weight:900;letter-spacing:-.5px;margin-top:3px}
+.vp-row{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--gris5);font-weight:600;padding:7px 2px;border-bottom:.5px solid var(--gris2)}
+.vp-row b{color:var(--negro);font-weight:800}
+.vp-sec{font-size:11px;font-weight:900;color:var(--gris4);letter-spacing:.5px;text-transform:uppercase;margin:16px 0 8px}
+.vp-btns{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.vp-btn{display:flex;align-items:center;gap:9px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--gris2);background:#fff;font-family:inherit;font-size:12.5px;font-weight:800;color:var(--negro);cursor:pointer;text-align:left}
+.vp-btn:hover{background:var(--gris1)}
+.vp-btn.pri{background:var(--negro);color:#fff;border-color:var(--negro)}
+.vp-datebar{display:flex;gap:8px;align-items:center;margin-top:8px}
+.vp-datebar input{flex:1;height:38px;border:1.5px solid var(--gris3);border-radius:10px;padding:0 11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--negro)}
+.vp-alertas{margin-top:6px}
+.vp-alerta{display:flex;gap:9px;padding:9px 10px;border-radius:10px;background:var(--gris1);margin-bottom:6px}
+.vp-alerta .va-t{font-size:11.5px;font-weight:800;color:var(--negro)}
+.vp-alerta .va-s{font-size:10px;color:var(--gris4);font-weight:600;margin-top:1px}
+.vp-alerta .va-h{margin-left:auto;font-size:10px;font-weight:800;color:var(--gris5);flex-shrink:0}
 /* ── Vista múltiple ── */
 #multi-ovl{position:fixed;inset:0;z-index:620;background:var(--gris1);display:none;flex-direction:column}
 #multi-ovl.on{display:flex}
@@ -910,10 +943,17 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
             <div class="rutas-filtro" id="rutas-filtro"></div>
             <div class="map-btns">
               <button class="map-fab on" id="btn-trafico" onclick="haptic();toggleTrafico()" title="Tráfico en vivo">🚦</button>
+              <button class="map-fab" id="btn-medir" onclick="haptic();toggleMedir()" title="Medir distancia">📏</button>
               <button class="map-fab" id="btn-multi" onclick="haptic();abrirVistaMultiple()" title="Vista múltiple (un mapa por ruta)">▦</button>
               <button class="map-fab" id="btn-fullmap" onclick="haptic();toggleMapaCompleto()" title="Pantalla completa">⛶</button>
             </div>
           </div>
+          <div class="map-typebar">
+            <button class="mtb-btn on" data-mt="roadmap" onclick="haptic();setTipoMapa('roadmap')">Calle</button>
+            <button class="mtb-btn" data-mt="satellite" onclick="haptic();setTipoMapa('satellite')">Satélite</button>
+            <button class="mtb-btn" data-mt="hybrid" onclick="haptic();setTipoMapa('hybrid')">Híbrido</button>
+          </div>
+          <div class="medir-info" id="medir-info">Toca puntos en el mapa · <span id="medir-km">0 m</span><button onclick="haptic();limpiarMedir()">Borrar</button></div>
           <div id="dash-map"></div>
         </div>
       </div>
@@ -947,6 +987,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 <button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
+
+<!-- ══ PANEL DE VEHÍCULO (clic en un vehículo del mapa/lista) ══ -->
+<div id="veh-panel">
+  <div class="vp-head" id="vp-head">
+    <button class="vph-x" onclick="haptic();cerrarVehPanel()">✕</button>
+    <div class="vph-r" id="vp-ruta">RUTA</div>
+    <div class="vph-u" id="vp-unit">—</div>
+  </div>
+  <div class="vp-body" id="vp-body"></div>
+</div>
 
 <!-- ══ VISTA MÚLTIPLE — un mapa por ruta, bajo demanda ══ -->
 <div id="multi-ovl">
@@ -2028,8 +2078,9 @@ function abrirVistaMultiple(){
       }
       // Vehículo
       const unit=unitPorRuta[r];const pos=unit?fc.posPorUnit[unit]:null;
+      const vehM=unit&&_vehCache?_vehCache.find(v=>v.nombre===unit):null;
       if(pos){const vlat=parseFloat(pos.Latitude),vlng=parseFloat(pos.Longitude);
-        if(vlat&&vlng){new google.maps.Marker({position:{lat:vlat,lng:vlng},map:m,icon:dashTruckIcon(r,pos.Ignition==='1'),zIndex:2000});bounds.extend({lat:vlat,lng:vlng});hay=true;}}
+        if(vlat&&vlng){new google.maps.Marker({position:{lat:vlat,lng:vlng},map:m,icon:dashTruckIcon(r,pos.Ignition==='1',vehM&&vehM.tipo_vehiculo),zIndex:2000});bounds.extend({lat:vlat,lng:vlng});hay=true;}}
       if(hay)m.fitBounds(bounds);
     });
   },80);
@@ -2038,6 +2089,113 @@ function cerrarVistaMultiple(){
   document.getElementById('multi-ovl').classList.remove('on');
   multiMaps=[];
   document.getElementById('multi-grid').innerHTML=''; // libera los mapas para no consumir recursos
+}
+/* ══ Tipo de mapa (calle / satélite / híbrido) ══ */
+function setTipoMapa(t){
+  if(!dashMap)return;
+  dashMap.setMapTypeId(t);
+  document.querySelectorAll('.mtb-btn').forEach(b=>b.classList.toggle('on',b.dataset.mt===t));
+}
+/* ══ Herramienta de medir distancia ══ */
+let medirOn=false,medirPts=[],medirPoly=null,medirMarks=[],medirLis=null;
+function toggleMedir(){
+  if(!dashMap)return;
+  medirOn=!medirOn;
+  document.getElementById('btn-medir').classList.toggle('on',medirOn);
+  document.getElementById('medir-info').classList.toggle('on',medirOn);
+  if(medirOn){
+    dashMap.setOptions({draggableCursor:'crosshair'});
+    medirLis=dashMap.addListener('click',e=>agregarPuntoMedir(e.latLng));
+  }else{
+    dashMap.setOptions({draggableCursor:null});
+    if(medirLis){google.maps.event.removeListener(medirLis);medirLis=null;}
+    limpiarMedir();
+  }
+}
+function agregarPuntoMedir(latLng){
+  medirPts.push(latLng);
+  medirMarks.push(new google.maps.Marker({position:latLng,map:dashMap,zIndex:3000,
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:4.5,fillColor:'#0F1117',fillOpacity:1,strokeColor:'#fff',strokeWeight:1.6}}));
+  if(medirPoly)medirPoly.setMap(null);
+  medirPoly=new google.maps.Polyline({path:medirPts,map:dashMap,strokeColor:'#0F1117',strokeWeight:2.5,strokeOpacity:.9,zIndex:2900});
+  let m=0;for(let i=1;i<medirPts.length;i++)m+=google.maps.geometry.spherical.computeDistanceBetween(medirPts[i-1],medirPts[i]);
+  document.getElementById('medir-km').textContent=m<1000?Math.round(m)+' m':(m/1000).toFixed(2)+' km';
+}
+function limpiarMedir(){
+  medirPts=[];medirMarks.forEach(m=>m.setMap(null));medirMarks=[];
+  if(medirPoly){medirPoly.setMap(null);medirPoly=null;}
+  const el=document.getElementById('medir-km');if(el)el.textContent='0 m';
+}
+/* ══ Panel de vehículo (recorrido, compartir, alertas, ignición, velocidad, conductor) ══ */
+function abrirVehPanel(unitId,ruta){
+  const fc=_flotaCache||{posPorUnit:{}};
+  const u=fc.posPorUnit[unitId];
+  const veh=(_vehCache||[]).find(v=>v.nombre===unitId);
+  const cond=(veh&&_driverCache)?_driverCache.find(d=>String(d.idvehiculo)===String(veh.id)):null;
+  const nombreCond=cond?(cond.nombre+' '+(cond.apellido||'')).trim():'';
+  const col=rutaColor[ruta]||'#E30613';
+  document.getElementById('vp-head').style.background=col;
+  document.getElementById('vp-ruta').textContent='RUTA '+ruta+(veh&&veh.tipo_vehiculo?' · '+(tipoVehiculoClase(veh.tipo_vehiculo)==='camion'?'CAMIÓN':'FURGÓN'):'');
+  document.getElementById('vp-unit').textContent=unitId;
+  const enc=u&&u.Ignition==='1';
+  const vel=u?(u.GpsSpeed||0):'—';
+  const mins=(u&&u.ReportDate)?Math.max(0,Math.round((Date.now()-new Date(u.ReportDate.replace(' ','T')).getTime())/60000)):null;
+  const sensoresTxt=u?resumenSensores(u.Sensores):'';
+  const hoy=getColDate();
+  const b=document.getElementById('vp-body');
+  b.innerHTML=
+    '<div class="vp-stats">'+
+      '<div class="vp-stat"><div class="vs-l">Velocidad</div><div class="vs-v" style="color:'+(enc&&vel>0?'#0E9F6E':'#0F1117')+'">'+vel+' <span style="font-size:11px">km/h</span></div></div>'+
+      '<div class="vp-stat"><div class="vs-l">Ignición</div><div class="vs-v" style="color:'+(enc?'#0E9F6E':'#8A90A0')+'">'+(enc?'Encendido':'Apagado')+'</div></div>'+
+    '</div>'+
+    '<div class="vp-row"><span>👤 Conductor</span><b style="margin-left:auto">'+(nombreCond||'Sin registrar en Securita')+'</b></div>'+
+    '<div class="vp-row"><span>🕒 Último reporte</span><b style="margin-left:auto">'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+'</b></div>'+
+    (veh?'<div class="vp-row"><span>🚚 Vehículo</span><b style="margin-left:auto">'+((veh.marca||'')+' '+(veh.modelo||'')).trim()+'</b></div>':'')+
+    (sensoresTxt?'<div class="vp-row"><span>📟 Sensores</span><b style="margin-left:auto">'+sensoresTxt+'</b></div>':'')+
+    (u&&u.Domicilio?'<div class="vp-row" style="border:none"><span style="color:#6B7385">'+u.Domicilio+'</span></div>':'')+
+    '<div class="vp-sec">Recorrido histórico</div>'+
+    '<div class="vp-datebar"><input type="date" id="vp-fecha" value="'+hoy+'" max="'+hoy+'"><button class="vp-btn pri" style="flex:0 0 auto;padding:11px 14px" onclick="haptic();verRecorridoVehiculo(\''+unitId+'\',\''+ruta+'\')">Ver ▶</button></div>'+
+    '<div class="vp-btns">'+
+      '<button class="vp-btn" onclick="haptic();compartirUbicacion(\''+unitId+'\')">📍 Compartir ubicación actual</button>'+
+    '</div>'+
+    '<div class="vp-sec">Alertas de hoy</div>'+
+    '<div class="vp-alertas" id="vp-alertas"><div style="font-size:12px;color:#8A90A0;font-weight:600;padding:6px 2px">Cargando alertas…</div></div>';
+  document.getElementById('veh-panel').classList.add('on');
+  verAlertasVehiculo(unitId,ruta);
+}
+function cerrarVehPanel(){ document.getElementById('veh-panel').classList.remove('on'); }
+function verRecorridoVehiculo(unitId,ruta){
+  const f=document.getElementById('vp-fecha');
+  const fecha=f?f.value:getColDate();
+  cerrarVehPanel();
+  toggleRecorrido(unitId,ruta,fecha);
+}
+async function compartirUbicacion(unitId){
+  const fc=_flotaCache||{posPorUnit:{}};
+  const u=fc.posPorUnit[unitId];
+  if(!u||!u.Latitude){toast('Sin ubicación reciente de '+unitId,'err');return;}
+  const link='https://maps.google.com/?q='+u.Latitude+','+u.Longitude;
+  const texto=unitId+' — ubicación actual ('+(u.Domicilio||'')+'): '+link;
+  try{
+    if(navigator.share){ await navigator.share({title:'Ubicación '+unitId,text:texto,url:link}); return; }
+  }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ await navigator.clipboard.writeText(texto); toast('Ubicación de '+unitId+' copiada','ok'); }
+  catch(e){ window.open(link,'_blank'); }
+}
+async function verAlertasVehiculo(unitId,ruta){
+  const cont=document.getElementById('vp-alertas');
+  if(!cont)return;
+  try{
+    const veh=(_vehCache||[]).find(v=>v.nombre===unitId);
+    if(!veh){cont.innerHTML='<div style="font-size:12px;color:#8A90A0;padding:6px 2px">Vehículo no encontrado</div>';return;}
+    const al=await secAlertas(veh.idgps,getColDate())||[];
+    const lista=Array.isArray(al)?al:[al];
+    if(!lista.length||!lista[0]){cont.innerHTML='<div style="font-size:12px;color:#0E9F6E;font-weight:700;padding:6px 2px">✓ Sin alertas hoy</div>';return;}
+    cont.innerHTML=lista.map(e=>{
+      const crit=/PANICO|EXCESO|VELOCIDAD|IMPACTO|FRENADA|ACELERACION/i.test(e.TipoAlerta||e.Descripcion||'');
+      return '<div class="vp-alerta" style="background:'+(crit?'#FFF1F2':'#FFF8E6')+'"><div><div class="va-t" style="color:'+(crit?'#E30613':'#D97706')+'">'+(e.TipoAlerta||'Alerta')+'</div><div class="va-s">'+(e.StatusAlerta||e.Domicilio||'').slice(0,50)+'</div></div><div class="va-h">'+(e.Hora||'')+'</div></div>';
+    }).join('');
+  }catch(e){cont.innerHTML='<div style="font-size:12px;color:#8A90A0;padding:6px 2px">No se pudieron cargar las alertas</div>';}
 }
 
 /* ══ API SECURITAGPS (service24gps) — rastreo real de la flota ══ */
@@ -2093,17 +2251,39 @@ function resumenSensores(sensoresJson){
 
 /* ══ FLOTA EN VIVO en el panel del coordinador (posición REAL del dispositivo GPS) ══ */
 let flotaMarkers=[];
-function dashTruckIcon(ruta,encendido){
+function tipoVehiculoClase(tipo){
+  const t=(tipo||'').toLowerCase();
+  if(/camioneta|furg[oó]n|van|pickup|pick-up|panel|automovil|autom[oó]vil/.test(t))return 'furgon';
+  if(/cami[oó]n|truck|volqueta|sencillo|turbo|estaca|sba|nqr|npr|mv6|4700|4300|jx104|jx105/.test(t))return 'camion';
+  return 'furgon';
+}
+function dashTruckIcon(ruta,encendido,tipo){
   const col=rutaColor[ruta]||'#E30613';
-  const s='<svg xmlns="http://www.w3.org/2000/svg" width="44" height="42" viewBox="0 0 60 56">'+
-    '<ellipse cx="30" cy="50" rx="14" ry="3" fill="rgba(0,0,0,.2)"/>'+
-    '<circle cx="30" cy="27" r="21" fill="'+col+'33">'+(encendido?'<animate attributeName="r" values="18;23;18" dur="1.6s" repeatCount="indefinite"/>':'')+'</circle>'+
-    '<g transform="translate(8,12)"><rect x="0" y="3" width="26" height="22" rx="4" fill="'+col+'" opacity="'+(encendido?1:.55)+'"/>'+
-    '<path d="M26 9 h9 a2 2 0 0 1 1.6 .8 L43 18 a2 2 0 0 1 .9 1.7 V25 a2 2 0 0 1-2 2 H26 Z" fill="'+col+'" opacity="'+(encendido?1:.55)+'"/>'+
-    '<rect x="29" y="11" width="8.5" height="6.5" rx="1.6" fill="#cfe3f2"/>'+
-    '<rect x="4" y="7" width="18" height="6" rx="1.5" fill="#fff" opacity=".9"/>'+
-    '<circle cx="11" cy="28.5" r="5" fill="#16181f"/><circle cx="35" cy="28.5" r="5" fill="#16181f"/></g></svg>';
-  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(44,42),anchor:new google.maps.Point(22,38)};
+  const op=encendido?1:.62;
+  const glow='<circle cx="32" cy="26" r="20" fill="'+col+'22">'+(encendido?'<animate attributeName="r" values="18;24;18" dur="1.7s" repeatCount="indefinite"/>':'')+'</circle>';
+  let body;
+  if(tipoVehiculoClase(tipo)==='camion'){
+    // Camión: cabina + caja de carga + 3 ejes (perfil lateral serio)
+    body='<g transform="translate(12,13)">'+
+      '<rect x="13" y="-1" width="25" height="20" rx="1.6" fill="'+col+'" opacity="'+op+'"/>'+
+      '<rect x="15" y="1" width="21" height="4" fill="#ffffff" opacity=".22"/>'+
+      '<path d="M0 7 h12 v12 H1 a1.5 1.5 0 0 1-1.5-1.5 V9 a2 2 0 0 1 2-2z" fill="'+col+'" opacity="'+op+'"/>'+
+      '<rect x="1.5" y="9" width="8" height="5.5" rx="1" fill="#cfe3f2"/>'+
+      '<circle cx="7" cy="23" r="4.2" fill="#16181f"/><circle cx="7" cy="23" r="1.7" fill="#6a7080"/>'+
+      '<circle cx="24" cy="23" r="4.2" fill="#16181f"/><circle cx="24" cy="23" r="1.7" fill="#6a7080"/>'+
+      '<circle cx="33" cy="23" r="4.2" fill="#16181f"/><circle cx="33" cy="23" r="1.7" fill="#6a7080"/></g>';
+  }else{
+    // Furgón / camioneta: cuerpo único con frente inclinado, 2 ruedas
+    body='<g transform="translate(14,14)">'+
+      '<path d="M0 3 a3 3 0 0 1 3-3 h19 l9 8 v7 a2 2 0 0 1-2 2 H2 a2 2 0 0 1-2-2 z" fill="'+col+'" opacity="'+op+'"/>'+
+      '<rect x="3" y="3" width="14" height="6" rx="1.4" fill="#fff" opacity=".85"/>'+
+      '<path d="M22 1 l7 6 h-7 z" fill="#cfe3f2"/>'+
+      '<circle cx="8" cy="19" r="4.2" fill="#16181f"/><circle cx="8" cy="19" r="1.7" fill="#6a7080"/>'+
+      '<circle cx="25" cy="19" r="4.2" fill="#16181f"/><circle cx="25" cy="19" r="1.7" fill="#6a7080"/></g>';
+  }
+  const s='<svg xmlns="http://www.w3.org/2000/svg" width="46" height="44" viewBox="0 0 64 52">'+
+    '<ellipse cx="32" cy="47" rx="15" ry="3" fill="rgba(0,0,0,.18)"/>'+glow+body+'</svg>';
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(46,44),anchor:new google.maps.Point(23,40)};
 }
 async function pintarFlotaEnVivo(){
   if(!dashMap)return;
@@ -2157,19 +2337,12 @@ async function pintarFlotaEnVivo(){
         '<div class="dfl-i"><b style="color:'+col+'">'+ruta+' · '+unitId+'</b><small>'+domLinea+'</small></div>'+
         '<div class="dfl-st"><span class="dfl-badge" style="background:'+bg+';color:'+cl+'">'+(enc?'▶ '+(u.GpsSpeed||0)+' km/h':'⏸ detenido')+'</span>'+
         '<small>'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+(sensoresTxt?' · '+sensoresTxt:'')+'</small></div>'+
-        '<button class="dchip" style="padding:5px 8px;font-size:9.5px;margin-left:4px" onclick="haptic();toggleRecorrido(\''+unitId+'\',\''+ruta+'\')" title="Ver recorrido de hoy">🕓</button></div>';
+        '<button class="dchip" style="padding:5px 8px;font-size:9.5px;margin-left:4px" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')" title="Ver vehículo">⋯</button></div>';
       if(lat&&lng){
         vistos++;
-        const mk=new google.maps.Marker({position:{lat,lng},map:rutaVisible(ruta)?dashMap:null,icon:dashTruckIcon(ruta,enc),zIndex:2000,title:ruta+' · '+unitId});
+        const mk=new google.maps.Marker({position:{lat,lng},map:rutaVisible(ruta)?dashMap:null,icon:dashTruckIcon(ruta,enc,veh&&veh.tipo_vehiculo),zIndex:2000,title:ruta+' · '+unitId});
         mk._ruta=ruta;
-        mk.addListener('click',()=>{iw.setContent(
-          '<div style="font-family:DM Sans,sans-serif">'+
-          '<b style="font-size:13px;color:'+col+'">'+ruta+' · '+unitId+'</b><br>'+
-          '<span style="font-size:11px;color:#6B7385">'+(enc?'Encendido':'Apagado')+' · '+(u.GpsSpeed||0)+' km/h</span><br>'+
-          (nombreCond?'<span style="font-size:11px;color:#6B7385">👤 '+nombreCond+'</span><br>':'<span style="font-size:11px;color:#B5BAC6">Sin conductor registrado en Securita</span><br>')+
-          (sensoresTxt?'<span style="font-size:11px;color:#6B7385">'+sensoresTxt+'</span><br>':'')+
-          '<span style="font-size:11px;color:#6B7385">'+(u.Domicilio||'')+'</span></div>'
-        );iw.open(dashMap,mk);});
+        mk.addListener('click',()=>abrirVehPanel(unitId,ruta));
         flotaMarkers.push(mk);
         evaluarGeocercaVehiculo(unitId,ruta,lat,lng,parseFloat(u.GpsSpeed)||0);
       }
@@ -2188,17 +2361,17 @@ function limpiarRecorrido(){
   [recorridoCapa.polyline,recorridoCapa.marcadorInicio,recorridoCapa.marcadorFin,recorridoCapa.marcadorAnim].forEach(o=>o&&o.setMap(null));
   recorridoCapa=null;
 }
-async function toggleRecorrido(unitId,ruta){
-  if(recorridoCapa&&recorridoCapa.unitId===unitId){limpiarRecorrido();return;}
+async function toggleRecorrido(unitId,ruta,fechaSel){
+  if(recorridoCapa&&recorridoCapa.unitId===unitId&&!fechaSel){limpiarRecorrido();return;}
   limpiarRecorrido();
   if(!_vehCache)_vehCache=await secVehiculos()||[];
   const v=_vehCache.find(x=>x.nombre===unitId);
   if(!v){toast('Vehículo no encontrado','err');return;}
-  toast('Cargando recorrido de hoy de '+unitId+'…','ok');
+  const fecha=fechaSel||getColDate();
+  toast('Cargando recorrido de '+unitId+' ('+fecha+')…','ok');
   try{
-    const fecha=getColDate();
-    const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',300);
-    if(!puntos||!puntos.length){toast('Sin recorrido histórico hoy para '+unitId,'err');return;}
+    const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',500);
+    if(!puntos||!puntos.length){toast('Sin recorrido para '+unitId+' el '+fecha,'err');return;}
     const ordenados=puntos.slice().reverse(); // Securita entrega más reciente primero; para animar necesitamos orden cronológico
     const path=ordenados.map(p=>({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)})).filter(p=>p.lat&&p.lng);
     if(!path.length){toast('Recorrido sin coordenadas válidas','err');return;}
@@ -4047,6 +4220,7 @@ if(yaInstalada){const b=document.getElementById('btn-install');if(b)b.classList.
 
 /* ══ BOTÓN ATRÁS DEL CELULAR: navegar dentro de la app, no cerrar ══ */
 function _capaAbiertaCerrar(){
+  const VP=document.getElementById('veh-panel'); if(VP&&VP.classList.contains('on'))return cerrarVehPanel;
   const MV=document.getElementById('multi-ovl'); if(MV&&MV.classList.contains('on'))return cerrarVistaMultiple;
   const MW=document.getElementById('map-wrap'); if(MW&&MW.classList.contains('full'))return toggleMapaCompleto;
   const M=document.getElementById('modal-nov'); if(M&&M.classList.contains('show'))return closeNovModal;
