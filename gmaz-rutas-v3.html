@@ -978,7 +978,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
     <div class="dcard">
       <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
-      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
+      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
     </div>
     <div class="dcard">
       <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
@@ -2344,7 +2344,7 @@ async function pintarFlotaEnVivo(){
         mk._ruta=ruta;
         mk.addListener('click',()=>abrirVehPanel(unitId,ruta));
         flotaMarkers.push(mk);
-        evaluarGeocercaVehiculo(unitId,ruta,lat,lng,parseFloat(u.GpsSpeed)||0);
+        evaluarGeocercaVehiculo(unitId,ruta,lat,lng,parseFloat(u.GpsSpeed)||0,enc);
       }
     });
     if(lista)lista.innerHTML=filas||estadoVacio('truck','Sin posiciones','Los vehículos asignados aún no reportan ubicación.','gris');
@@ -2562,7 +2562,7 @@ async function sincronizarLimitesVelocidad(clientes_){
     await crearOActualizarGeocercaVelocidad('regional','GMAZ - Cobertura regional (60 km-h)',2,[{lat:1.2136,lng:-77.2811}],60000,60,'#0E9F6E');
   }catch(e){console.log('sincronizarLimitesVelocidad:',e.message);}
 }
-function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel){
+function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel,ignicion){
   const g=geocercas[ruta];
   if(!g||!window.turf)return;
   const punto=turf.point([lng,lat]);
@@ -2575,18 +2575,26 @@ function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel){
   }
   estado.trail.push({lat,lng,ts:Date.now()});
   if(estado.trail.length>200)estado.trail.shift();
+  // Mientras sigue FUERA: acumular si estuvo encendido, si se movió, y la velocidad máxima
+  if(estado.dentro===false){
+    estado.maxVelFuera=Math.max(estado.maxVelFuera||0,vel||0);
+    if((vel||0)>3)estado.movioFuera=true;
+    if(ignicion)estado.encFuera=true;
+  }
   if(dentro===estado.dentro)return; // sin cambio de estado
   let distM=0;
   try{ distM=Math.round(turf.pointToLineDistance(punto,turf.polygonToLine(g.poligono),{units:'kilometers'})*1000); }catch(e){}
   if(!dentro){
     estado.salidaEn=Date.now();
     estado.puntoSalida={lat,lng};
-    registrarEventoGeocerca(unitId,ruta,'salio',lat,lng,vel,distM,null);
+    estado.maxVelFuera=vel||0;estado.movioFuera=(vel||0)>3;estado.encFuera=!!ignicion; // reiniciar acumuladores de la excursión
+    registrarEventoGeocerca(unitId,ruta,'salio',lat,lng,vel,distM,null,null);
     toast('🚨 '+unitId+' ('+ruta+') salió de su geocerca','err');
   }else{
     const tiempoFuera=estado.salidaEn?Math.round((Date.now()-estado.salidaEn)/1000):null;
     estado.puntoEntrada={lat,lng};
-    registrarEventoGeocerca(unitId,ruta,'entro',lat,lng,vel,distM,tiempoFuera);
+    const resumen=(estado.encFuera?'Encendido':'Apagado')+' · '+(estado.movioFuera?'Se movió':'Estuvo quieto')+(estado.maxVelFuera>0?' · máx '+Math.round(estado.maxVelFuera)+' km/h':'');
+    registrarEventoGeocerca(unitId,ruta,'entro',lat,lng,vel,distM,tiempoFuera,resumen);
     toast('✓ '+unitId+' ('+ruta+') volvió a su zona','ok');
   }
   estado.dentro=dentro;
@@ -2612,16 +2620,13 @@ function dibujarTrailVehiculo(unitId,ruta,estado){
       title:unitId+' reingresó aquí'});
   }
 }
-async function registrarEventoGeocerca(unitId,ruta,tipo,lat,lng,vel,distanciaM,tiempoFueraSeg){
+async function registrarEventoGeocerca(unitId,ruta,tipo,lat,lng,vel,distanciaM,tiempoFueraSeg,estadoFuera){
+  const base={fecha:getColDate(),hora:new Date().toISOString(),unit_id:unitId,ruta,tipo,lat,lng,velocidad:vel||0,distancia_limite_m:distanciaM,tiempo_fuera_seg:tiempoFueraSeg};
+  const post=(body)=>fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO,{
+    method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});
   try{
-    await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO,{
-      method:'POST',
-      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({
-        fecha:getColDate(),hora:new Date().toISOString(),unit_id:unitId,ruta,tipo,
-        lat,lng,velocidad:vel||0,distancia_limite_m:distanciaM,tiempo_fuera_seg:tiempoFueraSeg
-      })
-    });
+    const r=await post({...base,estado_fuera:estadoFuera||null});
+    if(!r.ok)await post(base); // la columna estado_fuera aún no existe: guardar el evento sin ese detalle
   }catch(e){console.log('geocerca_eventos:',e.message);}
 }
 async function cargarEventosGeocerca(){
@@ -2634,21 +2639,24 @@ async function cargarEventosGeocerca(){
     });
     if(!r.ok){
       const meta=document.getElementById('dash-geo-meta');if(meta)meta.textContent='tabla pendiente';
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Falta crear la tabla "geocerca_eventos" en Supabase</td></tr>';
+      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8A90A0;padding:16px">Falta crear la tabla "geocerca_eventos" en Supabase</td></tr>';
       return;
     }
     const eventos=await r.json();
     const meta=document.getElementById('dash-geo-meta');if(meta)meta.textContent=eventos.length+' eventos hoy';
-    if(!eventos.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Sin salidas de geocerca hoy</td></tr>';return;}
+    if(!eventos.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8A90A0;padding:16px">Sin salidas de geocerca hoy</td></tr>';return;}
     tbody.innerHTML=eventos.map(e=>{
       const col=rutaColor[e.ruta]||'#4A5060';
       const hora=e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
       const esSalida=e.tipo==='salio';
+      const ef=e.estado_fuera||'';
+      const efHtml=ef?'<span style="font-size:11px;color:'+(/Se movió|Encendido/.test(ef)?'#D97706':'#6B7385')+'">'+ef+'</span>':'<span style="color:#B5BAC6">—</span>';
       return '<tr><td>'+hora+'</td><td style="font-weight:800">'+e.unit_id+'</td>'+
         '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td>'+
         '<td><span class="dtag" style="background:'+(esSalida?'#FFF1F2':'#E6F7F0')+';color:'+(esSalida?'#E30613':'#0E9F6E')+'">'+(esSalida?'🚨 Salió':'✓ Ingresó')+'</span></td>'+
         '<td>'+(e.distancia_limite_m!=null?e.distancia_limite_m+' m':'—')+'</td>'+
-        '<td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td></tr>';
+        '<td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td>'+
+        '<td>'+efHtml+'</td></tr>';
     }).join('');
   }catch(e){console.log('cargarEventosGeocerca:',e.message);}
 }
