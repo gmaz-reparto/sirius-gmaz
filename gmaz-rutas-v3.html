@@ -559,6 +559,35 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dlive{font-size:10px;font-weight:800;color:var(--verde);display:flex;align-items:center;gap:5px}
 .dlive i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
 @keyframes dblink{0%,100%{opacity:.4}50%{opacity:1}}
+.dash-tabs{display:flex;gap:2px;padding:0 22px;background:#fff;border-bottom:1px solid var(--gris2);flex-shrink:0;overflow-x:auto}
+.dtab{font-size:12.5px;font-weight:800;padding:13px 15px;border:none;background:none;color:var(--gris4);cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.dtab.on{color:var(--negro);border-bottom-color:var(--rojo)}
+.dtab-b{font-size:9.5px;font-weight:800;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--gris2);color:var(--gris5);display:inline-grid;place-items:center}
+.dtab-b.warn{background:#FFF1F2;color:#E30613}
+.dtab-b.hide{display:none}
+.mod{display:none}
+.mod.on{display:block;animation:modIn .22s ease}
+@keyframes modIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.veh-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px}
+.vc{background:#fff;border:1px solid var(--gris2);border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(15,17,23,.03);cursor:pointer;transition:box-shadow .15s,transform .15s}
+.vc:hover{box-shadow:0 8px 22px rgba(15,17,23,.08);transform:translateY(-1px)}
+.vc-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.vc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.vc-plate{font-size:16px;font-weight:900;letter-spacing:-.3px}
+.vc-badge{margin-left:auto;font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:20px}
+.vc-sub{font-size:11px;color:var(--gris4);font-weight:600;margin-bottom:11px}
+.vc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.vc-cell{background:var(--gris1);border-radius:10px;padding:8px 9px;text-align:center}
+.vc-cell .v{font-size:15px;font-weight:900;letter-spacing:-.4px}
+.vc-cell .l{font-size:8.5px;font-weight:800;color:var(--gris4);letter-spacing:.3px;text-transform:uppercase;margin-top:2px}
+.graf-card{background:#fff;border:1px solid var(--gris2);border-radius:16px;padding:15px 17px}
+.graf-card h4{font-size:13px;font-weight:800;margin-bottom:3px}
+.graf-card .gq{font-size:10.5px;color:var(--gris4);font-weight:600;margin-bottom:12px}
+.barrow{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.barrow .bl{width:64px;font-size:11px;font-weight:800;flex-shrink:0}
+.barrow .bt{flex:1;height:9px;background:var(--gris1);border-radius:6px;overflow:hidden}
+.barrow .bt i{display:block;height:100%;border-radius:6px}
+.barrow .bv{width:52px;text-align:right;font-size:11px;font-weight:800;flex-shrink:0}
 .dash-main{flex:1;overflow:auto;padding:18px 22px;background:var(--gris1)}
 .dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1100px){.dkpis{grid-template-columns:repeat(3,1fr)}}
@@ -941,57 +970,92 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
     </div>
   </div>
+  <div class="dash-tabs" id="dash-tabs">
+    <button class="dtab on" data-mod="operacion" onclick="haptic();activarModulo('operacion')">Operación</button>
+    <button class="dtab" data-mod="vehiculos" onclick="haptic();activarModulo('vehiculos')">Vehículos</button>
+    <button class="dtab" data-mod="clientes" onclick="haptic();activarModulo('clientes')">Clientes</button>
+    <button class="dtab" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')">Rechazos <span class="dtab-b" id="dtab-rech">0</span></button>
+    <button class="dtab" data-mod="alertas" onclick="haptic();activarModulo('alertas')">Alertas <span class="dtab-b warn" id="dtab-alert">0</span></button>
+    <button class="dtab" data-mod="indicadores" onclick="haptic();activarModulo('indicadores')">Indicadores</button>
+  </div>
   <div class="dash-main">
-    <div class="dkpis" id="dash-kpis"></div>
-    <div class="dgrid">
-      <div class="dcard">
-        <div class="dcard-h"><h3><span class="h3ic">🗺️</span>Centro de control — Pasto</h3><span class="dm"><span id="dash-map-meta">cargando…</span> · <b style="color:#E30613" id="dash-flota-meta">flota</b></span></div>
-        <div class="map-wrap" id="map-wrap">
-          <div class="map-toolbar">
-            <div class="rutas-filtro" id="rutas-filtro"></div>
-            <div class="map-btns">
-              <button class="map-fab on" id="btn-trafico" onclick="haptic();toggleTrafico()" title="Tráfico en vivo">🚦</button>
-              <button class="map-fab" id="btn-medir" onclick="haptic();toggleMedir()" title="Medir distancia">📏</button>
-              <button class="map-fab" id="btn-multi" onclick="haptic();abrirVistaMultiple()" title="Vista múltiple (un mapa por ruta)">▦</button>
-              <button class="map-fab" id="btn-fullmap" onclick="haptic();toggleMapaCompleto()" title="Pantalla completa">⛶</button>
+
+    <!-- ══ MÓDULO OPERACIÓN (por defecto) ══ -->
+    <section class="mod on" id="mod-operacion">
+      <div class="dkpis" id="dash-kpis"></div>
+      <div class="dgrid">
+        <div class="dcard">
+          <div class="dcard-h"><h3><span class="h3ic">🗺️</span>Centro de control — Pasto</h3><span class="dm"><span id="dash-map-meta">cargando…</span> · <b style="color:#E30613" id="dash-flota-meta">flota</b></span></div>
+          <div class="map-wrap" id="map-wrap">
+            <div class="map-toolbar">
+              <div class="rutas-filtro" id="rutas-filtro"></div>
+              <div class="map-btns">
+                <button class="map-fab on" id="btn-trafico" onclick="haptic();toggleTrafico()" title="Tráfico en vivo">🚦</button>
+                <button class="map-fab" id="btn-medir" onclick="haptic();toggleMedir()" title="Medir distancia">📏</button>
+                <button class="map-fab" id="btn-multi" onclick="haptic();abrirVistaMultiple()" title="Vista múltiple (un mapa por ruta)">▦</button>
+                <button class="map-fab" id="btn-fullmap" onclick="haptic();toggleMapaCompleto()" title="Pantalla completa">⛶</button>
+              </div>
             </div>
+            <div class="map-typebar">
+              <button class="mtb-btn on" data-mt="roadmap" onclick="haptic();setTipoMapa('roadmap')">Calle</button>
+              <button class="mtb-btn" data-mt="satellite" onclick="haptic();setTipoMapa('satellite')">Satélite</button>
+              <button class="mtb-btn" data-mt="hybrid" onclick="haptic();setTipoMapa('hybrid')">Híbrido</button>
+            </div>
+            <div class="medir-info" id="medir-info">Toca puntos en el mapa · <span id="medir-km">0 m</span><button onclick="haptic();limpiarMedir()">Borrar</button></div>
+            <div id="dash-map"></div>
           </div>
-          <div class="map-typebar">
-            <button class="mtb-btn on" data-mt="roadmap" onclick="haptic();setTipoMapa('roadmap')">Calle</button>
-            <button class="mtb-btn" data-mt="satellite" onclick="haptic();setTipoMapa('satellite')">Satélite</button>
-            <button class="mtb-btn" data-mt="hybrid" onclick="haptic();setTipoMapa('hybrid')">Híbrido</button>
-          </div>
-          <div class="medir-info" id="medir-info">Toca puntos en el mapa · <span id="medir-km">0 m</span><button onclick="haptic();limpiarMedir()">Borrar</button></div>
-          <div id="dash-map"></div>
+        </div>
+        <div class="dcard">
+          <div class="dcard-h"><h3><span class="h3ic">🚚</span>Flota en vivo</h3><span class="dm dlive2"><i></i>SecuritaGPS · <span id="dash-flota-meta2">—</span></span></div>
+          <div class="dflota-list" id="dash-flota-list" style="max-height:392px"><div class="veh-cargando">Cargando posiciones…</div></div>
         </div>
       </div>
-      <div class="dcard">
-        <div class="dcard-h"><h3><span class="h3ic">🚚</span>Flota en vivo</h3><span class="dm dlive2"><i></i>SecuritaGPS · <span id="dash-flota-meta2">—</span></span></div>
-        <div class="dflota-list" id="dash-flota-list" style="max-height:392px"><div class="veh-cargando">Cargando posiciones…</div></div>
-      </div>
-    </div>
-    <div class="dgrid eq">
-      <div class="dcard">
-        <div class="dcard-h"><h3><span class="h3ic">📊</span>Rendimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
-        <div class="drk" id="dash-ranking"></div>
-      </div>
-      <div class="dcard">
+    </section>
+
+    <!-- ══ MÓDULO VEHÍCULOS ══ -->
+    <section class="mod" id="mod-vehiculos">
+      <div id="veh-cards" class="veh-cards"><div class="veh-cargando">Abre este módulo para ver las tarjetas por vehículo…</div></div>
+      <div class="dcard" style="margin-top:14px">
         <div class="dcard-h"><h3><span class="h3ic">🔑</span>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
         <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
       </div>
-    </div>
-    <div class="dcard">
-      <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
-      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
-    </div>
-    <div class="dcard">
-      <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
-      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
-    </div>
-    <div class="dcard">
-      <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
-      <div style="overflow:auto;max-height:300px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
-    </div>
+    </section>
+
+    <!-- ══ MÓDULO CLIENTES ══ -->
+    <section class="mod" id="mod-clientes">
+      <div id="clientes-kpis" class="dkpis" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="dcard">
+        <div class="dcard-h"><h3><span class="h3ic">📊</span>Cumplimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
+        <div class="drk" id="dash-ranking"></div>
+      </div>
+    </section>
+
+    <!-- ══ MÓDULO RECHAZOS ══ -->
+    <section class="mod" id="mod-rechazos">
+      <div id="rechazos-graf" class="dgrid eq" style="margin-bottom:14px"></div>
+      <div class="dcard">
+        <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
+        <div style="overflow:auto;max-height:420px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ══ MÓDULO ALERTAS ══ -->
+    <section class="mod" id="mod-alertas">
+      <div class="dcard" style="margin-bottom:14px">
+        <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
+        <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
+        <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ══ MÓDULO INDICADORES ══ -->
+    <section class="mod" id="mod-indicadores">
+      <div id="indic-graf"><div class="veh-cargando">Abre este módulo para ver los gráficos ejecutivos…</div></div>
+    </section>
+
   </div>
 </div>
 <button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
@@ -1919,8 +1983,140 @@ async function cargarDash(){
     pintarDashMap(clientes_,entSet,novSet);
     cargarEventosGeocerca();
     cargarAlarmasSecurita();
+    // Cache para que los módulos (Vehículos/Clientes/Rechazos/Indicadores) reutilicen sin nuevas llamadas
+    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,entSet,novSet,rutaVend,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos};
+    actualizarBadgesModulos();
+    const modAct=document.querySelector('.dtab.on');if(modAct)refrescarModulo(modAct.dataset.mod);
     _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
+}
+let _dashData=null;
+function actualizarBadgesModulos(){
+  if(!_dashData)return;
+  const br=document.getElementById('dtab-rech');if(br){br.textContent=_dashData.totNov;br.classList.toggle('hide',_dashData.totNov===0);}
+  const ba=document.getElementById('dtab-alert');if(ba){const n=_alertasActivas();ba.textContent=n;ba.classList.toggle('hide',n===0);}
+}
+function _alertasActivas(){
+  // desvíos de geocerca abiertos (vehículos actualmente fuera)
+  let fuera=0;try{Object.values(geocercaEstado||{}).forEach(e=>{if(e&&e.dentro===false)fuera++;});}catch(e){}
+  return fuera;
+}
+function refrescarModulo(m){
+  if(m==='vehiculos')renderVehiculoCards();
+  else if(m==='clientes')renderClientesModulo();
+  else if(m==='rechazos')renderRechazosGraf();
+  else if(m==='indicadores')renderIndicadores();
+}
+function activarModulo(m){
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.toggle('on',t.dataset.mod===m));
+  document.querySelectorAll('.mod').forEach(s=>s.classList.toggle('on',s.id==='mod-'+m));
+  document.querySelector('.dash-main').scrollTop=0;
+  if(m==='operacion'&&dashMap){setTimeout(()=>google.maps.event.trigger(dashMap,'resize'),80);}
+  refrescarModulo(m);
+}
+/* ══ Donut SVG reutilizable ══ */
+function donutSvg(segs,size,grosor){
+  const s=size||120,w=grosor||18,r=(s-w)/2,c=2*Math.PI*r,cx=s/2;
+  const tot=segs.reduce((a,x)=>a+x.v,0)||1;let off=0,arcs='';
+  segs.forEach(seg=>{
+    const frac=seg.v/tot,len=c*frac;
+    arcs+='<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="'+seg.c+'" stroke-width="'+w+'" stroke-dasharray="'+len+' '+(c-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 '+cx+' '+cx+')"/>';
+    off+=len;
+  });
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#EEF0F4" stroke-width="'+w+'"/>'+arcs+'</svg>';
+}
+/* ══ MÓDULO VEHÍCULOS: tarjeta resumen por unidad ══ */
+function _estadoVehiculo(unitId,u){
+  if(geocercaEstado[unitId]&&geocercaEstado[unitId].dentro===false)return['Fuera de zona','#E30613','#FFF1F2'];
+  if(!u)return['Sin GPS','#8A90A0','#EEF0F4'];
+  const enc=u.Ignition==='1',vel=parseFloat(u.GpsSpeed)||0;
+  if(enc&&vel>0)return['En ruta','#0E9F6E','#E6F7F0'];
+  if(enc)return['Encendido','#0891B2','#ECFEFF'];
+  return['Detenido','#D97706','#FFF7ED'];
+}
+function renderVehiculoCards(){
+  const cont=document.getElementById('veh-cards');if(!cont)return;
+  const fc=_flotaCache,dd=_dashData;
+  if(!fc||!dd){cont.innerHTML='<div class="veh-cargando">Cargando datos de la flota…</div>';return;}
+  const units=Object.keys(fc.rutaPorUnit);
+  if(!units.length){cont.innerHTML=estadoVacio('truck','Sin vehículos asignados','Asigna vehículos a las rutas para ver sus tarjetas.','gris');return;}
+  cont.innerHTML=units.sort((a,b)=>fc.rutaPorUnit[a].localeCompare(fc.rutaPorUnit[b])).map(unitId=>{
+    const ruta=fc.rutaPorUnit[unitId],u=fc.posPorUnit[unitId];
+    const col=rutaColor[ruta]||'#E30613';
+    const[est,ec,eb]=_estadoVehiculo(unitId,u);
+    const veh=(_vehCache||[]).find(v=>v.nombre===unitId);
+    const cond=(veh&&_driverCache)?_driverCache.find(d=>String(d.idvehiculo)===String(veh.id)):null;
+    const nombreCond=cond?(cond.nombre+' '+(cond.apellido||'')).trim():'Sin conductor';
+    const pr=dd.porRuta[ruta]||{tot:0,ent:0,nov:0};
+    const pend=pr.tot-pr.ent;
+    const vel=u?(u.GpsSpeed||0):'—';
+    const mins=(u&&u.ReportDate)?Math.max(0,Math.round((Date.now()-new Date(u.ReportDate.replace(' ','T')).getTime())/60000)):null;
+    return '<div class="vc" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')">'+
+      '<div class="vc-h"><span class="vc-dot" style="background:'+col+'"></span><span class="vc-plate">'+unitId+'</span><span class="vc-badge" style="background:'+eb+';color:'+ec+'">'+est+'</span></div>'+
+      '<div class="vc-sub"><b style="color:'+col+'">'+ruta+'</b> · '+nombreCond+'</div>'+
+      '<div class="vc-grid">'+
+        '<div class="vc-cell"><div class="v" style="color:#059669">'+pr.ent+'</div><div class="l">Visitados</div></div>'+
+        '<div class="vc-cell"><div class="v">'+pend+'</div><div class="l">Pendientes</div></div>'+
+        '<div class="vc-cell"><div class="v" style="color:'+(pr.nov>0?'#E30613':'#0F1117')+'">'+pr.nov+'</div><div class="l">Rechazos</div></div>'+
+      '</div>'+
+      '<div class="vc-sub" style="margin:11px 0 0;display:flex;gap:12px">'+
+        '<span>▶ <b style="color:'+(vel>0?'#0E9F6E':'#6B7385')+'">'+vel+'</b> km/h</span>'+
+        '<span>🕒 '+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+'</span>'+
+      '</div></div>';
+  }).join('');
+}
+/* ══ MÓDULO CLIENTES: KPIs de atención + ranking ══ */
+function renderClientesModulo(){
+  const cont=document.getElementById('clientes-kpis');if(!cont||!_dashData)return;
+  const d=_dashData,pct=d.totCli?Math.round(d.totEnt/d.totCli*100):0,pend=d.totCli-d.totEnt;
+  const K=[
+    {v:d.totEnt,l:'Clientes atendidos',c:'#059669',bg:'#ECFDF5',i:'target'},
+    {v:pend,l:'Clientes pendientes',c:'#D97706',bg:'#FFF7ED',i:'store'},
+    {v:pct+'%',l:'Cumplimiento',c:'#1A56DB',bg:'#EFF6FF',i:'clock'},
+    {v:Math.round(d.cajasEnt).toLocaleString('es-CO'),l:'Cajas entregadas',c:'#7C3AED',bg:'#F5F3FF',i:'box'}
+  ];
+  cont.innerHTML=K.map(k=>'<div class="dkpi" style="--kac:'+k.c+'"><div class="ktop"><div class="ko" style="background:'+k.bg+';color:'+k.c+'">'+icoSvg(k.i,17)+'</div></div><div class="kv">'+k.v+'</div><div class="kl">'+k.l+'</div></div>').join('');
+}
+/* ══ MÓDULO RECHAZOS: donut por motivo + KPIs ══ */
+function renderRechazosGraf(){
+  const cont=document.getElementById('rechazos-graf');if(!cont||!_dashData)return;
+  const d=_dashData;
+  const porMotivo={};d.novedades_.forEach(n=>{const m=(n.motivo||'Otro');porMotivo[m]=(porMotivo[m]||0)+1;});
+  const PAL=['#E30613','#D97706','#7C3AED','#0891B2','#DB2777','#65A30D','#EA580C','#475569'];
+  const segs=Object.keys(porMotivo).sort((a,b)=>porMotivo[b]-porMotivo[a]).map((m,i)=>({n:m,v:porMotivo[m],c:PAL[i%PAL.length]}));
+  const leyenda=segs.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:'+s.c+';flex-shrink:0"></span><span style="flex:1">'+s.n+'</span><b>'+s.v+'</b></div>').join('');
+  cont.innerHTML=
+    '<div class="graf-card"><h4>Rechazos por motivo</h4><div class="gq">¿Por qué están devolviendo hoy?</div>'+
+      (segs.length?'<div style="display:flex;align-items:center;gap:18px"><div style="position:relative;flex-shrink:0">'+donutSvg(segs,130,20)+'<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:24px;font-weight:900">'+d.totNov+'</div><div style="font-size:9px;font-weight:800;color:#8A90A0">RECHAZOS</div></div></div></div><div style="flex:1">'+leyenda+'</div></div>':'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos hoy</div>')+
+    '</div>'+
+    '<div class="graf-card"><h4>Impacto en cajas</h4><div class="gq">Cuántas cajas se dejaron de entregar</div>'+
+      '<div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><div style="font-size:34px;font-weight:900;color:#E30613">'+Math.round(d.cajasRej).toLocaleString('es-CO')+'</div><div style="font-size:12px;color:#8A90A0;font-weight:700">cajas rechazadas</div></div>'+
+      '<div style="font-size:11.5px;color:#6B7385;font-weight:600;margin-top:8px">De '+Math.round(d.cajasProg).toLocaleString('es-CO')+' programadas · '+(d.cajasProg?Math.round(d.cajasRej/d.cajasProg*100):0)+'% del total</div>'+
+    '</div>';
+}
+/* ══ MÓDULO INDICADORES: gráficos ejecutivos ══ */
+function renderIndicadores(){
+  const cont=document.getElementById('indic-graf');if(!cont||!_dashData)return;
+  const d=_dashData,pend=d.totCli-d.totEnt;
+  // Donut cumplimiento
+  const segsCumpl=[{n:'Entregados',v:d.totEnt,c:'#059669'},{n:'Pendientes',v:pend-d.totNov>0?pend-d.totNov:0,c:'#D1D5DB'},{n:'Rechazos',v:d.totNov,c:'#E30613'}];
+  // Entregas por hora
+  const porHora={};d.tiempos.forEach(t=>{const h=new Date(t).getHours();porHora[h]=(porHora[h]||0)+1;});
+  const horas=Object.keys(porHora).map(Number).sort((a,b)=>a-b);
+  const maxH=Math.max(1,...Object.values(porHora));
+  const barras=horas.map(h=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;max-width:26px;height:'+(70*porHora[h]/maxH)+'px;background:#1A56DB;border-radius:4px 4px 0 0;min-height:3px"></div><span style="font-size:9px;color:#8A90A0;font-weight:700">'+h+'h</span></div>').join('');
+  // Ranking por ruta
+  const rutas=Object.keys(d.porRuta).sort((a,b)=>{const pa=d.porRuta[a].tot?d.porRuta[a].ent/d.porRuta[a].tot:0,pb=d.porRuta[b].tot?d.porRuta[b].ent/d.porRuta[b].tot:0;return pb-pa;});
+  const ranking=rutas.map(code=>{const r=d.porRuta[code],pct=r.tot?Math.round(r.ent/r.tot*100):0;const c=pct>=90?'#059669':pct>=75?'#D97706':'#E30613';
+    return '<div class="barrow"><div class="bl" style="color:'+(rutaColor[code]||'#0F1117')+'">'+code+'</div><div class="bt"><i style="width:'+pct+'%;background:'+c+'"></i></div><div class="bv">'+pct+'% · '+r.ent+'/'+r.tot+'</div></div>';}).join('');
+  cont.innerHTML=
+    '<div class="dgrid" style="margin-bottom:14px">'+
+      '<div class="graf-card"><h4>Ranking de cumplimiento por ruta</h4><div class="gq">¿Qué rutas van adelantadas y cuáles atrasadas?</div>'+ranking+'</div>'+
+      '<div class="graf-card"><h4>Cumplimiento global</h4><div class="gq">Estado de la operación del día</div><div style="display:flex;align-items:center;gap:16px"><div style="position:relative;flex-shrink:0">'+donutSvg(segsCumpl,120,18)+'<div style="position:absolute;inset:0;display:grid;place-items:center"><div style="text-align:center"><div style="font-size:22px;font-weight:900">'+(d.totCli?Math.round(d.totEnt/d.totCli*100):0)+'%</div></div></div></div><div>'+segsCumpl.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:'+s.c+'"></span>'+s.n+' <b style="margin-left:auto">'+s.v+'</b></div>').join('')+'</div></div></div>'+
+    '</div>'+
+    '<div class="graf-card"><h4>Entregas por hora</h4><div class="gq">Ritmo de la operación durante el día</div>'+
+      (horas.length?'<div style="display:flex;align-items:flex-end;gap:6px;height:90px;padding-top:8px">'+barras+'</div>':'<div class="veh-cargando">Aún sin entregas registradas hoy</div>')+
+    '</div>';
 }
 /* ══ Estilo de mapa profesional (monocromo suave para que resalten los colores de ruta) ══ */
 const MAP_STYLE=[
