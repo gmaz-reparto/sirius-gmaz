@@ -2819,6 +2819,8 @@ function startRoute(ruta,lista){
       },1200);
       // Precargar índice de facturas en background
       setTimeout(()=>cargarIndiceFacturas(),1000);
+      // Usar el GPS real del vehículo asignado a esta ruta (si el coordinador lo asignó)
+      setTimeout(()=>activarGpsVehiculo(ruta),1500);
       // Iniciar tacómetro
       setTimeout(()=>iniciarTacoInterval(),500);
       setTimeout(()=>autoNavPrimerCliente(),2200);
@@ -3002,6 +3004,7 @@ function initMap(){
   truckMk=new google.maps.Marker({position:pasto,map:gmap,icon:truckIcon(),zIndex:1000,title:'Tu posición'});
   let gpsOptimizado=false;
   navigator.geolocation&&navigator.geolocation.watchPosition(p=>{
+    if(_gpsVehActivo)return; // el GPS del vehículo asignado manda: el del celular queda solo de respaldo
     const pos={lat:p.coords.latitude,lng:p.coords.longitude};
     posGPS=pos; // alimenta "cliente más cercano"
     truckMk&&truckMk.setPosition(pos);
@@ -3013,6 +3016,42 @@ function initMap(){
     // Re-evaluar cliente más cercano al moverse (marcador + tarjeta + ruta)
     if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
   },e=>console.log('GPS:',e.message),{enableHighAccuracy:true,timeout:10000,maximumAge:5000});
+}
+/* ══ POSICIÓN DEL ENTREGADOR = GPS REAL DEL VEHÍCULO ASIGNADO (SecuritaGPS) ══
+   Si la ruta del entregador tiene un vehículo asignado por el coordinador, la app usa la posición
+   del GPS del furgón (no la del celular). Si no hay asignación o Securita falla, cae al GPS del móvil. */
+let _gpsVehActivo=false,_gpsVehTimer=null,_gpsVehUnit=null;
+async function activarGpsVehiculo(ruta){
+  try{
+    const fecha=getColDate();
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=unit_id&fecha=eq.'+fecha+'&ruta=eq.'+encodeURIComponent(ruta),{
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    const a=r.ok?await r.json():[];
+    if(!a.length){ _gpsVehActivo=false; return false; } // sin vehículo asignado: seguir con el GPS del celular
+    _gpsVehUnit=a[0].unit_id;
+    const tick=async()=>{
+      try{
+        const pos=await secPosiciones();
+        const u=(pos||[]).find(x=>x.UnitId===_gpsVehUnit);
+        if(u&&u.Latitude){
+          const p={lat:parseFloat(u.Latitude),lng:parseFloat(u.Longitude)};
+          if(p.lat&&p.lng){
+            _gpsVehActivo=true;
+            posGPS=p;
+            if(truckMk)truckMk.setPosition(p);
+            if(navMode&&gpano)gpano.setPosition(p);
+            if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
+          }
+        }
+      }catch(e){}
+    };
+    await tick();
+    if(_gpsVehTimer)clearInterval(_gpsVehTimer);
+    _gpsVehTimer=setInterval(tick,25000); // el GPS del furgón reporta ~cada minuto; refrescar cada 25s
+    if(_gpsVehActivo)toast('📍 Usando GPS del vehículo '+_gpsVehUnit,'ok');
+    return _gpsVehActivo;
+  }catch(e){ return false; }
 }
 
 function truckIcon(){
