@@ -627,6 +627,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .vp-alerta .va-t{font-size:11.5px;font-weight:800;color:var(--negro)}
 .vp-alerta .va-s{font-size:10px;color:var(--gris4);font-weight:600;margin-top:1px}
 .vp-alerta .va-h{margin-left:auto;font-size:10px;font-weight:800;color:var(--gris5);flex-shrink:0}
+/* ── Panel de recorrido / paradas ── */
+#rec-panel{position:fixed;left:0;right:0;bottom:0;z-index:610;background:#fff;box-shadow:0 -8px 40px rgba(0,0,0,.18);transform:translateY(105%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:46vh;display:flex;flex-direction:column;border-radius:18px 18px 0 0}
+#rec-panel.on{transform:translateY(0)}
+.rp-head{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid var(--gris2);flex-shrink:0}
+.rp-head b{font-size:15px;font-weight:900}
+.rp-head .rp-meta{font-size:11px;color:var(--gris4);font-weight:700}
+.rp-head .rp-x{margin-left:auto;width:32px;height:32px;border-radius:10px;background:var(--gris1);border:none;font-size:15px;cursor:pointer;font-family:inherit}
+.rp-body{overflow:auto;flex:1}
 /* ── Vista múltiple ── */
 #multi-ovl{position:fixed;inset:0;z-index:620;background:var(--gris1);display:none;flex-direction:column}
 #multi-ovl.on{display:flex}
@@ -996,6 +1004,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="vph-u" id="vp-unit">—</div>
   </div>
   <div class="vp-body" id="vp-body"></div>
+</div>
+
+<!-- ══ PANEL DE RECORRIDO / PARADAS ══ -->
+<div id="rec-panel">
+  <div class="rp-head"><b id="rp-titulo">Recorrido</b><span class="rp-meta" id="rp-meta">—</span><button class="rp-x" onclick="haptic();cerrarRecorridoPanel()">✕</button></div>
+  <div class="rp-body"><table class="dtbl"><thead><tr><th>#</th><th>Parada / Cliente</th><th>Llegó</th><th>Salió</th><th>Detenido</th><th>Dist. cliente</th></tr></thead><tbody id="rp-tbody"></tbody></table></div>
 </div>
 
 <!-- ══ VISTA MÚLTIPLE — un mapa por ruta, bajo demanda ══ -->
@@ -1810,7 +1824,7 @@ function mostrarDashSiEscritorio(){
   document.getElementById('dash-fecha').innerHTML=icoSvg('cal',12)+' '+new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
   cargarDash();
   if(dashInterval)clearInterval(dashInterval);
-  dashInterval=setInterval(()=>{if(document.getElementById('dash').classList.contains('on'))cargarDash();},30000);
+  dashInterval=setInterval(()=>{if(document.getElementById('dash').classList.contains('on')&&!_recorridoAbierto)cargarDash();},30000);
 }
 function verComoEntregador(){
   document.getElementById('dash').classList.remove('on');
@@ -2009,10 +2023,12 @@ function filtroTodas(){
 }
 function toggleRutaFiltro(r){
   const todas=Object.keys(dashMarkersPorRuta);
-  if(!rutasVisibles)rutasVisibles=new Set(todas); // partir de "todas" y quitar
-  if(rutasVisibles.has(r))rutasVisibles.delete(r);else rutasVisibles.add(r);
-  if(rutasVisibles.size===todas.length)rutasVisibles=null; // todas otra vez
-  if(rutasVisibles&&rutasVisibles.size===0)rutasVisibles=new Set(todas); // no dejar el mapa vacío
+  if(!rutasVisibles){
+    rutasVisibles=new Set([r]); // estaban todas → aislar SOLO la ruta tocada
+  }else{
+    if(rutasVisibles.has(r))rutasVisibles.delete(r);else rutasVisibles.add(r); // agregar/quitar de la selección
+    if(rutasVisibles.size===todas.length)rutasVisibles=null; // si quedaron todas → volver a "todas"
+  }
   renderRutasFiltro(todas.sort());
   aplicarFiltroRutas();
 }
@@ -2359,44 +2375,111 @@ async function pintarFlotaEnVivo(){
   }catch(e){console.log('flota:',e.message);const l=document.getElementById('dash-flota-list');if(l)l.innerHTML=estadoVacio('alert','No se pudo cargar la flota','Revisa la conexión con SecuritaGPS.','ambar');}
 }
 
-/* ══ RECORRIDO HISTÓRICO (playback) — SecuritaGPS historyGet ══ */
-let recorridoCapa=null;
+/* ══ RECORRIDO HISTÓRICO + PARADAS — SecuritaGPS historyGet cruzado con los clientes del día ══
+   Muestra el trazado del vehículo, los puntos de clientes de la ruta (para ver si debía estar ahí),
+   y detecta las PARADAS (≥3 min quieto) con hora de llegada/salida, duración y el cliente más cercano,
+   para identificar tiempos de demora. No usa animación pesada (evita el congelamiento). */
+let recorridoCapa=null,_recorridoAbierto=false;
 function limpiarRecorrido(){
-  if(!recorridoCapa)return;
-  clearInterval(recorridoCapa.timer);
-  [recorridoCapa.polyline,recorridoCapa.marcadorInicio,recorridoCapa.marcadorFin,recorridoCapa.marcadorAnim].forEach(o=>o&&o.setMap(null));
-  recorridoCapa=null;
+  if(recorridoCapa){
+    if(recorridoCapa.timer)clearInterval(recorridoCapa.timer);
+    (recorridoCapa.overlays||[]).forEach(o=>o&&o.setMap(null));
+  }
+  recorridoCapa=null;_recorridoAbierto=false;
+  const p=document.getElementById('rec-panel');if(p)p.classList.remove('on');
+}
+function cerrarRecorridoPanel(){ limpiarRecorrido(); }
+function _tsPt(p){ return new Date((p.fecha||getColDate())+'T'+(p.hora||'00:00:00')).getTime(); }
+function _distM(a,b){ return (window.google&&google.maps.geometry)?google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng)):0; }
+function detectarParadas(pts,clientesRuta){
+  const paradas=[];let i=0;
+  while(i<pts.length){
+    const v=parseFloat(pts[i].velocidad)||0;
+    if(v<=2){
+      let j=i;
+      while(j+1<pts.length){
+        const vn=parseFloat(pts[j+1].velocidad)||0;
+        const d=_distM({lat:+pts[i].latitud,lng:+pts[i].longitud},{lat:+pts[j+1].latitud,lng:+pts[j+1].longitud});
+        if(vn<=3&&d<70)j++;else break;
+      }
+      const durMin=Math.round((_tsPt(pts[j])-_tsPt(pts[i]))/60000);
+      if(durMin>=3){
+        const sp={lat:+pts[i].latitud,lng:+pts[i].longitud};
+        let mejor=null,md=1e9;
+        clientesRuta.forEach(c=>{const d=_distM(sp,{lat:c.lat,lng:c.lng});if(d<md){md=d;mejor=c;}});
+        paradas.push({lat:sp.lat,lng:sp.lng,ini:pts[i].hora,fin:pts[j].hora,durMin,cliente:(mejor&&md<150)?mejor:null,distCliente:mejor?Math.round(md):null});
+      }
+      i=j+1;
+    }else i++;
+  }
+  return paradas;
 }
 async function toggleRecorrido(unitId,ruta,fechaSel){
-  if(recorridoCapa&&recorridoCapa.unitId===unitId&&!fechaSel){limpiarRecorrido();return;}
+  const fecha=fechaSel||getColDate();
+  if(recorridoCapa&&recorridoCapa.unitId===unitId&&recorridoCapa.fecha===fecha){limpiarRecorrido();return;}
   limpiarRecorrido();
+  _recorridoAbierto=true;
   if(!_vehCache)_vehCache=await secVehiculos()||[];
   const v=_vehCache.find(x=>x.nombre===unitId);
-  if(!v){toast('Vehículo no encontrado','err');return;}
-  const fecha=fechaSel||getColDate();
+  if(!v){toast('Vehículo no encontrado','err');_recorridoAbierto=false;return;}
   toast('Cargando recorrido de '+unitId+' ('+fecha+')…','ok');
   try{
-    const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',500);
-    if(!puntos||!puntos.length){toast('Sin recorrido para '+unitId+' el '+fecha,'err');return;}
-    const ordenados=puntos.slice().reverse(); // Securita entrega más reciente primero; para animar necesitamos orden cronológico
-    const path=ordenados.map(p=>({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)})).filter(p=>p.lat&&p.lng);
-    if(!path.length){toast('Recorrido sin coordenadas válidas','err');return;}
+    const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
+    if(!puntos||!puntos.length){toast('Sin recorrido para '+unitId+' el '+fecha,'err');_recorridoAbierto=false;return;}
+    const ord=puntos.slice().reverse(); // Securita entrega más reciente primero → orden cronológico
+    const path=ord.map(p=>({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)})).filter(p=>p.lat&&p.lng);
+    if(!path.length){toast('Recorrido sin coordenadas válidas','err');_recorridoAbierto=false;return;}
     const col=rutaColor[ruta]||'#1A56DB';
-    const polyline=new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.75,strokeWeight:3,
-      icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:1,scale:3},offset:'0',repeat:'14px'}],zIndex:1400});
-    const marcadorInicio=new google.maps.Marker({position:path[0],map:dashMap,zIndex:1900,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:unitId+' — inicio del recorrido'});
-    const marcadorFin=new google.maps.Marker({position:path[path.length-1],map:dashMap,zIndex:1900,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:unitId+' — última posición'});
-    const marcadorAnim=new google.maps.Marker({position:path[0],map:dashMap,icon:dashTruckIcon(ruta,true),zIndex:2100});
-    let i=0;
-    const timer=setInterval(()=>{ i++; if(i>=path.length){clearInterval(timer);return;} marcadorAnim.setPosition(path[i]); },Math.max(30,Math.min(400,4000/path.length)));
-    let km=0;
-    if(window.turf)for(let k=1;k<path.length;k++)km+=turf.distance(turf.point([path[k-1].lng,path[k-1].lat]),turf.point([path[k].lng,path[k].lat]),{units:'kilometers'});
+    const overlays=[];
+    overlays.push(new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.8,strokeWeight:3.5,zIndex:1400,
+      icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:2.4,fillColor:col,fillOpacity:1,strokeWeight:0},offset:'0',repeat:'90px'}]}));
+    overlays.push(new google.maps.Marker({position:path[0],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Inicio '+((ord[0].hora||'').slice(0,5))}));
+    overlays.push(new google.maps.Marker({position:path[path.length-1],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Fin '+((ord[ord.length-1].hora||'').slice(0,5))}));
+    // Clientes del día de esa ruta (para ver si debía estar en esa zona)
+    const clientesRuta=(_clientesCache||[]).map(c=>{const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));return(c.ruta===ruta&&lat&&lng)?{...c,lat,lng}:null;}).filter(Boolean);
+    const iw=new google.maps.InfoWindow();
+    clientesRuta.forEach(c=>{
+      const estado=_entSetCache.has(String(c.id))?'entregado':_novSetCache.has(String(c.id))?'novedad':'pendiente';
+      const fill=estado==='entregado'?'#059669':estado==='novedad'?'#D97706':col;
+      const mk=new google.maps.Marker({position:{lat:c.lat,lng:c.lng},map:dashMap,zIndex:1200,icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:fill,fillOpacity:.85,strokeColor:'#fff',strokeWeight:1.3}});
+      mk.addListener('click',()=>{iw.setContent(iwClienteHTML(c,estado));iw.open(dashMap,mk);});
+      overlays.push(mk);
+    });
+    // Paradas detectadas → marcadores numerados
+    const paradas=detectarParadas(ord,clientesRuta);
+    paradas.forEach((p,ix)=>{
+      overlays.push(new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:dashMap,zIndex:1700,
+        label:{text:String(ix+1),color:'#fff',fontSize:'11px',fontWeight:'800'},
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:11,fillColor:p.cliente?'#0E9F6E':'#D97706',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
+        title:'Parada '+(ix+1)+' · '+p.durMin+' min'}));
+    });
+    let km=0;if(window.turf)for(let k=1;k<path.length;k++)km+=turf.distance(turf.point([path[k-1].lng,path[k-1].lat]),turf.point([path[k].lng,path[k].lat]),{units:'kilometers'});
     const bounds=new google.maps.LatLngBounds();path.forEach(p=>bounds.extend(p));dashMap.fitBounds(bounds);
-    toast('Recorrido de '+unitId+': '+path.length+' puntos'+(km?' · ~'+km.toFixed(1)+' km':''),'ok');
-    recorridoCapa={unitId,polyline,marcadorInicio,marcadorFin,marcadorAnim,timer};
-  }catch(e){toast('Error cargando recorrido: '+e.message,'err');}
+    recorridoCapa={unitId,ruta,fecha,overlays,timer:null};
+    mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord);
+    toast('Recorrido '+unitId+' ('+fecha+'): '+paradas.length+' paradas · ~'+km.toFixed(1)+' km','ok');
+  }catch(e){toast('Error cargando recorrido: '+e.message,'err');_recorridoAbierto=false;}
+}
+function mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord){
+  const p=document.getElementById('rec-panel');if(!p)return;
+  const col=rutaColor[ruta]||'#1A56DB';
+  document.getElementById('rp-titulo').innerHTML='<span style="color:'+col+'">'+ruta+' · '+unitId+'</span>';
+  const ini=(ord[0]&&ord[0].hora?ord[0].hora:'').slice(0,5)||'—';
+  const fin=(ord[ord.length-1]&&ord[ord.length-1].hora?ord[ord.length-1].hora:'').slice(0,5)||'—';
+  document.getElementById('rp-meta').textContent=fecha+' · '+ini+'–'+fin+' · '+paradas.length+' paradas · '+km.toFixed(1)+' km';
+  const tb=document.getElementById('rp-tbody');
+  if(!paradas.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Sin paradas de 3+ min detectadas ese día</td></tr>';}
+  else tb.innerHTML=paradas.map((p,i)=>{
+    const enCli=!!p.cliente;
+    const nom=enCli?(p.cliente.nombre||p.cliente.id):'Zona sin cliente';
+    const largo=p.durMin>=15;
+    return '<tr><td><span style="display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:'+(enCli?'#0E9F6E':'#D97706')+';color:#fff;font-size:10px;font-weight:800">'+(i+1)+'</span></td>'+
+      '<td style="font-weight:700">'+nom+(enCli?' <span style="font-size:9px;color:#8A90A0">#'+p.cliente.id+'</span>':'')+'</td>'+
+      '<td>'+(p.ini||'').slice(0,5)+'</td><td>'+(p.fin||'').slice(0,5)+'</td>'+
+      '<td><b style="color:'+(largo?'#E30613':'#0F1117')+'">'+p.durMin+' min</b></td>'+
+      '<td>'+(p.distCliente!=null?p.distCliente+' m':'—')+'</td></tr>';
+  }).join('');
+  p.classList.add('on');
 }
 
 /* ══ ALARMAS DEL DÍA (SecuritaGPS getAlerts) — solo de los vehículos asignados hoy ══ */
@@ -4273,6 +4356,7 @@ if(yaInstalada){const b=document.getElementById('btn-install');if(b)b.classList.
 
 /* ══ BOTÓN ATRÁS DEL CELULAR: navegar dentro de la app, no cerrar ══ */
 function _capaAbiertaCerrar(){
+  const RP=document.getElementById('rec-panel'); if(RP&&RP.classList.contains('on'))return cerrarRecorridoPanel;
   const VP=document.getElementById('veh-panel'); if(VP&&VP.classList.contains('on'))return cerrarVehPanel;
   const MV=document.getElementById('multi-ovl'); if(MV&&MV.classList.contains('on'))return cerrarVistaMultiple;
   const MW=document.getElementById('map-wrap'); if(MW&&MW.classList.contains('full'))return toggleMapaCompleto;
