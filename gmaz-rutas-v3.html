@@ -1991,8 +1991,8 @@ function pintarDashMap(clientes_,entSet,novSet){
 function renderRutasFiltro(rutas){
   const cont=document.getElementById('rutas-filtro');
   if(!cont)return;
-  const todasOn=!rutasVisibles;
-  let h='<span class="rfil-chip all" onclick="haptic();filtroTodas()">'+(todasOn?'✓ ':'')+'Todas</span>';
+  const todasOn=!rutasVisibles||rutasVisibles.size===rutas.length;
+  let h='<span class="rfil-chip all'+(todasOn?'':' off')+'" onclick="haptic();filtroTodas()">'+(todasOn?'✓ ':'')+'Todas</span>';
   rutas.forEach(r=>{
     const col=rutaColor[r]||'#E30613';
     const on=!rutasVisibles||rutasVisibles.has(r);
@@ -2000,7 +2000,13 @@ function renderRutasFiltro(rutas){
   });
   cont.innerHTML=h;
 }
-function filtroTodas(){ rutasVisibles=null; renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort()); aplicarFiltroRutas(); }
+function filtroTodas(){
+  const todas=Object.keys(dashMarkersPorRuta);
+  const todasOn=!rutasVisibles||rutasVisibles.size===todas.length;
+  rutasVisibles=todasOn?new Set():null; // si están todas → apagar todas; si no → encender todas
+  renderRutasFiltro(todas.sort());
+  aplicarFiltroRutas();
+}
 function toggleRutaFiltro(r){
   const todas=Object.keys(dashMarkersPorRuta);
   if(!rutasVisibles)rutasVisibles=new Set(todas); // partir de "todas" y quitar
