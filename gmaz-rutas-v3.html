@@ -2655,6 +2655,8 @@ function limpiarRecorrido(){
     if(recorridoCapa.timer)clearInterval(recorridoCapa.timer);
     (recorridoCapa.overlays||[]).forEach(o=>o&&o.setMap(null));
   }
+  if(recParadaMk){recParadaMk.setMap(null);recParadaMk=null;}
+  if(recParadaIW){recParadaIW.close();}
   recorridoCapa=null;_recorridoAbierto=false;
   const p=document.getElementById('rec-panel');if(p)p.classList.remove('on');
 }
@@ -2688,7 +2690,10 @@ function detectarParadas(pts,clientesRuta){
         const sp={lat:+pts[i].latitud,lng:+pts[i].longitud};
         let mejor=null,md=1e9;
         clientesRuta.forEach(c=>{const d=_distM(sp,{lat:c.lat,lng:c.lng});if(d<md){md=d;mejor=c;}});
-        paradas.push({lat:sp.lat,lng:sp.lng,ini:pts[i].hora,fin:pts[j].hora,durMin,cliente:(mejor&&md<150)?mejor:null,distCliente:mejor?Math.round(md):null});
+        // Motor encendido/apagado durante la parada (minutos)
+        let minOn=0,minOff=0;
+        for(let k=i;k<j;k++){const dt=(_tsPt(pts[k+1])-_tsPt(pts[k]))/60000;if(String(pts[k].ignicion)==='1')minOn+=dt;else minOff+=dt;}
+        paradas.push({lat:sp.lat,lng:sp.lng,ini:pts[i].hora,fin:pts[j].hora,durMin,cliente:(mejor&&md<150)?mejor:null,distCliente:mejor?Math.round(md):null,minOn:Math.round(minOn),minOff:Math.round(minOff)});
       }
       i=j+1;
     }else i++;
@@ -2739,7 +2744,7 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     });
     let km=0;if(window.turf)for(let k=1;k<path.length;k++)km+=turf.distance(turf.point([path[k-1].lng,path[k-1].lat]),turf.point([path[k].lng,path[k].lat]),{units:'kilometers'});
     const bounds=new google.maps.LatLngBounds();path.forEach(p=>bounds.extend(p));dashMap.fitBounds(bounds);
-    recorridoCapa={unitId,ruta,fecha,overlays,timer:null};
+    recorridoCapa={unitId,ruta,fecha,overlays,timer:null,paradas};
     mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord);
     toast('Recorrido '+unitId+' ('+fecha+'): '+paradas.length+' paradas · ~'+km.toFixed(1)+' km','ok');
   }catch(e){toast('Error cargando recorrido: '+e.message,'err');_recorridoAbierto=false;}
@@ -2757,13 +2762,46 @@ function mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord){
     const enCli=!!p.cliente;
     const nom=enCli?(p.cliente.nombre||p.cliente.id):'Zona sin cliente';
     const largo=p.durMin>=15;
-    return '<tr><td><span style="display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:'+(enCli?'#0E9F6E':'#D97706')+';color:#fff;font-size:10px;font-weight:800">'+(i+1)+'</span></td>'+
+    return '<tr style="cursor:pointer" onclick="haptic();verParadaEnMapa('+i+')" title="Ver en el mapa">'+
+      '<td><span style="display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:'+(enCli?'#0E9F6E':'#D97706')+';color:#fff;font-size:10px;font-weight:800">'+(i+1)+'</span></td>'+
       '<td style="font-weight:700">'+nom+(enCli?' <span style="font-size:9px;color:#8A90A0">#'+p.cliente.id+'</span>':'')+'</td>'+
       '<td>'+(p.ini||'').slice(0,5)+'</td><td>'+(p.fin||'').slice(0,5)+'</td>'+
       '<td><b style="color:'+(largo?'#E30613':'#0F1117')+'">'+p.durMin+' min</b></td>'+
       '<td>'+(p.distCliente!=null?p.distCliente+' m':'—')+'</td></tr>';
   }).join('');
   p.classList.add('on');
+}
+let recParadaIW=null,recParadaMk=null;
+function verParadaEnMapa(i){
+  if(!recorridoCapa||!recorridoCapa.paradas||!recorridoCapa.paradas[i]||!dashMap)return;
+  const p=recorridoCapa.paradas[i];
+  const enCli=!!p.cliente;
+  const nom=enCli?(p.cliente.nombre||p.cliente.id):'Zona sin cliente';
+  const col=enCli?'#0E9F6E':'#D97706';
+  dashMap.panTo({lat:p.lat,lng:p.lng});
+  if(dashMap.getZoom()<16)dashMap.setZoom(16);
+  // Marcador que resalta la parada seleccionada
+  if(recParadaMk)recParadaMk.setMap(null);
+  recParadaMk=new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:dashMap,zIndex:3000,
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:15,fillColor:col,fillOpacity:.25,strokeColor:col,strokeWeight:2}});
+  // Motor: encendido X / apagado Y
+  const motor=(p.minOn>0&&p.minOff>0)
+    ? '<span style="color:#0E9F6E">Encendido '+p.minOn+' min</span> · <span style="color:#6B7385">Apagado '+p.minOff+' min</span>'
+    : (p.minOn>0? '<span style="color:#0E9F6E">Motor encendido todo el tiempo ('+p.minOn+' min)</span>'
+      : '<span style="color:#6B7385">Motor apagado todo el tiempo ('+(p.minOff||p.durMin)+' min)</span>');
+  const html='<div class="iw-cli" style="min-width:220px">'+
+    '<div class="iwh"><span class="iwdot" style="background:'+col+'"></span><div><div class="iwn">Parada '+(i+1)+' · '+nom+'</div>'+
+      (enCli?'<div class="iwcod">Código '+p.cliente.id+'</div>':'<div class="iwcod">Sin cliente cercano</div>')+'</div></div>'+
+    '<div class="iwsep"></div>'+
+    '<div class="iwrow">🕒 Llegó <b>'+(p.ini||'').slice(0,5)+'</b> · Salió <b>'+(p.fin||'').slice(0,5)+'</b></div>'+
+    '<div class="iwrow">⏱️ Detenido <b style="color:'+(p.durMin>=15?'#E30613':'#0F1117')+'">'+p.durMin+' min</b></div>'+
+    '<div class="iwrow" style="border:none">🔑 '+motor+'</div>'+
+    (enCli?'':'<div class="iwrow" style="border:none;color:#D97706">⚠ A '+p.distCliente+' m del cliente más cercano</div>')+
+    '</div>';
+  if(!recParadaIW)recParadaIW=new google.maps.InfoWindow();
+  recParadaIW.setContent(html);
+  recParadaIW.setPosition({lat:p.lat,lng:p.lng});
+  recParadaIW.open(dashMap);
 }
 
 /* ══ ALARMAS DEL DÍA (SecuritaGPS getAlerts) — solo de los vehículos asignados hoy ══ */
