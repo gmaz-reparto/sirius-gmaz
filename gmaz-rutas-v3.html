@@ -2259,10 +2259,11 @@ function pintarDashMap(clientes_,entSet,novSet){
     const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
     if(!lat||!lng)return;
     const id=String(c.id);
-    const estado=entSet.has(id)?'entregado':novSet.has(id)?'novedad':'pendiente';
-    const fill=estado==='entregado'?'#059669':estado==='novedad'?'#D97706':(rutaColor[c.ruta]||'#E30613');
+    const esNov=novSet.has(id);
+    const estado=esNov?'novedad':'entregado';
+    // Punto del color de su RUTA (igual que el camión); rechazos con anillo rojo para que resalten
     const mk=new google.maps.Marker({position:{lat,lng},
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:5.5,fillColor:fill,fillOpacity:estado==='entregado'?.5:.95,strokeColor:'#fff',strokeWeight:1.5}});
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:esNov?7:5.5,fillColor:rutaColor[c.ruta]||'#E30613',fillOpacity:.95,strokeColor:esNov?'#E30613':'#fff',strokeWeight:esNov?3:1.5}});
     mk._ruta=c.ruta;
     mk.addListener('click',()=>{dashIW.setContent(iwClienteHTML(c,estado));dashIW.open(dashMap,mk);});
     dashMarkers.push(mk);
@@ -2356,10 +2357,8 @@ function abrirVistaMultiple(){
       multiMaps.push(m);
       const bounds=new google.maps.LatLngBounds();let hay=false;
       (cliPorRuta[r]||[]).forEach(({c,lat,lng})=>{
-        const id=String(c.id);
-        const estado=_entSetCache.has(id)?'entregado':_novSetCache.has(id)?'novedad':'pendiente';
-        const fill=estado==='entregado'?'#059669':estado==='novedad'?'#D97706':col;
-        new google.maps.Marker({position:{lat,lng},map:m,icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:fill,fillOpacity:estado==='entregado'?.5:.95,strokeColor:'#fff',strokeWeight:1.4}});
+        const esNov=_novSetCache.has(String(c.id));
+        new google.maps.Marker({position:{lat,lng},map:m,icon:{path:google.maps.SymbolPath.CIRCLE,scale:esNov?6.5:5,fillColor:col,fillOpacity:.95,strokeColor:esNov?'#E30613':'#fff',strokeWeight:esNov?2.5:1.4}});
         bounds.extend({lat,lng});hay=true;
       });
       // Geocerca de la ruta
@@ -2724,9 +2723,9 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     const clientesRuta=(_clientesCache||[]).map(c=>{const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));return(c.ruta===ruta&&lat&&lng)?{...c,lat,lng}:null;}).filter(Boolean);
     const iw=new google.maps.InfoWindow();
     clientesRuta.forEach(c=>{
-      const estado=_entSetCache.has(String(c.id))?'entregado':_novSetCache.has(String(c.id))?'novedad':'pendiente';
-      const fill=estado==='entregado'?'#059669':estado==='novedad'?'#D97706':col;
-      const mk=new google.maps.Marker({position:{lat:c.lat,lng:c.lng},map:dashMap,zIndex:1200,icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:fill,fillOpacity:.85,strokeColor:'#fff',strokeWeight:1.3}});
+      const esNov=_novSetCache.has(String(c.id));
+      const estado=esNov?'novedad':'entregado';
+      const mk=new google.maps.Marker({position:{lat:c.lat,lng:c.lng},map:dashMap,zIndex:1200,icon:{path:google.maps.SymbolPath.CIRCLE,scale:esNov?6.5:5,fillColor:col,fillOpacity:.9,strokeColor:esNov?'#E30613':'#fff',strokeWeight:esNov?2.5:1.3}});
       mk.addListener('click',()=>{iw.setContent(iwClienteHTML(c,estado));iw.open(dashMap,mk);});
       overlays.push(mk);
     });
