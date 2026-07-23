@@ -1918,38 +1918,35 @@ async function cargarDash(){
     const fecha=getColDate();
     const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
       sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia'),
-      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo').eq('fecha',fecha),
+      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo,created_at').eq('fecha',fecha),
       sb.from('estados_entrega').select('ruta,estado,codigo_cliente,created_at').eq('fecha',fecha),
       sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
     ]);
     const clientes_=todos||[],novedades_=novs||[],estados_=est||[];
     const rutaVend={};(maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
     const cajasCod={};clientes_.forEach(c=>cajasCod[String(c.id)]=parseFloat(String(c['CAJA_']||0).replace(',','.')||0));
-    const entSet=new Set(estados_.filter(e=>e.estado==='entregado').map(e=>String(e.codigo_cliente)));
+    // MODELO: todos entregados por defecto; una novedad = NO entregado.
+    // El % arranca en 100% en la mañana y BAJA con cada rechazo (por clientes y por cajas).
     const novSet=new Set(novedades_.map(n=>String(n.codigo_cliente)));
-    const totCli=clientes_.length,totEnt=entSet.size,totNov=novedades_.length;
+    const entSet=new Set(clientes_.map(c=>String(c.id)).filter(id=>!novSet.has(id)));
+    const totCli=clientes_.length,totNov=novedades_.length,totEnt=entSet.size;
     const cajasRej=novedades_.reduce((s,n)=>s+(cajasCod[n.codigo_cliente]||0),0);
     const cajasProg=clientes_.reduce((s,c)=>s+(cajasCod[String(c.id)]||0),0);
-    const cajasEnt=clientes_.reduce((s,c)=>s+(entSet.has(String(c.id))?(cajasCod[String(c.id)]||0):0),0);
-    const pctG=totCli?Math.round(totEnt/totCli*100):0;
-    const pctCajas=cajasProg?Math.round(cajasEnt/cajasProg*100):0;
-    // Ritmo de entrega: clientes entregados por hora desde la primera entrega
-    const tiempos=estados_.filter(e=>e.estado==='entregado'&&e.created_at).map(e=>new Date(e.created_at).getTime()).sort((a,b)=>a-b);
-    let ritmo='—';
-    if(tiempos.length>=2){
-      const horas=(Date.now()-tiempos[0])/3600000;
-      if(horas>0.05)ritmo=(totEnt/horas).toFixed(1)+' /h';
-    }
-    // KPIs — priorizados para decisión operativa
+    const cajasEnt=cajasProg-cajasRej; // cajas entregadas = programadas menos rechazadas
+    const pctG=totCli?Math.round(totEnt/totCli*100):100;
+    const pctCajas=cajasProg?Math.round(cajasEnt/cajasProg*100):100;
+    // Momentos de los rechazos del día (para "rechazos por hora" en Indicadores)
+    const tiempos=novedades_.filter(n=>n.created_at).map(n=>new Date(n.created_at).getTime()).sort((a,b)=>a-b);
+    // KPIs — modelo de cumplimiento en retroceso
     const pend=totCli-totEnt;
     const chip=(txt,cl,bg)=>({t:txt,tc:cl,tb:bg});
     const K=[
-      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cierre de clientes',c:chip(pctG>=75?'● en meta':pctG>=40?'● en curso':'● atrás',pctG>=75?'#059669':pctG>=40?'#D97706':'#E30613',pctG>=75?'#ECFDF5':pctG>=40?'#FFF7ED':'#FEF2F2')},
-      {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:Math.round(cajasEnt).toLocaleString('es-CO'),l:'Cajas · '+pctCajas+'% de '+Math.round(cajasProg).toLocaleString('es-CO')},
+      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cumplimiento clientes',c:chip(pctG>=95?'● excelente':pctG>=85?'● bien':'● revisar',pctG>=95?'#059669':pctG>=85?'#D97706':'#E30613',pctG>=95?'#ECFDF5':pctG>=85?'#FFF7ED':'#FEF2F2')},
+      {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:pctCajas+'%',l:'Cumplimiento cajas · '+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')},
       {i:'store',bg:'#F5F3FF',cl:'#7C3AED',v:totEnt+' / '+totCli,l:'Clientes entregados'},
-      {i:'clock',bg:'#ECFEFF',cl:'#0891B2',v:ritmo,l:'Ritmo de entrega'},
+      {i:'box',bg:'#FEF2F2',cl:'#E30613',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas'},
       {i:'truck',bg:'#FFF7ED',cl:'#EA580C',v:Object.keys(rutaColor).length,l:'Rutas activas'},
-      {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov,l:'Rechazos'+(cajasRej>0?' · '+Math.round(cajasRej)+' cj':' hoy'),c:totNov>0?chip('● revisar','#E30613','#FEF2F2'):chip('● sin novedad','#059669','#ECFDF5')}
+      {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov,l:'Rechazos'+(cajasRej>0?' hoy':' hoy'),c:totNov>0?chip('● revisar','#E30613','#FEF2F2'):chip('● sin novedad','#059669','#ECFDF5')}
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
       '<div class="dkpi" style="--kac:'+k.cl+'"><div class="ktop"><div class="ko" style="background:'+k.bg+';color:'+k.cl+'">'+icoSvg(k.i,17)+'</div>'+
@@ -2070,8 +2067,8 @@ function renderClientesModulo(){
   const cont=document.getElementById('clientes-kpis');if(!cont||!_dashData)return;
   const d=_dashData,pct=d.totCli?Math.round(d.totEnt/d.totCli*100):0,pend=d.totCli-d.totEnt;
   const K=[
-    {v:d.totEnt,l:'Clientes atendidos',c:'#059669',bg:'#ECFDF5',i:'target'},
-    {v:pend,l:'Clientes pendientes',c:'#D97706',bg:'#FFF7ED',i:'store'},
+    {v:d.totEnt,l:'Clientes entregados',c:'#059669',bg:'#ECFDF5',i:'target'},
+    {v:pend,l:'Con novedad',c:'#E30613',bg:'#FEF2F2',i:'alert'},
     {v:pct+'%',l:'Cumplimiento',c:'#1A56DB',bg:'#EFF6FF',i:'clock'},
     {v:Math.round(d.cajasEnt).toLocaleString('es-CO'),l:'Cajas entregadas',c:'#7C3AED',bg:'#F5F3FF',i:'box'}
   ];
@@ -2097,14 +2094,14 @@ function renderRechazosGraf(){
 /* ══ MÓDULO INDICADORES: gráficos ejecutivos ══ */
 function renderIndicadores(){
   const cont=document.getElementById('indic-graf');if(!cont||!_dashData)return;
-  const d=_dashData,pend=d.totCli-d.totEnt;
-  // Donut cumplimiento
-  const segsCumpl=[{n:'Entregados',v:d.totEnt,c:'#059669'},{n:'Pendientes',v:pend-d.totNov>0?pend-d.totNov:0,c:'#D1D5DB'},{n:'Rechazos',v:d.totNov,c:'#E30613'}];
-  // Entregas por hora
+  const d=_dashData;
+  // Donut cumplimiento (entregados vs rechazos)
+  const segsCumpl=[{n:'Entregados',v:d.totEnt,c:'#059669'},{n:'Rechazos',v:d.totNov,c:'#E30613'}];
+  // Rechazos por hora del día
   const porHora={};d.tiempos.forEach(t=>{const h=new Date(t).getHours();porHora[h]=(porHora[h]||0)+1;});
   const horas=Object.keys(porHora).map(Number).sort((a,b)=>a-b);
   const maxH=Math.max(1,...Object.values(porHora));
-  const barras=horas.map(h=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;max-width:26px;height:'+(70*porHora[h]/maxH)+'px;background:#1A56DB;border-radius:4px 4px 0 0;min-height:3px"></div><span style="font-size:9px;color:#8A90A0;font-weight:700">'+h+'h</span></div>').join('');
+  const barras=horas.map(h=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;max-width:26px;height:'+(70*porHora[h]/maxH)+'px;background:#E30613;border-radius:4px 4px 0 0;min-height:3px"></div><span style="font-size:9px;color:#8A90A0;font-weight:700">'+h+'h</span></div>').join('');
   // Ranking por ruta
   const rutas=Object.keys(d.porRuta).sort((a,b)=>{const pa=d.porRuta[a].tot?d.porRuta[a].ent/d.porRuta[a].tot:0,pb=d.porRuta[b].tot?d.porRuta[b].ent/d.porRuta[b].tot:0;return pb-pa;});
   const ranking=rutas.map(code=>{const r=d.porRuta[code],pct=r.tot?Math.round(r.ent/r.tot*100):0;const c=pct>=90?'#059669':pct>=75?'#D97706':'#E30613';
@@ -2114,8 +2111,8 @@ function renderIndicadores(){
       '<div class="graf-card"><h4>Ranking de cumplimiento por ruta</h4><div class="gq">¿Qué rutas van adelantadas y cuáles atrasadas?</div>'+ranking+'</div>'+
       '<div class="graf-card"><h4>Cumplimiento global</h4><div class="gq">Estado de la operación del día</div><div style="display:flex;align-items:center;gap:16px"><div style="position:relative;flex-shrink:0">'+donutSvg(segsCumpl,120,18)+'<div style="position:absolute;inset:0;display:grid;place-items:center"><div style="text-align:center"><div style="font-size:22px;font-weight:900">'+(d.totCli?Math.round(d.totEnt/d.totCli*100):0)+'%</div></div></div></div><div>'+segsCumpl.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:'+s.c+'"></span>'+s.n+' <b style="margin-left:auto">'+s.v+'</b></div>').join('')+'</div></div></div>'+
     '</div>'+
-    '<div class="graf-card"><h4>Entregas por hora</h4><div class="gq">Ritmo de la operación durante el día</div>'+
-      (horas.length?'<div style="display:flex;align-items:flex-end;gap:6px;height:90px;padding-top:8px">'+barras+'</div>':'<div class="veh-cargando">Aún sin entregas registradas hoy</div>')+
+    '<div class="graf-card"><h4>Rechazos por hora</h4><div class="gq">¿A qué horas se concentran los rechazos?</div>'+
+      (horas.length?'<div style="display:flex;align-items:flex-end;gap:6px;height:90px;padding-top:8px">'+barras+'</div>':'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos registrados hoy</div>')+
     '</div>';
 }
 /* ══ Estilo de mapa profesional (monocromo suave para que resalten los colores de ruta) ══ */
