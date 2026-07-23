@@ -588,6 +588,13 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .barrow .bt{flex:1;height:9px;background:var(--gris1);border-radius:6px;overflow:hidden}
 .barrow .bt i{display:block;height:100%;border-radius:6px}
 .barrow .bv{width:52px;text-align:right;font-size:11px;font-weight:800;flex-shrink:0}
+.segtog-bar{display:inline-flex;gap:2px;background:var(--gris2);border-radius:11px;padding:3px;margin-bottom:14px}
+.segtog-b{font-size:11.5px;font-weight:800;padding:7px 16px;border:none;background:none;color:var(--gris5);cursor:pointer;font-family:inherit;border-radius:8px}
+.segtog-b.on{background:#fff;color:var(--negro);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.mesbars{display:flex;align-items:flex-end;gap:3px;height:90px;padding-top:8px;overflow-x:auto}
+.mesbars .mb{flex:1;min-width:14px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mesbars .mb i{width:100%;max-width:22px;background:#E30613;border-radius:3px 3px 0 0;min-height:2px;display:block}
+.mesbars .mb span{font-size:8.5px;color:var(--gris4);font-weight:700}
 .dash-main{flex:1;overflow:auto;padding:18px 22px;background:var(--gris1)}
 .dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1100px){.dkpis{grid-template-columns:repeat(3,1fr)}}
@@ -1032,23 +1039,31 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
     <!-- ══ MÓDULO RECHAZOS ══ -->
     <section class="mod" id="mod-rechazos">
-      <div id="rechazos-graf" class="dgrid eq" style="margin-bottom:14px"></div>
-      <div class="dcard">
-        <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
-        <div style="overflow:auto;max-height:420px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
+      <div class="segtog-bar"><button class="segtog-b on" id="rt-hoy" onclick="haptic();setModoHist('rech','hoy')">Hoy</button><button class="segtog-b" id="rt-mes" onclick="haptic();setModoHist('rech','mes')">Este mes</button></div>
+      <div id="rech-hoy">
+        <div id="rechazos-graf" class="dgrid eq" style="margin-bottom:14px"></div>
+        <div class="dcard">
+          <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
+          <div style="overflow:auto;max-height:420px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
+        </div>
       </div>
+      <div id="rech-mes" style="display:none"><div class="veh-cargando">Cargando el mes…</div></div>
     </section>
 
     <!-- ══ MÓDULO ALERTAS ══ -->
     <section class="mod" id="mod-alertas">
-      <div class="dcard" style="margin-bottom:14px">
-        <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
-        <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
+      <div class="segtog-bar"><button class="segtog-b on" id="at-hoy" onclick="haptic();setModoHist('alert','hoy')">Hoy</button><button class="segtog-b" id="at-mes" onclick="haptic();setModoHist('alert','mes')">Este mes</button></div>
+      <div id="alertas-hoy">
+        <div class="dcard" style="margin-bottom:14px">
+          <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
+          <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
+        </div>
+        <div class="dcard">
+          <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
+          <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
+        </div>
       </div>
-      <div class="dcard">
-        <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
-        <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Distancia límite</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody id="dash-geo"></tbody></table></div>
-      </div>
+      <div id="alertas-mes" style="display:none"><div class="veh-cargando">Toca "Este mes" para cargar el histórico…</div></div>
     </section>
 
     <!-- ══ MÓDULO INDICADORES ══ -->
@@ -2114,6 +2129,69 @@ function renderIndicadores(){
     '<div class="graf-card"><h4>Rechazos por hora</h4><div class="gq">¿A qué horas se concentran los rechazos?</div>'+
       (horas.length?'<div style="display:flex;align-items:flex-end;gap:6px;height:90px;padding-top:8px">'+barras+'</div>':'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos registrados hoy</div>')+
     '</div>';
+}
+/* ══ HISTÓRICO DEL MES: rechazos y alertas de vehículos ══ */
+function _mesInicio(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'; }
+function _nomMes(){ return new Date().toLocaleDateString('es-CO',{month:'long',year:'numeric'}); }
+function _hdrSup(){ return {'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}; }
+function setModoHist(mod,modo){
+  const pre=mod==='rech'?'rech':'alertas', pf=mod==='rech'?'rt':'at';
+  document.getElementById(pre+'-hoy').style.display=modo==='hoy'?'':'none';
+  document.getElementById(pre+'-mes').style.display=modo==='mes'?'':'none';
+  document.getElementById(pf+'-hoy').classList.toggle('on',modo==='hoy');
+  document.getElementById(pf+'-mes').classList.toggle('on',modo==='mes');
+  if(modo==='mes'){ if(mod==='rech')cargarRechazosMes(); else cargarAlertasMes(); }
+}
+function _barrasMes(porDia){
+  const dias=Object.keys(porDia).sort();
+  const max=Math.max(1,...Object.values(porDia));
+  return '<div class="mesbars">'+dias.map(d=>'<div class="mb"><i style="height:'+Math.round(78*porDia[d]/max)+'px" title="'+d+': '+porDia[d]+'"></i><span>'+d.slice(8)+'</span></div>').join('')+'</div>';
+}
+async function cargarRechazosMes(){
+  const cont=document.getElementById('rech-mes');
+  cont.innerHTML='<div class="veh-cargando">Cargando rechazos de '+_nomMes()+'…</div>';
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha,codigo_cliente,nombre_cliente,ruta,motivo&fecha=gte.'+_mesInicio()+'&order=fecha.desc&limit=3000',{headers:_hdrSup()});
+    const rows=r.ok?await r.json():[];
+    const porDia={};rows.forEach(n=>{porDia[n.fecha]=(porDia[n.fecha]||0)+1;});
+    const tabla=rows.map(n=>{const col=rutaColor[n.ruta]||'#4A5060';return '<tr><td>'+(n.fecha||'').slice(5)+'</td><td style="font-weight:700">'+(n.nombre_cliente||n.codigo_cliente)+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+n.ruta+'</span></td><td>'+n.motivo+'</td></tr>';}).join('');
+    cont.innerHTML=
+      '<div class="graf-card" style="margin-bottom:14px"><h4>Rechazos por día · '+_nomMes()+'</h4><div class="gq">'+rows.length+' rechazos en el mes</div>'+(Object.keys(porDia).length?_barrasMes(porDia):'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos este mes</div>')+'</div>'+
+      '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">⚠️</span>Rechazos del mes</h3><span class="dm">'+rows.length+' registros</span></div>'+
+        '<div style="overflow:auto;max-height:440px"><table class="dtbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Ruta</th><th>Motivo</th></tr></thead><tbody>'+(tabla||'<tr><td colspan="4" style="text-align:center;color:#8A90A0;padding:16px">Sin rechazos este mes</td></tr>')+'</tbody></table></div></div>';
+  }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar el mes: '+e.message+'</div>';}
+}
+async function cargarAlertasMes(){
+  const cont=document.getElementById('alertas-mes');
+  cont.innerHTML='<div class="veh-cargando">Cargando geocercas de '+_nomMes()+'…</div>';
+  let geoRows=[];
+  try{ const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=*&fecha=gte.'+_mesInicio()+'&order=fecha.desc,hora.desc&limit=3000',{headers:_hdrSup()}); geoRows=r.ok?await r.json():[]; }catch(e){}
+  const geoTabla=geoRows.map(e=>{const col=rutaColor[e.ruta]||'#4A5060';const esS=e.tipo==='salio';return '<tr><td>'+(e.fecha||'').slice(5)+' '+(e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'')+'</td><td style="font-weight:700">'+e.unit_id+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td><td><span class="dtag" style="background:'+(esS?'#FFF1F2':'#E6F7F0')+';color:'+(esS?'#E30613':'#0E9F6E')+'">'+(esS?'Salió':'Ingresó')+'</span></td><td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td><td style="font-size:11px">'+(e.estado_fuera||'—')+'</td></tr>';}).join('');
+  cont.innerHTML=
+    '<div class="dcard" style="margin-bottom:14px"><div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas del mes — SecuritaGPS</h3><span class="dm" id="alarmas-mes-meta">'+_nomMes()+'</span></div>'+
+      '<div id="alarmas-mes-body" style="padding:16px 17px"><button class="dchip rojo" onclick="haptic();cargarAlarmasMesSecurita()">Traer alarmas del mes desde SecuritaGPS</button><div style="font-size:11px;color:#8A90A0;font-weight:600;margin-top:8px">Consulta Securita día por día; en un mes con varios vehículos puede tardar ~30s.</div></div></div>'+
+    '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca del mes</h3><span class="dm">'+geoRows.length+' eventos</span></div>'+
+      '<div style="overflow:auto;max-height:400px"><table class="dtbl"><thead><tr><th>Fecha/Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody>'+(geoTabla||'<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Sin eventos de geocerca este mes</td></tr>')+'</tbody></table></div></div>';
+}
+async function cargarAlarmasMesSecurita(){
+  const body=document.getElementById('alarmas-mes-body');
+  if(!body)return;
+  if(!_vehCache)_vehCache=await secVehiculos()||[];
+  const vehs=_vehCache.filter(v=>v.idgps);
+  const hoy=new Date(),y=hoy.getFullYear(),mo=hoy.getMonth();
+  const dias=[];for(let d=1;d<=hoy.getDate();d++)dias.push(y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  const todas=[];
+  for(let i=0;i<dias.length;i++){
+    body.innerHTML='<div class="veh-cargando">Consultando '+dias[i]+' … ('+(i+1)+'/'+dias.length+')</div>';
+    const res=await Promise.all(vehs.map(async v=>{ try{ const al=await secAlertas(v.idgps,dias[i])||[]; return (Array.isArray(al)?al:[al]).filter(x=>x&&x.TipoAlerta).map(x=>({...x,_fecha:dias[i],_placa:v.nombre})); }catch(e){return[];} }));
+    res.flat().forEach(a=>todas.push(a));
+  }
+  todas.sort((a,b)=>(b._fecha+' '+(b.Hora||'')).localeCompare(a._fecha+' '+(a.Hora||'')));
+  const porTipo={};todas.forEach(a=>{const t=a.TipoAlerta||'Alerta';porTipo[t]=(porTipo[t]||0)+1;});
+  const resumen=Object.keys(porTipo).sort((a,b)=>porTipo[b]-porTipo[a]).map(t=>'<span class="dtag" style="background:#FFF1F2;color:#E30613;margin:2px 4px 2px 0;display:inline-block">'+t+': '+porTipo[t]+'</span>').join('');
+  const tabla=todas.map(a=>{const crit=/PANICO|EXCESO|VELOCIDAD|IMPACTO|FRENADA|ACELERACION/i.test(a.TipoAlerta||'');return '<tr><td>'+a._fecha.slice(5)+' '+(a.Hora||'')+'</td><td style="font-weight:700">'+a._placa+'</td><td><span class="dtag" style="background:'+(crit?'#FFF1F2':'#FFF8E6')+';color:'+(crit?'#E30613':'#D97706')+'">'+a.TipoAlerta+'</span></td><td style="font-size:11px;color:#6B7385">'+((a.StatusAlerta||a.Domicilio||'').slice(0,50))+'</td></tr>';}).join('');
+  const meta=document.getElementById('alarmas-mes-meta');if(meta)meta.textContent=todas.length+' alarmas · '+_nomMes();
+  body.innerHTML='<div style="margin-bottom:10px;line-height:2">'+(resumen||'<span style="color:#0E9F6E;font-weight:700">✓ Sin alarmas en el mes</span>')+'</div><div style="overflow:auto;max-height:380px"><table class="dtbl"><thead><tr><th>Fecha/Hora</th><th>Vehículo</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>'+(tabla||'<tr><td colspan="4" style="text-align:center;color:#8A90A0;padding:16px">Sin alarmas en el mes</td></tr>')+'</tbody></table></div>';
 }
 /* ══ Estilo de mapa profesional (monocromo suave para que resalten los colores de ruta) ══ */
 const MAP_STYLE=[
