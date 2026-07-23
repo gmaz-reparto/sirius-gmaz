@@ -2662,6 +2662,17 @@ function limpiarRecorrido(){
 function cerrarRecorridoPanel(){ limpiarRecorrido(); }
 function _tsPt(p){ return new Date((p.fecha||getColDate())+'T'+(p.hora||'00:00:00')).getTime(); }
 function _distM(a,b){ return (window.google&&google.maps.geometry)?google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng)):0; }
+function filtrarOutliersGPS(pts){
+  // Quita puntos GPS imposibles: el equipo a veces reporta una ubicación fantasma en otra ciudad
+  // (misma coordenada fija, muy lejos del recorrido real). Se toma la mediana del día como centro real
+  // y se descartan los puntos a más de 80 km de ese cúmulo (Pasto + corregimientos caben; otra ciudad no).
+  const val=pts.filter(p=>{const la=parseFloat(p.latitud),ln=parseFloat(p.longitud);return la&&ln&&Math.abs(la)<=90&&Math.abs(ln)<=180;});
+  if(val.length<4)return val;
+  const lats=val.map(p=>parseFloat(p.latitud)).sort((a,b)=>a-b);
+  const lngs=val.map(p=>parseFloat(p.longitud)).sort((a,b)=>a-b);
+  const centro={lat:lats[Math.floor(lats.length/2)],lng:lngs[Math.floor(lngs.length/2)]};
+  return val.filter(p=>_distM({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)},centro)<80000);
+}
 function detectarParadas(pts,clientesRuta){
   const paradas=[];let i=0;
   while(i<pts.length){
@@ -2697,7 +2708,10 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
   try{
     const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
     if(!puntos||!puntos.length){toast('Sin recorrido para '+unitId+' el '+fecha,'err');_recorridoAbierto=false;return;}
-    const ord=puntos.slice().reverse(); // Securita entrega más reciente primero → orden cronológico
+    const ordCrudo=puntos.slice().reverse(); // Securita entrega más reciente primero → orden cronológico
+    const ord=filtrarOutliersGPS(ordCrudo); // descarta puntos GPS imposibles (equipo reportando otra ciudad)
+    const descartados=ordCrudo.length-ord.length;
+    if(descartados>0)toast('⚠ '+descartados+' punto(s) GPS erróneo(s) omitido(s) (equipo reportó fuera de zona)','ok');
     const path=ord.map(p=>({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)})).filter(p=>p.lat&&p.lng);
     if(!path.length){toast('Recorrido sin coordenadas válidas','err');_recorridoAbierto=false;return;}
     const col=rutaColor[ruta]||'#1A56DB';
