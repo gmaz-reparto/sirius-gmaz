@@ -3614,9 +3614,36 @@ function actualizarProgresoRuta(){
   if(de){
     const cla=parseFloat(String(getF(clientes[idx],CFG.COL_LAT)||clientes[idx].lat||'').replace(',','.'));
     const cln=parseFloat(String(getF(clientes[idx],CFG.COL_LNG)||clientes[idx].lng||'').replace(',','.'));
-    if(posGPS&&cla&&cln){ const d=_distMetros(posGPS.lat,posGPS.lng,cla,cln); de.textContent=' · '+(d<1000?Math.round(d)+' m':(d/1000).toFixed(1)+' km'); }
-    else de.textContent='';
+    if(posGPS&&cla&&cln){
+      const d=_distMetros(posGPS.lat,posGPS.lng,cla,cln);
+      de.dataset.base=' · '+(d<1000?Math.round(d)+' m':(d/1000).toFixed(1)+' km');
+      de.textContent=de.dataset.base+(de.dataset.eta&&de.dataset.etaIdx==idx?' · '+de.dataset.eta:'');
+      calcularEtaProximo(idx,cla,cln); // B1 (derivable): ETA con tráfico en vivo, throttled
+    } else { de.textContent=''; de.dataset.base=''; }
   }
+}
+let _etaUltimo={idx:-1,ts:0,corriendo:false};
+function calcularEtaProximo(idx,cla,cln){
+  if(!posGPS||!window.google||!google.maps)return;
+  const de=document.getElementById('ns-dist');if(!de)return;
+  // Throttle: recalcular solo si cambió el cliente o pasaron 60s (no gastar la API cada 25s)
+  if(_etaUltimo.corriendo)return;
+  if(idx===_etaUltimo.idx && Date.now()-_etaUltimo.ts<60000)return;
+  _etaUltimo.corriendo=true;
+  new google.maps.DirectionsService().route({
+    origin:posGPS,destination:{lat:cla,lng:cln},travelMode:google.maps.TravelMode.DRIVING,
+    drivingOptions:{departureTime:new Date(),trafficModel:'bestguess'}
+  },(r,s)=>{
+    _etaUltimo={idx,ts:Date.now(),corriendo:false};
+    if(s==='OK'&&r&&r.routes[0]&&r.routes[0].legs[0]){
+      const leg=r.routes[0].legs[0];
+      const dur=leg.duration_in_traffic||leg.duration;
+      const eta='~'+dur.text.replace(' minutos','').replace(' mins','').replace(' min','').trim()+' min';
+      de.dataset.eta=eta; de.dataset.etaIdx=idx;
+      const ns=document.getElementById('next-stop');
+      if(ns&&ns.dataset.idx==idx) de.textContent=(de.dataset.base||'')+' · '+eta;
+    }
+  });
 }
 function abrirSiguiente(){
   const ns=document.getElementById('next-stop');
