@@ -3258,7 +3258,7 @@ function startRoute(ruta,lista){
         if(posGPS){optimizarRutaDesdeGPS(posGPS);}
         else if(navigator.geolocation){
           navigator.geolocation.getCurrentPosition(
-            p=>{posGPS={lat:p.coords.latitude,lng:p.coords.longitude};optimizarRutaDesdeGPS(posGPS);},
+            p=>{if(!_gpsVehActivo)posGPS={lat:p.coords.latitude,lng:p.coords.longitude};optimizarRutaDesdeGPS(posGPS);},
             ()=>{},{enableHighAccuracy:true,timeout:9000,maximumAge:8000}
           );
         }
@@ -3485,10 +3485,12 @@ async function activarGpsVehiculo(ruta){
         if(u&&u.Latitude){
           const p={lat:parseFloat(u.Latitude),lng:parseFloat(u.Longitude)};
           if(p.lat&&p.lng){
+            const primeraVez=!_gpsVehActivo;
             _gpsVehActivo=true;
             posGPS=p;
             if(truckMk)truckMk.setPosition(p);
             if(navMode&&gpano)gpano.setPosition(p);
+            if(primeraVez){ if(gmap)gmap.panTo(p); lastNearestIdx=-1; try{optimizarRutaDesdeGPS(p);}catch(e){} } // al tomar el GPS del vehículo: centrar, renumerar y recalcular ruta
             actualizarChipGps('veh',_gpsVehUnit,u.ReportDate); // A1: estado del GPS del vehículo
             chequeosCampo(p,u); // A2 fuera de zona · M1 velocidad · M2/M3 llegada a planta
             if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
@@ -3827,14 +3829,13 @@ function calcularRuta(origen,destino){
 
 let autoNavActivo=false,lastNearestIdx=-1;
 function autoNavPrimerCliente(){
-  if(!gmap||!navigator.geolocation)return;
+  if(!gmap)return;
   if(!dirRenderer)dirRenderer=new google.maps.DirectionsRenderer({
     map:gmap,suppressMarkers:true,
     polylineOptions:{strokeColor:'#E30613',strokeWeight:5,strokeOpacity:.85}
   });
-  navigator.geolocation.getCurrentPosition(p=>{
-    // Con GPS real en mano, calcular el MÁS CERCANO y enrutar hacia él
-    posGPS={lat:p.coords.latitude,lng:p.coords.longitude};
+  const rutarDesde=(origen)=>{
+    if(!origen)return;
     const idx=idxMasCercano();
     if(idx<0)return;
     const cl=clientes[idx];
@@ -3844,9 +3845,16 @@ function autoNavPrimerCliente(){
     autoNavActivo=true;lastNearestIdx=idx;
     actualizarPuntoPrimero();actualizarProgresoRuta();
     new google.maps.DirectionsService().route({
-      origin:posGPS,destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
+      origin:origen,destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
     },(r,s)=>{if(s==='OK')dirRenderer.setDirections(r);});
-  },null,{enableHighAccuracy:true,timeout:8000,maximumAge:10000});
+  };
+  // Si el GPS del vehículo está activo, usar ESA posición — nunca la del celular
+  if(_gpsVehActivo&&posGPS){ rutarDesde(posGPS); return; }
+  if(!navigator.geolocation){ if(posGPS)rutarDesde(posGPS); return; }
+  navigator.geolocation.getCurrentPosition(p=>{
+    if(!_gpsVehActivo)posGPS={lat:p.coords.latitude,lng:p.coords.longitude}; // no pisar el GPS del vehículo
+    rutarDesde(posGPS);
+  },()=>{if(posGPS)rutarDesde(posGPS);},{enableHighAccuracy:true,timeout:8000,maximumAge:10000});
 }
 function reRutearSiCambioCercano(){
   // Si el más cercano cambió (se movió o entregó), redibujar la ruta automática
