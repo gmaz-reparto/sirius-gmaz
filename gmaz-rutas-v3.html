@@ -99,6 +99,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #map-container{flex:0 0 46%;position:relative;min-height:0}
 #gmap{width:100%;height:100%}
 #map-strip{position:absolute;top:6px;left:10px;background:rgba(255,255,255,.92);border-radius:16px;padding:3px 10px;font-size:9px;font-weight:700;color:var(--gris5);box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:1;pointer-events:none}
+#gps-chip{position:absolute;top:6px;right:10px;background:rgba(255,255,255,.94);border-radius:16px;padding:4px 10px 4px 8px;font-size:9.5px;font-weight:800;color:var(--gris5);box-shadow:0 1px 5px rgba(0,0,0,.14);z-index:2;display:flex;align-items:center;gap:6px;pointer-events:none}
+#gps-chip .gc-dot{width:7px;height:7px;border-radius:50%;background:#8A90A0;flex-shrink:0}
+#gps-chip.ok .gc-dot{background:#0E9F6E;animation:dblink 1.5s infinite}
+#gps-chip.viejo .gc-dot{background:#D97706}
+#gps-chip.cel .gc-dot{background:#1A56DB}
+#ns-dist{color:var(--verde);font-weight:900;margin-left:6px}
 #map-legend{position:absolute;bottom:6px;right:8px;display:flex;align-items:center;gap:5px;pointer-events:none}
 .leg-dot{width:7px;height:7px;border-radius:50%}.leg-lbl{font-size:8px;color:var(--gris5);font-weight:600}
 .client-panel{flex:1;background:var(--blanco);border-top:1px solid var(--gris2);display:flex;flex-direction:column;min-height:0}
@@ -806,6 +812,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div id="map-container" style="position:relative">
     <div id="gmap"></div>
     <div id="map-strip">Ruta: <span id="map-strip-ruta">—</span></div>
+    <div id="gps-chip"><span class="gc-dot"></span><span id="gps-chip-txt">Ubicando…</span></div>
 
 <!-- ══ TACÓMETRO SIDEBAR ══ -->
 <div id="taco-slide">
@@ -886,7 +893,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div class="client-panel">
     <div id="next-stop" style="display:none" onclick="haptic();abrirSiguiente()">
       <div class="nsq" id="ns-num">1</div>
-      <div class="nsi"><small>CLIENTE MÁS CERCANO A TI</small><b id="ns-nom">—</b><span id="ns-dir">—</span></div>
+      <div class="nsi"><small>CLIENTE MÁS CERCANO A TI<span id="ns-dist"></span></small><b id="ns-nom">—</b><span id="ns-dir">—</span></div>
       <div class="nsgo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
     </div>
     <div class="cp-header">
@@ -3223,6 +3230,8 @@ async function guardarAsignacionRuta(sel){
 function startRoute(ruta,lista){
   rutaActual=ruta;
   clientes=lista.map(c=>({...c,_st:'pendiente'}));
+  calcularZonaRuta(); // zona de la ruta para el aviso "fuera de tu zona"
+  _enPlantaAvisado=false;
   // Mostrar transición
   document.getElementById('st-badge-ruta').textContent=ruta;
   document.getElementById('st-title').innerHTML=`${clientes.length} clientes<br>te esperan hoy`;
@@ -3440,6 +3449,7 @@ function initMap(){
     if(_gpsVehActivo)return; // el GPS del vehículo asignado manda: el del celular queda solo de respaldo
     const pos={lat:p.coords.latitude,lng:p.coords.longitude};
     posGPS=pos; // alimenta "cliente más cercano"
+    actualizarChipGps('cel');
     truckMk&&truckMk.setPosition(pos);
     if(navMode&&gpano)gpano.setPosition(pos);
     if(!gpsOptimizado&&clientes.length>1){
@@ -3474,6 +3484,8 @@ async function activarGpsVehiculo(ruta){
             posGPS=p;
             if(truckMk)truckMk.setPosition(p);
             if(navMode&&gpano)gpano.setPosition(p);
+            actualizarChipGps('veh',_gpsVehUnit,u.ReportDate); // A1: estado del GPS del vehículo
+            chequeosCampo(p,u); // A2 fuera de zona · M1 velocidad · M2/M3 llegada a planta
             if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
           }
         }
@@ -3485,6 +3497,52 @@ async function activarGpsVehiculo(ruta){
     if(_gpsVehActivo)toast('📍 Usando GPS del vehículo '+_gpsVehUnit,'ok');
     return _gpsVehActivo;
   }catch(e){ return false; }
+}
+/* ══ Indicadores del entregador (aprovechando Securita, sin perder simplicidad) ══ */
+function actualizarChipGps(fuente,unit,reportDate){
+  const chip=document.getElementById('gps-chip'),txt=document.getElementById('gps-chip-txt');
+  if(!chip||!txt)return;
+  if(fuente==='cel'){ chip.className='cel'; txt.textContent='GPS del celular'; return; }
+  const mins=reportDate?Math.max(0,Math.round((Date.now()-new Date(reportDate.replace(' ','T')).getTime())/60000)):null;
+  chip.className=(mins!=null&&mins>10)?'viejo':'ok';
+  txt.textContent=(unit||'Vehículo')+' · '+(mins==null?'—':mins<1?'ahora':'hace '+mins+' min');
+}
+let _zonaRuta=null;               // {lat,lng,radio} círculo que cubre los clientes de la ruta
+let _avisoZonaTs=0,_avisoVelTs=0,_enPlantaAvisado=false;
+function calcularZonaRuta(){
+  const pts=clientes.map(c=>({lat:parseFloat(String(getF(c,CFG.COL_LAT)||c.lat||'').replace(',','.')),lng:parseFloat(String(getF(c,CFG.COL_LNG)||c.lng||'').replace(',','.'))})).filter(p=>p.lat&&p.lng);
+  if(pts.length<2){_zonaRuta=null;return;}
+  const cx=pts.reduce((s,p)=>s+p.lat,0)/pts.length, cy=pts.reduce((s,p)=>s+p.lng,0)/pts.length;
+  let rad=0; pts.forEach(p=>{const d=_distMetros(cx,cy,p.lat,p.lng);if(d>rad)rad=d;});
+  _zonaRuta={lat:cx,lng:cy,radio:rad+800}; // margen de 800 m para no molestar por bordes
+}
+function _distMetros(la1,ln1,la2,ln2){
+  if(window.google&&google.maps.geometry)return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(la1,ln1),new google.maps.LatLng(la2,ln2));
+  const R=6371000,dLa=(la2-la1)*Math.PI/180,dLn=(ln2-ln1)*Math.PI/180;
+  const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function chequeosCampo(p,u){
+  const ahora=Date.now();
+  // M1 · exceso de velocidad (aviso de seguridad, máx cada 2 min)
+  const vel=parseFloat(u&&u.GpsSpeed)||0;
+  if(vel>60 && ahora-_avisoVelTs>120000){ _avisoVelTs=ahora; toast('⚠ Vas a '+Math.round(vel)+' km/h — baja la velocidad','err'); }
+  // A2 · fuera de la zona de la ruta (máx cada 3 min)
+  if(_zonaRuta){
+    const d=_distMetros(_zonaRuta.lat,_zonaRuta.lng,p.lat,p.lng);
+    const enPlanta=CFG.PLANTA&&_distMetros(CFG.PLANTA.lat,CFG.PLANTA.lng,p.lat,p.lng)<(CFG.PLANTA.radio||250);
+    if(d>_zonaRuta.radio && !enPlanta && ahora-_avisoZonaTs>180000){ _avisoZonaTs=ahora; toast('📍 Estás fuera de tu zona de reparto','err'); }
+  }
+  // M2/M3 · llegada a la planta = resumen del día (una sola vez)
+  if(CFG.PLANTA && _distMetros(CFG.PLANTA.lat,CFG.PLANTA.lng,p.lat,p.lng)<(CFG.PLANTA.radio||250)){
+    if(!_enPlantaAvisado){ _enPlantaAvisado=true; avisarLlegadaPlanta(); }
+  } else _enPlantaAvisado=false;
+}
+function avisarLlegadaPlanta(){
+  const tot=clientes.length;
+  const nov=clientes.filter(c=>c._st==='novedad').length;
+  const ent=tot-nov;
+  toast('🏭 Llegaste a la planta · Hoy: '+ent+' entregados, '+nov+' con novedad','ok');
 }
 
 function truckIcon(){
@@ -3551,6 +3609,14 @@ function actualizarProgresoRuta(){
   document.getElementById('ns-num').textContent=idx+1;
   document.getElementById('ns-nom').textContent=clientes[idx].nombre||getF(clientes[idx],CFG.COL_NOMBRE)||'(sin nombre)';
   document.getElementById('ns-dir').textContent=(clientes[idx].direccion||getF(clientes[idx],CFG.COL_DIR)||'—');
+  // A3 · distancia hasta el próximo cliente (línea recta, sin llamar API)
+  const de=document.getElementById('ns-dist');
+  if(de){
+    const cla=parseFloat(String(getF(clientes[idx],CFG.COL_LAT)||clientes[idx].lat||'').replace(',','.'));
+    const cln=parseFloat(String(getF(clientes[idx],CFG.COL_LNG)||clientes[idx].lng||'').replace(',','.'));
+    if(posGPS&&cla&&cln){ const d=_distMetros(posGPS.lat,posGPS.lng,cla,cln); de.textContent=' · '+(d<1000?Math.round(d)+' m':(d/1000).toFixed(1)+' km'); }
+    else de.textContent='';
+  }
 }
 function abrirSiguiente(){
   const ns=document.getElementById('next-stop');
