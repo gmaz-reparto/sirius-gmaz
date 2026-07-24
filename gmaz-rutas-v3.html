@@ -157,6 +157,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ip-rb-g{background:var(--verde-s);color:var(--verde);border:1px solid rgba(5,150,105,.2)}
 .ip-name{font-size:12px;font-weight:900;color:var(--negro);line-height:1.2;flex-shrink:0}
 .ip-code{font-size:9px;color:var(--gris4);margin-top:1px;margin-bottom:5px;flex-shrink:0}
+.ip-histcli{display:none;flex-shrink:0;margin-bottom:6px;font-size:10px;font-weight:700;border-radius:9px;padding:6px 9px}
+.ip-histcli.warn{display:block;background:#FFF1F2;color:#E30613}
+.ip-histcli.ok{display:block;background:#ECFDF5;color:#0E9F6E}
 .ip-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;flex-shrink:0}
 .ip-btn{background:#fff;border:1.5px solid var(--gris2);border-radius:12px;padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:transform .1s;box-shadow:0 1px 3px rgba(16,24,40,.06)}
 .ip-btn:active{transform:scale(.94)}
@@ -935,6 +938,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
     <div class="ip-name" id="ip-name">—</div>
     <div class="ip-code" id="ip-code">—</div>
+    <div class="ip-histcli" id="ip-histcli"></div>
     <div class="ip-btns">
       <div class="ip-btn ip-btn-azul" onclick="haptic();activateNav()">
         <div class="ip-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
@@ -3399,6 +3403,7 @@ async function openClient(i){
   document.getElementById('cl-ruta-venta').textContent='Cargando...';
   document.getElementById('ip-rb-g').textContent='...';
   pintarBtnNov();
+  cargarHistorialCliente(cod); // B2: historial de incidencias del cliente (datos reales de novedades)
   showScr('scr-client');
   // Buscar vendedor
   try{
@@ -3649,6 +3654,24 @@ function abrirSiguiente(){
   const ns=document.getElementById('next-stop');
   const idx=parseInt(ns?.dataset.idx??-1);
   if(idx>=0)openClient(idx);
+}
+/* ══ B2 · Historial de incidencias del cliente (desde la tabla de novedades) ══ */
+async function cargarHistorialCliente(cod){
+  const el=document.getElementById('ip-histcli');
+  if(!el)return;
+  el.className='ip-histcli';el.textContent='';
+  if(!cod||cod==='—')return;
+  try{
+    const hoy=getColDate();
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha,motivo&codigo_cliente=eq.'+encodeURIComponent(cod)+'&fecha=lt.'+hoy+'&order=fecha.desc&limit=6',{headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+    if(!r.ok)return;
+    const rows=await r.json();
+    if(!rows.length){ el.className='ip-histcli ok'; el.textContent='✓ Sin novedades previas con este cliente'; return; }
+    const ult=rows[0];
+    const f=ult.fecha?ult.fecha.slice(5):'';
+    el.className='ip-histcli warn';
+    el.textContent='⚠ '+rows.length+(rows.length>=6?'+':'')+' novedad(es) antes · última '+f+': '+(ult.motivo||'');
+  }catch(e){}
 }
 
 /* ══ BOTÓN NOVEDAD: 2 ESTADOS VISUALES ══ */
