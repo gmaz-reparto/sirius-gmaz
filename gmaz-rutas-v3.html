@@ -627,6 +627,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dpage h1{font-size:26px;font-weight:900;letter-spacing:-.8px;color:#0F1117;line-height:1}
 .dpage-s{font-size:13px;color:#8A90A0;font-weight:500;margin-top:5px}
 .dpage-act{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.dsel{appearance:none;-webkit-appearance:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#2C2F36;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A90A0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 11px center;border:1px solid #EAECEF;border-radius:10px;padding:9px 32px 9px 13px;cursor:pointer}
+.dsel:hover{border-color:#D3D5DA}
+.dsel:focus{outline:none;border-color:var(--rojo)}
 .dash-main>.dkpis:first-child{margin-top:0}
 .dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1200px){.dkpis{grid-template-columns:repeat(3,1fr)}}
@@ -1023,15 +1026,18 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="dtb-left"><b>Grupo Empresarial GMAZ · Coca-Cola</b><span>Pasto, Nariño</span></div>
       <div class="dtb-right">
         <span class="dlive"><i></i>OPERACIÓN EN VIVO</span>
+        <span class="dchip" id="dash-fecha" style="cursor:default"></span>
+        <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
+        <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
       </div>
     </div>
   <div class="dash-main">
     <div class="dpage"><div><h1 id="dpage-t">Operación</h1><div class="dpage-s" id="dpage-s">Centro de control en vivo</div></div>
       <div class="dpage-act">
-        <span class="dchip" id="dash-fecha" style="cursor:default"></span>
-        <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
-        <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+        <select class="dsel" id="fil-ruta" onchange="haptic();filtrarPorRutaSel(this.value)"><option value="">Todas las rutas</option></select>
+        <select class="dsel" id="fil-mes" onchange="haptic();cambiarPeriodo()"></select>
+        <select class="dsel" id="fil-anio" onchange="haptic();cambiarPeriodo()"></select>
       </div>
     </div>
 
@@ -1952,6 +1958,7 @@ function mostrarDashSiEscritorio(){
   if(!esEscritorio())return;
   document.getElementById('dash').classList.add('on');
   document.getElementById('dash-fecha').innerHTML=icoSvg('cal',12)+' '+new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  poblarFiltros();
   cargarDash();
   if(dashInterval)clearInterval(dashInterval);
   dashInterval=setInterval(()=>{if(document.getElementById('dash').classList.contains('on')&&!_recorridoAbierto)cargarDash();},30000);
@@ -2032,6 +2039,7 @@ async function cargarDash(){
         '<div class="dr"><b style="color:'+(r.nov>=3?'#E30613':'#059669')+'">'+r.nov+'</b><small>RECHAZOS</small></div></div>';
     }).join('');
     renderAsignacionVehiculos(Object.keys(porRuta).sort());
+    poblarFiltroRutas(Object.keys(porRuta).sort());
     // Tabla novedades
     document.getElementById('dash-nov-meta').textContent=totNov+' rechazos · '+Math.round(cajasRej)+' cajas';
     document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>{
@@ -2193,7 +2201,7 @@ async function renderTendenciaMes(){
   const el=document.getElementById('indic-tend');if(!el)return;
   try{
     if(!_tendCache){
-      const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha&fecha=gte.'+_mesInicio()+'&limit=5000',{headers:_hdrSup()});
+      const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha&fecha=gte.'+_mesInicio()+'&fecha=lte.'+_mesFin()+'&limit=5000',{headers:_hdrSup()});
       const rows=r.ok?await r.json():[];
       const porDia={};rows.forEach(n=>{porDia[n.fecha]=(porDia[n.fecha]||0)+1;});
       _tendCache=Object.keys(porDia).sort().map(f=>({f,n:porDia[f]}));
@@ -2235,8 +2243,43 @@ async function renderTendenciaMes(){
   }catch(e){el.innerHTML='<div class="veh-cargando">No se pudo cargar la tendencia</div>';}
 }
 /* ══ HISTÓRICO DEL MES: rechazos y alertas de vehículos ══ */
-function _mesInicio(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'; }
-function _nomMes(){ return new Date().toLocaleDateString('es-CO',{month:'long',year:'numeric'}); }
+let _periodoAnio=new Date().getFullYear(), _periodoMes=new Date().getMonth()+1; // mes 1-12; controlado por los filtros
+function _mesInicio(){ return _periodoAnio+'-'+String(_periodoMes).padStart(2,'0')+'-01'; }
+function _mesFin(){ const ld=new Date(_periodoAnio,_periodoMes,0).getDate(); return _periodoAnio+'-'+String(_periodoMes).padStart(2,'0')+'-'+String(ld).padStart(2,'0'); }
+function _nomMes(){ return new Date(_periodoAnio,_periodoMes-1,1).toLocaleDateString('es-CO',{month:'long',year:'numeric'}); }
+function _esMesActual(){ const n=new Date(); return _periodoAnio===n.getFullYear()&&_periodoMes===n.getMonth()+1; }
+/* ══ Filtros del encabezado (ruta / mes / año) ══ */
+let _filtrosPoblados=false;
+function poblarFiltros(){
+  if(_filtrosPoblados)return; _filtrosPoblados=true;
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const ms=document.getElementById('fil-mes');
+  if(ms)ms.innerHTML=meses.map((m,i)=>'<option value="'+(i+1)+'"'+(i+1===_periodoMes?' selected':'')+'>'+m+'</option>').join('');
+  const as=document.getElementById('fil-anio'),ac=new Date().getFullYear();
+  if(as)as.innerHTML=[ac-1,ac].map(y=>'<option value="'+y+'"'+(y===_periodoAnio?' selected':'')+'>'+y+'</option>').join('');
+}
+function poblarFiltroRutas(rutas){
+  const rs=document.getElementById('fil-ruta');if(!rs)return;
+  const actual=rs.value;
+  rs.innerHTML='<option value="">Todas las rutas</option>'+rutas.map(r=>'<option value="'+r+'"'+(r===actual?' selected':'')+'>'+r+'</option>').join('');
+}
+function filtrarPorRutaSel(ruta){
+  rutasVisibles=ruta?new Set([ruta]):null;
+  if(typeof renderRutasFiltro==='function')renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort());
+  if(typeof aplicarFiltroRutas==='function')aplicarFiltroRutas();
+  const act=document.querySelector('.dnav.on');
+  if(act&&act.dataset.mod!=='operacion')activarModulo('operacion');
+}
+function cambiarPeriodo(){
+  const ms=document.getElementById('fil-mes'), as=document.getElementById('fil-anio');
+  if(ms)_periodoMes=parseInt(ms.value)||_periodoMes;
+  if(as)_periodoAnio=parseInt(as.value)||_periodoAnio;
+  _tendCache=null; // el gráfico de tendencia depende del mes
+  const m=document.querySelector('.dnav.on');if(m)refrescarModulo(m.dataset.mod);
+  const rm=document.getElementById('rech-mes');if(rm&&rm.style.display!=='none')cargarRechazosMes();
+  const am=document.getElementById('alertas-mes');if(am&&am.style.display!=='none')cargarAlertasMes();
+  toast('Período: '+_nomMes(),'ok');
+}
 function _hdrSup(){ return {'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}; }
 function setModoHist(mod,modo){
   const pre=mod==='rech'?'rech':'alertas', pf=mod==='rech'?'rt':'at';
@@ -2255,7 +2298,7 @@ async function cargarRechazosMes(){
   const cont=document.getElementById('rech-mes');
   cont.innerHTML='<div class="veh-cargando">Cargando rechazos de '+_nomMes()+'…</div>';
   try{
-    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha,codigo_cliente,nombre_cliente,ruta,motivo&fecha=gte.'+_mesInicio()+'&order=fecha.desc&limit=3000',{headers:_hdrSup()});
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha,codigo_cliente,nombre_cliente,ruta,motivo&fecha=gte.'+_mesInicio()+'&fecha=lte.'+_mesFin()+'&order=fecha.desc&limit=3000',{headers:_hdrSup()});
     const rows=r.ok?await r.json():[];
     const porDia={};rows.forEach(n=>{porDia[n.fecha]=(porDia[n.fecha]||0)+1;});
     const tabla=rows.map(n=>{const col=rutaColor[n.ruta]||'#4A5060';return '<tr><td>'+(n.fecha||'').slice(5)+'</td><td style="font-weight:700">'+(n.nombre_cliente||n.codigo_cliente)+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+n.ruta+'</span></td><td>'+n.motivo+'</td></tr>';}).join('');
@@ -2269,7 +2312,7 @@ async function cargarAlertasMes(){
   const cont=document.getElementById('alertas-mes');
   cont.innerHTML='<div class="veh-cargando">Cargando geocercas de '+_nomMes()+'…</div>';
   let geoRows=[];
-  try{ const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=*&fecha=gte.'+_mesInicio()+'&order=fecha.desc,hora.desc&limit=3000',{headers:_hdrSup()}); geoRows=r.ok?await r.json():[]; }catch(e){}
+  try{ const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=*&fecha=gte.'+_mesInicio()+'&fecha=lte.'+_mesFin()+'&order=fecha.desc,hora.desc&limit=3000',{headers:_hdrSup()}); geoRows=r.ok?await r.json():[]; }catch(e){}
   const geoTabla=geoRows.map(e=>{const col=rutaColor[e.ruta]||'#4A5060';const esS=e.tipo==='salio';return '<tr><td>'+(e.fecha||'').slice(5)+' '+(e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'')+'</td><td style="font-weight:700">'+e.unit_id+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td><td><span class="dtag" style="background:'+(esS?'#FFF1F2':'#E6F7F0')+';color:'+(esS?'#E30613':'#0E9F6E')+'">'+(esS?'Salió':'Ingresó')+'</span></td><td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td><td style="font-size:11px">'+(e.estado_fuera||'—')+'</td></tr>';}).join('');
   cont.innerHTML=
     '<div class="dcard" style="margin-bottom:14px"><div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas del mes — SecuritaGPS</h3><span class="dm" id="alarmas-mes-meta">'+_nomMes()+'</span></div>'+
@@ -2282,8 +2325,10 @@ async function cargarAlarmasMesSecurita(){
   if(!body)return;
   if(!_vehCache)_vehCache=await secVehiculos()||[];
   const vehs=_vehCache.filter(v=>v.idgps);
-  const hoy=new Date(),y=hoy.getFullYear(),mo=hoy.getMonth();
-  const dias=[];for(let d=1;d<=hoy.getDate();d++)dias.push(y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  const hoy=new Date();
+  // Días del período seleccionado: si es el mes actual, hasta hoy; si es un mes pasado, todo el mes
+  const ultimoDia=_esMesActual()?hoy.getDate():new Date(_periodoAnio,_periodoMes,0).getDate();
+  const dias=[];for(let d=1;d<=ultimoDia;d++)dias.push(_periodoAnio+'-'+String(_periodoMes).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   const todas=[];
   for(let i=0;i<dias.length;i++){
     body.innerHTML='<div class="veh-cargando">Consultando '+dias[i]+' … ('+(i+1)+'/'+dias.length+')</div>';
