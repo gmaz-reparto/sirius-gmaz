@@ -618,6 +618,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .mesbars .mb i{width:100%;max-width:22px;background:#E30613;border-radius:3px 3px 0 0;min-height:2px;display:block}
 .mesbars .mb span{font-size:8.5px;color:var(--gris4);font-weight:700}
 .dash-main{flex:1;overflow:auto;padding:22px 24px;background:#F7F8FA}
+.dpage{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}
+.dpage h1{font-size:26px;font-weight:900;letter-spacing:-.8px;color:#0F1117;line-height:1}
+.dpage-s{font-size:13px;color:#8A90A0;font-weight:500;margin-top:5px}
+.dpage-act{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
 .dash-main>.dkpis:first-child{margin-top:0}
 .dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1200px){.dkpis{grid-template-columns:repeat(3,1fr)}}
@@ -735,9 +739,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .drow .dr b{font-size:13px;font-weight:800}
 .drow .dr small{font-size:8.5px;color:var(--gris4);font-weight:700;display:block}
 .dtbl{width:100%;border-collapse:collapse}
-.dtbl th{text-align:left;font-size:9.5px;letter-spacing:.5px;color:var(--gris4);font-weight:800;padding:9px 14px;border-bottom:1px solid var(--gris2);text-transform:uppercase}
-.dtbl td{padding:10px 14px;border-bottom:1px solid var(--gris2);font-size:12px;font-weight:600}
-.dtbl tr:last-child td{border-bottom:none}
+.dtbl thead th{position:sticky;top:0;background:#FBFBFC;text-align:left;font-size:10px;letter-spacing:.4px;color:#9AA1B2;font-weight:700;padding:11px 16px;border-bottom:1px solid #EAECEF;text-transform:uppercase;white-space:nowrap}
+.dtbl tbody td{padding:12px 16px;border-bottom:1px solid #F1F2F5;font-size:12.5px;font-weight:600;color:#2C2F36}
+.dtbl tbody tr:last-child td{border-bottom:none}
+.dtbl tbody tr:hover td{background:#FAFBFC}
 .dtag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:7px;display:inline-block}
 #dash-volver{position:fixed;right:18px;bottom:18px;z-index:510;display:none;background:var(--negro);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.3)}
 #dash-volver.on{display:flex;align-items:center;gap:7px}
@@ -1012,13 +1017,18 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="dtopbar">
       <div class="dtb-left"><b>Grupo Empresarial GMAZ · Coca-Cola</b><span>Pasto, Nariño</span></div>
       <div class="dtb-right">
-        <span class="dchip" id="dash-fecha" style="cursor:default"></span>
-        <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
-        <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+        <span class="dlive"><i></i>OPERACIÓN EN VIVO</span>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
       </div>
     </div>
   <div class="dash-main">
+    <div class="dpage"><div><h1 id="dpage-t">Operación</h1><div class="dpage-s" id="dpage-s">Centro de control en vivo</div></div>
+      <div class="dpage-act">
+        <span class="dchip" id="dash-fecha" style="cursor:default"></span>
+        <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
+        <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+      </div>
+    </div>
 
     <!-- ══ MÓDULO OPERACIÓN (por defecto) ══ -->
     <section class="mod on" id="mod-operacion">
@@ -2057,9 +2067,13 @@ function refrescarModulo(m){
   else if(m==='rechazos')renderRechazosGraf();
   else if(m==='indicadores')renderIndicadores();
 }
+const _MODINFO={operacion:['Operación','Centro de control en vivo'],vehiculos:['Vehículos','Estado y GPS de la flota'],clientes:['Clientes','Cumplimiento de atención'],rechazos:['Rechazos','Novedades y devoluciones'],alertas:['Alertas','Geocercas y alarmas de vehículos'],indicadores:['Indicadores','Análisis ejecutivo de la operación']};
 function activarModulo(m){
   document.querySelectorAll('.dnav').forEach(t=>t.classList.toggle('on',t.dataset.mod===m));
   document.querySelectorAll('.mod').forEach(s=>s.classList.toggle('on',s.id==='mod-'+m));
+  const info=_MODINFO[m]||['',''];
+  const pt=document.getElementById('dpage-t');if(pt)pt.textContent=info[0];
+  const ps=document.getElementById('dpage-s');if(ps)ps.textContent=info[1];
   document.querySelector('.dash-main').scrollTop=0;
   if(m==='operacion'&&dashMap){setTimeout(()=>google.maps.event.trigger(dashMap,'resize'),80);}
   refrescarModulo(m);
