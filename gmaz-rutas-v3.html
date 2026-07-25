@@ -554,26 +554,39 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .rc-row svg{flex-shrink:0}
 .rc-go{margin-top:9px;height:32px;border-radius:9px;background:var(--negro);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.4px}
 
-/* ══ DASHBOARD COORDINADOR (escritorio) ══ */
-#dash{position:fixed;inset:0;background:var(--gris1);z-index:500;display:none;flex-direction:column;overflow:hidden}
+/* ══ DASHBOARD COORDINADOR — shell estilo GMAZ Comercial (sidebar) ══ */
+#dash{position:fixed;inset:0;background:#F7F8FA;z-index:500;display:none;flex-direction:row;overflow:hidden}
 #dash.on{display:flex}
-.dash-top{height:58px;background:#fff;border-bottom:1px solid var(--gris2);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
-.dash-top .db{width:5px;height:28px;background:var(--rojo);border-radius:3px}
-.dash-top .dt b{font-size:18px;font-weight:900;letter-spacing:-.5px;display:block;line-height:1}
-.dash-top .dt span{font-size:8px;font-weight:700;color:var(--rojo);letter-spacing:2.6px}
-.dash-top .dright{margin-left:auto;display:flex;align-items:center;gap:10px}
-.dchip{font-size:11px;font-weight:800;padding:7px 12px;border-radius:9px;background:var(--gris1);color:var(--gris5);border:1px solid var(--gris2);display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit}
+.dside{width:232px;flex-shrink:0;background:#fff;border-right:1px solid #EAECEF;display:flex;flex-direction:column;padding:14px 12px}
+.dside-logo{display:flex;align-items:center;gap:10px;padding:6px 8px 16px}
+.dlogo-ic{width:34px;height:34px;border-radius:10px;background:var(--rojo);color:#fff;font-size:18px;font-weight:900;display:grid;place-items:center;flex-shrink:0}
+.dlogo-t b{font-size:16px;font-weight:900;letter-spacing:-.4px;display:block;line-height:1;color:#0F1117}
+.dlogo-t span{font-size:11px;color:#8A90A0;font-weight:600}
+.dside-nav{display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1}
+.dnav{display:flex;align-items:center;gap:11px;padding:10px 12px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;color:#4A5060;cursor:pointer;text-align:left;width:100%;transition:background .12s,color .12s}
+.dnav:hover{background:#F1F2F5}
+.dnav.on{background:#FDECEC;color:var(--rojo);font-weight:700}
+.dnav .ni{width:19px;height:19px;flex-shrink:0;display:grid;place-items:center;color:inherit}
+.dnav .ni svg{width:19px;height:19px}
+.dnav-b{margin-left:auto;font-size:10px;font-weight:800;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#EEF0F4;color:#6B7385;display:inline-grid;place-items:center}
+.dnav-b.warn{background:#FFF1F2;color:#E30613}
+.dnav-b.hide{display:none}
+.dside-foot{padding:12px 8px 4px;border-top:1px solid #EAECEF;margin-top:8px}
+.dwrap{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.dtopbar{height:62px;background:#fff;border-bottom:1px solid #EAECEF;display:flex;align-items:center;padding:0 24px;flex-shrink:0;gap:14px}
+.dtb-left b{font-size:14px;font-weight:800;color:#0F1117;display:block;line-height:1.2}
+.dtb-left span{font-size:11.5px;color:#8A90A0;font-weight:500}
+.dtb-right{margin-left:auto;display:flex;align-items:center;gap:9px}
+.dtb-user{display:flex;align-items:center;gap:9px;padding-left:12px;margin-left:4px;border-left:1px solid #EAECEF}
+.dtb-av{width:34px;height:34px;border-radius:50%;background:#FDECEC;color:var(--rojo);display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.dtb-ut b{font-size:12.5px;font-weight:800;color:#0F1117;display:block;line-height:1.15}
+.dtb-ut span{font-size:10.5px;color:#8A90A0;font-weight:500}
+.dchip{font-size:11px;font-weight:800;padding:7px 12px;border-radius:9px;background:#F7F8FA;color:var(--gris5);border:1px solid #EAECEF;display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit}
 .dchip.rojo{background:var(--rojo);color:#fff;border-color:var(--rojo)}
 .dchip.on{background:#0E9F6E;color:#fff;border-color:#0E9F6E}
 .dlive{font-size:10px;font-weight:800;color:var(--verde);display:flex;align-items:center;gap:5px}
 .dlive i{width:7px;height:7px;border-radius:50%;background:var(--verde);animation:dblink 1.4s infinite}
 @keyframes dblink{0%,100%{opacity:.4}50%{opacity:1}}
-.dash-tabs{display:flex;gap:2px;padding:0 22px;background:#fff;border-bottom:1px solid var(--gris2);flex-shrink:0;overflow-x:auto}
-.dtab{font-size:12.5px;font-weight:800;padding:13px 15px;border:none;background:none;color:var(--gris4);cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px}
-.dtab.on{color:var(--negro);border-bottom-color:var(--rojo)}
-.dtab-b{font-size:9.5px;font-weight:800;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--gris2);color:var(--gris5);display:inline-grid;place-items:center}
-.dtab-b.warn{background:#FFF1F2;color:#E30613}
-.dtab-b.hide{display:none}
 .mod{display:none}
 .mod.on{display:block;animation:modIn .22s ease}
 @keyframes modIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -604,21 +617,26 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .mesbars .mb{flex:1;min-width:14px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .mesbars .mb i{width:100%;max-width:22px;background:#E30613;border-radius:3px 3px 0 0;min-height:2px;display:block}
 .mesbars .mb span{font-size:8.5px;color:var(--gris4);font-weight:700}
-.dash-main{flex:1;overflow:auto;padding:18px 22px;background:var(--gris1)}
+.dash-main{flex:1;overflow:auto;padding:22px 24px;background:#F7F8FA}
+.dash-main>.dkpis:first-child{margin-top:0}
 .dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
-@media(max-width:1100px){.dkpis{grid-template-columns:repeat(3,1fr)}}
-.dkpi{background:#fff;border:1px solid var(--gris2);border-radius:16px;padding:15px 16px;position:relative;overflow:hidden;transition:box-shadow .15s,transform .15s}
-.dkpi:hover{box-shadow:0 8px 22px rgba(15,17,23,.07);transform:translateY(-1px)}
-.dkpi::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--kac,transparent)}
-.dkpi .ktop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.dkpi .ko{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
-.dkpi .ktrend{font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:20px;display:flex;align-items:center;gap:3px}
-.dkpi .kv{font-size:25px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--negro)}
-.dkpi .kl{font-size:10.5px;color:var(--gris4);font-weight:700;margin-top:5px;letter-spacing:.2px}
+@media(max-width:1200px){.dkpis{grid-template-columns:repeat(3,1fr)}}
+/* KPI estilo GMAZ Comercial */
+.dkpi{background:#fff;border:1px solid #EAECEF;border-radius:14px;padding:14px 15px}
+.dkpi .dk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.dkpi .dk-l{font-size:12px;color:#6B7385;font-weight:600;line-height:1.25}
+.dkpi .dk-ic{color:#B5BAC6;flex-shrink:0}
+.dkpi .dk-v{font-size:24px;font-weight:800;letter-spacing:-.6px;line-height:1;color:#0F1117}
+.dkpi .dk-pbar{display:flex;align-items:center;gap:8px;margin-top:11px}
+.dkpi .dk-pbar .bt{flex:1;height:6px;background:#F1F2F5;border-radius:5px;overflow:hidden}
+.dkpi .dk-pbar .bt i{display:block;height:100%;border-radius:5px}
+.dkpi .dk-pbar .pv{font-size:11.5px;font-weight:800}
+.dkpi .dk-foot{font-size:10.5px;color:#8A90A0;font-weight:600;margin-top:9px;display:flex;justify-content:space-between;gap:8px}
+.dkpi .dk-foot b{color:#4A5060}
 .dgrid{display:grid;grid-template-columns:1.62fr 1fr;gap:14px;margin-bottom:14px}
 .dgrid.eq{grid-template-columns:1fr 1fr}
-.dcard{background:#fff;border:1px solid var(--gris2);border-radius:18px;overflow:hidden;box-shadow:0 1px 3px rgba(15,17,23,.03)}
-.dcard-h{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid var(--gris2)}
+.dcard{background:#fff;border:1px solid #EAECEF;border-radius:14px;overflow:hidden}
+.dcard-h{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid #EAECEF}
 .dcard-h h3{font-size:14px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
 .dcard-h h3 .h3ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--gris1)}
 .dcard-h .dm{font-size:10.5px;color:var(--gris4);font-weight:600}
@@ -978,24 +996,28 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <!-- ══ SELECCIONAR VEHÍCULO (una vez al día, antes de iniciar la ruta) ══ -->
 <!-- ══ DASHBOARD COORDINADOR (solo escritorio) ══ -->
 <div id="dash">
-  <div class="dash-top">
-    <div class="db"></div>
-    <div class="dt"><b>GMAZ</b><span>RUTAS · CENTRO DE CONTROL</span></div>
-    <div class="dright">
-      <span class="dlive"><i></i>OPERACIÓN EN VIVO</span>
-      <span class="dchip" id="dash-fecha" style="cursor:default"></span>
-      <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria (cargas)</button>
-      <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+  <aside class="dside">
+    <div class="dside-logo"><div class="dlogo-ic">G</div><div class="dlogo-t"><b>GMAZ</b><span>Rutas</span></div></div>
+    <nav class="dside-nav" id="dash-tabs">
+      <button class="dnav on" data-mod="operacion" onclick="haptic();activarModulo('operacion')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></i>Operación</button>
+      <button class="dnav" data-mod="vehiculos" onclick="haptic();activarModulo('vehiculos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></i>Vehículos</button>
+      <button class="dnav" data-mod="clientes" onclick="haptic();activarModulo('clientes')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>Clientes</button>
+      <button class="dnav" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></i>Rechazos<span class="dnav-b" id="dtab-rech">0</span></button>
+      <button class="dnav" data-mod="alertas" onclick="haptic();activarModulo('alertas')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></i>Alertas<span class="dnav-b warn" id="dtab-alert">0</span></button>
+      <button class="dnav" data-mod="indicadores" onclick="haptic();activarModulo('indicadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/></svg></i>Indicadores</button>
+    </nav>
+    <div class="dside-foot"><span class="dlive"><i></i>Operación en vivo</span></div>
+  </aside>
+  <div class="dwrap">
+    <div class="dtopbar">
+      <div class="dtb-left"><b>Grupo Empresarial GMAZ · Coca-Cola</b><span>Pasto, Nariño</span></div>
+      <div class="dtb-right">
+        <span class="dchip" id="dash-fecha" style="cursor:default"></span>
+        <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
+        <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+        <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
+      </div>
     </div>
-  </div>
-  <div class="dash-tabs" id="dash-tabs">
-    <button class="dtab on" data-mod="operacion" onclick="haptic();activarModulo('operacion')">Operación</button>
-    <button class="dtab" data-mod="vehiculos" onclick="haptic();activarModulo('vehiculos')">Vehículos</button>
-    <button class="dtab" data-mod="clientes" onclick="haptic();activarModulo('clientes')">Clientes</button>
-    <button class="dtab" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')">Rechazos <span class="dtab-b" id="dtab-rech">0</span></button>
-    <button class="dtab" data-mod="alertas" onclick="haptic();activarModulo('alertas')">Alertas <span class="dtab-b warn" id="dtab-alert">0</span></button>
-    <button class="dtab" data-mod="indicadores" onclick="haptic();activarModulo('indicadores')">Indicadores</button>
-  </div>
   <div class="dash-main">
 
     <!-- ══ MÓDULO OPERACIÓN (por defecto) ══ -->
@@ -1082,6 +1104,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div id="indic-graf"><div class="veh-cargando">Abre este módulo para ver los gráficos ejecutivos…</div></div>
     </section>
 
+  </div>
   </div>
 </div>
 <button id="dash-volver" onclick="haptic();volverAlDash()">‹ Volver al panel coordinador</button>
@@ -1967,19 +1990,21 @@ async function cargarDash(){
     const tiempos=novedades_.filter(n=>n.created_at).map(n=>new Date(n.created_at).getTime()).sort((a,b)=>a-b);
     // KPIs — modelo de cumplimiento en retroceso
     const pend=totCli-totEnt;
-    const chip=(txt,cl,bg)=>({t:txt,tc:cl,tb:bg});
+    const colPct=p=>p>=95?'#059669':p>=85?'#D97706':'#E30613';
     const K=[
-      {i:'target',bg:'#ECFDF5',cl:'#059669',v:pctG+'%',l:'Cumplimiento clientes',c:chip(pctG>=95?'● excelente':pctG>=85?'● bien':'● revisar',pctG>=95?'#059669':pctG>=85?'#D97706':'#E30613',pctG>=95?'#ECFDF5':pctG>=85?'#FFF7ED':'#FEF2F2')},
-      {i:'box',bg:'#EFF6FF',cl:'#1A56DB',v:pctCajas+'%',l:'Cumplimiento cajas · '+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')},
-      {i:'store',bg:'#F5F3FF',cl:'#7C3AED',v:totEnt+' / '+totCli,l:'Clientes entregados'},
-      {i:'box',bg:'#FEF2F2',cl:'#E30613',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas'},
-      {i:'truck',bg:'#FFF7ED',cl:'#EA580C',v:Object.keys(rutaColor).length,l:'Rutas activas'},
-      {i:'alert',bg:'#FEF2F2',cl:'#E30613',v:totNov,l:'Rechazos'+(cajasRej>0?' hoy':' hoy'),c:totNov>0?chip('● revisar','#E30613','#FEF2F2'):chip('● sin novedad','#059669','#ECFDF5')}
+      {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
+      {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
+      {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
+      {i:'box',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
+      {i:'truck',v:Object.keys(rutaColor).length,l:'Rutas activas',foot:['Vehículos','<b>SecuritaGPS</b>']},
+      {i:'alert',v:totNov,l:'Rechazos hoy',foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
-      '<div class="dkpi" style="--kac:'+k.cl+'"><div class="ktop"><div class="ko" style="background:'+k.bg+';color:'+k.cl+'">'+icoSvg(k.i,17)+'</div>'+
-      (k.c?'<span class="ktrend" style="color:'+k.c.tc+';background:'+k.c.tb+'">'+k.c.t+'</span>':'')+'</div>'+
-      '<div class="kv">'+k.v+'</div><div class="kl">'+k.l+'</div></div>').join('');
+      '<div class="dkpi"><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic">'+icoSvg(k.i,17,1.9)+'</span></div>'+
+      '<div class="dk-v">'+k.v+'</div>'+
+      (k.pct!=null?'<div class="dk-pbar"><div class="bt"><i style="width:'+Math.min(k.pct,100)+'%;background:'+k.pc+'"></i></div><span class="pv" style="color:'+k.pc+'">'+k.pct+'%</span></div>':'')+
+      (k.foot?'<div class="dk-foot"><span>'+k.foot[0]+'</span><span>'+k.foot[1]+'</span></div>':'')+
+      '</div>').join('');
     // Ranking por ruta
     const porRuta={};
     clientes_.forEach(c=>{const r=c.ruta||'—';if(!porRuta[r])porRuta[r]={tot:0,ent:0,nov:0,cajas:0};porRuta[r].tot++;porRuta[r].cajas+=cajasCod[String(c.id)]||0;
@@ -2011,7 +2036,7 @@ async function cargarDash(){
     // Cache para que los módulos (Vehículos/Clientes/Rechazos/Indicadores) reutilicen sin nuevas llamadas
     _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,entSet,novSet,rutaVend,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos};
     actualizarBadgesModulos();
-    const modAct=document.querySelector('.dtab.on');if(modAct)refrescarModulo(modAct.dataset.mod);
+    const modAct=document.querySelector('.dnav.on');if(modAct)refrescarModulo(modAct.dataset.mod);
     _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
 }
@@ -2033,7 +2058,7 @@ function refrescarModulo(m){
   else if(m==='indicadores')renderIndicadores();
 }
 function activarModulo(m){
-  document.querySelectorAll('.dtab').forEach(t=>t.classList.toggle('on',t.dataset.mod===m));
+  document.querySelectorAll('.dnav').forEach(t=>t.classList.toggle('on',t.dataset.mod===m));
   document.querySelectorAll('.mod').forEach(s=>s.classList.toggle('on',s.id==='mod-'+m));
   document.querySelector('.dash-main').scrollTop=0;
   if(m==='operacion'&&dashMap){setTimeout(()=>google.maps.event.trigger(dashMap,'resize'),80);}
