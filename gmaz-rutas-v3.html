@@ -2529,7 +2529,7 @@ function abrirVistaMultiple(){
       const unit=unitPorRuta[r];const pos=unit?fc.posPorUnit[unit]:null;
       const vehM=unit&&_vehCache?_vehCache.find(v=>v.nombre===unit):null;
       if(pos){const vlat=parseFloat(pos.Latitude),vlng=parseFloat(pos.Longitude);
-        if(vlat&&vlng){new google.maps.Marker({position:{lat:vlat,lng:vlng},map:m,icon:dashTruckIcon(r,pos.Ignition==='1',vehM&&vehM.tipo_vehiculo),zIndex:2000});bounds.extend({lat:vlat,lng:vlng});hay=true;}}
+        if(vlat&&vlng&&posicionOperativa(vlat,vlng)){new google.maps.Marker({position:{lat:vlat,lng:vlng},map:m,icon:dashTruckIcon(r,pos.Ignition==='1',vehM&&vehM.tipo_vehiculo),zIndex:2000});bounds.extend({lat:vlat,lng:vlng});hay=true;}}
       if(hay)m.fitBounds(bounds);
     });
   },80);
@@ -2787,13 +2787,18 @@ async function pintarFlotaEnVivo(){
         '<div class="dfl-st"><span class="dfl-badge" style="background:'+bg+';color:'+cl+'">'+(enc?'▶ '+(u.GpsSpeed||0)+' km/h':'⏸ detenido')+'</span>'+
         '<small>'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+(sensoresTxt?' · '+sensoresTxt:'')+'</small></div>'+
         '<button class="dchip" style="padding:5px 8px;font-size:9.5px;margin-left:4px" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')" title="Ver vehículo">⋯</button></div>';
-      if(lat&&lng){
+      if(lat&&lng&&posicionOperativa(lat,lng)){
         vistos++;
         const mk=new google.maps.Marker({position:{lat,lng},map:rutaVisible(ruta)?dashMap:null,icon:dashTruckIcon(ruta,enc,veh&&veh.tipo_vehiculo),zIndex:2000,title:ruta+' · '+unitId});
         mk._ruta=ruta;
         mk.addListener('click',()=>abrirVehPanel(unitId,ruta));
         flotaMarkers.push(mk);
         evaluarGeocercaVehiculo(unitId,ruta,lat,lng,parseFloat(u.GpsSpeed)||0,enc);
+      } else if(lat&&lng){
+        // GPS fantasma (fuera de la zona operativa): no dibujar marcador ni rastro; limpiar rastro viejo
+        const capa=geocercaCapas[unitId];
+        if(capa){[capa.polyline,capa.marcadorSalida,capa.marcadorEntrada].forEach(o=>o&&o.setMap(null));delete geocercaCapas[unitId];}
+        delete geocercaEstado[unitId];
       }
     });
     if(lista)lista.innerHTML=filas||estadoVacio('truck','Sin posiciones','Los vehículos asignados aún no reportan ubicación.','gris');
@@ -2821,6 +2826,8 @@ function cerrarRecorridoPanel(){ limpiarRecorrido(); }
 function _tsPt(p){ return new Date((p.fecha||getColDate())+'T'+(p.hora||'00:00:00')).getTime(); }
 function _distM(a,b){ return (window.google&&google.maps.geometry)?google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng)):0; }
 function esPlanta(lat,lng){ return CFG.PLANTA && _distM({lat,lng},CFG.PLANTA) < (CFG.PLANTA.radio||250); }
+/* Zona operativa: filtra posiciones GPS fantasma (equipo reportando otra ciudad, ej. Puerto Asís) */
+function posicionOperativa(lat,lng){ if(!lat||!lng)return false; if(!CFG.PLANTA)return true; return _distM({lat,lng},CFG.PLANTA) < 70000; }
 function filtrarOutliersGPS(pts){
   // Quita puntos GPS imposibles: el equipo a veces reporta una ubicación fantasma en otra ciudad
   // (misma coordenada fija, muy lejos del recorrido real). Se toma la mediana del día como centro real
