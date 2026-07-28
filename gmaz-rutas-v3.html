@@ -1367,7 +1367,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="pc-date" id="pc-date">Cargando...</div>
       <div class="pc-lbl">Ejecutar cada mañana en orden</div>
       <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();switchPcTab(3)">Ver histórico</button></div>
-      <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos del día anterior</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">Limpiar fotos</button></div>
+      <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos antiguas (+2 meses)</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">Limpiar +2 meses</button></div>
       <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
       <div class="pc-step ps4"><div class="pc-num pn4" style="background:#4F46E5">4</div><div class="pc-info"><div class="pc-action">Subir Libro de pedidos</div><div class="pc-detail" id="pc-det-ped">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-ped">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pbped" onclick="haptic();document.getElementById('inp-ped').click()">↑ Subir</button><button class="pc-btn" style="background:#3730a3;font-size:8px;padding:4px 8px" onclick="haptic();borrarPedidosHoy()">Borrar</button></div><input type="file" id="inp-ped" accept=".pdf" multiple style="display:none" onchange="uploadLibroPedidos(event)"></div>
       <div class="pc-step ps4"><div class="pc-num pn4" style="background:#0EA5E9">5</div><div class="pc-info"><div class="pc-action">Subir Hoja de cargue</div><div class="pc-detail" id="pc-det-hoja">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-hoja">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pbhoja" onclick="haptic();document.getElementById('inp-hoja').click()">↑ Subir</button><button class="pc-btn" style="background:#075985;font-size:8px;padding:4px 8px" onclick="haptic();borrarHojasHoy()">Borrar</button></div><input type="file" id="inp-hoja" accept=".pdf" multiple style="display:none" onchange="uploadHojaCarga(event)"></div>
@@ -2260,7 +2260,7 @@ async function mapaCajasRechazadas(novedades_,fechaDefault){
         const cod=file.name.replace(/\.json$/,'');
         if(!porFecha[f].has(cod))continue;
         try{const d=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+f+'/'+encodeURIComponent(file.name)+'?t='+Date.now())).json();
-          map[cod]={caj:d.total_cajas||0,und:d.total_und||0};}catch(e){}
+          map[cod]={caj:d.total_cajas||0,und:d.total_und||0,detalle:d.detalle||[],motivo:d.motivo||'',estado:d.estado||'pendiente'};}catch(e){}
       }
     }catch(e){}
   }
@@ -3104,28 +3104,35 @@ function iwClienteHTML(c,estado){
   const cajas=Math.round(parseFloat(String(c['CAJA_']||0).replace(',','.'))||0);
   const est=estado==='entregado'?['Entregado','#059669','#ECFDF5']:estado==='novedad'?['Con novedad','#D97706','#FFF7ED']:['Pendiente','#6B7385','#EEF0F4'];
   const dir=c.direccion?String(c.direccion).replace(/&ntilde;/gi,'ñ'):'';
-  const orden=(c.secuencia!=null&&c.secuencia!=='')?c.secuencia:null;
+  // Se omite el "#999" (orden de visita placeholder) de la vista
+  const ordenRaw=(c.secuencia!=null&&c.secuencia!=='')?String(c.secuencia):null;
+  const orden=(ordenRaw&&ordenRaw!=='999')?ordenRaw:null;
   const ico=(p)=>'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A90A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
   const cod=String(c.id);
+  const esNov=estado==='novedad';
   // Ruta del vendedor (maestro o Libro de pedidos)
   let vend='—';
   try{const rv=_dashData&&_dashData.rutaVend?_dashData.rutaVend[cod]:null;const vp=_dashData&&_dashData.vendPed?_dashData.vendPed[cod]:null;vend=(rv&&rv!=='—')?rv:(vp||'—');}catch(e){}
-  // Resumen del pedido del cliente (del Libro)
+  const rc=(_dashData&&_dashData.rechCod)?_dashData.rechCod[cod]:null;
+  // Resumen del pedido (solo si NO tiene novedad; con novedad se muestran los productos rechazados)
   let pedidoRow='';
-  try{
+  if(!esNov){try{
     const ped=(typeof pedidosClientes!=='undefined')?pedidosClientes[cod]:null;
     if(ped&&ped.b){let nItems=0,cj=0,bt=0;ped.b.forEach(b=>{if(/Carga Base/i.test(b.t))return;b.i.forEach(it=>{nItems++;cj+=it[2];bt+=it[3];});});
       if(nItems)pedidoRow='<div class="iwrow">'+ico('<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>')+'Pedido: <b>'+nItems+'</b> ref · '+cj+' cj'+(bt?' + '+bt+' u':'')+'</div>';}
-  }catch(e){}
-  // Motivo de la novedad (si tiene)
-  let novRow='';
-  try{
-    if(estado==='novedad'&&_dashData&&_dashData.novedades_){
-      const nv=_dashData.novedades_.find(n=>String(n.codigo_cliente)===cod);
-      const rc=_dashData.rechCod?_dashData.rechCod[cod]:null;
-      if(nv)novRow='<div class="iwrow" style="color:#B45309">'+ico('<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>')+'Novedad: <b style="color:#B45309">'+(nv.motivo||'—')+'</b>'+(rc&&rc.caj?' · '+rc.caj+' cj devueltas':'')+'</div>';
+  }catch(e){}}
+  // Motivo + PRODUCTOS RECHAZADOS (si tiene novedad)
+  let novRow='',rejProds='';
+  if(esNov){
+    const nv=(_dashData&&_dashData.novedades_)?_dashData.novedades_.find(n=>String(n.codigo_cliente)===cod):null;
+    const motivo=(rc&&rc.motivo)||(nv&&nv.motivo)||'—';
+    const eb=rc?(rc.estado==='afecta'?' · <span style="color:#B91C1C;font-weight:800">afecta comisión</span>':rc.estado==='omitida'?' · <span style="color:#475569;font-weight:800">omitida</span>':' · <span style="color:#92400E;font-weight:800">pendiente aprob.</span>'):'';
+    novRow='<div class="iwrow" style="color:#B45309">'+ico('<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>')+'Novedad: <b style="color:#B45309">'+motivo+'</b>'+eb+'</div>';
+    if(rc&&rc.detalle&&rc.detalle.length){
+      rejProds='<div style="margin-top:7px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:9px;padding:8px 10px"><div style="font-size:9px;font-weight:800;color:#B45309;letter-spacing:.04em;margin-bottom:4px">PRODUCTO(S) QUE SE RECHAZÓ</div>'+
+        rc.detalle.map(d=>'<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#7C2D12;padding:1.5px 0"><span>'+d.desc+'</span><span style="font-weight:800;white-space:nowrap;color:#B91C1C">'+(d.cajas?d.cajas+' cj':'')+(d.cajas&&d.und?'+':'')+(d.und?d.und+' u':'')+'</span></div>').join('')+'</div>';
     }
-  }catch(e){}
+  }
   return '<div class="iw-cli"><div class="iwh"><span class="iwdot" style="background:'+col+'"></span>'+
     '<div><div class="iwn">'+(c.nombre||c.id)+'</div><div class="iwcod">Código '+c.id+'</div></div></div>'+
     (dir?'<div class="iwrow">'+ico('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>')+'<span>'+dir+'</span></div>':'')+
@@ -3133,8 +3140,8 @@ function iwClienteHTML(c,estado){
     '<div class="iwrow">'+ico('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')+'Ruta entrega <b style="color:'+col+'">'+c.ruta+'</b>'+(orden!=null?' · #'+orden:'')+'</div>'+
     '<div class="iwrow">'+ico('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>')+'Vendedor <b style="color:#E30613">'+vend+'</b></div>'+
     pedidoRow+
-    '<div class="iwrow">'+ico('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>')+'<b>'+cajas+'</b> cajas programadas</div>'+
-    novRow+
+    (!esNov?'<div class="iwrow">'+ico('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>')+'<b>'+cajas+'</b> cajas programadas</div>':'')+
+    novRow+rejProds+
     '<span class="iwtag" style="color:'+est[1]+';background:'+est[2]+'">'+est[0]+'</span></div>';
 }
 function pintarDashMap(clientes_,entSet,novSet){
@@ -5215,14 +5222,16 @@ async function verificarEstadoPanel(){
     }
   }catch(e){setEst('pc-est-nov','pc-det-nov',null,'?','Error al verificar');}
 
-  // ── Verificar fotos del día anterior
+  // ── Verificar fotos de rechazos con más de 2 meses (las recientes se conservan)
   setEst('pc-est-fotos','pc-det-fotos',null,'...','Verificando...');
   try{
-    const{data:fotos}=await sb.storage.from(CFG.BCK_FOTOS).list(ayer);
-    if(fotos&&fotos.length>0){
-      setEst('pc-est-fotos','pc-det-fotos',false,'⚠ '+fotos.length+' fotos','Hay '+fotos.length+' fotos del '+ayer+' sin limpiar');
+    const limiteStr=new Date(ahora.getTime()+offset*3600000-60*86400000).toISOString().split('T')[0];
+    const{data:carpetas}=await sb.storage.from(CFG.BCK_FOTOS).list('',{limit:1000});
+    const viejas=(carpetas||[]).map(x=>x.name).filter(n=>/^\d{4}-\d{2}-\d{2}$/.test(n)&&n<limiteStr);
+    if(viejas.length){
+      setEst('pc-est-fotos','pc-det-fotos',false,'⚠ '+viejas.length+' días','Hay fotos de rechazos de +2 meses ('+viejas.length+' día/s) por limpiar');
     }else{
-      setEst('pc-est-fotos','pc-det-fotos',null,'Sin fotos','No hay fotos del '+ayer+' — ya fueron limpiadas o no hubo novedades');
+      setEst('pc-est-fotos','pc-det-fotos',null,'Al día','Las fotos de rechazos se conservan 2 meses · nada antiguo por borrar');
     }
   }catch(e){setEst('pc-est-fotos','pc-det-fotos',null,'?','Error al verificar');}
 
@@ -5438,41 +5447,37 @@ async function descargarNovedasFecha(fecha){
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
+/* Las fotos de rechazos se CONSERVAN 2 meses; solo se borran las carpetas de fecha con +60 días. */
 async function cleanPhotos(){
-  const ayer=getColDate(-1);
-  // Primero verificar cuántas fotos hay sin preguntar aún
-  showLoad('Verificando fotos...');
-  let listaFotos=[];
-  try{
-    const{data}=await sb.storage.from(CFG.BCK_FOTOS).list(ayer);
-    listaFotos=data||[];
-  }catch(e){}
+  showLoad('Buscando fotos de más de 2 meses...');
+  const offset=CFG.UTC_OFFSET||-5;
+  const hoy=new Date(Date.now()+offset*3600000);
+  const limiteStr=new Date(hoy.getTime()-60*86400000).toISOString().split('T')[0];
+  let carpetas=[];
+  try{const{data}=await sb.storage.from(CFG.BCK_FOTOS).list('',{limit:1000});
+    carpetas=(data||[]).map(x=>x.name).filter(n=>/^\d{4}-\d{2}-\d{2}$/.test(n));}catch(e){}
   hideLoad();
-  if(!listaFotos.length){
-    toast('No hay fotos del '+ayer+' para limpiar','err');
-    const est=document.getElementById('pc-est-fotos');
-    const det=document.getElementById('pc-det-fotos');
-    if(est){est.textContent='Sin fotos';est.className='pc-estado pc-estado-empty';}
-    if(det)det.textContent='No hay fotos del '+ayer;
+  const viejas=carpetas.filter(f=>f<limiteStr).sort();
+  const est=document.getElementById('pc-est-fotos'),det=document.getElementById('pc-det-fotos');
+  if(!viejas.length){
+    toast('No hay fotos de más de 2 meses ✓','ok');
+    if(est){est.textContent='✓ Al día';est.className='pc-estado pc-estado-ok';}
+    if(det)det.textContent='Las fotos de rechazos se conservan 2 meses · nada más antiguo por borrar';
     return;
   }
-  if(!confirm('Hay '+listaFotos.length+' fotos del '+ayer+'. ¿Eliminarlas todas?'))return;
-  openProg('Limpiando fotos del '+ayer,listaFotos.length+' fotos encontradas');
-  logProg(listaFotos.length+' fotos del '+ayer,'info');
-  listaFotos.forEach(f=>logProg(f.name,'info'));
-  updateProg(40,'Eliminando '+listaFotos.length+' fotos...');
+  if(!confirm('Se eliminarán las fotos de rechazos de '+viejas.length+' día(s) con más de 2 meses (anteriores al '+limiteStr+'). Las recientes se conservan. ¿Continuar?'))return;
+  openProg('Limpiando fotos de +2 meses',viejas.length+' día(s) por limpiar');
+  let total=0;
   try{
-    const paths=listaFotos.map(f=>`${ayer}/${f.name}`);
-    const{error:de}=await sb.storage.from(CFG.BCK_FOTOS).remove(paths);
-    if(de)throw de;
-    logProg('Todas eliminadas correctamente','ok');
-    updateProg(100,'');
-    endProg(true,'✓ '+listaFotos.length+' fotos eliminadas');
-    const b=document.getElementById('pb2');b.textContent='✓ Limpio';b.classList.add('done');
-    const est=document.getElementById('pc-est-fotos');
-    const det=document.getElementById('pc-det-fotos');
+    for(const f of viejas){
+      const{data}=await sb.storage.from(CFG.BCK_FOTOS).list(f);
+      const paths=(data||[]).map(x=>f+'/'+x.name);
+      if(paths.length){await sb.storage.from(CFG.BCK_FOTOS).remove(paths);total+=paths.length;logProg(f+': '+paths.length+' fotos','ok');}
+    }
+    updateProg(100,'');endProg(true,'✓ '+total+' fotos de +2 meses eliminadas ('+viejas.length+' días)');
+    const b=document.getElementById('pb2');if(b){b.textContent='✓ Limpio';b.classList.add('done');}
     if(est){est.textContent='✓ Limpio';est.className='pc-estado pc-estado-ok';}
-    if(det)det.textContent=''+listaFotos.length+' fotos del '+ayer+' eliminadas';
+    if(det)det.textContent=total+' fotos de +2 meses eliminadas · las recientes se conservan';
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al limpiar');}
 }
 
