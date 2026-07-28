@@ -764,14 +764,28 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 @media(min-width:900px){
   body{background:linear-gradient(160deg,#10182d 0%,#0B1020 55%,#1a2236 100%)}
   body::before{content:'GMAZ RUTAS · Sistema de Reparto Coca-Cola';position:fixed;top:26px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.25);font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;z-index:1}
-  .scr,#modal-nov,#panel-coord,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{
+  .scr,#modal-nov,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{
     left:0;right:0;width:430px;margin-left:auto;margin-right:auto;
     box-shadow:0 0 80px rgba(0,0,0,.55);
   }
   .scr{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
-  #modal-nov,#panel-coord,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
+  #modal-nov,#prog-overlay,#pantalla-facturas,#pantalla-detalle,#ent-ovl,#loading{top:60px;bottom:24px;border-radius:24px;overflow:hidden}
   #ent-ovl .ent-sheet{border-radius:22px 22px 24px 24px}
   #scr-splash{position:fixed;inset:0;width:100%;left:0;right:0;top:0;bottom:0;margin:0;border-radius:0;box-shadow:none}
+  /* ══ Panel del coordinador: PANTALLA COMPLETA y profesional en escritorio ══ */
+  #panel-coord{inset:0;width:100%;border-radius:0;box-shadow:none;background:#F4F6F9}
+  #panel-coord .pc-hdr{padding:16px 34px;background:#fff;border-bottom:1px solid #E6E9EF}
+  #panel-coord .pc-title{font-size:19px}
+  #panel-coord .pc-sub{font-size:12px}
+  #panel-coord .pc-hdr+div{padding:0 34px;background:#fff}
+  #panel-coord [id^="pctab-content-"]{background:#F4F6F9}
+  #panel-coord #pctab-content-1 .pc-body{max-width:840px;margin:0 auto;width:100%;padding-top:20px}
+  #panel-coord #pctab-content-3>div{max-width:840px;margin:0 auto;width:100%;padding-top:20px}
+  #panel-coord #pctab-content-2>div{max-width:1240px;margin:0 auto;width:100%;padding:20px 34px}
+  #panel-coord #pc-cargue{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;align-items:start}
+  #panel-coord #pc-cargue>div:first-child{grid-column:1/-1}
+  #panel-coord #pc-cargue>div{margin-bottom:0!important}
+  #panel-coord .pc-footer{padding:12px 34px}
 }
 </style>
 </head>
@@ -1385,7 +1399,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <!-- TAB 3: HISTÓRICO -->
   <div id="pctab-content-3" style="flex:1;overflow-y:auto;display:none">
     <div style="padding:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--negro);margin-bottom:12px">Novedades de los últimos 7 días</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--negro);flex:1">Novedades por fecha</div>
+        <input type="date" id="pc-hist-fecha" onchange="verNovedadesFecha(this.value)" style="border:1px solid var(--gris2);border-radius:8px;padding:6px 9px;font-size:11px;font-family:inherit;color:var(--negro)">
+      </div>
+      <div id="pc-hist-detalle"></div>
+      <div style="font-size:9px;font-weight:800;color:var(--gris4);text-transform:uppercase;letter-spacing:.05em;margin:14px 2px 7px">Últimos 7 días</div>
       <div id="pc-hist-lista"><div style="font-size:11px;color:var(--gris4)">Cargando...</div></div>
     </div>
   </div>
@@ -5401,6 +5420,20 @@ async function cargarHistoricoNovedades(){
     </div>`;
   }
   lista.innerHTML=html||'<div style="font-size:10px;color:var(--gris4)">Sin datos en los últimos 7 días</div>';
+}
+
+/* Ver las novedades de CUALQUIER fecha elegida (no solo los últimos 7 días). */
+async function verNovedadesFecha(fecha){
+  const cont=document.getElementById('pc-hist-detalle');if(!cont)return;
+  if(!fecha){cont.innerHTML='';return;}
+  cont.innerHTML='<div style="font-size:10px;color:var(--gris4);padding:8px">Cargando '+fecha+'...</div>';
+  try{
+    const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,nombre_cliente,motivo,codigo_cliente').eq('fecha',fecha).order('ruta');
+    if(!novs||!novs.length){cont.innerHTML='<div style="background:var(--gris1);border-radius:9px;padding:14px;text-align:center;font-size:11px;color:var(--gris4)">Sin novedades el '+fecha+'</div>';return;}
+    let html='<div style="background:#FEF2F2;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between"><div><b style="font-size:14px;color:#E30613">'+novs.length+' novedad'+(novs.length>1?'es':'')+'</b><div style="font-size:9px;color:#B91C1C">'+fecha+'</div></div><button onclick="haptic();descargarNovedasFecha(\''+fecha+'\')" style="background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:10px;font-weight:800;cursor:pointer">↓ Excel</button></div>';
+    html+=novs.map(n=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 9px;border-bottom:.5px solid var(--gris2);font-size:11px"><div style="flex:1;min-width:0"><b>'+(n.nombre_cliente||n.codigo_cliente)+'</b><div style="font-size:9px;color:var(--gris4)">'+(n.codigo_cliente||'')+' · '+(n.ruta||'')+'</div></div><span style="color:#B45309;font-weight:700;font-size:10px;text-align:right;flex-shrink:0">'+(n.motivo||'')+'</span></div>').join('');
+    cont.innerHTML=html;
+  }catch(e){cont.innerHTML='<div style="font-size:10px;color:#E30613;padding:8px">Error: '+e.message+'</div>';}
 }
 
 async function descargarNovedasFecha(fecha){
