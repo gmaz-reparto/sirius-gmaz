@@ -1019,49 +1019,31 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 
-<!-- ══ SHEET RECHAZO POR PRODUCTO ══ -->
+<!-- ══ TABLA DE DEVOLUCIÓN EMBEBIDA (dentro del modal de novedad) ══ -->
 <style>
-.ns-rechhint{margin:2px 16px 10px;font-size:12px;color:#0F1117}
-.ns-rechhint.total{background:#FEF2F2;border:1px solid #F5B5B0;color:#B91C1C;border-radius:10px;padding:9px 11px;font-weight:600}
-.ns-rechhint.ok{background:#F0FDF4;border:1px solid #A7E3BE;color:#0b6b3a;border-radius:10px;padding:9px 11px}
-.ns-rechbtn{width:100%;background:#111;color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer}
-#rech-ovl{position:fixed;inset:0;z-index:660;background:rgba(15,17,23,.5);display:none;align-items:flex-end;justify-content:center}
-#rech-ovl.show{display:flex}
-#rech-sheet{background:#fff;width:100%;max-width:520px;max-height:88vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;animation:pedUp .22s ease}
-#rech-sheet .ph{padding:13px 16px 11px;border-bottom:.5px solid #EEF0F4;position:relative}
-#rech-sheet .grab{width:38px;height:4px;border-radius:3px;background:#E2E5EC;margin:0 auto 10px}
-#rech-title{font-size:15px;font-weight:700;color:#0F1117;padding-right:30px;line-height:1.2}
-#rech-motivo{font-size:11px;color:#E30613;font-weight:600;margin-top:2px}
-#rech-x{position:absolute;top:11px;right:14px;width:26px;height:26px;border-radius:50%;background:#F2F4F7;border:none;font-size:15px;color:#6B7385;cursor:pointer}
-#rech-body{padding:8px 14px;overflow-y:auto;flex:1}
-.rech-tipo{font-size:11px;font-weight:700;color:#6B7385;text-transform:uppercase;letter-spacing:.05em;margin:12px 2px 4px}
-.rech-row{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:.5px solid #EEF0F4;border-radius:8px}
-.rech-row.on{background:#FEF2F2}
-.rech-nm{flex:1;min-width:0}
-.rech-nm b{font-size:12.5px;font-weight:600;color:#0F1117;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rech-nm span{font-size:10px;color:#8A90A0}
-.rech-steps{display:flex;gap:6px;flex-shrink:0}
-.stpr{display:flex;align-items:center;gap:4px;background:#F2F4F7;border-radius:9px;padding:2px}
-.stpr button{width:26px;height:26px;border:none;border-radius:7px;background:#fff;font-size:16px;font-weight:700;color:#0F1117;cursor:pointer;line-height:1}
-.stpr-v{min-width:26px;text-align:center}
-.stpr-v b{font-size:13px;font-weight:700;color:#0F1117;display:block;line-height:1}
-.stpr-v small{font-size:8px;color:#8A90A0}
-#rech-foot{padding:11px 16px calc(11px + env(safe-area-inset-bottom,0));border-top:.5px solid #EEF0F4;display:flex;align-items:center;gap:10px}
-#rech-foot-txt{flex:1;font-size:12px;font-weight:600;color:#0F1117}
-#rech-ok{background:#E30613;color:#fff;border:none;border-radius:11px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer}
-#rech-ok:disabled{background:#E2E5EC;color:#9AA0AE;cursor:not-allowed}
+#ns-tabla{margin:0 14px 12px;border:1px solid #EEF0F4;border-radius:12px;overflow:hidden;background:#fff}
+.ns-tbl-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:#F7F8FA;border-bottom:.5px solid #EEF0F4}
+.ns-tbl-hd span{font-size:10px;font-weight:800;letter-spacing:.05em;color:#6B7385}
+.ns-tbl-all{background:#E30613;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:10.5px;font-weight:700;cursor:pointer}
+.ns-tbl-scroll{max-height:230px;overflow:auto}
+.ns-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ns-tbl thead th{position:sticky;top:0;background:#fff;font-size:8.5px;font-weight:800;letter-spacing:.03em;color:#9AA0AE;text-transform:uppercase;text-align:center;padding:6px 4px;border-bottom:.5px solid #EEF0F4}
+.ns-tbl thead th:first-child{text-align:left;padding-left:10px}
+.ns-tbl tbody td{padding:6px 4px;border-bottom:.5px solid #F2F4F7;text-align:center;vertical-align:middle}
+.ns-tbl tr.on{background:#FEF2F2}
+.dt-nm{text-align:left!important;padding-left:10px!important;max-width:130px}
+.dt-nm b{display:block;font-size:11px;font-weight:600;color:#0F1117;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dt-nm span{font-size:8.5px;color:#9AA0AE}
+.dt-c{font-size:10.5px;color:#6B7385;white-space:nowrap}
+.dt-f{font-size:10.5px;color:#0F1117;font-weight:600;white-space:nowrap}
+.dt-v{font-size:10.5px;color:#0F1117;font-weight:700;white-space:nowrap}
+.dt-dev{white-space:nowrap}
+.dv-mini{display:inline-flex;align-items:center;gap:2px;margin:1px}
+.dv-mini button{width:20px;height:20px;border:none;border-radius:5px;background:#EEF0F4;font-size:13px;font-weight:800;color:#0F1117;cursor:pointer;line-height:1}
+.dv-mini b{min-width:16px;font-size:11px;font-weight:700;color:#E30613}
+.dv-mini small{font-size:8px;color:#9AA0AE;margin-left:1px}
+.ns-tbl-foot{padding:8px 11px;background:#F7F8FA;border-top:.5px solid #EEF0F4;font-size:11px;color:#0F1117}
 </style>
-<div id="rech-ovl" onclick="if(event.target===this)cerrarRechazo()">
-  <div id="rech-sheet">
-    <div class="ph"><div class="grab"></div>
-      <div id="rech-title">—</div><div id="rech-motivo">—</div>
-      <button id="rech-x" onclick="haptic();cerrarRechazo()">✕</button>
-    </div>
-    <div id="rech-body"></div>
-    <div id="rech-foot"><span id="rech-foot-txt">Nada marcado aún</span>
-      <button id="rech-ok" disabled onclick="haptic();confirmarRechazo()">Listo</button></div>
-  </div>
-</div>
 
 <!-- ══ SHEET ¿LOGRASTE ENTREGAR? ══ -->
 <div id="ent-ovl" onclick="if(event.target===this)cerrarSheetEnt()">
@@ -1319,6 +1301,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
     <div class="ns-photo-badge">✓ Foto tomada</div>
   </div>
+  <div id="ns-tabla" style="display:none"></div>
   <div class="ns-body">
     <div class="ns-lbl">Motivo del rechazo</div>
     <div class="ns-opt" onclick="haptic();pickReason('CLIENTE CERRADO',this)">
@@ -1340,7 +1323,6 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Rechazo parcial</div>
     </div>
   </div>
-  <div class="ns-rechhint" id="ns-rechhint" style="display:none"></div>
   <div class="ns-actions">
     <button class="ns-cancel" onclick="haptic();closeNovModal()">Cancelar</button>
     <button class="ns-ok" id="ns-ok" disabled onclick="haptic();submitNovedad()">
@@ -1596,7 +1578,6 @@ const MAESTRO_PROD={
 let pedidosClientes={}; // índice de pedidos del día: {codigo:{n,r,b:[{t,v,i:[[cod,descrip,cajas,bot,precio]]}]}}
 let pedidoActual=null;  // pedido del cliente abierto
 let rechazoDetalle=null; // detalle del rechazo confirmado: [{cod,desc,cajas,und}]
-let rechazoSel={};       // selección en edición: key -> {cod,desc,cajas,und,maxCaj,maxUnd,...}
 
 let sb,gmap,gpano,svSvc,truckMk,dirRenderer;
 let clientes=[],markers=[],rutaActual='',clienteIdx=0,vendedorActual=null;
@@ -1978,72 +1959,100 @@ function verPedidoCliente(){
 }
 function cerrarPedido(){document.getElementById('ped-ovl').classList.remove('show');}
 
-/* ══════════════ RECHAZO PARCIAL POR PRODUCTO (Fase B) ══════════════ */
-/* Motivos que rechazan TODO el pedido automáticamente. */
-function _motivoEsTotal(m){return /CERRAD|NO HIZO PEDIDO/i.test(m||'');}
+/* ══════════════ TABLA DE DEVOLUCIÓN EMBEBIDA EN EL MODAL DE NOVEDAD ══════════════ */
+let devSel={}; // key -> {cod,desc,precio,pedCaj,pedBot,und,devCaj,devUnd}
+/* Solo "cliente cerrado" rechaza todo automáticamente; los demás motivos son a elección. */
+function _motivoEsTotal(m){return /CERRAD/i.test(m||'');}
 function _resumenDetalle(d){let c=0,u=0;(d||[]).forEach(x=>{c+=x.cajas;u+=x.und;});return c+' caja'+(c===1?'':'s')+(u?' + '+u+' und':'');}
-function _detalleTotalPedido(ped){
-  const arr=[];
-  (ped.b||[]).forEach(b=>{ if(/Carga Base/i.test(b.t))return;
-    b.i.forEach(it=>{const info=prodInfo(it[0],it[1]);arr.push({cod:it[0],desc:info.desc,cajas:it[2],und:it[3]});}); });
-  return arr;
-}
-function _stepper(key,campo,lbl){
-  return '<div class="stpr"><button type="button" onclick="rechStep(\''+key+'\',\''+campo+'\',-1)">−</button>'+
-    '<div class="stpr-v"><b id="stp_'+key+'_'+campo+'">0</b><small>'+lbl+'</small></div>'+
-    '<button type="button" onclick="rechStep(\''+key+'\',\''+campo+'\',1)">+</button></div>';
-}
-function abrirRechazoSheet(){
-  const cl=clientes[clienteIdx];if(!cl)return;
-  const cod=String(cl.id||getF(cl,CFG.COL_CODIGO));
-  const ped=pedidosClientes[cod];if(!ped||!ped.b){toast('Sin pedido para marcar','err');return;}
-  rechazoSel={};
-  let html='';
+function _precioNum(p){return parseInt(String(p==null?'':p).replace(/,.*/,'').replace(/[^\d]/g,''))||0;}
+function _pesos(n){return '$'+Math.round(n||0).toLocaleString('es-CO');}
+function _qtyTxt(caj,bot){return (caj?caj+' cj':'')+(caj&&bot?' + ':'')+(bot?bot+' u':'')||'0';}
+/* Construye la tabla de devolución dentro del modal a partir del pedido del cliente. */
+function renderTablaDevolucion(){
+  const cont=document.getElementById('ns-tabla');if(!cont)return false;
+  const cl=clientes[clienteIdx];
+  const cod=cl?String(cl.id||getF(cl,CFG.COL_CODIGO)):'';
+  const ped=cod?pedidosClientes[cod]:null;
+  devSel={};
+  const tienePed=ped&&ped.b&&ped.b.some(b=>!/Carga Base/i.test(b.t)&&b.i.length);
+  if(!tienePed){cont.style.display='none';cont.innerHTML='';return false;}
+  let filas='';
   ped.b.forEach((b,bi)=>{
     if(/Carga Base/i.test(b.t))return;
-    html+='<div class="rech-tipo">'+b.t+'</div>';
     b.i.forEach((it,ii)=>{
-      const info=prodInfo(it[0],it[1]);
-      const key=bi+'_'+ii;
-      const maxCaj=it[2], maxUnd=(it[3]||0)+(info.und>1?info.und-1:0);
-      rechazoSel[key]={cod:it[0],desc:info.desc,cajas:0,und:0,maxCaj,maxUnd};
-      const pedTxt='pidió '+(it[2]?it[2]+' cj':'')+(it[2]&&it[3]?' + ':'')+(it[3]?it[3]+' und':'')||'—';
-      html+='<div class="rech-row" id="rrow_'+key+'">'+
-        '<div class="rech-nm"><b>'+info.desc+'</b><span>'+it[0]+' · '+pedTxt+'</span></div>'+
-        '<div class="rech-steps">'+_stepper(key,'cajas','cj')+_stepper(key,'und','und')+'</div></div>';
+      const info=prodInfo(it[0],it[1]);const key=bi+'_'+ii;
+      devSel[key]={cod:it[0],desc:info.desc,precio:_precioNum(it[4]),pedCaj:it[2],pedBot:it[3],und:info.und||1,devCaj:0,devUnd:0};
+      filas+=_filaDevHTML(key);
     });
   });
-  document.getElementById('rech-body').innerHTML=html;
-  document.getElementById('rech-title').textContent=cl.nombre||getF(cl,CFG.COL_NOMBRE)||('Cliente '+cod);
-  document.getElementById('rech-motivo').textContent='Motivo: '+(motivo||'—');
-  actualizarRechFoot();
-  document.getElementById('rech-ovl').classList.add('show');
+  cont.innerHTML=
+    '<div class="ns-tbl-hd"><span>PRODUCTOS DEL PEDIDO</span><button type="button" class="ns-tbl-all" onclick="haptic();rechazarTodoPedido()">Rechazar todo</button></div>'+
+    '<div class="ns-tbl-scroll"><table class="ns-tbl"><thead><tr><th>Producto</th><th>Cons.</th><th>Devolución</th><th>Factura</th><th>Valor</th></tr></thead><tbody>'+filas+'</tbody></table></div>'+
+    '<div class="ns-tbl-foot" id="ns-tbl-foot"></div>';
+  cont.style.display='block';
+  _recalcTablaDev();
+  return true;
 }
-function rechStep(key,campo,delta){
-  haptic(18);
-  const s=rechazoSel[key];if(!s)return;
-  const max=campo==='cajas'?s.maxCaj:s.maxUnd;
-  s[campo]=Math.max(0,Math.min(max,(s[campo]||0)+delta));
-  document.getElementById('stp_'+key+'_'+campo).textContent=s[campo];
-  document.getElementById('rrow_'+key).classList.toggle('on',s.cajas>0||s.und>0);
-  actualizarRechFoot();
+/* Todo se calcula en UNIDADES TOTALES (caja×factor + sueltas) para no dar negativos. */
+function _consUnits(s){return s.pedCaj*(s.und||1)+s.pedBot;}
+function _devUnits(s){return s.devCaj*(s.und||1)+s.devUnd;}
+function _normQty(units,und){units=Math.max(0,units);const c=Math.floor(units/(und||1)),u=units%(und||1);return (c?c+' cj':'')+(c&&u?' + ':'')+(u?u+' u':'')||'0';}
+function _valUnits(units,s){return Math.round(Math.max(0,units)*(s.precio/(s.und||1)));}
+function _filaDevHTML(key){
+  const s=devSel[key];
+  const fu=_consUnits(s)-_devUnits(s);
+  return '<tr id="drow_'+key+'" class="'+((s.devCaj||s.devUnd)?'on':'')+'">'+
+    '<td class="dt-nm"><b>'+s.desc+'</b><span>'+s.cod+' · '+_pesos(s.precio)+'</span></td>'+
+    '<td class="dt-c">'+_qtyTxt(s.pedCaj,s.pedBot)+'</td>'+
+    '<td class="dt-dev"><div class="dv-mini"><button type="button" onclick="devStep(\''+key+'\',\'caj\',-1)">−</button><b id="dv_'+key+'_caj">'+s.devCaj+'</b><button type="button" onclick="devStep(\''+key+'\',\'caj\',1)">+</button><small>cj</small></div>'+
+      '<div class="dv-mini"><button type="button" onclick="devStep(\''+key+'\',\'und\',-1)">−</button><b id="dv_'+key+'_und">'+s.devUnd+'</b><button type="button" onclick="devStep(\''+key+'\',\'und\',1)">+</button><small>u</small></div></td>'+
+    '<td class="dt-f" id="df_'+key+'">'+_normQty(fu,s.und)+'</td>'+
+    '<td class="dt-v" id="dvv_'+key+'">'+_pesos(_valUnits(fu,s))+'</td></tr>';
 }
-function actualizarRechFoot(){
-  let items=0,c=0,u=0;
-  Object.values(rechazoSel).forEach(s=>{if(s.cajas>0||s.und>0){items++;c+=s.cajas;u+=s.und;}});
-  document.getElementById('rech-foot-txt').textContent=items?(items+' producto(s) · '+c+' cj'+(u?' + '+u+' und':'')):'Nada marcado aún';
-  document.getElementById('rech-ok').disabled=!items;
+function devStep(key,campo,delta){
+  haptic(16);
+  const s=devSel[key];if(!s)return;
+  const cons=_consUnits(s);
+  if(campo==='caj'){
+    const nc=s.devCaj+delta;if(nc<0)return;
+    if(nc>s.pedCaj){toast('⚠ No puedes devolver más de lo cargado: solo hay '+s.pedCaj+' caja(s) de '+s.desc,'err');return;}
+    if(nc*(s.und||1)+s.devUnd>cons){toast('⚠ Estás devolviendo más de lo cargado de '+s.desc,'err');return;}
+    s.devCaj=nc;document.getElementById('dv_'+key+'_caj').textContent=nc;
+  }else{
+    const nu=s.devUnd+delta;if(nu<0)return;
+    if(s.devCaj*(s.und||1)+nu>cons){toast('⚠ No puedes devolver más de lo cargado ('+cons+' und) de '+s.desc,'err');return;}
+    s.devUnd=nu;document.getElementById('dv_'+key+'_und').textContent=nu;
+  }
+  const fu=cons-_devUnits(s);
+  document.getElementById('df_'+key).textContent=_normQty(fu,s.und);
+  document.getElementById('dvv_'+key).textContent=_pesos(_valUnits(fu,s));
+  document.getElementById('drow_'+key).classList.toggle('on',s.devCaj>0||s.devUnd>0);
+  _recalcTablaDev();
 }
-function confirmarRechazo(){
-  rechazoDetalle=Object.values(rechazoSel).filter(s=>s.cajas>0||s.und>0).map(s=>({cod:s.cod,desc:s.desc,cajas:s.cajas,und:s.und}));
-  if(!rechazoDetalle.length){toast('Marca al menos un producto','err');return;}
-  cerrarRechazo();
-  document.getElementById('ns-ok').disabled=false;
-  const hint=document.getElementById('ns-rechhint');
-  hint.className='ns-rechhint ok';
-  hint.innerHTML='✅ Rechazo: <b>'+_resumenDetalle(rechazoDetalle)+'</b> · <span onclick="haptic();abrirRechazoSheet()" style="text-decoration:underline;cursor:pointer">editar</span>';
+function rechazarTodoPedido(){
+  Object.keys(devSel).forEach(key=>{
+    const s=devSel[key];s.devCaj=s.pedCaj;s.devUnd=s.pedBot;
+    const eC=document.getElementById('dv_'+key+'_caj');if(eC)eC.textContent=s.devCaj;
+    const eU=document.getElementById('dv_'+key+'_und');if(eU)eU.textContent=s.devUnd;
+    const df=document.getElementById('df_'+key);if(df)df.textContent='0';
+    const dv=document.getElementById('dvv_'+key);if(dv)dv.textContent=_pesos(0);
+    const row=document.getElementById('drow_'+key);if(row)row.classList.add('on');
+  });
+  _recalcTablaDev();haptic(30);
 }
-function cerrarRechazo(){document.getElementById('rech-ovl').classList.remove('show');}
+function _recalcTablaDev(){
+  let valDev=0,valFact=0;const marcados=[];
+  Object.values(devSel).forEach(s=>{
+    if(s.devCaj>0||s.devUnd>0)marcados.push({cajas:s.devCaj,und:s.devUnd});
+    const du=_devUnits(s), fu=_consUnits(s)-du;
+    valFact+=_valUnits(fu,s); valDev+=_valUnits(du,s);
+  });
+  const foot=document.getElementById('ns-tbl-foot');
+  if(foot)foot.innerHTML='Devolución: <b style="color:#E30613">'+(marcados.length?_resumenDetalle(marcados)+' · '+_pesos(valDev):'0')+'</b> &nbsp;·&nbsp; A facturar: <b>'+_pesos(valFact)+'</b>';
+}
+function _construirRechazoDetalle(){
+  return Object.values(devSel).filter(s=>s.devCaj>0||s.devUnd>0).map(s=>({cod:s.cod,desc:s.desc,cajas:s.devCaj,und:s.devUnd}));
+}
 
 /* ══════════════ HOJA DE CARGA · CARGUE POR RUTA (Fase C) ══════════════ */
 let hojasIndex={}; // {ruta:{placa,transporte,entregas,cargueCaj,cargueBot,items:{cod:{caj,bot}}}}
@@ -2111,35 +2120,61 @@ async function cargarResumenCargue(){
   const rech=await cargarRechazosDelDia();
   const rutas=[...new Set([...Object.keys(hojasIndex),...Object.keys(rech)])].sort();
   if(!rutas.length){el.innerHTML='<div style="background:#F7F8FA;border-radius:12px;padding:16px;text-align:center;font-size:11px;color:#8A90A0">Sube la <b>Hoja de cargue</b> desde la Rutina para ver el cargue por ruta.</div>';return;}
-  let totCaj=0,totRej=0;
+  let totCaj=0,totAfe=0,totPend=0;
+  const _badge=(est)=>est==='afecta'?'<span style="font-size:8.5px;font-weight:700;color:#B91C1C;background:#FEE2E2;border-radius:5px;padding:1px 6px">Afecta comisión</span>'
+    :est==='omitida'?'<span style="font-size:8.5px;font-weight:700;color:#475569;background:#E2E8F0;border-radius:5px;padding:1px 6px">Omitida</span>'
+    :'<span style="font-size:8.5px;font-weight:700;color:#92400E;background:#FEF3C7;border-radius:5px;padding:1px 6px">Pendiente</span>';
   const cards=rutas.map(r=>{
     const h=hojasIndex[r], rj=rech[r];
     const carg=h?h.cargueCaj:0; const cargB=h?h.cargueBot:0;
-    const rejC=rj?rj.caj:0, rejU=rj?rj.und:0;
-    totCaj+=carg; totRej+=rejC;
-    const efe=carg>0?Math.round(((carg-rejC)/carg)*100):100;
-    const col=efe>=90?'#059669':efe>=75?'#D97706':'#E30613';
     const clientes=(rj&&rj.clientes||[]).sort((a,b)=>(b.total_cajas||0)-(a.total_cajas||0));
+    let rejC=0,rejU=0,afeC=0,pend=0;
+    clientes.forEach(c=>{const est=c.estado||'pendiente';rejC+=c.total_cajas||0;rejU+=c.total_und||0;
+      if(est==='afecta')afeC+=c.total_cajas||0; if(est==='pendiente')pend++;});
+    totCaj+=carg; totAfe+=afeC; totPend+=pend;
+    const efe=carg>0?Math.round(((carg-afeC)/carg)*100):100;
+    const col=efe>=90?'#059669':efe>=75?'#D97706':'#E30613';
     const detCli=clientes.map(c=>{
+      const est=c.estado||'pendiente';const cod=c.codigo_cliente;
       const items=(c.detalle||[]).map(d=>'<div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6B7385;padding:1px 0"><span>'+d.desc+'</span><span style="color:#E30613;font-weight:600;white-space:nowrap">'+(d.cajas?d.cajas+' cj':'')+(d.cajas&&d.und?'+':'')+(d.und?d.und+' u':'')+'</span></div>').join('');
-      return '<div style="border-top:.5px solid #EEF0F4;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:#0F1117"><span>'+(c.nombre_cliente||c.codigo_cliente)+'</span><span style="color:#E30613">'+(c.total_cajas||0)+' cj'+(c.total_und?'+'+c.total_und+'u':'')+'</span></div><div style="font-size:9.5px;color:#9AA0AE;margin:1px 0 3px">'+(c.motivo||'')+'</div>'+items+'</div>';
+      const botones=est==='pendiente'
+        ?'<div style="display:flex;gap:6px;margin-top:6px"><button onclick="haptic();aprobarDevolucion(\''+cod+'\',\'afecta\')" style="flex:1;background:#B91C1C;color:#fff;border:none;border-radius:7px;padding:6px;font-size:10px;font-weight:700;cursor:pointer">Sí afecta comisión</button><button onclick="haptic();aprobarDevolucion(\''+cod+'\',\'omitida\')" style="flex:1;background:#E2E8F0;color:#334155;border:none;border-radius:7px;padding:6px;font-size:10px;font-weight:700;cursor:pointer">Omitir (no afecta)</button></div>'
+        :'<div style="margin-top:5px"><button onclick="haptic();aprobarDevolucion(\''+cod+'\',\'pendiente\')" style="background:none;border:none;color:#8A90A0;font-size:9.5px;text-decoration:underline;cursor:pointer">↺ revisar de nuevo</button></div>';
+      return '<div style="border-top:.5px solid #EEF0F4;padding:7px 0"><div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:600;color:#0F1117"><span>'+(c.nombre_cliente||cod)+'</span><span style="color:#E30613">'+(c.total_cajas||0)+' cj'+(c.total_und?'+'+c.total_und+'u':'')+'</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0 3px"><span style="font-size:9.5px;color:#9AA0AE">'+(c.motivo||'')+'</span>'+_badge(est)+'</div>'+items+botones+'</div>';
     }).join('');
     return '<div style="background:#fff;border:.5px solid #EEF0F4;border-radius:13px;padding:12px 13px;margin-bottom:9px">'+
       '<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">'+
         '<div style="width:38px;height:38px;border-radius:10px;background:'+col+'14;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:'+col+'">'+efe+'</div>'+
         '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#0F1117">'+r+(h&&h.placa?' · <span style="font-size:10px;color:#6B7385">'+h.placa+'</span>':'')+'</div>'+
-        '<div style="font-size:10px;color:#8A90A0">'+(h?h.entregas+' entregas':'—')+' · efectividad estimada</div></div>'+
-        (clientes.length?'<button onclick="haptic();this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'" style="background:#FEF2F2;border:none;color:#E30613;font-size:10px;font-weight:700;border-radius:7px;padding:5px 9px;cursor:pointer">'+clientes.length+' rechazo(s) ▾</button>':'<span style="font-size:10px;color:#059669;font-weight:600">sin rechazos</span>')+
+        '<div style="font-size:10px;color:#8A90A0">'+(h?h.entregas+' entregas':'—')+' · efectividad (solo aprobadas)</div></div>'+
+        (clientes.length?'<button onclick="haptic();this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'" style="background:#FEF2F2;border:none;color:#E30613;font-size:10px;font-weight:700;border-radius:7px;padding:5px 9px;cursor:pointer">'+clientes.length+' dev.'+(pend?' · '+pend+' x aprobar':'')+' ▾</button>':'<span style="font-size:10px;color:#059669;font-weight:600">sin devoluciones</span>')+
       '</div>'+
       '<div style="display:flex;gap:7px;font-size:11px">'+
         '<div style="flex:1;background:#F7F8FA;border-radius:9px;padding:7px 9px"><div style="color:#8A90A0;font-size:9px">CARGUE</div><b style="color:#0F1117">'+carg+' cj'+(cargB?' + '+cargB+' bot':'')+'</b></div>'+
-        '<div style="flex:1;background:#FEF2F2;border-radius:9px;padding:7px 9px"><div style="color:#B91C1C;font-size:9px">DEVOLUCIÓN (rechazo)</div><b style="color:#E30613">'+rejC+' cj'+(rejU?' + '+rejU+' u':'')+'</b></div>'+
+        '<div style="flex:1;background:#FEF2F2;border-radius:9px;padding:7px 9px"><div style="color:#B91C1C;font-size:9px">DEVOLUCIÓN'+(pend?' · '+pend+' pend.':'')+'</div><b style="color:#E30613">'+rejC+' cj'+(rejU?' + '+rejU+' u':'')+'</b></div>'+
       '</div>'+
       (clientes.length?'<div style="display:none;margin-top:8px">'+detCli+'</div>':'')+
     '</div>';
   }).join('');
-  const efeGlobal=totCaj>0?Math.round(((totCaj-totRej)/totCaj)*100):100;
-  el.innerHTML='<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#6B7385;margin:4px 2px 8px">CARGUE Y DEVOLUCIÓN DEL DÍA · <span style="color:#0F1117">'+totCaj+' cj cargadas · '+totRej+' cj devueltas · '+efeGlobal+'%</span></div>'+cards;
+  const efeGlobal=totCaj>0?Math.round(((totCaj-totAfe)/totCaj)*100):100;
+  el.innerHTML='<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#6B7385;margin:4px 2px 8px">CARGUE Y DEVOLUCIÓN DEL DÍA · <span style="color:#0F1117">'+totCaj+' cj cargadas · '+totAfe+' cj afectan comisión · '+efeGlobal+'%</span>'+(totPend?'<span style="color:#92400E"> · '+totPend+' por aprobar</span>':'')+'</div>'+cards;
+}
+/* El supervisor aprueba (afecta comisión) u omite (no afecta) cada devolución. */
+async function aprobarDevolucion(cod,decision){
+  const offset=CFG.UTC_OFFSET||-5;
+  const hoy=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
+  const pub=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+hoy+'/'+cod+'.json';
+  const put=CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECHAZOS/'+hoy+'/'+cod+'.json';
+  showLoad('Actualizando devolución...');
+  try{
+    const d=await (await fetch(pub+'?t='+Date.now())).json();
+    d.estado=decision; d.aprobado_hora=new Date().toISOString();
+    const res=await fetch(put,{method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(d)});
+    if(!res.ok)throw new Error(await res.text());
+    hideLoad();
+    toast(decision==='afecta'?'✓ Marcada: SÍ afecta comisión':decision==='omitida'?'✓ Omitida (no afecta comisión)':'↺ Vuelta a pendiente','ok');
+    cargarResumenCargue();
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
 /* ══ ABRIR / CERRAR PANTALLAS FACTURAS ══ */
@@ -4647,9 +4682,9 @@ function startNovedad(){
     const {blob,url}=await comprimirFoto(f);
     photoFile=blob;photoPreviewUrl=url;
     document.getElementById('ns-photo-img').src=url;
-    motivo=null;rechazoDetalle=null;rechazoSel={};
+    motivo=null;rechazoDetalle=null;devSel={};
     document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
-    const hint=document.getElementById('ns-rechhint');if(hint){hint.innerHTML='';hint.style.display='none';}
+    renderTablaDevolucion(); // tabla de productos/devolución si el cliente tiene pedido cargado
     document.getElementById('ns-ok').disabled=true;
     document.getElementById('modal-nov').classList.add('show');
   };
@@ -4673,34 +4708,11 @@ function pickReason(m,el){
   haptic();
   document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
   el.classList.add('sel');motivo=m;
-  rechazoDetalle=null;
-  const okBtn=document.getElementById('ns-ok');
-  const hint=document.getElementById('ns-rechhint');
-  const cl=clientes[clienteIdx];
-  const cod=cl?String(cl.id||getF(cl,CFG.COL_CODIGO)):'';
-  const ped=cod?pedidosClientes[cod]:null;
-  const tienePed=ped&&ped.b&&ped.b.some(b=>!/Carga Base/i.test(b.t)&&b.i.length);
-  if(tienePed){
-    if(_motivoEsTotal(m)){
-      // Rechazo TOTAL automático de todo el pedido
-      rechazoDetalle=_detalleTotalPedido(ped);
-      okBtn.disabled=false;
-      hint.className='ns-rechhint total';
-      hint.innerHTML='⛔ Rechazo TOTAL automático · <b>'+_resumenDetalle(rechazoDetalle)+'</b>';
-    }else{
-      // Por producto: obliga a marcar cantidades antes de confirmar
-      okBtn.disabled=true;
-      hint.className='ns-rechhint';
-      hint.innerHTML='<button type="button" class="ns-rechbtn" onclick="haptic();abrirRechazoSheet()">🧾 Marcar productos rechazados →</button>';
-    }
-  }else{
-    // Sin pedido cargado: flujo clásico (solo motivo + foto)
-    rechazoDetalle=null;
-    okBtn.disabled=false;
-    if(hint){hint.className='ns-rechhint';hint.innerHTML='';hint.style.display='none';}
-    return;
-  }
-  hint.style.display='block';
+  // Si hay tabla de pedido y el motivo es "cliente cerrado" → devolver todo automáticamente.
+  const tabla=document.getElementById('ns-tabla');
+  const hayTabla=tabla&&tabla.style.display!=='none'&&Object.keys(devSel).length;
+  if(hayTabla&&_motivoEsTotal(m))rechazarTodoPedido();
+  document.getElementById('ns-ok').disabled=false;
 }
 
 function closeNovModal(){document.getElementById('modal-nov').classList.remove('show');}
@@ -4708,6 +4720,7 @@ function bdClose(e){if(e.target===document.getElementById('modal-nov'))closeNovM
 
 async function submitNovedad(){
   if(!motivo||!photoFile)return;
+  rechazoDetalle=_construirRechazoDetalle(); // devolución marcada en la tabla
   const cl=clientes[clienteIdx];
   const cod=getF(cl,CFG.COL_CODIGO),nom=getF(cl,CFG.COL_NOMBRE),dir=getF(cl,CFG.COL_DIR)||'—';
   const fecha=getColDate();
@@ -4730,7 +4743,8 @@ async function submitNovedad(){
       try{
         const tot=rechazoDetalle.reduce((a,d)=>({c:a.c+d.cajas,u:a.u+d.und}),{c:0,u:0});
         const payload={codigo_cliente:cod,nombre_cliente:nom,ruta:rutaActual,motivo,
-          fecha,hora:new Date().toISOString(),detalle:rechazoDetalle,total_cajas:tot.c,total_und:tot.u};
+          fecha,hora:new Date().toISOString(),detalle:rechazoDetalle,total_cajas:tot.c,total_und:tot.u,
+          estado:'pendiente'}; // pendiente de aprobación del supervisor
         const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
         await sb.storage.from(CFG.BCK_PED).upload('RECHAZOS/'+fecha+'/'+cod+'.json',blob,{contentType:'application/json',upsert:true});
       }catch(e){/* si falla el detalle, la novedad ya quedó registrada */}
