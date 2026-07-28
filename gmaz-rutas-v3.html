@@ -1302,7 +1302,6 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
     <div class="ns-photo-badge">✓ Foto tomada</div>
   </div>
-  <div id="ns-tabla" style="display:none"></div>
   <div class="ns-body">
     <div class="ns-lbl">Motivo del rechazo</div>
     <div class="ns-opt" onclick="haptic();pickReason('CLIENTE CERRADO',this)">
@@ -1324,6 +1323,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Rechazo parcial</div>
     </div>
   </div>
+  <div id="ns-tabla" style="display:none"></div>
   <div class="ns-actions">
     <button class="ns-cancel" onclick="haptic();closeNovModal()">Cancelar</button>
     <button class="ns-ok" id="ns-ok" disabled onclick="haptic();submitNovedad()">
@@ -2114,6 +2114,30 @@ async function cargarRechazosDelDia(){
   }catch(e){}
   return rech;
 }
+/* Mapa {codigo_cliente:{caj,und}} de cajas REALMENTE rechazadas (de RECHAZOS/{fecha}/*.json),
+   para que el dashboard muestre lo devuelto y NO el total del pedido. */
+async function mapaCajasRechazadas(novedades_,fechaDefault){
+  const porFecha={};
+  (novedades_||[]).forEach(n=>{const f=(n.fecha||fechaDefault);if(!f)return;(porFecha[f]=porFecha[f]||new Set()).add(String(n.codigo_cliente));});
+  const map={};
+  for(const f of Object.keys(porFecha)){
+    try{
+      const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',
+        headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({prefix:'RECHAZOS/'+f+'/',limit:1000})});
+      if(!lr.ok)continue;
+      const files=await lr.json();
+      for(const file of (files||[])){
+        if(!file.name||!file.name.endsWith('.json'))continue;
+        const cod=file.name.replace(/\.json$/,'');
+        if(!porFecha[f].has(cod))continue;
+        try{const d=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+f+'/'+encodeURIComponent(file.name)+'?t='+Date.now())).json();
+          map[cod]={caj:d.total_cajas||0,und:d.total_und||0};}catch(e){}
+      }
+    }catch(e){}
+  }
+  return map;
+}
 /* Render del resumen Cargue vs Devolución (pestaña Operación del panel coordinador). */
 async function cargarResumenCargue(){
   const el=document.getElementById('pc-cargue');if(!el)return;
@@ -2564,12 +2588,15 @@ async function cargarDash(){
     const clientes_=todos||[],novedades_=novs||[],estados_=est||[];
     const rutaVend={};(maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
     const cajasCod={};clientes_.forEach(c=>cajasCod[String(c.id)]=parseFloat(String(c['CAJA_']||0).replace(',','.')||0));
+    // Cajas REALMENTE rechazadas (del detalle en storage), no el total del pedido.
+    const rechCod=await mapaCajasRechazadas(novedades_,fecha);
+    const cajRech=cod=>(rechCod[String(cod)]?rechCod[String(cod)].caj:0);
     // MODELO: todos entregados por defecto; una novedad = NO entregado.
     // El % arranca en 100% en la mañana y BAJA con cada rechazo (por clientes y por cajas).
     const novSet=new Set(novedades_.map(n=>String(n.codigo_cliente)));
     const entSet=new Set(clientes_.map(c=>String(c.id)).filter(id=>!novSet.has(id)));
     const totCli=clientes_.length,totNov=novedades_.length,totEnt=entSet.size;
-    const cajasRej=novedades_.reduce((s,n)=>s+(cajasCod[n.codigo_cliente]||0),0);
+    const cajasRej=novedades_.reduce((s,n)=>s+cajRech(n.codigo_cliente),0);
     const cajasProg=clientes_.reduce((s,c)=>s+(cajasCod[String(c.id)]||0),0);
     const cajasEnt=cajasProg-cajasRej; // cajas entregadas = programadas menos rechazadas
     const pctG=totCli?Math.round(totEnt/totCli*100):100;
@@ -2614,7 +2641,7 @@ async function cargarDash(){
       '<td><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span></td>'+
       '<td>'+n.motivo+'</td>'+
       '<td><span class="dtag" style="background:#FFF0F1;color:#E30613">'+(rutaVend[String(n.codigo_cliente)]||'—')+'</span></td>'+
-      '<td><b>'+Math.round(cajasCod[n.codigo_cliente]||0)+'</b></td></tr>';
+      '<td><b>'+Math.round(cajRech(n.codigo_cliente))+'</b></td></tr>';
     }).join(''):'<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:18px">Sin novedades registradas hoy ✓</td></tr>';
     // Mapa
     document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
@@ -2623,7 +2650,7 @@ async function cargarDash(){
     cargarEventosGeocerca();
     cargarAlarmasSecurita();
     // Cache para que los módulos (Vehículos/Clientes/Rechazos/Indicadores) reutilicen sin nuevas llamadas
-    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,entSet,novSet,rutaVend,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos};
+    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos};
     actualizarBadgesModulos();
     const modAct=document.querySelector('.dnav.on');if(modAct)refrescarModulo(modAct.dataset.mod);
     _dashCargadoUnaVez=true;
@@ -4713,7 +4740,7 @@ function startNovedad(){
     document.getElementById('ns-photo-img').src=url;
     motivo=null;rechazoDetalle=null;devSel={};
     document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
-    renderTablaDevolucion(); // tabla de productos/devolución si el cliente tiene pedido cargado
+    const _t=document.getElementById('ns-tabla');if(_t){_t.style.display='none';_t.innerHTML='';} // la tabla aparece tras elegir motivo
     document.getElementById('ns-ok').disabled=true;
     document.getElementById('modal-nov').classList.add('show');
   };
@@ -4737,10 +4764,11 @@ function pickReason(m,el){
   haptic();
   document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
   el.classList.add('sel');motivo=m;
-  // Si hay tabla de pedido y el motivo es "cliente cerrado" → devolver todo automáticamente.
+  // La tabla de productos/devolución aparece DESPUÉS de elegir el motivo.
   const tabla=document.getElementById('ns-tabla');
-  const hayTabla=tabla&&tabla.style.display!=='none'&&Object.keys(devSel).length;
-  if(hayTabla&&_motivoEsTotal(m))rechazarTodoPedido();
+  if(!tabla||tabla.style.display==='none'||!Object.keys(devSel).length)renderTablaDevolucion();
+  // "Cliente cerrado" → devolver todo el pedido automáticamente.
+  if(Object.keys(devSel).length&&_motivoEsTotal(m))rechazarTodoPedido();
   document.getElementById('ns-ok').disabled=false;
 }
 
@@ -4855,10 +4883,13 @@ async function cargarResumenOperacion(){
       el.innerHTML=estadoVacio('checkc','Todo en orden','No hay novedades ni rechazos registrados hoy. La operación va sin incidencias.','verde');
       return;
     }
+    // Cajas REALMENTE rechazadas (del detalle en storage), no el total del pedido.
+    const rechCod=await mapaCajasRechazadas(novs,fecha);
+    const cajRech=cod=>(rechCod[String(cod)]?rechCod[String(cod)].caj:0);
     // Totales
     const totalCli=(todos||[]).length;
     const totalNov=novs.length;
-    const totalCajas=novs.reduce((s,n)=>s+(cajasCod[n.codigo_cliente]||0),0);
+    const totalCajas=novs.reduce((s,n)=>s+cajRech(n.codigo_cliente),0);
     const pctGlobal=totalCli>0?Math.round(((totalCli-totalNov)/totalCli)*100):100;
     const colGlobal=pctGlobal>=90?'#059669':pctGlobal>=75?'#D97706':'#E30613';
     // Agrupar por ruta de entrega
@@ -4866,7 +4897,7 @@ async function cargarResumenOperacion(){
     novs.forEach(n=>{
       if(!porRuta[n.ruta])porRuta[n.ruta]={ruta:n.ruta,rechazos:0,cajas:0,clientes:[]};
       porRuta[n.ruta].rechazos++;
-      porRuta[n.ruta].cajas+=cajasCod[n.codigo_cliente]||0;
+      porRuta[n.ruta].cajas+=cajRech(n.codigo_cliente);
       porRuta[n.ruta].clientes.push(n);
     });
     const totalPorRuta={};
@@ -4940,7 +4971,7 @@ async function cargarResumenOperacion(){
       <div style="font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Detalle rechazos · vendedor · cajas</div>`;
     novs.forEach(n=>{
       const ico=iconMotivo[n.motivo]||'❌';
-      const caj=cajasCod[n.codigo_cliente]||0;
+      const caj=cajRech(n.codigo_cliente);
       const vend=rutaVend[n.codigo_cliente]||'—';
       html+=`<div style="display:flex;align-items:center;padding:6px 0;border-bottom:.5px solid #F3F4F6;gap:7px">
         <span style="font-size:13px">${ico}</span>
