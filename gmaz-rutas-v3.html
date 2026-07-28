@@ -357,9 +357,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .det-pdf-info{flex:1;text-align:center}
 .det-pdf-titulo{font-size:12px;font-weight:700;color:var(--negro)}
 .det-pdf-sub{font-size:10px;color:var(--gris4);margin-top:2px}
-.det-canvas-wrap{flex:1;overflow:auto;padding:10px;background:var(--gris1);display:flex;align-items:flex-start;justify-content:center;-webkit-overflow-scrolling:touch;position:relative;touch-action:pan-x pan-y}
-.det-canvas-wrap canvas{width:100%;max-width:600px;border-radius:var(--radio-sm);box-shadow:var(--sombra-md);transform-origin:top center}
-.det-zoom{position:sticky;bottom:12px;left:100%;margin-right:12px;align-self:flex-end;display:inline-flex;gap:1px;background:rgba(15,17,23,.86);border-radius:11px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.28);z-index:5;height:fit-content}
+#dcontent-preview{position:relative}
+.det-canvas-wrap{flex:1;overflow:auto;padding:10px;background:var(--gris1);text-align:center;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.det-canvas-wrap canvas{width:100%;max-width:600px;border-radius:var(--radio-sm);box-shadow:var(--sombra-md);display:inline-block;vertical-align:top}
+.det-zoom{position:absolute;bottom:14px;right:14px;display:inline-flex;gap:1px;background:rgba(15,17,23,.86);border-radius:11px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.28);z-index:5}
 .det-zoom button{width:34px;height:34px;border:none;background:none;color:#fff;font-size:19px;font-weight:700;cursor:pointer;border-radius:8px}
 .det-zoom button:active{background:rgba(255,255,255,.15)}
 .det-zoom span{min-width:44px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700}
@@ -707,8 +708,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .vp-alerta .va-s{font-size:10px;color:var(--gris4);font-weight:600;margin-top:1px}
 .vp-alerta .va-h{margin-left:auto;font-size:10px;font-weight:800;color:var(--gris5);flex-shrink:0}
 /* ── Panel de recorrido / paradas ── */
-#rec-panel{position:fixed;left:0;right:0;bottom:0;z-index:610;background:#fff;box-shadow:0 -8px 40px rgba(0,0,0,.18);transform:translateY(105%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:46vh;display:flex;flex-direction:column;border-radius:18px 18px 0 0}
-#rec-panel.on{transform:translateY(0)}
+#rec-panel{position:fixed;top:60px;right:0;bottom:0;z-index:610;background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,.16);transform:translateX(105%);transition:transform .3s cubic-bezier(.4,0,.2,1);width:min(460px,94vw);display:flex;flex-direction:column;border-radius:16px 0 0 0}
+#rec-panel.on{transform:translateX(0)}
 .rp-head{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid var(--gris2);flex-shrink:0}
 .rp-head b{font-size:15px;font-weight:900}
 .rp-head .rp-meta{font-size:11px;color:var(--gris4);font-weight:700}
@@ -1256,9 +1257,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     </div>
     <div class="det-canvas-wrap" id="det-canvas-wrap">
       <canvas id="det-canvas" style="display:none"></canvas>
-      <div class="det-zoom" id="det-zoom" style="display:none"><button onclick="haptic();factZoom(-0.5)">−</button><span id="det-zoom-lbl">100%</span><button onclick="haptic();factZoom(0.5)">+</button></div>
       <div class="det-loading" id="det-loading"><div class="det-spin"></div><div class="det-loading-txt" id="det-loading-txt">Extrayendo páginas...</div></div>
     </div>
+    <div class="det-zoom" id="det-zoom" style="display:none"><button onclick="haptic();factZoom(-0.5)">−</button><span id="det-zoom-lbl">100%</span><button onclick="haptic();factZoom(0.5)">+</button></div>
   </div>
   <!-- INFO + WHATSAPP -->
   <div class="det-tab-content" id="dcontent-info" style="flex-direction:column;overflow-y:auto">
@@ -2587,6 +2588,10 @@ async function cargarDash(){
     ]);
     const clientes_=todos||[],novedades_=novs||[],estados_=est||[];
     const rutaVend={};(maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
+    // Respaldo del vendedor desde el Libro de pedidos (ruta del vendedor por cliente)
+    try{await cargarIndicePedidos();}catch(e){}
+    const vendPed={};for(const cd of Object.keys(pedidosClientes||{})){const b=pedidosClientes[cd].b||[];const v=(b.find(x=>x.v)||{}).v;if(v)vendPed[cd]=v;}
+    const vendCli=cod=>{const c=String(cod);const rv=rutaVend[c];return (rv&&rv!=='—')?rv:(vendPed[c]||'—');};
     const cajasCod={};clientes_.forEach(c=>cajasCod[String(c.id)]=parseFloat(String(c['CAJA_']||0).replace(',','.')||0));
     // Cajas REALMENTE rechazadas (del detalle en storage), no el total del pedido.
     const rechCod=await mapaCajasRechazadas(novedades_,fecha);
@@ -2637,10 +2642,11 @@ async function cargarDash(){
     document.getElementById('dash-nov-meta').textContent=totNov+' rechazos · '+Math.round(cajasRej)+' cajas';
     document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>{
       const c=rutaColor[n.ruta]||'#4A5060';
-      return '<tr><td style="font-weight:800">'+(n.nombre_cliente||n.codigo_cliente)+'</td>'+
+      const vd=vendCli(n.codigo_cliente);
+      return '<tr><td style="font-weight:800">'+(n.nombre_cliente||n.codigo_cliente)+'<div style="font-size:10px;font-weight:600;color:#8A90A0;margin-top:1px">'+n.codigo_cliente+'</div></td>'+
       '<td><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span></td>'+
       '<td>'+n.motivo+'</td>'+
-      '<td><span class="dtag" style="background:#FFF0F1;color:#E30613">'+(rutaVend[String(n.codigo_cliente)]||'—')+'</span></td>'+
+      '<td>'+(vd&&vd!=='—'?'<span class="dtag" style="background:#FFF0F1;color:#E30613">'+vd+'</span>':'<span style="color:#C0C4CC">—</span>')+'</td>'+
       '<td><b>'+Math.round(cajRech(n.codigo_cliente))+'</b></td></tr>';
     }).join(''):'<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:18px">Sin novedades registradas hoy ✓</td></tr>';
     // Mapa
@@ -3784,9 +3790,8 @@ function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel,ignicion){
 function dibujarTrailVehiculo(unitId,ruta,estado){
   if(!dashMap)return;
   const capa=geocercaCapas[unitId]=geocercaCapas[unitId]||{};
-  if(capa.polyline)capa.polyline.setMap(null);
-  const path=estado.trail.map(p=>({lat:p.lat,lng:p.lng}));
-  capa.polyline=new google.maps.Polyline({path,map:dashMap,strokeColor:'#E30613',strokeWeight:3,strokeOpacity:.85,zIndex:1500});
+  // Sin línea de rastro roja en vivo: confundía el mapa. El recorrido se ve con "Ver ▶".
+  if(capa.polyline){capa.polyline.setMap(null);capa.polyline=null;}
   if(estado.puntoSalida){
     if(capa.marcadorSalida)capa.marcadorSalida.setMap(null);
     capa.marcadorSalida=new google.maps.Marker({position:estado.puntoSalida,map:dashMap,zIndex:1900,
@@ -4407,10 +4412,12 @@ async function cargarHistorialCliente(cod){
     if(!r.ok)return;
     const rows=await r.json();
     if(!rows.length){ el.className='ip-histcli ok'; el.textContent='✓ Sin novedades previas con este cliente'; return; }
-    const ult=rows[0];
-    const f=ult.fecha?ult.fecha.slice(5):'';
     el.className='ip-histcli warn';
-    el.textContent='⚠ '+rows.length+(rows.length>=6?'+':'')+' novedad(es) antes · última '+f+': '+(ult.motivo||'');
+    const ultimas=rows.slice(0,3).map(x=>{
+      const f=x.fecha?x.fecha.slice(5):'';
+      return '<div style="display:flex;gap:6px;line-height:1.4"><span style="opacity:.65;flex-shrink:0;min-width:38px">'+f+'</span><span style="font-weight:800">'+(x.motivo||'—')+'</span></div>';
+    }).join('');
+    el.innerHTML='<div style="font-weight:800;margin-bottom:3px">⚠ Últimas novedades ('+rows.length+(rows.length>=6?'+':'')+')</div>'+ultimas;
   }catch(e){}
 }
 
