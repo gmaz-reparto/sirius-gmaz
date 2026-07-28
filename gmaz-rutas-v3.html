@@ -932,8 +932,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div class="client-panel">
     <!-- La tarjeta "cliente más cercano" se quitó: el más cercano ya aparece como #1 en el listado. -->
     <div class="cp-header">
-      <div class="cp-title" id="cp-title">Clientes de ruta</div>
-      <div class="cp-count" id="cp-count">0 puntos</div>
+      <div><div class="cp-title" id="cp-title">Clientes de ruta</div><div class="cp-count" id="cp-count">0 puntos</div></div>
+      <button id="btn-finruta" onclick="haptic();finalizarRuta()" style="margin-left:auto;background:#0F1117;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Finalizar ruta</button>
     </div>
     <div class="cp-search-wrap">
       <input class="cp-search" type="search" id="cp-search" placeholder="Buscar por código o nombre..." autocomplete="off" oninput="filtrarClientes(this.value)">
@@ -1017,6 +1017,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <button id="ped-x" onclick="haptic();cerrarPedido()">✕</button>
     </div>
     <div id="ped-body"></div>
+  </div>
+</div>
+
+<!-- ══ SHEET FINALIZAR RUTA · RESUMEN DE RECHAZOS DE LA JORNADA ══ -->
+<div id="fin-ovl" onclick="if(event.target===this)cerrarFinRuta()" style="position:fixed;inset:0;z-index:660;background:rgba(15,17,23,.55);display:none;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;width:100%;max-width:520px;max-height:88vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;animation:pedUp .22s ease">
+    <div style="padding:14px 16px 11px;border-bottom:.5px solid #EEF0F4;position:relative">
+      <div style="width:38px;height:4px;border-radius:3px;background:#E2E5EC;margin:0 auto 10px"></div>
+      <div style="font-size:16px;font-weight:800;color:#0F1117">Resumen de tu jornada</div>
+      <div id="fin-sub" style="font-size:11px;color:#8A90A0;margin-top:2px">—</div>
+      <button onclick="haptic();cerrarFinRuta()" style="position:absolute;top:11px;right:14px;width:26px;height:26px;border-radius:50%;background:#F2F4F7;border:none;font-size:15px;color:#6B7385;cursor:pointer">✕</button>
+    </div>
+    <div id="fin-body" style="padding:12px 14px 20px;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -2057,6 +2070,46 @@ function _construirRechazoDetalle(){
     .map(s=>({cod:s.cod,desc:s.desc,cajas:s.devCaj,und:s.devUnd,valor:_valUnits(_devUnits(s),s)}));
 }
 
+/* ══ FINALIZAR RUTA · resumen de la jornada del entregador con el detalle de rechazos ══ */
+async function finalizarRuta(){
+  if(!clientes.length){toast('Sin ruta activa','err');return;}
+  const fecha=getColDate();
+  const novCli=clientes.filter(c=>c._st==='novedad');
+  const entregados=clientes.filter(c=>c._st==='entregado').length;
+  const pend=clientes.length-entregados-novCli.length;
+  showLoad('Preparando resumen...');
+  const base=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+fecha+'/';
+  const dets=[];
+  for(const c of novCli){
+    const cod=String(c.id||getF(c,CFG.COL_CODIGO));
+    const nom=c.nombre||getF(c,CFG.COL_NOMBRE)||cod;
+    try{const d=await (await fetch(base+encodeURIComponent(cod)+'.json?t='+Date.now())).json();
+      dets.push({cod,nom,motivo:d.motivo,detalle:d.detalle||[],tc:d.total_cajas||0,tu:d.total_und||0,estado:d.estado});}
+    catch(e){dets.push({cod,nom,motivo:'(novedad sin detalle)',detalle:[],tc:0,tu:0});}
+  }
+  hideLoad();
+  let totCj=0,totU=0,totVal=0;
+  dets.forEach(d=>{totCj+=d.tc;totU+=d.tu;(d.detalle||[]).forEach(x=>totVal+=x.valor||0);});
+  document.getElementById('fin-sub').textContent=rutaActual+' · '+clientes.length+' clientes';
+  let html='<div style="display:flex;gap:8px;margin-bottom:12px">'+
+    '<div style="flex:1;background:#ECFDF5;border-radius:11px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:#059669">'+entregados+'</div><div style="font-size:9px;color:#0b6b3a;font-weight:700">ENTREGADOS</div></div>'+
+    '<div style="flex:1;background:#FEF2F2;border-radius:11px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:#E30613">'+novCli.length+'</div><div style="font-size:9px;color:#B91C1C;font-weight:700">CON NOVEDAD</div></div>'+
+    '<div style="flex:1;background:#F7F8FA;border-radius:11px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:#6B7385">'+pend+'</div><div style="font-size:9px;color:#6B7385;font-weight:700">PENDIENTES</div></div>'+
+  '</div>';
+  if(!dets.length){html+='<div style="text-align:center;padding:22px;color:#059669;font-weight:800">✓ Sin rechazos en tu jornada</div>';}
+  else{
+    html+='<div style="font-size:10px;font-weight:800;color:#6B7385;letter-spacing:.05em;margin:4px 2px 8px">RECHAZOS DE HOY · '+totCj+' cj'+(totU?' + '+totU+' u':'')+' · '+_pesos(totVal)+'</div>';
+    html+=dets.map(d=>{
+      const items=(d.detalle||[]).map(x=>'<div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6B7385;padding:1px 0"><span>'+x.desc+'</span><span style="color:#E30613;font-weight:600;white-space:nowrap">'+(x.cajas?x.cajas+' cj':'')+(x.cajas&&x.und?'+':'')+(x.und?x.und+' u':'')+' · '+_pesos(x.valor||0)+'</span></div>').join('');
+      const est=d.estado==='afecta'?'<span style="font-size:8px;font-weight:700;color:#B91C1C;background:#FEE2E2;border-radius:5px;padding:1px 6px">Afecta comisión</span>':d.estado==='omitida'?'<span style="font-size:8px;font-weight:700;color:#475569;background:#E2E8F0;border-radius:5px;padding:1px 6px">Omitida</span>':'<span style="font-size:8px;font-weight:700;color:#92400E;background:#FEF3C7;border-radius:5px;padding:1px 6px">Pendiente sup.</span>';
+      return '<div style="border:.5px solid #EEF0F4;border-radius:11px;padding:10px 12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12.5px;color:#0F1117">'+d.nom+'</b><span style="color:#E30613;font-weight:700;font-size:11.5px">'+d.tc+' cj'+(d.tu?'+'+d.tu+'u':'')+'</span></div><div style="display:flex;gap:6px;align-items:center;margin:2px 0 5px"><span style="font-size:9.5px;color:#9AA0AE">'+(d.motivo||'')+'</span>'+est+'</div>'+items+'</div>';
+    }).join('');
+  }
+  document.getElementById('fin-body').innerHTML=html;
+  document.getElementById('fin-ovl').style.display='flex';
+}
+function cerrarFinRuta(){document.getElementById('fin-ovl').style.display='none';}
+
 /* ══════════════ HOJA DE CARGA · CARGUE POR RUTA (Fase C) ══════════════ */
 let hojasIndex={}; // {ruta:{placa,transporte,entregas,cargueCaj,cargueBot,items:{cod:{caj,bot}}}}
 function parseHojaCarga(lineas,acc){
@@ -2656,7 +2709,7 @@ async function cargarDash(){
     cargarEventosGeocerca();
     cargarAlarmasSecurita();
     // Cache para que los módulos (Vehículos/Clientes/Rechazos/Indicadores) reutilicen sin nuevas llamadas
-    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos};
+    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,vendPed,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos};
     actualizarBadgesModulos();
     const modAct=document.querySelector('.dnav.on');if(modAct)refrescarModulo(modAct.dataset.mod);
     _dashCargadoUnaVez=true;
@@ -2979,12 +3032,35 @@ function iwClienteHTML(c,estado){
   const dir=c.direccion?String(c.direccion).replace(/&ntilde;/gi,'ñ'):'';
   const orden=(c.secuencia!=null&&c.secuencia!=='')?c.secuencia:null;
   const ico=(p)=>'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A90A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+  const cod=String(c.id);
+  // Ruta del vendedor (maestro o Libro de pedidos)
+  let vend='—';
+  try{const rv=_dashData&&_dashData.rutaVend?_dashData.rutaVend[cod]:null;const vp=_dashData&&_dashData.vendPed?_dashData.vendPed[cod]:null;vend=(rv&&rv!=='—')?rv:(vp||'—');}catch(e){}
+  // Resumen del pedido del cliente (del Libro)
+  let pedidoRow='';
+  try{
+    const ped=(typeof pedidosClientes!=='undefined')?pedidosClientes[cod]:null;
+    if(ped&&ped.b){let nItems=0,cj=0,bt=0;ped.b.forEach(b=>{if(/Carga Base/i.test(b.t))return;b.i.forEach(it=>{nItems++;cj+=it[2];bt+=it[3];});});
+      if(nItems)pedidoRow='<div class="iwrow">'+ico('<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>')+'Pedido: <b>'+nItems+'</b> ref · '+cj+' cj'+(bt?' + '+bt+' u':'')+'</div>';}
+  }catch(e){}
+  // Motivo de la novedad (si tiene)
+  let novRow='';
+  try{
+    if(estado==='novedad'&&_dashData&&_dashData.novedades_){
+      const nv=_dashData.novedades_.find(n=>String(n.codigo_cliente)===cod);
+      const rc=_dashData.rechCod?_dashData.rechCod[cod]:null;
+      if(nv)novRow='<div class="iwrow" style="color:#B45309">'+ico('<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>')+'Novedad: <b style="color:#B45309">'+(nv.motivo||'—')+'</b>'+(rc&&rc.caj?' · '+rc.caj+' cj devueltas':'')+'</div>';
+    }
+  }catch(e){}
   return '<div class="iw-cli"><div class="iwh"><span class="iwdot" style="background:'+col+'"></span>'+
     '<div><div class="iwn">'+(c.nombre||c.id)+'</div><div class="iwcod">Código '+c.id+'</div></div></div>'+
     (dir?'<div class="iwrow">'+ico('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>')+'<span>'+dir+'</span></div>':'')+
     '<div class="iwsep"></div>'+
-    '<div class="iwrow">'+ico('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')+'Ruta <b style="color:'+col+'">'+c.ruta+'</b>'+(orden!=null?' · Orden de visita <b>#'+orden+'</b>':'')+'</div>'+
+    '<div class="iwrow">'+ico('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>')+'Ruta entrega <b style="color:'+col+'">'+c.ruta+'</b>'+(orden!=null?' · #'+orden:'')+'</div>'+
+    '<div class="iwrow">'+ico('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>')+'Vendedor <b style="color:#E30613">'+vend+'</b></div>'+
+    pedidoRow+
     '<div class="iwrow">'+ico('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>')+'<b>'+cajas+'</b> cajas programadas</div>'+
+    novRow+
     '<span class="iwtag" style="color:'+est[1]+';background:'+est[2]+'">'+est[0]+'</span></div>';
 }
 function pintarDashMap(clientes_,entSet,novSet){
