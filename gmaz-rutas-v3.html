@@ -3487,6 +3487,25 @@ async function pintarFlotaEnVivo(){
    y detecta las PARADAS (≥3 min quieto) con hora de llegada/salida, duración y el cliente más cercano,
    para identificar tiempos de demora. No usa animación pesada (evita el congelamiento). */
 let recorridoCapa=null,_recorridoAbierto=false;
+let _geoEventos=[],_geoEvMk=null,_geoEvIW=null;
+/* Clic en un evento de geocerca → llevar al mapa, marcar el punto y ofrecer el recorrido/paradas. */
+function verEventoGeocerca(i){
+  const e=(_geoEventos||[])[i];if(!e||!dashMap)return;
+  if(e.lat==null||e.lng==null){toast('Ese evento no tiene coordenadas','err');return;}
+  const pos={lat:e.lat,lng:e.lng},esSalida=e.tipo==='salio';
+  document.getElementById('dash-map')?.scrollIntoView({behavior:'smooth',block:'center'});
+  dashMap.panTo(pos);dashMap.setZoom(16);
+  if(_geoEvMk)_geoEvMk.setMap(null);
+  _geoEvMk=new google.maps.Marker({position:pos,map:dashMap,zIndex:3200,
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:esSalida?'#E30613':'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:3}});
+  const hora=e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'';
+  if(!_geoEvIW)_geoEvIW=new google.maps.InfoWindow();
+  _geoEvIW.setContent('<div style="font-family:DM Sans,sans-serif;min-width:190px"><b style="color:'+(esSalida?'#E30613':'#0E9F6E')+'">'+(esSalida?'🚨 Salió de la zona aquí':'✓ Ingresó a la zona aquí')+'</b>'+
+    '<div style="font-size:11px;color:#6B7385;margin-top:3px">'+e.unit_id+' · '+e.ruta+' · '+hora+'</div>'+
+    (e.tiempo_fuera_seg!=null?'<div style="font-size:11px;color:#D97706;font-weight:700;margin-top:2px">Estuvo fuera '+Math.round(e.tiempo_fuera_seg/60)+' min</div>':'')+
+    '<div style="margin-top:7px"><a onclick="verRecorridoVehiculo(\''+e.unit_id+'\',\''+e.ruta+'\')" style="color:#1A56DB;font-size:11px;font-weight:800;cursor:pointer;text-decoration:underline">Ver recorrido y dónde se estacionó →</a></div></div>');
+  _geoEvIW.setPosition(pos);_geoEvIW.open(dashMap);
+}
 function limpiarRecorrido(){
   if(recorridoCapa){
     if(recorridoCapa.timer)clearInterval(recorridoCapa.timer);
@@ -3561,8 +3580,7 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     if(!path.length){toast('Recorrido sin coordenadas válidas','err');_recorridoAbierto=false;return;}
     const col=rutaColor[ruta]||'#1A56DB';
     const overlays=[];
-    overlays.push(new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.8,strokeWeight:3.5,zIndex:1400,
-      icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:2.4,fillColor:col,fillOpacity:1,strokeWeight:0},offset:'0',repeat:'90px'}]}));
+    overlays.push(new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.72,strokeWeight:4,zIndex:1400}));
     overlays.push(new google.maps.Marker({position:path[0],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Inicio '+((ord[0].hora||'').slice(0,5))}));
     overlays.push(new google.maps.Marker({position:path[path.length-1],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Fin '+((ord[ord.length-1].hora||'').slice(0,5))}));
     // Clientes del día de esa ruta (para ver si debía estar en esa zona)
@@ -3593,6 +3611,16 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     let km=0;if(window.turf)for(let k=1;k<path.length;k++)km+=turf.distance(turf.point([path[k-1].lng,path[k-1].lat]),turf.point([path[k].lng,path[k].lat]),{units:'kilometers'});
     const bounds=new google.maps.LatLngBounds();path.forEach(p=>bounds.extend(p));dashMap.fitBounds(bounds);
     recorridoCapa={unitId,ruta,fecha,overlays,timer:null,paradas};
+    // Camión 🚚 animado recorriendo la ruta (en vez de las flechas confusas cuando pasó varias veces por el mismo punto)
+    const truck=new google.maps.Marker({position:path[0],map:dashMap,zIndex:2100,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:0,fillOpacity:0,strokeWeight:0},label:{text:'🚚',fontSize:'24px'}});
+    overlays.push(truck);
+    let _ti=0;const _tstep=path.length>400?2:1;
+    const _truckTimer=setInterval(()=>{
+      if(!recorridoCapa||recorridoCapa.timer!==_truckTimer){clearInterval(_truckTimer);return;}
+      truck.setPosition(path[_ti]);_ti+=_tstep;if(_ti>=path.length)_ti=0;
+    },70);
+    recorridoCapa.timer=_truckTimer;
     mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord);
     toast('Recorrido '+unitId+' ('+fecha+'): '+paradas.length+' paradas · ~'+km.toFixed(1)+' km','ok');
   }catch(e){toast('Error cargando recorrido: '+e.message,'err');_recorridoAbierto=false;}
@@ -3904,19 +3932,26 @@ async function cargarEventosGeocerca(){
       return;
     }
     const eventos=await r.json();
+    _geoEventos=eventos;
     const meta=document.getElementById('dash-geo-meta');if(meta)meta.textContent=eventos.length+' eventos hoy';
     if(!eventos.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8A90A0;padding:16px">Sin salidas de geocerca hoy</td></tr>';return;}
-    tbody.innerHTML=eventos.map(e=>{
+    // Emparejar salió→ingresó para mostrar el tiempo fuera también en la fila de la salida
+    const asc=[...eventos].sort((a,b)=>new Date(a.hora)-new Date(b.hora)),lastSalio={},tiempoSal={};
+    asc.forEach(e=>{if(e.tipo==='salio')lastSalio[e.unit_id]=e;else if(e.tipo==='entro'&&lastSalio[e.unit_id]){tiempoSal[lastSalio[e.unit_id].hora+'|'+e.unit_id]=e.tiempo_fuera_seg;lastSalio[e.unit_id]=null;}});
+    tbody.innerHTML=eventos.map((e,idx)=>{
       const col=rutaColor[e.ruta]||'#4A5060';
       const hora=e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
       const esSalida=e.tipo==='salio';
       const ef=e.estado_fuera||'';
       const efHtml=ef?'<span style="font-size:11px;color:'+(/Se movió|Encendido/.test(ef)?'#D97706':'#6B7385')+'">'+ef+'</span>':'<span style="color:#B5BAC6">—</span>';
-      return '<tr><td>'+hora+'</td><td style="font-weight:800">'+e.unit_id+'</td>'+
+      let tf=e.tiempo_fuera_seg;if(tf==null&&esSalida)tf=tiempoSal[e.hora+'|'+e.unit_id];
+      const tfHtml=tf!=null?(Math.round(tf/60)+' min'+(esSalida?' <span style="color:#B5BAC6;font-size:9px">al volver</span>':'')):'<span style="color:#B5BAC6">—</span>';
+      const clic=(e.lat!=null&&e.lng!=null);
+      return '<tr onclick="verEventoGeocerca('+idx+')" style="'+(clic?'cursor:pointer':'')+'" title="'+(clic?'Ver en el mapa':'')+'"><td>'+hora+'</td><td style="font-weight:800">'+e.unit_id+(clic?' <span style="color:#1A56DB;font-size:9px">📍</span>':'')+'</td>'+
         '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td>'+
         '<td><span class="dtag" style="background:'+(esSalida?'#FFF1F2':'#E6F7F0')+';color:'+(esSalida?'#E30613':'#0E9F6E')+'">'+(esSalida?'🚨 Salió':'✓ Ingresó')+'</span></td>'+
         '<td>'+(e.distancia_limite_m!=null?e.distancia_limite_m+' m':'—')+'</td>'+
-        '<td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td>'+
+        '<td>'+tfHtml+'</td>'+
         '<td>'+efHtml+'</td></tr>';
     }).join('');
   }catch(e){console.log('cargarEventosGeocerca:',e.message);}
