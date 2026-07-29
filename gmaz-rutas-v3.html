@@ -3526,8 +3526,11 @@ async function pintarFlotaEnVivo(){
       if(lista)lista.innerHTML=estadoVacio('truck','Sin vehículos asignados','Asigna un vehículo a cada ruta en el panel de la izquierda para ver su posición GPS en tiempo real.','gris');
       return;
     }
-    const rutaPorUnit={};
-    asignaciones.forEach(a=>{rutaPorUnit[a.unit_id]=a.ruta;});
+    // Un vehículo puede estar asignado a VARIAS rutas (el coordinador une, p.ej., la V52 al camión de la V11)
+    const rutasPorUnit={};
+    asignaciones.forEach(a=>{(rutasPorUnit[a.unit_id]=rutasPorUnit[a.unit_id]||[]).push(a.ruta);});
+    Object.values(rutasPorUnit).forEach(a=>a.sort());
+    const rutaPorUnit={};Object.keys(rutasPorUnit).forEach(u=>rutaPorUnit[u]=rutasPorUnit[u][0]); // ruta primaria (compat)
     // Catálogos de Securita (vehículos + conductores) — cacheados, no se piden en cada refresco
     if(!_vehCache)_vehCache=await secVehiculos()||[];
     if(_driverCache===null){ try{ _driverCache=await secConductores()||[]; }catch(e){ _driverCache=[]; } }
@@ -3537,17 +3540,17 @@ async function pintarFlotaEnVivo(){
     const iw=new google.maps.InfoWindow();
     let vistos=0,filas='';
     const posPorUnit={};(posiciones||[]).forEach(u=>posPorUnit[u.UnitId]=u);
-    _flotaCache={rutaPorUnit,posPorUnit}; // reutilizado por la vista múltiple sin volver a llamar la API
+    _flotaCache={rutaPorUnit,rutasPorUnit,posPorUnit}; // reutilizado por la vista múltiple sin volver a llamar la API
     // Marcadores + filas de lista, en el orden de las rutas asignadas
-    Object.keys(rutaPorUnit).sort((a,b)=>rutaPorUnit[a].localeCompare(rutaPorUnit[b])).forEach(unitId=>{
-      const ruta=rutaPorUnit[unitId], u=posPorUnit[unitId];
+    Object.keys(rutasPorUnit).sort((a,b)=>rutasPorUnit[a][0].localeCompare(rutasPorUnit[b][0])).forEach(unitId=>{
+      const rutas=rutasPorUnit[unitId], ruta=rutas[0], label=rutas.join(' + '), u=posPorUnit[unitId];
       const col=rutaColor[ruta]||'#E30613';
       const veh=_vehCache.find(v=>v.nombre===unitId);
       const conductor=veh?(_driverCache.find(d=>String(d.idvehiculo)===String(veh.id))||null):null;
       const nombreCond=conductor?(conductor.nombre+' '+(conductor.apellido||'')).trim():'';
       if(!u){ // asignado pero sin reporte GPS
         filas+='<div class="dfl-row"><div class="dfl-ic" style="background:#F1EFE8;color:#9AA1B2">'+icoSvg('truck',18)+'</div>'+
-          '<div class="dfl-i"><b style="color:'+col+'">'+ruta+'</b><small>'+unitId+' · sin reporte</small></div>'+
+          '<div class="dfl-i"><b style="color:'+col+'">'+label+'</b><small>'+unitId+' · sin reporte</small></div>'+
           '<div class="dfl-st"><span class="dfl-badge" style="background:#F1EFE8;color:#6B7385">— —</span></div></div>';
         return;
       }
@@ -3558,17 +3561,17 @@ async function pintarFlotaEnVivo(){
       const sensoresTxt=resumenSensores(u.Sensores);
       const domLinea=(nombreCond?nombreCond+' · ':'')+(u.Domicilio||'—');
       filas+='<div class="dfl-row"><div class="dfl-ic" style="background:'+col+'1A;color:'+col+'">'+icoSvg('truck',18)+'</div>'+
-        '<div class="dfl-i"><b style="color:'+col+'">'+ruta+' · '+unitId+'</b><small>'+domLinea+'</small></div>'+
+        '<div class="dfl-i"><b style="color:'+col+'">'+label+' · '+unitId+'</b><small>'+domLinea+'</small></div>'+
         '<div class="dfl-st"><span class="dfl-badge" style="background:'+bg+';color:'+cl+'">'+(enc?'▶ '+(u.GpsSpeed||0)+' km/h':'⏸ detenido')+'</span>'+
         '<small>'+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+(sensoresTxt?' · '+sensoresTxt:'')+'</small></div>'+
         '<button class="dchip" style="padding:5px 8px;font-size:9.5px;margin-left:4px" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')" title="Ver vehículo">⋯</button></div>';
       if(lat&&lng&&posicionOperativa(lat,lng)){
         vistos++;
-        const mk=new google.maps.Marker({position:{lat,lng},map:rutaVisible(ruta)?dashMap:null,icon:dashTruckIcon(ruta,enc,veh&&veh.tipo_vehiculo),zIndex:2000,title:ruta+' · '+unitId});
-        mk._ruta=ruta;
+        const mk=new google.maps.Marker({position:{lat,lng},map:rutas.some(r=>rutaVisible(r))?dashMap:null,icon:dashTruckIcon(ruta,enc,veh&&veh.tipo_vehiculo),zIndex:2000,title:label+' · '+unitId});
+        mk._ruta=ruta;mk._rutas=rutas;
         mk.addListener('click',()=>abrirVehPanel(unitId,ruta));
         flotaMarkers.push(mk);
-        evaluarGeocercaVehiculo(unitId,ruta,lat,lng,parseFloat(u.GpsSpeed)||0,enc);
+        evaluarGeocercaVehiculo(unitId,rutas,lat,lng,parseFloat(u.GpsSpeed)||0,enc);
       } else if(lat&&lng){
         // GPS fantasma (fuera de la zona operativa): no dibujar marcador ni rastro; limpiar rastro viejo
         const capa=geocercaCapas[unitId];
@@ -3953,11 +3956,14 @@ async function sincronizarLimitesVelocidad(clientes_){
   }catch(e){console.log('sincronizarLimitesVelocidad:',e.message);}
 }
 function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel,ignicion){
-  const g=geocercas[ruta];
-  if(!g||!window.turf)return;
+  // Un vehículo puede servir VARIAS rutas: está "en zona" si cae en la geocerca de cualquiera de ellas.
+  const rutas=Array.isArray(ruta)?ruta:[ruta];
+  const rutaLbl=rutas.join(' + ');
+  const gs=rutas.map(r=>geocercas[r]).filter(Boolean);
+  if(!gs.length||!window.turf)return;
   const punto=turf.point([lng,lat]);
-  let dentro=true;
-  try{ dentro=turf.booleanPointInPolygon(punto,g.poligono); }catch(e){return;}
+  let dentro=false;
+  try{ dentro=gs.some(g=>turf.booleanPointInPolygon(punto,g.poligono)); }catch(e){return;}
   let estado=geocercaEstado[unitId];
   if(!estado){ // primer reporte de este vehículo: fija línea base, no dispara alerta
     geocercaEstado[unitId]={dentro,trail:[{lat,lng,ts:Date.now()}]};
@@ -3973,22 +3979,22 @@ function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel,ignicion){
   }
   if(dentro===estado.dentro)return; // sin cambio de estado
   let distM=0;
-  try{ distM=Math.round(turf.pointToLineDistance(punto,turf.polygonToLine(g.poligono),{units:'kilometers'})*1000); }catch(e){}
+  try{ distM=Math.round(Math.min(...gs.map(g=>turf.pointToLineDistance(punto,turf.polygonToLine(g.poligono),{units:'kilometers'})*1000))); }catch(e){}
   if(!dentro){
     estado.salidaEn=Date.now();
     estado.puntoSalida={lat,lng};
     estado.maxVelFuera=vel||0;estado.movioFuera=(vel||0)>3;estado.encFuera=!!ignicion; // reiniciar acumuladores de la excursión
-    registrarEventoGeocerca(unitId,ruta,'salio',lat,lng,vel,distM,null,null);
-    toast('🚨 '+unitId+' ('+ruta+') salió de su geocerca','err');
+    registrarEventoGeocerca(unitId,rutaLbl,'salio',lat,lng,vel,distM,null,null);
+    toast('🚨 '+unitId+' ('+rutaLbl+') salió de su geocerca','err');
   }else{
     const tiempoFuera=estado.salidaEn?Math.round((Date.now()-estado.salidaEn)/1000):null;
     estado.puntoEntrada={lat,lng};
     const resumen=(estado.encFuera?'Encendido':'Apagado')+' · '+(estado.movioFuera?'Se movió':'Estuvo quieto')+(estado.maxVelFuera>0?' · máx '+Math.round(estado.maxVelFuera)+' km/h':'');
-    registrarEventoGeocerca(unitId,ruta,'entro',lat,lng,vel,distM,tiempoFuera,resumen);
-    toast('✓ '+unitId+' ('+ruta+') volvió a su zona','ok');
+    registrarEventoGeocerca(unitId,rutaLbl,'entro',lat,lng,vel,distM,tiempoFuera,resumen);
+    toast('✓ '+unitId+' ('+rutaLbl+') volvió a su zona','ok');
   }
   estado.dentro=dentro;
-  dibujarTrailVehiculo(unitId,ruta,estado);
+  dibujarTrailVehiculo(unitId,rutaLbl,estado);
   cargarEventosGeocerca();
 }
 function dibujarTrailVehiculo(unitId,ruta,estado){
@@ -4136,15 +4142,17 @@ async function renderAsignacionVehiculos(rutas){
     }
     const asignadas=rAsig.ok?await rAsig.json():[];
     const asigPorRuta={};asignadas.forEach(a=>asigPorRuta[a.ruta]=a.unit_id);
+    const usoUnit={};asignadas.forEach(a=>usoUnit[a.unit_id]=(usoUnit[a.unit_id]||0)+1); // vehículos usados en >1 ruta
     cont.innerHTML=rutas.map(ruta=>{
       const actual=asigPorRuta[ruta]||'';
+      const compartido=actual&&usoUnit[actual]>1;
       const opciones=_vehCache.map(v=>'<option value="'+v.nombre+'"'+(v.nombre===actual?' selected':'')+'>'+v.nombre+' · '+(v.marca||'')+' '+(v.modelo||'')+'</option>').join('');
       return '<div class="dveh-row">'+
         '<div class="dveh-code" style="color:'+(rutaColor[ruta]||'#0F1117')+'">'+ruta+'</div>'+
         '<select class="dveh-select" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
         '<option value="">— sin asignar —</option>'+opciones+
         '</select>'+
-        '<div class="dveh-ok">'+(actual?'✅':'')+'</div></div>';
+        '<div class="dveh-ok">'+(actual?(compartido?'<span style="font-size:8px;font-weight:800;color:#B45309;background:#FEF3C7;border-radius:5px;padding:2px 6px">compartido</span>':'✅'):'')+'</div></div>';
     }).join('');
     _vehListCargada=true;
   }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
