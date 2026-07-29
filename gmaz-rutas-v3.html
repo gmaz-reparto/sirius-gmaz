@@ -801,6 +801,55 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 
+<!-- LOGIN POR ROL -->
+<style>
+#scr-login{background:radial-gradient(130% 100% at 50% 0%,#F0263A 0%,#B5000F 55%,#7a0009 100%);align-items:center;justify-content:center;z-index:210;padding:24px}
+.lg-wrap{width:100%;max-width:400px;text-align:center}
+.lg-brand{display:inline-flex;align-items:center;gap:11px;margin-bottom:26px}
+.lg-brand .lg-bar{width:5px;height:38px;background:#fff;border-radius:3px}
+.lg-g{font-size:30px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1}
+.lg-r{font-size:12px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:1px}
+.lg-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.92);margin-bottom:16px}
+.lg-cards{display:flex;gap:11px;margin-bottom:16px}
+.lg-card{flex:1;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);border-radius:16px;padding:18px 8px;cursor:pointer;transition:.18s;backdrop-filter:blur(4px)}
+.lg-card:hover{background:rgba(255,255,255,.2)}
+.lg-card.sel{background:#fff;border-color:#fff}
+.lg-card .lg-ic{font-size:30px;line-height:1;margin-bottom:8px}
+.lg-card .lg-lbl{font-size:12.5px;font-weight:800;color:#fff}
+.lg-card.sel .lg-lbl{color:#B5000F}
+.lg-pwd{display:flex;gap:8px;animation:lgIn .2s ease}
+@keyframes lgIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.lg-pwd input{flex:1;height:48px;border:none;border-radius:13px;padding:0 16px;font-size:15px;font-family:inherit;background:#fff;color:#0F1117;outline:none}
+.lg-pwd button{height:48px;padding:0 22px;border:none;border-radius:13px;background:#0F1117;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+.lg-foot{margin-top:22px;font-size:10px;color:rgba(255,255,255,.6);font-weight:600}
+#scr-preventa{background:#0F1117;align-items:center;justify-content:center;z-index:205;color:#fff;text-align:center;padding:30px}
+</style>
+<div id="scr-login" class="scr hidden">
+  <div class="lg-wrap">
+    <div class="lg-brand"><div class="lg-bar"></div><div style="text-align:left"><div class="lg-g">GMAZ</div><div class="lg-r">RUTAS · COCA-COLA</div></div></div>
+    <div class="lg-title">Selecciona tu perfil e ingresa tu clave</div>
+    <div class="lg-cards">
+      <div class="lg-card" data-rol="entregador" onclick="haptic();pickRolLogin('entregador')"><div class="lg-ic">🚚</div><div class="lg-lbl">Entregador</div></div>
+      <div class="lg-card" data-rol="coordinador" onclick="haptic();pickRolLogin('coordinador')"><div class="lg-ic">🧭</div><div class="lg-lbl">Coordinador</div></div>
+      <div class="lg-card" data-rol="preventa" onclick="haptic();pickRolLogin('preventa')"><div class="lg-ic">📋</div><div class="lg-lbl">Preventa</div></div>
+    </div>
+    <div class="lg-pwd" data-rol="entregador" style="display:none"><input id="lg-inp-entregador" type="password" placeholder="Clave de entregador" onkeydown="if(event.key==='Enter')loginRol('entregador')"><button onclick="haptic();loginRol('entregador')">Entrar</button></div>
+    <div class="lg-pwd" data-rol="coordinador" style="display:none"><input id="lg-inp-coordinador" type="password" placeholder="Clave de coordinador" onkeydown="if(event.key==='Enter')loginRol('coordinador')"><button onclick="haptic();loginRol('coordinador')">Entrar</button></div>
+    <div class="lg-pwd" data-rol="preventa" style="display:none"><input id="lg-inp-preventa" type="password" placeholder="Clave de preventa" onkeydown="if(event.key==='Enter')loginRol('preventa')"><button onclick="haptic();loginRol('preventa')">Entrar</button></div>
+    <div class="lg-foot">Cada perfil ve solo lo que le corresponde</div>
+  </div>
+</div>
+
+<!-- PREVENTA (placeholder — acceso por definir) -->
+<div id="scr-preventa" class="scr hidden">
+  <div>
+    <div style="font-size:44px;margin-bottom:14px">📋</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">Preventa</div>
+    <div style="font-size:13px;color:#9AA1B2;max-width:280px;margin:0 auto 22px;line-height:1.5">Este perfil aún no tiene funciones habilitadas. Pronto podrás consultar tus clientes, pedidos y obsequios.</div>
+    <button onclick="haptic();cerrarSesion()" style="background:#E30613;color:#fff;border:none;border-radius:12px;padding:12px 22px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">Cerrar sesión</button>
+  </div>
+</div>
+
 <!-- START TRANSITION -->
 <div id="scr-start" class="scr hidden">
   <div class="st-label">¡Arrancando ruta!</div>
@@ -835,8 +884,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="hs"><b id="hs-cajas">—</b><span>CAJAS</span></div>
     </div>
   </div>
-  <div class="routes-meta">
+  <div class="routes-meta" style="display:flex;align-items:center;justify-content:space-between">
     <div class="routes-title">Selecciona tu ruta · orden P PAS</div>
+    <button onclick="haptic();cerrarSesion()" style="background:none;border:none;color:#8A90A0;font-size:10px;font-weight:700;text-decoration:underline;cursor:pointer;font-family:inherit">⎋ Cerrar sesión</button>
   </div>
   <div class="routes-grid" id="routes-grid"></div>
 </div>
@@ -1111,6 +1161,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <span class="dchip" id="dash-fecha" style="cursor:default"></span>
         <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
         <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
+        <button class="dchip" onclick="haptic();cerrarSesion()" title="Cerrar sesión">⎋ Salir</button>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
       </div>
     </div>
@@ -1490,7 +1541,7 @@ const CFG={
   COL_LAT:['lat','Latitud_','LAT','Coord. Geocaptura 1','LATITUD'],
   COL_LNG:['lng','Longitud_','LNG','Coord. Geocaptura 2','LONGITUD'],
   COL_DIR:['direccion','Direccion__linea_1_','Dirección__línea_1_','DIRECCION','DIRECCIÓN','Dirección'],
-  COORD_PWD:'gmaz2024',COORD_TAPS:3,UTC_OFFSET:-5,
+  COORD_PWD:'gmaz2024',ENTREGA_PWD:'Entregagmaz2024',PREVENTA_PWD:'Preventagmaz2024',COORD_TAPS:3,UTC_OFFSET:-5,
   // Plataforma SecuritaGPS (service24gps) — rastreo real de la flota
   SEC_URL:'https://api.service24gps.com/api/v1/',
   SEC_APIKEY:'d7e3a9426efaa458518179f8cdea361b',
@@ -2605,7 +2656,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('hdr-date').textContent=d.toLocaleDateString('es-CO',opts).toUpperCase();
   setTimeout(()=>{
     document.getElementById('scr-splash').classList.add('hidden');
-    loadRoutes();
+    let r=null;try{r=localStorage.getItem('gmaz_rol');}catch(e){}
+    if(r&&['entregador','coordinador','preventa'].includes(r))entrarComoRol(r);
+    else mostrarLogin();
   },1400);
 });
 
@@ -2691,8 +2744,13 @@ function toggleTrafico(){
   toast(trafficOn?'Tráfico activado':'Tráfico desactivado','ok');
 }
 function esEscritorio(){return !ES_MOVIL&&window.innerWidth>=900;}
-function mostrarDashSiEscritorio(){
-  if(!esEscritorio())return;
+let ROL=null;
+/* Al final de loadRoutes: enruta la vista según el ROL elegido en el login. */
+function rutearVistaInicial(){
+  if(ROL==='coordinador'){ if(esEscritorio())mostrarDash(); else openCoord(); }
+  // entregador: ya quedó en el flujo scr-* de loadRoutes
+}
+function mostrarDash(){
   document.getElementById('dash').classList.add('on');
   document.getElementById('dash-fecha').innerHTML=icoSvg('cal',12)+' '+new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
   poblarFiltros();
@@ -2700,6 +2758,29 @@ function mostrarDashSiEscritorio(){
   if(dashInterval)clearInterval(dashInterval);
   dashInterval=setInterval(()=>{if(document.getElementById('dash').classList.contains('on')&&!_recorridoAbierto)cargarDash();},30000);
 }
+/* ══ LOGIN POR ROL (entregador / coordinador / preventa) ══ */
+function mostrarLogin(){document.getElementById('scr-login').classList.remove('hidden');}
+function pickRolLogin(rol){
+  document.querySelectorAll('.lg-card').forEach(c=>c.classList.toggle('sel',c.dataset.rol===rol));
+  document.querySelectorAll('.lg-pwd').forEach(p=>p.style.display=p.dataset.rol===rol?'flex':'none');
+  const inp=document.getElementById('lg-inp-'+rol);if(inp){inp.value='';setTimeout(()=>inp.focus(),50);}
+}
+function loginRol(rol){
+  const inp=document.getElementById('lg-inp-'+rol);
+  const pwd=inp?inp.value:'';
+  const claves={entregador:CFG.ENTREGA_PWD,coordinador:CFG.COORD_PWD,preventa:CFG.PREVENTA_PWD};
+  if(pwd!==claves[rol]){toast('Clave incorrecta','err');if(inp){inp.value='';inp.focus();}return;}
+  haptic([40,30,40]);
+  entrarComoRol(rol);
+}
+function entrarComoRol(rol){
+  ROL=rol;try{localStorage.setItem('gmaz_rol',rol);}catch(e){}
+  const lg=document.getElementById('scr-login');if(lg)lg.classList.add('hidden');
+  if(rol==='preventa'){document.getElementById('scr-preventa').classList.add('on');return;}
+  if(rol==='coordinador')coordUnlocked=true;
+  loadRoutes(); // carga los datos; al terminar, rutearVistaInicial() muestra la vista del coordinador
+}
+function cerrarSesion(){try{localStorage.removeItem('gmaz_rol');}catch(e){}location.reload();}
 function verComoEntregador(){
   document.getElementById('dash').classList.remove('on');
   document.getElementById('dash-volver').classList.add('on');
@@ -4112,7 +4193,7 @@ async function loadRoutes(){
     // Gauges reales desde estados_entrega (asíncrono, no bloquea)
     actualizarGaugesRutas(rutas);
     hideLoad();showScr('scr-routes');
-    mostrarDashSiEscritorio();
+    rutearVistaInicial();
   }catch(e){hideLoad();toast('Error cargando rutas: '+e.message,'err');showScr('scr-routes');}
 }
 
