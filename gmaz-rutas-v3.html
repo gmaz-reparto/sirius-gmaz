@@ -4215,13 +4215,7 @@ function startRoute(ruta,lista){
       if(!window._hintSwipe){window._hintSwipe=true;setTimeout(()=>toast('Desliza un cliente ← o → para acciones rápidas','ok'),3500);}
       // Numerar 1→2→3 desde la ubicación del entregador (no esperar al watch GPS)
       setTimeout(()=>{
-        if(posGPS){optimizarRutaDesdeGPS(posGPS);}
-        else if(navigator.geolocation){
-          navigator.geolocation.getCurrentPosition(
-            p=>{if(!_gpsVehActivo)posGPS={lat:p.coords.latitude,lng:p.coords.longitude};optimizarRutaDesdeGPS(posGPS);},
-            ()=>{},{enableHighAccuracy:true,timeout:9000,maximumAge:8000}
-          );
-        }
+        if(posGPS){optimizarRutaDesdeGPS(posGPS);} // solo GPS del vehículo; sin él, el orden P PAS manda
       },1200);
       // Precargar índice de facturas y de pedidos en background
       setTimeout(()=>cargarIndiceFacturas(),1000);
@@ -4411,21 +4405,8 @@ function initMap(){
   gmap.setStreetView(gpano);
   svSvc=new google.maps.StreetViewService();
   truckMk=new google.maps.Marker({position:pasto,map:gmap,icon:truckIcon(),zIndex:1000,title:'Tu posición'});
-  let gpsOptimizado=false;
-  navigator.geolocation&&navigator.geolocation.watchPosition(p=>{
-    if(_gpsVehActivo)return; // el GPS del vehículo asignado manda: el del celular queda solo de respaldo
-    const pos={lat:p.coords.latitude,lng:p.coords.longitude};
-    posGPS=pos; // alimenta "cliente más cercano"
-    actualizarChipGps('cel');
-    truckMk&&truckMk.setPosition(pos);
-    if(navMode&&gpano)gpano.setPosition(pos);
-    if(!gpsOptimizado&&clientes.length>1){
-      gpsOptimizado=true;
-      setTimeout(()=>optimizarRutaDesdeGPS(pos),800);
-    }
-    // Re-evaluar cliente más cercano al moverse (marcador + tarjeta + ruta)
-    if(clientes.length){actualizarPuntoPrimero();actualizarProgresoRuta();reRutearSiCambioCercano();}
-  },e=>console.log('GPS:',e.message),{enableHighAccuracy:true,timeout:10000,maximumAge:5000});
+  // GPS DEL CELULAR DESACTIVADO: la posición del entregador SIEMPRE viene del GPS del vehículo
+  // asignado (activarGpsVehiculo → SecuritaGPS). Nunca se usa la ubicación del teléfono.
 }
 /* ══ POSICIÓN DEL ENTREGADOR = GPS REAL DEL VEHÍCULO ASIGNADO (SecuritaGPS) ══
    Si la ruta del entregador tiene un vehículo asignado por el coordinador, la app usa la posición
@@ -4759,18 +4740,15 @@ function activateNav(){
     map:gmap,suppressMarkers:true,
     polylineOptions:{strokeColor:'#E30613',strokeWeight:5,strokeOpacity:.9}
   });
-  // Usar última posición GPS conocida del watchPosition (ya está activo)
-  if(ultimaPosGPS){
-    calcularRuta(ultimaPosGPS,{lat,lng});
+  // Navegar desde el GPS del VEHÍCULO (nunca el del celular). Si no hay posición del vehículo,
+  // abrir Google Maps externo hacia el cliente (usa el GPS nativo del teléfono, fuera de la app).
+  if(posGPS){
+    calcularRuta(posGPS,{lat,lng});
     return;
   }
-  // Si no hay posición previa, solicitarla
-  showLoad('Obteniendo ubicación...');
-  navigator.geolocation.getCurrentPosition(
-    p=>{ultimaPosGPS={lat:p.coords.latitude,lng:p.coords.longitude};calcularRuta(ultimaPosGPS,{lat,lng});},
-    e=>{hideLoad();navMode=false;toast('Activa la ubicación en el navegador para navegar','err');},
-    {enableHighAccuracy:true,timeout:10000,maximumAge:30000}
-  );
+  navMode=false;
+  const a=document.createElement('a');a.href='https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'&travelmode=driving';a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Sin GPS del vehículo — abriendo Google Maps al cliente','ok');
 }
 
 function calcularRuta(origen,destino){
@@ -4812,13 +4790,8 @@ function autoNavPrimerCliente(){
       origin:origen,destination:{lat,lng},travelMode:google.maps.TravelMode.DRIVING
     },(r,s)=>{if(s==='OK')dirRenderer.setDirections(r);});
   };
-  // Si el GPS del vehículo está activo, usar ESA posición — nunca la del celular
-  if(_gpsVehActivo&&posGPS){ rutarDesde(posGPS); return; }
-  if(!navigator.geolocation){ if(posGPS)rutarDesde(posGPS); return; }
-  navigator.geolocation.getCurrentPosition(p=>{
-    if(!_gpsVehActivo)posGPS={lat:p.coords.latitude,lng:p.coords.longitude}; // no pisar el GPS del vehículo
-    rutarDesde(posGPS);
-  },()=>{if(posGPS)rutarDesde(posGPS);},{enableHighAccuracy:true,timeout:8000,maximumAge:10000});
+  // La ruta automática parte SIEMPRE del GPS del vehículo (nunca del celular)
+  if(posGPS)rutarDesde(posGPS);
 }
 function reRutearSiCambioCercano(){
   // Si el más cercano cambió (se movió o entregó), redibujar la ruta automática
