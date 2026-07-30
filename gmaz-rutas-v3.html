@@ -903,6 +903,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
 </div>
 
+<!-- Botón de salida siempre visible (para no quedar atrapado en ningún rol) -->
+<button id="btn-salir-global" onclick="haptic();cerrarSesion()" style="display:none;position:fixed;top:8px;right:8px;z-index:9000;align-items:center;gap:5px;background:rgba(15,17,23,.86);color:#fff;border:none;border-radius:20px;padding:7px 13px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.28)">⎋ Salir</button>
+
 <!-- START TRANSITION -->
 <div id="scr-start" class="scr hidden">
   <div class="st-label">¡Arrancando ruta!</div>
@@ -2831,7 +2834,9 @@ function loginRol(rol){
 function entrarComoRol(rol){
   ROL=rol;try{localStorage.setItem('gmaz_rol',rol);}catch(e){}
   const lg=document.getElementById('scr-login');if(lg)lg.classList.add('hidden');
-  if(rol==='preventa'){document.getElementById('scr-preventa').classList.add('on');return;}
+  // Botón "Salir" flotante siempre visible (el coordinador ya tiene el suyo en la barra)
+  const bs=document.getElementById('btn-salir-global');if(bs)bs.style.display=(rol==='coordinador')?'none':'flex';
+  if(rol==='preventa'){const p=document.getElementById('scr-preventa');p.classList.remove('hidden');p.style.transition='none';p.style.opacity='1';p.style.transform='none';p.style.pointerEvents='auto';p.style.zIndex='240';return;}
   if(rol==='coordinador')coordUnlocked=true;
   loadRoutes(); // carga los datos; al terminar, rutearVistaInicial() muestra la vista del coordinador
 }
