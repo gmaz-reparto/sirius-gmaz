@@ -774,6 +774,26 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dtbl tbody tr{transition:background .1s}
 .dtbl tbody tr:hover td{background:#FAFBFD}
 .dtag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:7px;display:inline-block}
+/* ── Novedades del día: tarjetas tipo "centro de calidad" ── */
+.nov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px;padding:4px 2px 2px}
+.nov-card{display:flex;gap:11px;background:#fff;border:1px solid var(--gris2);border-radius:var(--radio-lg);padding:11px;box-shadow:var(--sh-card);transition:box-shadow .15s,transform .15s}
+.nov-card:hover{box-shadow:var(--sh-card-hov);transform:translateY(-1px)}
+.nov-photo{width:64px;height:64px;border-radius:13px;flex-shrink:0;background-size:cover;background-position:center;background-color:var(--gris1);position:relative;cursor:pointer;overflow:hidden}
+.nov-photo-empty{display:flex;align-items:center;justify-content:center;color:var(--gris3);cursor:default}
+.nov-photo-zoom{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,17,23,0);font-size:14px;opacity:0;transition:background .15s,opacity .15s}
+.nov-photo:hover .nov-photo-zoom{background:rgba(15,17,23,.35);opacity:1}
+.nov-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.nov-top{display:flex;align-items:baseline;gap:7px;min-width:0}
+.nov-top b{font-size:12.5px;font-weight:800;color:#0F1117;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nov-cod{font-size:10px;color:var(--gris4);font-weight:600;flex-shrink:0}
+.nov-tags{display:flex;flex-wrap:wrap;gap:5px}
+.nov-est{font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;display:inline-block}
+.nov-est.afecta{background:#FEE2E2;color:#B91C1C}
+.nov-est.omitida{background:#E2E8F0;color:#475569}
+.nov-est.pendiente{background:#FEF3C7;color:#92400E}
+.nov-foot{display:flex;flex-wrap:wrap;gap:11px;font-size:10.5px;color:var(--gris5);font-weight:600;margin-top:auto}
+.nov-foot b{color:#0F1117;font-weight:800}
+.nov-empty{grid-column:1/-1;text-align:center;color:#8A90A0;padding:26px;font-size:12.5px;font-weight:600}
 #dash-volver{position:fixed;right:18px;bottom:18px;z-index:510;display:none;background:var(--negro);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.3)}
 #dash-volver.on{display:flex;align-items:center;gap:7px}
 
@@ -1321,7 +1341,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div id="rechazos-graf" class="dgrid eq" style="margin-bottom:14px"></div>
         <div class="dcard">
           <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
-          <div style="overflow:auto;max-height:420px"><table class="dtbl"><thead><tr><th>Cliente</th><th>Ruta entrega</th><th>Motivo</th><th>Vendedor</th><th>Cajas</th></tr></thead><tbody id="dash-nov"></tbody></table></div>
+          <div class="nov-grid" id="dash-nov" style="max-height:460px;overflow:auto"></div>
         </div>
       </div>
       <div id="rech-mes" style="display:none"><div class="veh-cargando">Cargando el mes…</div></div>
@@ -2476,7 +2496,7 @@ async function mapaCajasRechazadas(novedades_,fechaDefault){
         const cod=file.name.replace(/\.json$/,'');
         if(!porFecha[f].has(cod))continue;
         try{const d=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+f+'/'+encodeURIComponent(file.name)+'?t='+Date.now())).json();
-          map[cod]={caj:d.total_cajas||0,und:d.total_und||0,detalle:d.detalle||[],motivo:d.motivo||'',estado:d.estado||'pendiente'};}catch(e){}
+          map[cod]={caj:d.total_cajas||0,und:d.total_und||0,detalle:d.detalle||[],motivo:d.motivo||'',estado:d.estado||'pendiente',hora:d.hora||''};}catch(e){}
       }
     }catch(e){}
   }
@@ -3020,6 +3040,17 @@ function abrirRutinaDesdeDash(){
   }
   openCoord();
 }
+function motivoMeta(m){
+  const map={
+    'CLIENTE CERRADO':{c:'#4A5060',bg:'#F1F2F5'},
+    'CLIENTE SIN DINERO':{c:'#D97706',bg:'#FFF8E6'},
+    'PEDIDO MAL ELABORADO':{c:'#1A56DB',bg:'#EFF6FF'},
+    'CLIENTE NO HIZO PEDIDO':{c:'#7C3AED',bg:'#F3E8FF'},
+    'PRODUCTO NO CARGADO':{c:'#E30613',bg:'#FFF0F1'},
+    'RECHAZO PARCIAL':{c:'#059669',bg:'#ECFDF5'}
+  };
+  return map[m]||{c:'#4A5060',bg:'#F1F2F5'};
+}
 let _dashCargadoUnaVez=false;
 async function cargarDash(){
   try{
@@ -3032,7 +3063,7 @@ async function cargarDash(){
     const fecha=getColDate();
     const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
       sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia'),
-      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo,created_at').eq('fecha',fecha),
+      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url').eq('fecha',fecha),
       sb.from('estados_entrega').select('ruta,estado,codigo_cliente,created_at').eq('fecha',fecha),
       sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
     ]);
@@ -3090,15 +3121,29 @@ async function cargarDash(){
     poblarFiltroRutas(Object.keys(porRuta).sort());
     // Tabla novedades
     document.getElementById('dash-nov-meta').textContent=totNov+' rechazos · '+Math.round(cajasRej)+' cajas';
+    const _estBadge=est=>est==='afecta'?'<span class="nov-est afecta">Afecta comisión</span>':est==='omitida'?'<span class="nov-est omitida">Omitida</span>':'<span class="nov-est pendiente">Por revisar</span>';
     document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>{
       const c=rutaColor[n.ruta]||'#4A5060';
       const vd=vendCli(n.codigo_cliente);
-      return '<tr><td style="font-weight:800">'+(n.nombre_cliente||n.codigo_cliente)+'<div style="font-size:10px;font-weight:600;color:#8A90A0;margin-top:1px">'+n.codigo_cliente+'</div></td>'+
-      '<td><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span></td>'+
-      '<td>'+n.motivo+'</td>'+
-      '<td>'+(vd&&vd!=='—'?'<span class="dtag" style="background:#FFF0F1;color:#E30613">'+vd+'</span>':'<span style="color:#C0C4CC">—</span>')+'</td>'+
-      '<td><b>'+Math.round(cajRech(n.codigo_cliente))+'</b></td></tr>';
-    }).join(''):'<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:18px">Sin novedades registradas hoy ✓</td></tr>';
+      const rd=rechCod[String(n.codigo_cliente)]||{};
+      const mm=motivoMeta(n.motivo);
+      const horaSrc=rd.hora||n.created_at;
+      const hora=horaSrc?new Date(horaSrc).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
+      const foto=n.foto_url;
+      return '<div class="nov-card">'+
+        (foto?'<div class="nov-photo" style="background-image:url(\''+foto+'\')" onclick="window.open(\''+foto+'\',\'_blank\')" title="Ver evidencia"><div class="nov-photo-zoom">🔍</div></div>'
+             :'<div class="nov-photo nov-photo-empty" title="Sin foto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>')+
+        '<div class="nov-body">'+
+          '<div class="nov-top"><b>'+(n.nombre_cliente||n.codigo_cliente)+'</b><span class="nov-cod">'+n.codigo_cliente+'</span></div>'+
+          '<div class="nov-tags"><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span>'+
+            '<span class="dtag" style="background:'+mm.bg+';color:'+mm.c+'">'+n.motivo+'</span>'+
+            _estBadge(rd.estado)+
+          '</div>'+
+          '<div class="nov-foot"><span>🕒 '+hora+'</span><span>📦 <b>'+Math.round(cajRech(n.codigo_cliente))+'</b> cajas</span>'+
+            (vd&&vd!=='—'?'<span>👤 '+vd+'</span>':'')+
+          '</div>'+
+        '</div></div>';
+    }).join(''):'<div class="nov-empty">Sin novedades registradas hoy ✓</div>';
     // Mapa
     document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
     await actualizarGeocercas(clientes_); // geocercas listas antes de pintar la flota (no bloquea si ya estaban calculadas)
