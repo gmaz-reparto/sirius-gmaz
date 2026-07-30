@@ -878,6 +878,21 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div class="asis-wrap"><table id="asis-tbl"></table></div>
 </div>
 
+<!-- ══ AUDITORÍA ANTIFRAUDE (LiquiYa vs lo reportado) ══ -->
+<div id="scr-audit" style="position:fixed;inset:0;z-index:650;background:#F4F6F9;display:none;flex-direction:column;font-family:'DM Sans',sans-serif">
+  <div class="asis-top">
+    <b>🔎 Auditoría · LiquiYa vs reportado</b>
+    <span id="audit-meta" style="font-size:11px;color:#B45309;font-weight:800"></span>
+    <span style="flex:1"></span>
+    <label class="asis-btn e" style="cursor:pointer">↑ Subir Liquidación<input type="file" accept=".xlsx,.xls" multiple style="display:none" onchange="uploadLiquidacion(event)"></label>
+    <button class="asis-btn g" onclick="haptic();cargarAuditoria()">↻ Recalcular</button>
+    <button class="asis-btn e" onclick="haptic();exportarAuditoria()">↓ Exportar</button>
+    <button class="asis-btn c" onclick="haptic();cerrarAuditoria()">✕ Cerrar</button>
+  </div>
+  <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Cruza <b>Pedido (Libro)</b> + <b>PPAS</b> + <b>Rechazos</b> + <b>Liquidación (LiquiYa)</b> → detecta clientes/productos liquidados fuera del pedido y rechazos que en realidad se liquidaron.</div>
+  <div class="asis-wrap" id="audit-body" style="padding:16px"></div>
+</div>
+
 <!-- PREVENTA (placeholder — acceso por definir) -->
 <div id="scr-preventa" class="scr hidden">
   <div>
@@ -1199,6 +1214,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <span class="dchip" id="dash-fecha" style="cursor:default"></span>
         <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
         <button class="dchip" onclick="haptic();abrirAsistencia()">🗓️ Asistencia</button>
+        <button class="dchip" onclick="haptic();abrirAuditoria()">🔎 Auditoría</button>
         <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
         <button class="dchip" onclick="haptic();cerrarSesion()" title="Cerrar sesión">⎋ Salir</button>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
@@ -5689,6 +5705,122 @@ async function cleanPhotos(){
     if(det)det.textContent=total+' fotos de +2 meses eliminadas · las recientes se conservan';
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al limpiar');}
 }
+
+/* ══════════════ LIQUIDACIÓN (LiquiYa de Angelita) + AUDITORÍA ANTIFRAUDE ══════════════ */
+let liqIndex={}; // {cod:{nombre,rutaVend,prods:{sku:{caj,sub,monto,desc}}}}
+function parseLiquiYaXLSX(wb){
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const liq={};
+  for(let i=2;i<rows.length;i++){ // fila 0 título, 1 encabezados
+    const r=rows[i];if(!r||!r[0])continue;
+    const rutaVend=String(r[0]).trim();if(!/^KA4V/i.test(rutaVend))continue;
+    const nombre=String(r[4]||'').trim();
+    const cod=String(r[5]||'').trim();if(!/^\d{6,}/.test(cod))continue;
+    const sku=String(r[6]||'').replace(/\D/g,'').padStart(6,'0');
+    const desc=String(r[7]||'').trim();
+    const caj=parseFloat(r[8])||0, sub=parseFloat(r[9])||0, monto=parseFloat(r[10])||0;
+    if(!liq[cod])liq[cod]={nombre,rutaVend,prods:{}};
+    const p=liq[cod].prods[sku]||(liq[cod].prods[sku]={caj:0,sub:0,monto:0,desc});
+    p.caj+=caj;p.sub+=sub;p.monto+=monto;
+  }
+  return liq;
+}
+async function uploadLiquidacion(ev){
+  const files=Array.from(ev.target.files).filter(f=>/\.xls[xm]?$/i.test(f.name));
+  if(!files.length)return;
+  openProg('Subiendo Liquidación (LiquiYa)',files.length+' archivo(s) de Angelita');
+  try{
+    updateProg(8,'Cargando motor Excel...');await cargarXLSX();
+    const acc={};
+    for(let i=0;i<files.length;i++){const file=files[i];
+      logProg('Leyendo '+file.name+'...','info');updateProg(10+i/files.length*70,'Procesando '+file.name);
+      const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+      const liq=parseLiquiYaXLSX(wb);
+      for(const cod in liq){ if(!acc[cod]){acc[cod]=liq[cod];continue;}
+        for(const sku in liq[cod].prods){const s=acc[cod].prods[sku]||(acc[cod].prods[sku]={caj:0,sub:0,monto:0,desc:liq[cod].prods[sku].desc});
+          s.caj+=liq[cod].prods[sku].caj;s.sub+=liq[cod].prods[sku].sub;s.monto+=liq[cod].prods[sku].monto;}}
+    }
+    const nCli=Object.keys(acc).length;
+    updateProg(88,'Subiendo índice de liquidación...');
+    const offset=CFG.UTC_OFFSET||-5;const hoyStr=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
+    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+hoyStr+'/LIQUIDACION_INDEX.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(acc)});
+    if(!res.ok)throw new Error(await res.text());
+    liqIndex=acc;
+    updateProg(100,'');endProg(true,'✓ Liquidación subida · '+nCli+' clientes');
+  }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir la liquidación');}
+  ev.target.value='';
+}
+async function cargarIndiceLiquidacion(){
+  liqIndex={};const offset=CFG.UTC_OFFSET||-5,ahora=new Date();
+  for(const fecha of [new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0],new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]]){
+    try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/LIQUIDACION_INDEX.json?t='+Date.now());
+      if(r.ok){const d=await r.json();if(d&&Object.keys(d).length){liqIndex=d;break;}}}catch(e){}
+  }
+  return liqIndex;
+}
+/* Cruza Pedido(Libro)+PPAS(clientes_rutas)+Rechazos+Liquidación(LiquiYa) para cazar el desvío:
+   cliente/producto liquidado que NO estaba en el pedido, y rechazos que en realidad SÍ se liquidaron. */
+async function cargarAuditoria(){
+  const cont=document.getElementById('audit-body');if(cont)cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cruzando Pedido · Cargue · Rechazos · Liquidación…</div>';
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  await cargarIndicePedidos();      // pedidosClientes (Libro)
+  await cargarIndiceLiquidacion();  // liqIndex (LiquiYa)
+  let cli2ruta={};
+  try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}
+  const rech=await cargarRechazosDelDia();
+  const rechPorCod={};Object.values(rech).forEach(r=>(r.clientes||[]).forEach(c=>rechPorCod[String(c.codigo_cliente)]=c));
+  if(!Object.keys(liqIndex).length){if(cont)cont.innerHTML='<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">Sube la <b>Liquidación (LiquiYa)</b> de Angelita para cruzar y auditar.</div>';return;}
+  const anom=[];
+  for(const cod in liqIndex){
+    const L=liqIndex[cod], ped=pedidosClientes[cod], rutaE=cli2ruta[cod]||'(no en PPAS)';
+    const skusPed = ped ? new Set(ped.b.flatMap(b=>(b.i||[]).map(it=>it[0]))) : null;
+    for(const sku in L.prods){const p=L.prods[sku];if(p.caj<=0&&p.sub<=0)continue;
+      if(!ped) anom.push({tipo:'CLIENTE ADICIONAL',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:p.monto});
+      else if(!skusPed.has(sku)) anom.push({tipo:'PRODUCTO ADICIONAL',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:p.monto});
+    }
+  }
+  for(const cod in rechPorCod){const c=rechPorCod[cod], L=liqIndex[cod];if(!L)continue;
+    (c.detalle||[]).forEach(d=>{const lp=L.prods[d.cod];if(lp&&(lp.caj>0||lp.sub>0))
+      anom.push({tipo:'RECHAZO FALSO',ruta:c.ruta,cod,nombre:c.nombre_cliente,sku:d.cod,desc:d.desc,caj:lp.caj,sub:lp.sub,monto:lp.monto,nota:'entregador marcó rechazo pero LiquiYa lo liquidó'});});
+  }
+  window._auditAnom=anom;
+  renderAuditoria(anom);
+}
+function renderAuditoria(anom){
+  const cont=document.getElementById('audit-body');if(!cont)return;
+  const col={'CLIENTE ADICIONAL':'#B91C1C','PRODUCTO ADICIONAL':'#B45309','RECHAZO FALSO':'#7C2D12'};
+  const bg={'CLIENTE ADICIONAL':'#FEE2E2','PRODUCTO ADICIONAL':'#FEF3C7','RECHAZO FALSO':'#FED7AA'};
+  const porTipo={};anom.forEach(a=>porTipo[a.tipo]=(porTipo[a.tipo]||0)+1);
+  const totMonto=anom.reduce((s,a)=>s+(a.monto||0),0);
+  document.getElementById('audit-meta').innerHTML=anom.length? (anom.length+' alerta(s) · '+_pesos(totMonto)+' en juego · '+Object.entries(porTipo).map(([k,v])=>v+' '+k.toLowerCase()).join(' · ')) : '';
+  if(!anom.length){cont.innerHTML='<div style="background:#ECFDF5;border-radius:12px;padding:22px;text-align:center;color:#059669;font-weight:700">✓ Sin desvíos detectados — todo lo liquidado coincide con el pedido</div>';return;}
+  cont.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#0F1117;color:#fff">'+
+    ['Tipo','Ruta entrega','Cliente','Cód.','SKU','Producto','Cajas','Valor liquidado'].map(h=>'<th style="padding:8px 9px;text-align:left;font-size:10px">'+h+'</th>').join('')+'</tr></thead><tbody>'+
+    anom.map(a=>'<tr style="border-bottom:.5px solid #EEF0F4">'+
+      '<td style="padding:7px 9px"><span style="font-size:9px;font-weight:800;color:'+col[a.tipo]+';background:'+bg[a.tipo]+';border-radius:5px;padding:2px 7px">'+a.tipo+'</span></td>'+
+      '<td style="padding:7px 9px">'+a.ruta+'</td>'+
+      '<td style="padding:7px 9px;font-weight:700">'+(a.nombre||'')+'</td>'+
+      '<td style="padding:7px 9px;color:#8A90A0">'+a.cod+'</td>'+
+      '<td style="padding:7px 9px;color:#8A90A0">'+a.sku+'</td>'+
+      '<td style="padding:7px 9px">'+(a.desc||'')+'</td>'+
+      '<td style="padding:7px 9px;font-weight:700">'+(a.caj||0)+(a.sub?' + '+a.sub+'u':'')+'</td>'+
+      '<td style="padding:7px 9px;font-weight:800;color:'+col[a.tipo]+'">'+_pesos(a.monto||0)+'</td></tr>').join('')+
+    '</tbody></table>';
+}
+async function exportarAuditoria(){
+  const anom=window._auditAnom||[];if(!anom.length){toast('No hay alertas para exportar','err');return;}
+  showLoad('Generando Excel...');
+  try{await cargarXLSX();
+    const filas=anom.map(a=>({Tipo:a.tipo,'Ruta entrega':a.ruta,Cliente:a.nombre,Codigo:a.cod,SKU:a.sku,Producto:a.desc,Cajas:a.caj,SubUnidades:a.sub,'Valor liquidado':a.monto,Nota:a.nota||''}));
+    const ws=XLSX.utils.json_to_sheet(filas);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Auditoria');
+    const offset=CFG.UTC_OFFSET||-5;const f=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
+    XLSX.writeFile(wb,'Auditoria_'+f+'.xlsx');hideLoad();
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+function abrirAuditoria(){document.getElementById('scr-audit').classList.add('on');cargarAuditoria();}
+function cerrarAuditoria(){document.getElementById('scr-audit').classList.remove('on');}
 
 async function uploadRoutes(ev){
   const file=ev.target.files[0];if(!file)return;
