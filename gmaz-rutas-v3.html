@@ -893,6 +893,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div class="asis-wrap" id="audit-body" style="padding:16px"></div>
 </div>
 
+<!-- ══ OBSEQUIOS (ZG) — vista de supervisor ══ -->
+<div id="scr-obseq" style="position:fixed;inset:0;z-index:650;background:#F4F6F9;display:none;flex-direction:column;font-family:'DM Sans',sans-serif">
+  <div class="asis-top">
+    <b>🎁 Obsequios por ruta</b>
+    <span id="obseq-meta" style="font-size:11px;color:#B45309;font-weight:800"></span>
+    <span style="flex:1"></span>
+    <button class="asis-btn g" onclick="haptic();cargarObsequiosSup()">↻ Actualizar</button>
+    <button class="asis-btn c" onclick="haptic();cerrarObsequiosSup()">✕ Cerrar</button>
+  </div>
+  <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Clientes con obsequio (ZG) por ruta y si el entregador ya tomó la <b>foto del obsequio entregado</b> — para validación en línea de los supervisores.</div>
+  <div class="asis-wrap" id="obseq-body" style="padding:16px"></div>
+</div>
+
 <!-- PREVENTA (placeholder — acceso por definir) -->
 <div id="scr-preventa" class="scr hidden">
   <div>
@@ -1091,6 +1104,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <div class="ip-name" id="ip-name">—</div>
     <div class="ip-code" id="ip-code">—</div>
     <div class="ip-histcli" id="ip-histcli"></div>
+    <div id="ip-obsequio" style="display:none"></div>
     <div class="ip-btns">
       <div class="ip-btn ip-btn-azul" onclick="haptic();activateNav()">
         <div class="ip-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2.4 20.2 20a1 1 0 0 1-1.32 1.29L12 18.2l-6.88 3.09A1 1 0 0 1 3.8 20z"/></svg></div>
@@ -1218,6 +1232,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
         <button class="dchip" onclick="haptic();abrirAsistencia()">🗓️ Asistencia</button>
         <button class="dchip" onclick="haptic();abrirAuditoria()">🔎 Auditoría</button>
+        <button class="dchip" onclick="haptic();abrirObsequiosSup()">🎁 Obsequios</button>
         <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
         <button class="dchip" onclick="haptic();cerrarSesion()" title="Cerrar sesión">⎋ Salir</button>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
@@ -1998,6 +2013,8 @@ function parseLibroPedidos(lineas,acc){
   const reCli =/^\s*(\d{3,4})\s+(\d{10})\s+Ruta:\s*(\S+).*?Fecha de Entrega:\s*([\d.]+)/;
   const reTipo=/^\s*(\S+)\s+(Venta de Contado(?: CO)?(?: Promoci\S+)?|Vta\s*Cr\S+\s*\w*.*?|Carga Base.*)\s*$/;
   const reProd=/^\s*(\d{10})\s+(\d{9})\s+(\d{6})\s+(.+?)\s+(\d+)(?:\s*\/\s*(\d+))?\s+([\d.,]+)\s+([\d.,]+)\s*$/;
+  // Obsequio/bonificación: secuencia código nombre pedido SKU desc cajas ZGxx firma
+  const reObs=/^\s*\d{3,4}\s+(\d{10})\s+(.+?)\s+\d{10}\s+(\d{6})\s+(.+?)\s+(\d+)(?:\s*\/\s*(\d+))?\s+(ZG\d+)/;
   // Estado que persiste ENTRE páginas (un PDF se parsea página por página, y un
   // cliente puede tener su encabezado en una página y sus productos en la siguiente).
   let mode=acc._mode||null;
@@ -2006,6 +2023,12 @@ function parseLibroPedidos(lineas,acc){
   for(const ln of lineas){
     if(reHdrPed.test(ln)){mode='ped';continue;}
     if(reHdrBon.test(ln)){mode='bon';continue;}
+    if(mode==='bon'){ // capturar OBSEQUIOS (ZG) por cliente
+      const mo=ln.match(reObs);
+      if(mo){const cod=mo[1];const O=(acc._obs=acc._obs||{});const c=O[cod]||(O[cod]={nombre:mo[2].trim(),items:[]});
+        c.items.push({sku:mo[3].padStart(6,'0'),desc:mo[4].trim(),caj:+mo[5],bot:mo[6]?+mo[6]:0,zg:mo[7]});}
+      continue;
+    }
     if(mode!=='ped')continue;
     let m=ln.match(reCli);
     if(m){
@@ -2058,6 +2081,54 @@ function actualizarBotonPedido(){
   const hay=cod&&pedidosClientes[cod]&&pedidosClientes[cod].b&&pedidosClientes[cod].b.length;
   btn.style.opacity=hay?'1':'.45';
   const lbl=btn.querySelector('.ip-btn-lbl');if(lbl)lbl.textContent=hay?'Pedido':'Sin pedido';
+}
+/* ══════════════ OBSEQUIOS (ZG): foto obligatoria del obsequio entregado ══════════════ */
+let obsequiosClientes={}; // {cod:{nombre,items:[{sku,desc,caj,bot,zg}]}}
+async function cargarIndiceObsequios(){
+  obsequiosClientes={};
+  const offset=CFG.UTC_OFFSET||-5,ahora=new Date();
+  for(const fecha of [new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0],new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]]){
+    try{const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/OBSEQUIOS_INDEX.json?t='+Date.now());
+      if(res.ok){const d=await res.json();if(d&&Object.keys(d).length){obsequiosClientes=d;break;}}}catch(e){}
+  }
+}
+/* Foto de obsequio ya tomada hoy para un cliente (existe el registro). */
+async function _obsFotoTomada(cod){
+  const fecha=getColDate();
+  try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/OBSFOTO/'+fecha+'/'+cod+'.json?t='+Date.now());return r.ok;}catch(e){return false;}
+}
+async function actualizarObsequioCliente(){
+  const box=document.getElementById('ip-obsequio');if(!box)return;
+  const cl=clientes[clienteIdx];const cod=cl?String(cl.id||getF(cl,CFG.COL_CODIGO)):'';
+  const ob=cod&&obsequiosClientes[cod];
+  if(!ob||!ob.items||!ob.items.length){box.style.display='none';box.innerHTML='';return;}
+  const tomada=await _obsFotoTomada(cod);
+  const items=ob.items.map(it=>prodInfo(it.sku,it.desc).desc+' — '+(it.caj?it.caj+' cj':'')+(it.caj&&it.bot?'+':'')+(it.bot?it.bot+' u':'')+' ('+it.zg+')').join(' · ');
+  box.style.display='block';
+  box.innerHTML='<div style="background:'+(tomada?'#ECFDF5':'#FFF7ED')+';border:1px solid '+(tomada?'#A7E3BE':'#FDBA74')+';border-radius:12px;padding:10px 12px;margin-bottom:8px">'+
+    '<div style="font-size:11px;font-weight:800;color:'+(tomada?'#0b6b3a':'#B45309')+';display:flex;align-items:center;justify-content:space-between">🎁 OBSEQUIO DEL CLIENTE'+(tomada?' · ✓ foto tomada':'')+'</div>'+
+    '<div style="font-size:11px;color:#6B7385;margin:4px 0 8px">'+items+'</div>'+
+    (tomada?'':'<button onclick="haptic();fotoObsequio()" style="width:100%;background:#B45309;color:#fff;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:800;cursor:pointer">📷 Tomar foto del obsequio entregado</button>')+
+  '</div>';
+}
+function fotoObsequio(){
+  const cl=clientes[clienteIdx];if(!cl)return;
+  const cod=String(cl.id||getF(cl,CFG.COL_CODIGO)),nom=cl.nombre||getF(cl,CFG.COL_NOMBRE)||cod;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';
+  inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    showLoad('Subiendo foto del obsequio...');
+    try{const {blob}=await comprimirFoto(f);const fecha=getColDate();
+      const fn=fecha+'/'+cod+'_'+Date.now()+'.jpg';
+      await sb.storage.from(CFG.BCK_FOTOS).upload('OBSEQUIOS/'+fn,blob,{contentType:'image/jpeg',upsert:false});
+      const fotoUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FOTOS+'/OBSEQUIOS/'+fn;
+      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/OBSFOTO/'+fecha+'/'+cod+'.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+        body:JSON.stringify({codigo_cliente:cod,nombre_cliente:nom,ruta:rutaActual,foto_url:fotoUrl,hora:new Date().toISOString()})});
+      hideLoad();toast('✓ Foto del obsequio registrada','ok');haptic([40,30,40]);
+      actualizarObsequioCliente();
+    }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+  };
+  inp.click();
 }
 /* ══ VER PEDIDO DEL CLIENTE ══ */
 function verPedidoCliente(){
@@ -4436,6 +4507,7 @@ function startRoute(ruta,lista){
       // Precargar índice de facturas y de pedidos en background
       setTimeout(()=>cargarIndiceFacturas(),1000);
       setTimeout(()=>cargarIndicePedidos(),1100);
+      setTimeout(()=>cargarIndiceObsequios(),1150);
       // Usar el GPS real del vehículo asignado a esta ruta (si el coordinador lo asignó)
       setTimeout(()=>activarGpsVehiculo(ruta),1500);
       // Iniciar tacómetro
@@ -4576,6 +4648,7 @@ async function openClient(i){
   pintarBtnNov();
   actualizarBotonPedido(); // módulo pedidos: activa/atenúa el botón según haya pedido
   cargarHistorialCliente(cod); // B2: historial de incidencias del cliente (datos reales de novedades)
+  actualizarObsequioCliente(); // 🎁 obsequio (ZG) del cliente + foto obligatoria
   showScr('scr-client');
   // Buscar vendedor
   try{
@@ -5827,6 +5900,33 @@ async function exportarAuditoria(){
 function abrirAuditoria(){document.getElementById('scr-audit').classList.add('on');cargarAuditoria();}
 function cerrarAuditoria(){document.getElementById('scr-audit').classList.remove('on');}
 
+/* ══ OBSEQUIOS (ZG) — vista de supervisor: clientes con obsequio por ruta + estado de foto ══ */
+function abrirObsequiosSup(){document.getElementById('scr-obseq').classList.add('on');cargarObsequiosSup();}
+function cerrarObsequiosSup(){document.getElementById('scr-obseq').classList.remove('on');}
+async function cargarObsequiosSup(){
+  const cont=document.getElementById('obseq-body');if(!cont)return;
+  cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cargando obsequios…</div>';
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  await cargarIndiceObsequios();
+  let cli2ruta={};try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}
+  const fecha=getColDate();const conFoto=new Set();
+  try{const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},_h),body:JSON.stringify({prefix:'OBSFOTO/'+fecha+'/',limit:1000})});
+    if(lr.ok){const files=await lr.json();for(const f of (files||[])){if(f.name&&f.name.endsWith('.json'))conFoto.add(f.name.replace(/\.json$/,''));}}}catch(e){}
+  const porRuta={};
+  for(const cod in obsequiosClientes){const ob=obsequiosClientes[cod];const r=cli2ruta[cod]||'(sin ruta)';(porRuta[r]=porRuta[r]||[]).push(Object.assign({cod},ob));}
+  const rutas=Object.keys(porRuta).sort();
+  let totCli=0,totFoto=0;
+  const html=rutas.map(r=>{
+    const cls=porRuta[r].sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+    const rows=cls.map(c=>{const tiene=conFoto.has(c.cod);if(tiene)totFoto++;totCli++;
+      const items=(c.items||[]).map(it=>prodInfo(it.sku,it.desc).desc+' ('+it.zg+')').join(', ');
+      return '<tr style="border-bottom:.5px solid #EEF0F4"><td style="padding:6px 9px;font-weight:700">'+(c.nombre||'')+'</td><td style="padding:6px 9px;color:#8A90A0">'+c.cod+'</td><td style="padding:6px 9px;font-size:11px">'+items+'</td><td style="padding:6px 9px">'+(tiene?'<span style="color:#059669;font-weight:800">✓ Foto</span>':'<span style="color:#B45309;font-weight:800">⏳ Pendiente</span>')+'</td></tr>';}).join('');
+    return '<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:800;color:'+(rutaColor[r]||'#0F1117')+';margin:0 2px 6px">'+r+' · '+cls.length+' obsequio(s)</div><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden"><thead><tr style="background:#0F1117;color:#fff"><th style="padding:7px 9px;text-align:left;font-size:10px">Cliente</th><th style="padding:7px 9px;text-align:left;font-size:10px">Código</th><th style="padding:7px 9px;text-align:left;font-size:10px">Obsequio (ZG)</th><th style="padding:7px 9px;text-align:left;font-size:10px">Foto</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }).join('');
+  const meta=document.getElementById('obseq-meta');if(meta)meta.textContent=totCli?(totFoto+'/'+totCli+' con foto tomada'):'';
+  cont.innerHTML=rutas.length?html:'<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">Sube el <b>Libro de pedidos</b> (con la sección de bonificaciones) para ver los obsequios.</div>';
+}
+
 async function uploadRoutes(ev){
   const file=ev.target.files[0];if(!file)return;
   openProg('Subiendo rutas del día',file.name);
@@ -5999,6 +6099,12 @@ async function uploadLibroPedidos(ev){
       body:JSON.stringify(index)
     });
     if(!res.ok){const t=await res.text();throw new Error(t);}
+    // Índice de OBSEQUIOS (ZG) del libro → para foto obligatoria y validación de supervisores
+    try{const obs=acc._obs||{};const nObs=Object.keys(obs).length;
+      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'OBSEQUIOS_INDEX.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(obs)});
+      if(nObs)logProg(nObs+' clientes con obsequios (ZG) indexados','ok');
+    }catch(e){}
     logProg(nCli+' clientes · '+nItems+' líneas de producto indexadas','ok');
     if(nSku.size)logProg('⚠ '+nSku.size+' SKU nuevos sin maestro: '+[...nSku].slice(0,8).join(', '),'info');
     await cargarIndicePedidos();
