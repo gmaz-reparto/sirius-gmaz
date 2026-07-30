@@ -588,9 +588,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dside-foot{padding:12px 8px 4px;border-top:1px solid #EAECEF;margin-top:8px}
 .dwrap{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .dtopbar{height:64px;background:var(--glass-bg);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid rgba(15,17,23,.06);display:flex;align-items:center;padding:0 26px;flex-shrink:0;gap:14px;position:sticky;top:0;z-index:8;box-shadow:0 1px 0 rgba(15,17,23,.02),0 12px 24px -18px rgba(15,17,23,.18)}
-.dtb-left b{font-size:14px;font-weight:800;color:#0F1117;display:block;line-height:1.2}
-.dtb-left span{font-size:11.5px;color:#8A90A0;font-weight:500}
-.dtb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.dtb-left{min-width:0}
+.dtb-left b{font-size:14px;font-weight:800;color:#0F1117;display:block;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}
+.dtb-status{display:flex;align-items:center;gap:7px;margin-top:2px;white-space:nowrap}
+.dtb-status>span:not(.dlive):not(.dtb-sep){font-size:11px;color:#8A90A0;font-weight:600}
+.dtb-sep{color:#D3D5DA;font-size:10px}
+.dtb-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.dtb-tools{display:flex;align-items:center;gap:4px;background:#F4F5F8;border-radius:12px;padding:4px}
+.dtool{width:32px;height:32px;border-radius:9px;border:none;background:transparent;display:grid;place-items:center;cursor:pointer;font-size:14.5px;transition:background .12s,transform .12s;color:var(--gris5)}
+.dtool:hover{background:#fff;transform:translateY(-1px);box-shadow:0 2px 6px rgba(15,17,23,.08)}
+.dtb-right>.dtool{background:#F4F5F8}
 .dtb-user{display:flex;align-items:center;gap:9px;padding-left:13px;margin-left:5px;border-left:1px solid rgba(15,17,23,.08)}
 .dtb-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,#FFF0F1,#FDECEC);color:var(--rojo);display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0;box-shadow:inset 0 0 0 1.5px rgba(227,6,19,.18)}
 .dtb-ut b{font-size:12.5px;font-weight:800;color:#0F1117;display:block;line-height:1.15}
@@ -649,12 +656,13 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dkpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1200px){.dkpis{grid-template-columns:repeat(3,1fr)}}
 /* KPI estilo GMAZ Comercial */
-.dkpi{background:#fff;border:1px solid #EAECEF;border-radius:var(--radio-lg);padding:15px 16px;box-shadow:var(--sh-card);transition:transform .15s,box-shadow .15s}
-.dkpi:hover{transform:translateY(-2px);box-shadow:var(--sh-card-hov)}
-.dkpi .dk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
-.dkpi .dk-l{font-size:12px;color:#6B7385;font-weight:600;line-height:1.25}
-.dkpi .dk-ic{color:var(--rojo);flex-shrink:0;width:30px;height:30px;border-radius:9px;background:linear-gradient(150deg,#FFF3F4,#FDECEC);display:grid;place-items:center}
-.dkpi .dk-v{font-size:25px;font-weight:800;letter-spacing:-.7px;line-height:1;color:#0F1117}
+.dkpi{background:#fff;border:1px solid #F0F1F4;border-radius:var(--radio-lg);padding:16px 17px 15px;box-shadow:var(--sh-card);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.dkpi::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--kac,#E30613)}
+.dkpi:hover{transform:translateY(-3px);box-shadow:var(--sh-card-hov)}
+.dkpi .dk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+.dkpi .dk-l{font-size:11.5px;color:#6B7385;font-weight:700;line-height:1.25;letter-spacing:.1px}
+.dkpi .dk-ic{flex-shrink:0;width:32px;height:32px;border-radius:10px;display:grid;place-items:center}
+.dkpi .dk-v{font-size:27px;font-weight:900;letter-spacing:-.8px;line-height:1;color:#0F1117}
 .dkpi .dk-pbar{display:flex;align-items:center;gap:8px;margin-top:11px}
 .dkpi .dk-pbar .bt{flex:1;height:6px;background:#F1F2F5;border-radius:5px;overflow:hidden}
 .dkpi .dk-pbar .bt i{display:block;height:100%;border-radius:5px}
@@ -1262,16 +1270,19 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </aside>
   <div class="dwrap">
     <div class="dtopbar">
-      <div class="dtb-left"><b>Grupo Empresarial GMAZ · Coca-Cola</b><span>Pasto, Nariño</span></div>
+      <div class="dtb-left">
+        <b>Grupo Empresarial GMAZ · Coca-Cola</b>
+        <div class="dtb-status"><span class="dlive"><i></i>En vivo</span><span class="dtb-sep">·</span><span id="dash-fecha"></span><span class="dtb-sep">·</span><span>Pasto, Nariño</span></div>
+      </div>
       <div class="dtb-right">
-        <span class="dlive"><i></i>OPERACIÓN EN VIVO</span>
-        <span class="dchip" id="dash-fecha" style="cursor:default"></span>
-        <button class="dchip" onclick="haptic();abrirRutinaDesdeDash()">Rutina diaria</button>
-        <button class="dchip" onclick="haptic();abrirAsistencia()">🗓️ Asistencia</button>
-        <button class="dchip" onclick="haptic();abrirAuditoria()">🔎 Auditoría</button>
-        <button class="dchip" onclick="haptic();abrirObsequiosSup()">🎁 Obsequios</button>
+        <div class="dtb-tools">
+          <button class="dtool" onclick="haptic();abrirRutinaDesdeDash()" title="Rutina diaria"><span>📋</span></button>
+          <button class="dtool" onclick="haptic();abrirAsistencia()" title="Asistencia"><span>🗓️</span></button>
+          <button class="dtool" onclick="haptic();abrirAuditoria()" title="Auditoría"><span>🔎</span></button>
+          <button class="dtool" onclick="haptic();abrirObsequiosSup()" title="Obsequios"><span>🎁</span></button>
+        </div>
         <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
-        <button class="dchip" onclick="haptic();cerrarSesion()" title="Cerrar sesión">⎋ Salir</button>
+        <button class="dtool" onclick="haptic();cerrarSesion()" title="Cerrar sesión"><span>⎋</span></button>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
       </div>
     </div>
@@ -3093,15 +3104,15 @@ async function cargarDash(){
     const pend=totCli-totEnt;
     const colPct=p=>p>=95?'#059669':p>=85?'#D97706':'#E30613';
     const K=[
-      {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
-      {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
-      {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
-      {i:'box',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
-      {i:'truck',v:Object.keys(rutaColor).length,l:'Rutas activas',foot:['Vehículos','<b>SecuritaGPS</b>']},
-      {i:'alert',v:totNov,l:'Rechazos hoy',foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
+      {i:'target',ac:colPct(pctG),v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
+      {i:'box',ac:'#1A56DB',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
+      {i:'store',ac:'#059669',v:totEnt+' / '+totCli,l:'Clientes entregados',foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
+      {i:'box',ac:'#D97706',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
+      {i:'truck',ac:'#7C3AED',v:Object.keys(rutaColor).length,l:'Rutas activas',foot:['Vehículos','<b>SecuritaGPS</b>']},
+      {i:'alert',ac:'#E11D48',v:totNov,l:'Rechazos hoy',foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
-      '<div class="dkpi"><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic">'+icoSvg(k.i,17,1.9)+'</span></div>'+
+      '<div class="dkpi" style="--kac:'+k.ac+'"><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic" style="background:'+k.ac+'16;color:'+k.ac+'">'+icoSvg(k.i,17,2)+'</span></div>'+
       '<div class="dk-v">'+k.v+'</div>'+
       (k.pct!=null?'<div class="dk-pbar"><div class="bt"><i style="width:'+Math.min(k.pct,100)+'%;background:'+k.pc+'"></i></div><span class="pv" style="color:'+k.pc+'">'+k.pct+'%</span></div>':'')+
       (k.foot?'<div class="dk-foot"><span>'+k.foot[0]+'</span><span>'+k.foot[1]+'</span></div>':'')+
