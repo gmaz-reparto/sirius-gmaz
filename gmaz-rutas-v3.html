@@ -5976,12 +5976,12 @@ async function exportarAuditoria(){
     XLSX.writeFile(wb,'Auditoria_'+f+'.xlsx');hideLoad();
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
-function abrirAuditoria(){document.getElementById('scr-audit').classList.add('on');cargarAuditoria();}
-function cerrarAuditoria(){document.getElementById('scr-audit').classList.remove('on');}
+function abrirAuditoria(){document.getElementById('scr-audit').style.display='flex';cargarAuditoria();}
+function cerrarAuditoria(){document.getElementById('scr-audit').style.display='none';}
 
 /* ══ OBSEQUIOS (ZG) — vista de supervisor: clientes con obsequio por ruta + estado de foto ══ */
-function abrirObsequiosSup(){document.getElementById('scr-obseq').classList.add('on');cargarObsequiosSup();}
-function cerrarObsequiosSup(){document.getElementById('scr-obseq').classList.remove('on');}
+function abrirObsequiosSup(){document.getElementById('scr-obseq').style.display='flex';cargarObsequiosSup();}
+function cerrarObsequiosSup(){document.getElementById('scr-obseq').style.display='none';}
 async function cargarObsequiosSup(){
   const cont=document.getElementById('obseq-body');if(!cont)return;
   cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cargando obsequios…</div>';
