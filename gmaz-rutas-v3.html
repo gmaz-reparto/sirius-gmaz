@@ -919,9 +919,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .asis-wrap{flex:1;overflow:auto;padding:0}
 #asis-tbl{border-collapse:collapse;font-size:11px;background:#fff}
 #asis-tbl th,#asis-tbl td{border:1px solid #E6E9EF;text-align:center;white-space:nowrap}
-#asis-tbl thead th{position:sticky;top:0;background:#0F1117;color:#fff;z-index:3;font-size:9.5px;font-weight:700;padding:5px 4px}
+#asis-tbl thead th{position:sticky;top:0;background:#FBFBFD;color:#6B7385;z-index:3;font-size:9.5px;font-weight:800;text-transform:uppercase;padding:5px 4px}
 #asis-tbl .col-emp{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:4px 8px;min-width:210px;max-width:210px}
-#asis-tbl thead .col-emp{z-index:4;background:#0F1117}
+#asis-tbl thead .col-emp{z-index:4;background:#FBFBFD}
 #asis-tbl .col-emp b{font-size:11px;font-weight:700;color:#0F1117;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #asis-tbl .col-emp span{font-size:8.5px;color:#9AA0AE}
 #asis-tbl td.dcell{width:24px;height:26px;cursor:pointer;font-size:9px;font-weight:800;color:#334}
@@ -6178,8 +6178,8 @@ function renderAuditoria(anom,resetFiltro=true){
   let filtrados=anom.filter(a=>(!filtro.ruta||a.ruta===filtro.ruta)&&(!filtro.tipo||a.tipo===filtro.tipo));
   filtrados=filtrados.slice().sort((a,b)=>(b.monto||0)-(a.monto||0)); // lo más grave primero
   const tabla=!filtrados.length?'<div style="background:#F7F8FA;border-radius:12px;padding:18px;text-align:center;color:#8A90A0">Sin resultados con ese filtro</div>':
-    '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#0F1117;color:#fff">'+
-    ['Tipo','Ruta entrega','Cliente','Cód.','SKU','Producto','Cajas','Valor liquidado','Detalle'].map(h=>'<th style="padding:8px 9px;text-align:left;font-size:10px">'+h+'</th>').join('')+'</tr></thead><tbody>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,17,23,.04)"><thead><tr style="background:#FBFBFD">'+
+    ['Tipo','Ruta entrega','Cliente','Cód.','SKU','Producto','Cajas','Valor liquidado','Detalle'].map(h=>'<th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">'+h+'</th>').join('')+'</tr></thead><tbody>'+
     filtrados.map(a=>'<tr style="border-bottom:.5px solid #EEF0F4">'+
       '<td style="padding:7px 9px"><span style="font-size:9px;font-weight:800;color:'+AUDIT_COL[a.tipo]+';background:'+AUDIT_BG[a.tipo]+';border-radius:5px;padding:2px 7px;white-space:nowrap">'+a.tipo+'</span></td>'+
       '<td style="padding:7px 9px;white-space:nowrap">'+a.ruta+'</td>'+
@@ -6227,7 +6227,7 @@ async function cargarObsequiosSup(){
     const rows=cls.map(c=>{const tiene=conFoto.has(c.cod);if(tiene)totFoto++;totCli++;
       const items=(c.items||[]).map(it=>prodInfo(it.sku,it.desc).desc+' ('+it.zg+')').join(', ');
       return '<tr style="border-bottom:.5px solid #EEF0F4"><td style="padding:6px 9px;font-weight:700">'+(c.nombre||'')+'</td><td style="padding:6px 9px;color:#8A90A0">'+c.cod+'</td><td style="padding:6px 9px;font-size:11px">'+items+'</td><td style="padding:6px 9px">'+(tiene?'<span style="color:#059669;font-weight:800">✓ Foto</span>':'<span style="color:#B45309;font-weight:800">⏳ Pendiente</span>')+'</td></tr>';}).join('');
-    return '<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:800;color:'+(rutaColor[r]||'#0F1117')+';margin:0 2px 6px">'+r+' · '+cls.length+' obsequio(s)</div><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden"><thead><tr style="background:#0F1117;color:#fff"><th style="padding:7px 9px;text-align:left;font-size:10px">Cliente</th><th style="padding:7px 9px;text-align:left;font-size:10px">Código</th><th style="padding:7px 9px;text-align:left;font-size:10px">Obsequio (ZG)</th><th style="padding:7px 9px;text-align:left;font-size:10px">Foto</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    return '<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:800;color:'+(rutaColor[r]||'#0F1117')+';margin:0 2px 6px">'+r+' · '+cls.length+' obsequio(s)</div><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,17,23,.04)"><thead><tr style="background:#FBFBFD"><th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Cliente</th><th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Código</th><th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Obsequio (ZG)</th><th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Foto</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }).join('');
   const meta=document.getElementById('obseq-meta');if(meta)meta.textContent=totCli?(totFoto+'/'+totCli+' con foto tomada'):'';
   cont.innerHTML=rutas.length?html:'<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">Sube el <b>Libro de pedidos</b> (con la sección de bonificaciones) para ver los obsequios.</div>';
