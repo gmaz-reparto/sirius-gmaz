@@ -821,6 +821,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .nov-foot{display:flex;flex-wrap:wrap;gap:11px;font-size:10.5px;color:var(--gris5);font-weight:600;margin-top:auto}
 .nov-foot b{color:#0F1117;font-weight:800}
 .nov-empty{grid-column:1/-1;text-align:center;color:#8A90A0;padding:26px;font-size:12.5px;font-weight:600}
+/* Histórico de novedades por mes (Panel Coordinador / Rutina, pestaña Histórico) */
+.pc-hist-row{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--gris2);border-radius:var(--radio-lg,14px);padding:10px 12px;margin-bottom:8px;box-shadow:var(--sh-card,0 1px 2px rgba(15,17,23,.04))}
+.pc-hist-fechabox{width:38px;text-align:center;flex-shrink:0}
+.pc-hist-fechabox b{display:block;font-size:16px;font-weight:900;color:var(--negro);line-height:1}
+.pc-hist-fechabox span{display:block;font-size:9px;color:var(--gris4);font-weight:800;text-transform:uppercase;margin-top:1px}
+.pc-hist-info{flex:1;min-width:0}
+.pc-hist-info b{font-size:12.5px;font-weight:800;color:var(--rojo);display:block}
+.pc-hist-info span{font-size:10.5px;color:var(--gris4);font-weight:600}
 /* Detalle por SKU (producto/cantidad/valor) dentro de la tarjeta de novedad */
 .nov-det{margin-top:8px;padding-top:8px;border-top:1px dashed var(--gris2);display:flex;flex-direction:column;gap:3px}
 .nov-det-row{display:grid;grid-template-columns:44px 1fr auto auto;gap:7px;align-items:baseline;font-size:10px}
@@ -1671,7 +1679,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <input type="date" id="pc-hist-fecha" onchange="verNovedadesFecha(this.value)" style="border:1px solid var(--gris2);border-radius:8px;padding:6px 9px;font-size:11px;font-family:inherit;color:var(--negro)">
       </div>
       <div id="pc-hist-detalle"></div>
-      <div style="font-size:9px;font-weight:800;color:var(--gris4);text-transform:uppercase;letter-spacing:.05em;margin:14px 2px 7px">Últimos 7 días</div>
+      <div style="display:flex;align-items:center;gap:9px;margin:18px 0 10px">
+        <div style="font-size:10.5px;font-weight:800;color:var(--gris4);text-transform:uppercase;letter-spacing:.6px;flex:1">Novedades por mes</div>
+        <input type="month" id="pc-hist-mes" onchange="haptic();cargarHistoricoNovedades(this.value)" style="border:1px solid var(--gris3);border-radius:9px;padding:7px 10px;font-size:12px;font-weight:700;font-family:inherit;color:var(--negro)">
+      </div>
       <div id="pc-hist-lista"><div style="font-size:11px;color:var(--gris4)">Cargando...</div></div>
     </div>
   </div>
@@ -6071,31 +6082,40 @@ function toggleHistorico(){
   }else{el.style.display='none';}
 }
 
-async function cargarHistoricoNovedades(){
+async function cargarHistoricoNovedades(mesSel){
   const lista=document.getElementById('pc-hist-lista');
-  // Generar últimos 7 días
+  const mInp=document.getElementById('pc-hist-mes');
+  const mes=mesSel||(mInp&&mInp.value)||getColDate().slice(0,7); // 'YYYY-MM'
+  if(mInp&&!mInp.value)mInp.value=mes;
+  lista.innerHTML='<div style="font-size:11px;color:var(--gris4);padding:8px 2px">Cargando '+mes+'…</div>';
+  const[anio,mesNum]=mes.split('-').map(Number);
+  const hoy=getColDate();
+  const diasEnMes=new Date(anio,mesNum,0).getDate();
   const dias=[];
-  const offset=-5;
-  for(let i=1;i<=7;i++){
-    const d=new Date(Date.now()+offset*3600000-i*86400000);
-    dias.push(d.toISOString().split('T')[0]);
+  for(let d=diasEnMes;d>=1;d--){
+    const fecha=mes+'-'+String(d).padStart(2,'0');
+    if(fecha<=hoy)dias.push(fecha); // no listar días futuros del mes en curso
   }
-  let html='';
+  const filas=[];
   for(const fecha of dias){
-    // Contar novedades de ese día
     const{count}=await sb.from(CFG.TBL_NOV).select('id',{count:'exact',head:true}).eq('fecha',fecha);
-    const n=count||0;
-    const col=n>0?'var(--rojo)':'var(--gris4)';
-    const bg=n>0?'var(--rojo-s)':'var(--gris1)';
-    html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${bg};border-radius:6px;margin-bottom:4px">
-      <div style="flex:1">
-        <div style="font-size:10px;font-weight:600;color:var(--negro)">${fecha}</div>
-        <div style="font-size:9px;color:${col}">${n>0?n+' novedad'+(n>1?'es':''):' Sin novedades'}</div>
-      </div>
-      ${n>0?`<button onclick="haptic();descargarNovedasFecha('${fecha}')" style="background:var(--rojo);color:white;border:none;border-radius:5px;padding:4px 8px;font-size:9px;font-weight:700;cursor:pointer">↓ Excel</button>`:''}
-    </div>`;
+    filas.push({fecha,n:count||0});
   }
-  lista.innerHTML=html||'<div style="font-size:10px;color:var(--gris4)">Sin datos en los últimos 7 días</div>';
+  const totMes=filas.reduce((s,f)=>s+f.n,0);
+  const conNov=filas.filter(f=>f.n>0);
+  lista.innerHTML=conNov.length?
+    '<div style="font-size:10.5px;color:var(--gris4);font-weight:600;margin-bottom:8px">'+totMes+' novedades en '+conNov.length+' día(s) de '+mes+'</div>'+
+    conNov.map(f=>{
+      const fechaObj=new Date(f.fecha+'T00:00:00');
+      const diaSem=fechaObj.toLocaleDateString('es-CO',{weekday:'short'});
+      return '<div class="pc-hist-row">'+
+        '<div class="pc-hist-fechabox"><b>'+f.fecha.slice(8,10)+'</b><span>'+diaSem.replace('.','')+'</span></div>'+
+        '<div class="pc-hist-info"><b>'+f.n+' novedad'+(f.n>1?'es':'')+'</b><span>'+f.fecha+'</span></div>'+
+        '<button class="rut-link" onclick="haptic();verNovedadesFecha(\''+f.fecha+'\');document.getElementById(\'pc-hist-fecha\').value=\''+f.fecha+'\'">Ver →</button>'+
+        '<button onclick="haptic();descargarNovedasFecha(\''+f.fecha+'\')" style="background:var(--negro);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:inherit">↓ Excel</button>'+
+      '</div>';
+    }).join('')
+    :'<div style="font-size:11.5px;color:var(--gris4);text-align:center;padding:18px">Sin novedades registradas en '+mes+' ✓</div>';
 }
 
 /* Ver las novedades de CUALQUIER fecha elegida (no solo los últimos 7 días). */
