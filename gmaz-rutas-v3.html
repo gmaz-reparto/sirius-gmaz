@@ -2109,6 +2109,15 @@ function _normTipoVenta(t){
   if(/Carga Base/i.test(t))           return 'Carga Base';
   return t;
 }
+/* Convierte un importe del Libro ("15.000", "0,00", "0") a número. Miles con punto, decimales con coma.
+   Devuelve NaN si no se pudo interpretar (para no confundir "no se pudo leer" con "vale $0"). */
+function _moneyLibro(s){
+  if(s==null)return NaN;
+  const t=String(s).trim();
+  if(!t)return NaN;
+  const n=parseFloat(t.replace(/\./g,'').replace(',','.'));
+  return isNaN(n)?NaN:n;
+}
 /* Parser del Reporte Detallado de Pedidos. Acumula en `acc` (varias páginas / varios PDF). */
 function parseLibroPedidos(lineas,acc){
   const reHdrPed=/Reporte Detallado de Pedidos/i;
@@ -2148,7 +2157,14 @@ function parseLibroPedidos(lineas,acc){
     m=ln.match(reProd);
     if(m){
       if(!cur.b.length)cur.b.push({t:curTipo||'Contado',v:curVend,i:[]});
-      cur.b[cur.b.length-1].i.push([m[3],m[4].trim(),parseInt(m[5],10),m[6]?parseInt(m[6],10):0,m[7]]);
+      const cajas=parseInt(m[5],10),bot=m[6]?parseInt(m[6],10):0,importe=_moneyLibro(m[8]);
+      cur.b[cur.b.length-1].i.push([m[3],m[4].trim(),cajas,bot,m[7]]);
+      // Línea del pedido normal que llegó a $0 (ej. "Contado Promoción" sin cobro) = obsequio real,
+      // igual que las ZG de Bonificaciones: también debe pedirle foto de entrega al repartidor.
+      if(importe===0&&(cajas>0||bot>0)){
+        const cod=acc._curCod;const O=(acc._obs=acc._obs||{});const c=O[cod]||(O[cod]={nombre:cur.n||'',items:[]});
+        c.items.push({sku:m[3].padStart(6,'0'),desc:m[4].trim(),caj:cajas,bot,zg:'$0'});
+      }
     }
   }
   acc._mode=mode;acc._curTipo=curTipo;acc._curVend=curVend;
