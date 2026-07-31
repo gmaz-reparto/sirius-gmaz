@@ -1662,6 +1662,13 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
           <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarMaestro()">Borrar</button></div>
         </div>
       </div>
+      <div class="dcard" style="margin-top:16px">
+        <div class="dcard-h"><h3><span class="h3ic">🗂️</span>Historial de archivos</h3>
+          <input type="month" id="hist-arch-mes" onchange="haptic();cargarHistorialArchivos(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+        </div>
+        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">Qué se subió cada día — para que el histórico no tenga huecos.</div>
+        <div style="overflow:auto;max-height:420px;padding:10px 17px 16px" id="hist-arch-body"><div class="veh-cargando">Elige un mes para ver qué se subió cada día…</div></div>
+      </div>
     </div>
   </div>
   <!-- TAB 2: OPERACIÓN HOY -->
@@ -5861,6 +5868,7 @@ async function cargarResumenOperacion(){
 async function verificarEstadoPanel(){
   respaldarRecorridosDia();      // en segundo plano, no bloquea — respaldo diario de recorridos (2 meses)
   limpiarDatosAntiguosAuto();    // en segundo plano — purga automática de recorridos y PPAS de +2 meses
+  cargarHistorialArchivos();     // en segundo plano — historial de archivos subidos del mes en curso
   const offset=-5;
   const ahora=new Date();
   const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
@@ -5975,6 +5983,43 @@ async function verificarEstadoPanel(){
       setEst('pc-est-liq','pc-det-liq',true,'✓ '+n+' clientes','Liquidación de ayer ('+ayer+') lista para auditar');
     }else{setEst('pc-est-liq','pc-det-liq',false,'⚠ Falta','Sin liquidación de ayer ('+ayer+') — súbela cuando la envíe Angelita');}
   }catch(e){setEst('pc-est-liq','pc-det-liq',null,'?','Error al verificar');}
+}
+/* Historial de archivos subidos por día — para ver de un vistazo qué falta y que el histórico
+   (Auditoría, nómina, etc.) no tenga huecos. Un solo list() por día (barato), no descarga los JSON. */
+const HIST_ARCH_TIPOS=[['ped','PEDIDOS_INDEX.json','Libro'],['hoja','HOJAS_INDEX.json','Hoja cargue'],['liq','LIQUIDACION_INDEX.json','Liquidación'],['ppas','PPAS_INDEX.json','PPAS'],['fact','FACTURAS_INDEX.json','Facturas']];
+async function cargarHistorialArchivos(mesSel){
+  const cont=document.getElementById('hist-arch-body');if(!cont)return;
+  const mInp=document.getElementById('hist-arch-mes');
+  const mes=mesSel||(mInp&&mInp.value)||getColDate().slice(0,7);
+  if(mInp&&!mInp.value)mInp.value=mes;
+  cont.innerHTML='<div class="veh-cargando">Revisando '+mes+'…</div>';
+  const[anio,mesNum]=mes.split('-').map(Number);
+  const hoy=getColDate();
+  const diasEnMes=new Date(anio,mesNum,0).getDate();
+  const dias=[];
+  for(let d=diasEnMes;d>=1;d--){const fecha=mes+'-'+String(d).padStart(2,'0');if(fecha<=hoy)dias.push(fecha);}
+  const filas=[];
+  for(const fecha of dias){
+    let nombres=new Set();
+    try{
+      const{data}=await sb.storage.from(CFG.BCK_PED).list(fecha,{limit:100});
+      (data||[]).forEach(f=>nombres.add(f.name));
+    }catch(e){}
+    filas.push({fecha,nombres});
+  }
+  const _ic=ok=>ok?'<span style="color:#059669;font-weight:900">✓</span>':'<span style="color:#D1D5DE;font-weight:900">✕</span>';
+  cont.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr style="background:#FBFBFD">'+
+    '<th style="padding:8px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Fecha</th>'+
+    HIST_ARCH_TIPOS.map(t=>'<th style="padding:8px 9px;text-align:center;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">'+t[2]+'</th>').join('')+
+    '</tr></thead><tbody>'+
+    filas.map(f=>{
+      const faltan=HIST_ARCH_TIPOS.filter(t=>!f.nombres.has(t[1])).length;
+      return '<tr style="border-bottom:.5px solid #EEF0F4'+(faltan===HIST_ARCH_TIPOS.length?';background:#FFF7ED':'')+'">'+
+        '<td style="padding:6px 9px;font-weight:700">'+f.fecha+'</td>'+
+        HIST_ARCH_TIPOS.map(t=>'<td style="padding:6px 9px;text-align:center">'+_ic(f.nombres.has(t[1]))+'</td>').join('')+
+      '</tr>';
+    }).join('')+
+    '</tbody></table>';
 }
 /* Arrastrar y soltar archivos sobre las tarjetas de la Rutina diaria (reusa los mismos <input> ocultos). */
 function initRutDropzones(){
