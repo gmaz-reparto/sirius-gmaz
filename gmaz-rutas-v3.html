@@ -706,7 +706,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .rfil-chip{font-size:10.5px;font-weight:800;padding:6px 11px;border-radius:20px;background:#fff;border:1px solid var(--gris2);cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:var(--sh-card);user-select:none;transition:opacity .12s}
 .rfil-chip .rfdot{width:8px;height:8px;border-radius:50%}
 .rfil-chip.off{opacity:.4}
-.rfil-chip.all{background:var(--negro);color:#fff;border-color:var(--negro)}
+.rfil-chip.all{background:#9CA3AF;color:#fff;border-color:#9CA3AF;font-weight:700}
 .map-btns{display:flex;gap:7px;flex-shrink:0}
 .map-fab{width:37px;height:37px;border-radius:11px;background:#fff;border:1px solid var(--gris2);display:grid;place-items:center;cursor:pointer;box-shadow:var(--sh-card);color:var(--gris6);transition:background .12s}
 .map-fab.on{background:#0E9F6E;color:#fff;border-color:#0E9F6E}
@@ -3335,8 +3335,10 @@ function renderVehiculoCards(){
     const pend=pr.tot-pr.ent;
     const vel=u?(u.GpsSpeed||0):'—';
     const mins=(u&&u.ReportDate)?Math.max(0,Math.round((Date.now()-new Date(u.ReportDate.replace(' ','T')).getTime())/60000)):null;
+    const encVc=u&&u.Ignition==='1';
+    const icoVc=dashTruckIcon(ruta,encVc,veh&&veh.tipo_vehiculo).url;
     return '<div class="vc" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')">'+
-      '<div class="vc-h"><span class="vc-dot" style="background:'+col+'"></span><span class="vc-plate">'+unitId+'</span><span class="vc-badge" style="background:'+eb+';color:'+ec+'">'+est+'</span></div>'+
+      '<div class="vc-h"><img src="'+icoVc+'" width="30" height="21" alt=""><span class="vc-plate">'+unitId+'</span><span class="vc-badge" style="background:'+eb+';color:'+ec+'">'+est+'</span></div>'+
       '<div class="vc-sub"><b style="color:'+col+'">'+ruta+'</b> · '+nombreCond+'</div>'+
       '<div class="vc-grid">'+
         '<div class="vc-cell"><div class="v" style="color:#059669">'+pr.ent+'</div><div class="l">Visitados</div></div>'+
@@ -3919,6 +3921,81 @@ async function secAlertas(equipo,fecha){ return await secApi('getAlerts',{equipo
 async function secHistorial(equipo,fechaIni,fechaFin,limite){
   return await secApi('historyGet',{equipo,fechaIni,fechaFin,format:'DateTime',limite:limite||300});
 }
+/* ══ RESPALDO DE RECORRIDOS: guarda el historial GPS del día en Supabase Storage (2 meses) ══
+   SecuritaGPS no garantiza retener el historial para siempre; esta es la copia propia de GMAZ Rutas. */
+async function _recorridoStorageGet(unitId,fecha){
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/'+encodeURIComponent(unitId)+'.json?t='+Date.now());
+    if(r.ok){const d=await r.json();if(d&&d.puntos&&d.puntos.length)return d.puntos;}
+  }catch(e){}
+  return null;
+}
+/* Recorrido de un vehículo/fecha: primero el respaldo propio (por si SecuritaGPS ya lo purgó), si no hay, en vivo. */
+async function obtenerHistorialVehiculo(v,fecha){
+  const guardado=await _recorridoStorageGet(v.nombre,fecha);
+  if(guardado)return guardado;
+  return await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
+}
+/* Respaldo automático del día anterior (ya cerrado) — se dispara una vez al día al abrir la Rutina.
+   No bloquea la UI; si un vehículo falla, sigue con los demás. */
+async function respaldarRecorridosDia(){
+  const fecha=getColDate(-1);
+  const marcaLS='gmaz_recBackup_'+fecha;
+  if(localStorage.getItem(marcaLS))return; // ya se hizo hoy para esta fecha, no repetir llamadas a Securita
+  try{
+    const done=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/_DONE.json?t='+Date.now());
+    if(done.ok){localStorage.setItem(marcaLS,'1');return;} // ya respaldado antes (otro día/otra sesión)
+  }catch(e){}
+  try{
+    if(!_vehCache)_vehCache=await secVehiculos()||[];
+    let ok=0,vacios=0,fallos=0;
+    for(const v of _vehCache){
+      try{
+        const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
+        if(puntos&&puntos.length){
+          await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/'+encodeURIComponent(v.nombre)+'.json',{
+            method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+            body:JSON.stringify({unitId:v.nombre,fecha,puntos})});
+          ok++;
+        }else vacios++;
+      }catch(e){fallos++;}
+    }
+    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/_DONE.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+      body:JSON.stringify({fecha,vehiculos:ok,vacios,fallos,ts:new Date().toISOString()})});
+    localStorage.setItem(marcaLS,'1');
+  }catch(e){/* si falla el respaldo completo, se reintenta la próxima vez que se abra la Rutina */}
+}
+/* ══ LIMPIEZA AUTOMÁTICA (+2 meses): recorridos guardados y snapshot histórico del PPAS.
+   Se ejecuta sola (sin botón) una vez al día, igual disparador que el respaldo de recorridos. */
+async function limpiarDatosAntiguosAuto(){
+  const hoyLS='gmaz_cleanupAuto_'+getColDate();
+  if(localStorage.getItem(hoyLS))return;
+  const limite=getColDate(-60);
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  try{
+    // RECORRIDOS/{fecha}/* — carpetas completas (solo contienen recorridos, nada más que conservar)
+    const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',
+      headers:{..._h,'Content-Type':'application/json'},body:JSON.stringify({prefix:'RECORRIDOS/',limit:1000})});
+    if(lr.ok){
+      const carpetas=(await lr.json()||[]).map(x=>x.name).filter(n=>/^\d{4}-\d{2}-\d{2}$/.test(n)&&n<limite);
+      for(const f of carpetas){
+        const{data}=await sb.storage.from(CFG.BCK_PED).list('RECORRIDOS/'+f);
+        const paths=(data||[]).map(x=>'RECORRIDOS/'+f+'/'+x.name);
+        if(paths.length)await sb.storage.from(CFG.BCK_PED).remove(paths);
+      }
+    }
+    // {fecha}/PPAS_INDEX.json — solo ese archivo, sin tocar Pedidos/Hojas/Liquidación/Facturas del mismo día
+    const lp=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',
+      headers:{..._h,'Content-Type':'application/json'},body:JSON.stringify({prefix:'',limit:1000})});
+    if(lp.ok){
+      const carpetas=(await lp.json()||[]).map(x=>x.name).filter(n=>/^\d{4}-\d{2}-\d{2}$/.test(n)&&n<limite);
+      const paths=carpetas.map(f=>f+'/PPAS_INDEX.json');
+      if(paths.length)await sb.storage.from(CFG.BCK_PED).remove(paths);
+    }
+    localStorage.setItem(hoyLS,'1');
+  }catch(e){/* se reintenta la próxima vez que se abra la Rutina */}
+}
 function resumenSensores(sensoresJson){
   if(!sensoresJson)return '';
   try{
@@ -3943,33 +4020,30 @@ function tipoVehiculoClase(tipo){
   if(/cami[oó]n|truck|volqueta|sencillo|turbo|estaca|sba|nqr|npr|mv6|4700|4300|jx104|jx105/.test(t))return 'camion';
   return 'furgon';
 }
+/* Camión de reparto plano (estilo flota Coca-Cola: caja roja de la ruta + cabina negra), mirando a la derecha,
+   como el camión de referencia — sin brillos/degradados, coherente con el resto del rediseño. */
 function dashTruckIcon(ruta,encendido,tipo){
   const col=rutaColor[ruta]||'#E30613';
-  const op=encendido?1:.62;
-  const glow='<circle cx="32" cy="26" r="20" fill="'+col+'22">'+(encendido?'<animate attributeName="r" values="18;24;18" dur="1.7s" repeatCount="indefinite"/>':'')+'</circle>';
-  let body;
-  if(tipoVehiculoClase(tipo)==='camion'){
-    // Camión: cabina + caja de carga + 3 ejes (perfil lateral serio)
-    body='<g transform="translate(12,13)">'+
-      '<rect x="13" y="-1" width="25" height="20" rx="1.6" fill="'+col+'" opacity="'+op+'"/>'+
-      '<rect x="15" y="1" width="21" height="4" fill="#ffffff" opacity=".22"/>'+
-      '<path d="M0 7 h12 v12 H1 a1.5 1.5 0 0 1-1.5-1.5 V9 a2 2 0 0 1 2-2z" fill="'+col+'" opacity="'+op+'"/>'+
-      '<rect x="1.5" y="9" width="8" height="5.5" rx="1" fill="#cfe3f2"/>'+
-      '<circle cx="7" cy="23" r="4.2" fill="#16181f"/><circle cx="7" cy="23" r="1.7" fill="#6a7080"/>'+
-      '<circle cx="24" cy="23" r="4.2" fill="#16181f"/><circle cx="24" cy="23" r="1.7" fill="#6a7080"/>'+
-      '<circle cx="33" cy="23" r="4.2" fill="#16181f"/><circle cx="33" cy="23" r="1.7" fill="#6a7080"/></g>';
-  }else{
-    // Furgón / camioneta: cuerpo único con frente inclinado, 2 ruedas
-    body='<g transform="translate(14,14)">'+
-      '<path d="M0 3 a3 3 0 0 1 3-3 h19 l9 8 v7 a2 2 0 0 1-2 2 H2 a2 2 0 0 1-2-2 z" fill="'+col+'" opacity="'+op+'"/>'+
-      '<rect x="3" y="3" width="14" height="6" rx="1.4" fill="#fff" opacity=".85"/>'+
-      '<path d="M22 1 l7 6 h-7 z" fill="#cfe3f2"/>'+
-      '<circle cx="8" cy="19" r="4.2" fill="#16181f"/><circle cx="8" cy="19" r="1.7" fill="#6a7080"/>'+
-      '<circle cx="25" cy="19" r="4.2" fill="#16181f"/><circle cx="25" cy="19" r="1.7" fill="#6a7080"/></g>';
-  }
-  const s='<svg xmlns="http://www.w3.org/2000/svg" width="46" height="44" viewBox="0 0 64 52">'+
-    '<ellipse cx="32" cy="47" rx="15" ry="3" fill="rgba(0,0,0,.18)"/>'+glow+body+'</svg>';
-  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(46,44),anchor:new google.maps.Point(23,40)};
+  const op=encendido?1:.55;
+  const esCamion=tipoVehiculoClase(tipo)==='camion';
+  const cajaW=esCamion?36:30, cajaH=esCamion?17:15;
+  const body='<g opacity="'+op+'">'+
+    // Caja de carga (color de la ruta), con línea divisoria como el camión de referencia
+    '<rect x="2" y="'+(24-cajaH)+'" width="'+cajaW+'" height="'+cajaH+'" rx="1.6" fill="'+col+'"/>'+
+    '<rect x="2" y="'+(24-cajaH)+'" width="'+cajaW+'" height="3" fill="#fff" opacity=".22"/>'+
+    '<line x1="2" y1="'+(24-cajaH/2)+'" x2="'+(2+cajaW)+'" y2="'+(24-cajaH/2)+'" stroke="#000" stroke-opacity=".12" stroke-width="1"/>'+
+    // Cabina negra (adelante, a la derecha) con parabrisas
+    '<path d="M'+(2+cajaW)+' '+(24-cajaH)+' h9 a3 3 0 0 1 3 3 v'+(cajaH-3)+' a1.6 1.6 0 0 1-1.6 1.6 h-10.4 z" fill="#15161c"/>'+
+    '<rect x="'+(6+cajaW)+'" y="'+(24-cajaH+3)+'" width="6.5" height="5.5" rx="1" fill="#cfe3f2"/>'+
+    // Parachoques
+    '<rect x="2" y="23.5" width="'+(cajaW+13)+'" height="2" rx="1" fill="#15161c"/>'+
+    // Ruedas
+    '<circle cx="10" cy="27" r="4.4" fill="#15161c"/><circle cx="10" cy="27" r="1.8" fill="#8a90a0"/>'+
+    '<circle cx="'+(cajaW+5)+'" cy="27" r="4.4" fill="#15161c"/><circle cx="'+(cajaW+5)+'" cy="27" r="1.8" fill="#8a90a0"/>'+
+  '</g>';
+  const s='<svg xmlns="http://www.w3.org/2000/svg" width="48" height="34" viewBox="0 0 60 34">'+
+    '<ellipse cx="28" cy="32" rx="24" ry="1.8" fill="rgba(0,0,0,.15)"/>'+body+'</svg>';
+  return{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(s),scaledSize:new google.maps.Size(48,34),anchor:new google.maps.Point(24,29)};
 }
 async function pintarFlotaEnVivo(){
   if(!dashMap)return;
@@ -4135,7 +4209,7 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
   if(!v){toast('Vehículo no encontrado','err');_recorridoAbierto=false;return;}
   toast('Cargando recorrido de '+unitId+' ('+fecha+')…','ok');
   try{
-    const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
+    const puntos=await obtenerHistorialVehiculo(v,fecha);
     if(!puntos||!puntos.length){toast('Sin recorrido para '+unitId+' el '+fecha,'err');_recorridoAbierto=false;return;}
     const ordCrudo=puntos.slice().reverse(); // Securita entrega más reciente primero → orden cronológico
     const ord=filtrarOutliersGPS(ordCrudo); // descarta puntos GPS imposibles (equipo reportando otra ciudad)
@@ -5661,6 +5735,8 @@ async function cargarResumenOperacion(){
 
 
 async function verificarEstadoPanel(){
+  respaldarRecorridosDia();      // en segundo plano, no bloquea — respaldo diario de recorridos (2 meses)
+  limpiarDatosAntiguosAuto();    // en segundo plano — purga automática de recorridos y PPAS de +2 meses
   const offset=-5;
   const ahora=new Date();
   const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
@@ -6298,7 +6374,7 @@ async function uploadRoutes(ev){
     logProg(clientes2.length+' clientes subidos correctamente','ok');
     // Snapshot histórico del PPAS del día — clientes_rutas se sobrescribe a diario, esto queda guardado para siempre
     try{
-      const ppasMin={};clientes2.forEach(c=>{ppasMin[c.id]={ruta:c.ruta,nombre:c.nombre};});
+      const ppasMin={};clientes2.forEach(c=>{ppasMin[c.id]={ruta:c.ruta,nombre:c.nombre,direccion:c.direccion,lat:c.lat,lng:c.lng,barrio:c.barrio,caj:c.CAJA_};});
       await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+getColDate()+'/PPAS_INDEX.json',{
         method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
         body:JSON.stringify(ppasMin)
