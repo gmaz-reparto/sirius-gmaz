@@ -927,6 +927,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <div id="scr-audit" style="position:fixed;inset:0;z-index:650;background:#F4F6F9;display:none;flex-direction:column;font-family:'DM Sans',sans-serif">
   <div class="asis-top">
     <b>🔎 Auditoría · LiquiYa vs reportado</b>
+    <input type="date" id="audit-fecha" onchange="haptic();cambiarFechaAuditoria(this.value)" style="height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
     <span id="audit-meta" style="font-size:11px;color:#B45309;font-weight:800"></span>
     <span style="flex:1"></span>
     <label class="asis-btn e" style="cursor:pointer">↑ Subir Liquidación<input type="file" accept=".xlsx,.xls" multiple style="display:none" onchange="uploadLiquidacion(event)"></label>
@@ -934,7 +935,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <button class="asis-btn e" onclick="haptic();exportarAuditoria()">↓ Exportar</button>
     <button class="asis-btn c" onclick="haptic();cerrarAuditoria()">✕ Cerrar</button>
   </div>
-  <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Cruza <b>Pedido (Libro)</b> + <b>PPAS</b> + <b>Rechazos</b> + <b>Liquidación (LiquiYa)</b> → detecta clientes/productos liquidados fuera del pedido y rechazos que en realidad se liquidaron.</div>
+  <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Cruza <b>Pedido (Libro)</b> + <b>PPAS</b> (snapshot histórico del día) + <b>Rechazos</b> + <b>Liquidación (LiquiYa)</b> de la <b>misma fecha</b> → detecta clientes/productos liquidados fuera del pedido y rechazos que en realidad se liquidaron. Angelita sube la liquidación de un día en la mañana siguiente, por eso arranca en <b>ayer</b> — cambia la fecha arriba para ver otro día.</div>
   <div class="asis-wrap" id="audit-body" style="padding:16px"></div>
 </div>
 
@@ -2106,13 +2107,10 @@ function prodInfo(cod,descripLibro){
   return{desc:descripLibro||('SKU '+cod),und:1,ret:0,conocido:false};
 }
 /* ══ CARGAR ÍNDICE DE PEDIDOS DEL DÍA ══ */
-async function cargarIndicePedidos(){
+async function cargarIndicePedidos(fechaFija){
   pedidosClientes={};
-  const offset=CFG.UTC_OFFSET||-5;
-  const ahora=new Date();
-  const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
-  const ayer=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0];
-  for(const fecha of [hoy,ayer]){
+  const fechas=fechaFija?[fechaFija]:[getColDate(),getColDate(-1)];
+  for(const fecha of fechas){
     try{
       const url=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/PEDIDOS_INDEX.json';
       const res=await fetch(url+'?t='+Date.now());
@@ -2120,6 +2118,16 @@ async function cargarIndicePedidos(){
     }catch(e){}
   }
   actualizarBotonPedido();
+}
+/* Mapa {codigo:{ruta,nombre}} del PPAS histórico de una fecha (snapshot guardado al subir rutas ese día).
+   clientes_rutas en Supabase es solo el snapshot del día actual (se borra y reemplaza a diario), por eso
+   para auditar un día anterior hace falta este archivo — no la tabla en vivo. */
+async function cargarPPASHistorico(fecha){
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/PPAS_INDEX.json?t='+Date.now());
+    if(r.ok){const d=await r.json();if(d&&Object.keys(d).length)return d;}
+  }catch(e){}
+  return null;
 }
 /* Muestra/oculta el botón "Pedido" del cliente abierto según haya datos. */
 function actualizarBotonPedido(){
@@ -2470,10 +2478,9 @@ async function cargarIndiceHojas(){
   return hojasIndex;
 }
 /* Lee todos los detalles de rechazo del día (RECHAZOS/{fecha}/*.json) agrupados por ruta. */
-async function cargarRechazosDelDia(){
+async function cargarRechazosDelDia(fechaFija){
   const rech={};
-  const offset=CFG.UTC_OFFSET||-5;
-  const hoy=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
+  const hoy=fechaFija||getColDate();
   try{
     const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{
       method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
@@ -5859,13 +5866,31 @@ async function cleanPhotos(){
 
 /* ══════════════ LIQUIDACIÓN (LiquiYa de Angelita) + AUDITORÍA ANTIFRAUDE ══════════════ */
 let liqIndex={}; // {cod:{nombre,rutaVend,prods:{sku:{caj,sub,monto,desc}}}}
+/* Convierte el valor crudo de la columna "Entrega" (fecha) del LiquiYa a 'YYYY-MM-DD'.
+   Puede venir como serial de Excel (número) o como texto DD/MM/YYYY o YYYY-MM-DD. */
+function _parseFechaLiqui(v){
+  if(v===null||v===undefined||v==='')return null;
+  if(typeof v==='number'&&isFinite(v)){
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    if(!isNaN(d.getTime()))return d.toISOString().split('T')[0];
+    return null;
+  }
+  const s=String(v).trim();
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  return null;
+}
 function parseLiquiYaXLSX(wb){
   const ws=wb.Sheets[wb.SheetNames[0]];
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   const liq={};
+  const fechasVistas={};
   for(let i=2;i<rows.length;i++){ // fila 0 título, 1 encabezados
     const r=rows[i];if(!r||!r[0])continue;
     const rutaVend=String(r[0]).trim();if(!/^KA4V/i.test(rutaVend))continue;
+    const fEnt=_parseFechaLiqui(r[3]);if(fEnt)fechasVistas[fEnt]=(fechasVistas[fEnt]||0)+1;
     const nombre=String(r[4]||'').trim();
     const cod=String(r[5]||'').trim();if(!/^\d{6,}/.test(cod))continue;
     const sku=String(r[6]||'').replace(/\D/g,'').padStart(6,'0');
@@ -5875,7 +5900,9 @@ function parseLiquiYaXLSX(wb){
     const p=liq[cod].prods[sku]||(liq[cod].prods[sku]={caj:0,sub:0,monto:0,desc});
     p.caj+=caj;p.sub+=sub;p.monto+=monto;
   }
-  return liq;
+  // Fecha del reporte = la más frecuente en la columna "Entrega" (casi siempre todas iguales).
+  let fecha=null,max=0;for(const f in fechasVistas)if(fechasVistas[f]>max){max=fechasVistas[f];fecha=f;}
+  return{liq,fecha};
 }
 async function uploadLiquidacion(ev){
   const files=Array.from(ev.target.files).filter(f=>/\.xls[xm]?$/i.test(f.name));
@@ -5883,46 +5910,70 @@ async function uploadLiquidacion(ev){
   openProg('Subiendo Liquidación (LiquiYa)',files.length+' archivo(s) de Angelita');
   try{
     updateProg(8,'Cargando motor Excel...');await cargarXLSX();
-    const acc={};
+    // Se agrupa por la fecha REAL de la operación (columna "Entrega" del archivo), NO por el día en que
+    // se sube — Angelita sube en la mañana la liquidación del día anterior, si se guardara con la fecha
+    // de subida el cruce contra el pedido/PPAS de ese día nunca cuadraría.
+    const accPorFecha={};
     for(let i=0;i<files.length;i++){const file=files[i];
       logProg('Leyendo '+file.name+'...','info');updateProg(10+i/files.length*70,'Procesando '+file.name);
       const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
-      const liq=parseLiquiYaXLSX(wb);
+      const{liq,fecha:fechaDetectada}=parseLiquiYaXLSX(wb);
+      const fecha=fechaDetectada||getColDate(-1);
+      logProg((fechaDetectada?'Fecha detectada en el archivo: ':'No se detectó fecha en el archivo, se asume ayer: ')+fecha,fechaDetectada?'ok':'err');
+      const acc=accPorFecha[fecha]||(accPorFecha[fecha]={});
       for(const cod in liq){ if(!acc[cod]){acc[cod]=liq[cod];continue;}
         for(const sku in liq[cod].prods){const s=acc[cod].prods[sku]||(acc[cod].prods[sku]={caj:0,sub:0,monto:0,desc:liq[cod].prods[sku].desc});
           s.caj+=liq[cod].prods[sku].caj;s.sub+=liq[cod].prods[sku].sub;s.monto+=liq[cod].prods[sku].monto;}}
     }
-    const nCli=Object.keys(acc).length;
+    const fechas=Object.keys(accPorFecha);
     updateProg(88,'Subiendo índice de liquidación...');
-    const offset=CFG.UTC_OFFSET||-5;const hoyStr=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
-    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+hoyStr+'/LIQUIDACION_INDEX.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(acc)});
-    if(!res.ok)throw new Error(await res.text());
-    liqIndex=acc;
-    updateProg(100,'');endProg(true,'✓ Liquidación subida · '+nCli+' clientes');
+    let totCli=0;
+    for(const fecha of fechas){
+      const acc=accPorFecha[fecha];totCli+=Object.keys(acc).length;
+      const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+fecha+'/LIQUIDACION_INDEX.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(acc)});
+      if(!res.ok)throw new Error('Fecha '+fecha+': '+(await res.text()));
+      logProg('Guardado en '+fecha+' · '+Object.keys(acc).length+' clientes','ok');
+    }
+    liqIndex=accPorFecha[fechas[fechas.length-1]]||{};
+    window._auditFecha=fechas[fechas.length-1];
+    updateProg(100,'');endProg(true,'✓ Liquidación subida · '+totCli+' clientes · '+fechas.join(', '));
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir la liquidación');}
   ev.target.value='';
 }
-async function cargarIndiceLiquidacion(){
-  liqIndex={};const offset=CFG.UTC_OFFSET||-5,ahora=new Date();
-  for(const fecha of [new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0],new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]]){
+async function cargarIndiceLiquidacion(fechaFija){
+  liqIndex={};
+  const fechas=fechaFija?[fechaFija]:[getColDate(),getColDate(-1)];
+  for(const fecha of fechas){
     try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/LIQUIDACION_INDEX.json?t='+Date.now());
       if(r.ok){const d=await r.json();if(d&&Object.keys(d).length){liqIndex=d;break;}}}catch(e){}
   }
   return liqIndex;
 }
-/* Cruza Pedido(Libro)+PPAS(clientes_rutas)+Rechazos+Liquidación(LiquiYa) para cazar el desvío:
-   cliente/producto liquidado que NO estaba en el pedido, y rechazos que en realidad SÍ se liquidaron. */
-async function cargarAuditoria(){
-  const cont=document.getElementById('audit-body');if(cont)cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cruzando Pedido · Cargue · Rechazos · Liquidación…</div>';
+/* Cruza Pedido(Libro)+PPAS(histórico)+Rechazos+Liquidación(LiquiYa) para cazar el desvío:
+   cliente/producto liquidado que NO estaba en el pedido, y rechazos que en realidad SÍ se liquidaron.
+   Todo se cruza para la MISMA fecha operativa (por defecto ayer, porque Angelita sube la liquidación
+   del día anterior en la mañana). clientes_rutas (PPAS) es solo el snapshot del día en vivo — para
+   fechas pasadas se usa el snapshot histórico guardado por uploadRoutes() en PPAS_INDEX.json. */
+async function cargarAuditoria(fecha){
+  fecha=fecha||window._auditFecha||getColDate(-1);
+  window._auditFecha=fecha;
+  const dInp=document.getElementById('audit-fecha');if(dInp)dInp.value=fecha;
+  const cont=document.getElementById('audit-body');if(cont)cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cruzando Pedido · PPAS · Rechazos · Liquidación de '+fecha+'…</div>';
   const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
-  await cargarIndicePedidos();      // pedidosClientes (Libro)
-  await cargarIndiceLiquidacion();  // liqIndex (LiquiYa)
-  let cli2ruta={};
-  try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}
-  const rech=await cargarRechazosDelDia();
+  await cargarIndicePedidos(fecha);      // pedidosClientes (Libro) de esa fecha
+  await cargarIndiceLiquidacion(fecha);  // liqIndex (LiquiYa) de esa fecha
+  let cli2ruta={},ppasFuente='histórico';
+  const ppasHist=await cargarPPASHistorico(fecha);
+  if(ppasHist){for(const cod in ppasHist)cli2ruta[cod]=ppasHist[cod].ruta;}
+  else if(fecha===getColDate()){
+    ppasFuente='en vivo (sin snapshot histórico para hoy todavía)';
+    try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}
+  }else{ppasFuente='no disponible';}
+  window._auditPpasFuente=ppasFuente;
+  const rech=await cargarRechazosDelDia(fecha);
   const rechPorCod={};Object.values(rech).forEach(r=>(r.clientes||[]).forEach(c=>rechPorCod[String(c.codigo_cliente)]=c));
-  if(!Object.keys(liqIndex).length){if(cont)cont.innerHTML='<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">Sube la <b>Liquidación (LiquiYa)</b> de Angelita para cruzar y auditar.</div>';return;}
+  if(!Object.keys(liqIndex).length){if(cont)cont.innerHTML='<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">No hay <b>Liquidación (LiquiYa)</b> guardada para el '+fecha+'. Súbela con "↑ Subir Liquidación" o elige otra fecha.</div>';const m=document.getElementById('audit-meta');if(m)m.textContent='';return;}
   const anom=[];
   for(const cod in liqIndex){
     const L=liqIndex[cod], ped=pedidosClientes[cod], rutaE=cli2ruta[cod]||'(no en PPAS)';
@@ -5945,39 +5996,78 @@ async function cargarAuditoria(){
   window._auditAnom=anom;
   renderAuditoria(anom);
 }
-function renderAuditoria(anom){
+const AUDIT_COL={'CLIENTE ADICIONAL':'#B91C1C','PRODUCTO ADICIONAL':'#B45309','CANTIDAD DE MÁS':'#9A3412','RECHAZO FALSO':'#7C2D12'};
+const AUDIT_BG={'CLIENTE ADICIONAL':'#FEE2E2','PRODUCTO ADICIONAL':'#FEF3C7','CANTIDAD DE MÁS':'#FFEDD5','RECHAZO FALSO':'#FED7AA'};
+const AUDIT_DESC={
+  'CLIENTE ADICIONAL':'Se liquidó a un cliente que NO tenía pedido ese día — típico de mover producto a un cliente de descuento/mayorista.',
+  'PRODUCTO ADICIONAL':'El cliente sí tenía pedido, pero se le liquidó un producto que no pidió.',
+  'CANTIDAD DE MÁS':'El cliente pidió cierta cantidad de un producto y se liquidó más cajas de las que pidió.',
+  'RECHAZO FALSO':'El entregador marcó el producto como rechazado en la app, pero LiquiYa muestra que sí se liquidó (sí se entregó y se cobró).'
+};
+function _auditRutas(anom){return[...new Set(anom.map(a=>a.ruta))].sort();}
+function filtrarAuditoria(){
+  const f={ruta:(document.getElementById('audit-fil-ruta')||{}).value||'',tipo:(document.getElementById('audit-fil-tipo')||{}).value||''};
+  window._auditFiltro=f;
+  renderAuditoria(window._auditAnom||[],false);
+}
+function renderAuditoria(anom,resetFiltro=true){
   const cont=document.getElementById('audit-body');if(!cont)return;
-  const col={'CLIENTE ADICIONAL':'#B91C1C','PRODUCTO ADICIONAL':'#B45309','CANTIDAD DE MÁS':'#9A3412','RECHAZO FALSO':'#7C2D12'};
-  const bg={'CLIENTE ADICIONAL':'#FEE2E2','PRODUCTO ADICIONAL':'#FEF3C7','CANTIDAD DE MÁS':'#FFEDD5','RECHAZO FALSO':'#FED7AA'};
-  const porTipo={};anom.forEach(a=>porTipo[a.tipo]=(porTipo[a.tipo]||0)+1);
+  if(resetFiltro)window._auditFiltro={ruta:'',tipo:''};
+  const filtro=window._auditFiltro||{ruta:'',tipo:''};
+  const porTipo={};anom.forEach(a=>{porTipo[a.tipo]=porTipo[a.tipo]||{n:0,monto:0};porTipo[a.tipo].n++;porTipo[a.tipo].monto+=a.monto||0;});
   const totMonto=anom.reduce((s,a)=>s+(a.monto||0),0);
-  document.getElementById('audit-meta').innerHTML=anom.length? (anom.length+' alerta(s) · '+_pesos(totMonto)+' en juego · '+Object.entries(porTipo).map(([k,v])=>v+' '+k.toLowerCase()).join(' · ')) : '';
-  if(!anom.length){cont.innerHTML='<div style="background:#ECFDF5;border-radius:12px;padding:22px;text-align:center;color:#059669;font-weight:700">✓ Sin desvíos detectados — todo lo liquidado coincide con el pedido</div>';return;}
-  cont.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#0F1117;color:#fff">'+
-    ['Tipo','Ruta entrega','Cliente','Cód.','SKU','Producto','Cajas','Valor liquidado'].map(h=>'<th style="padding:8px 9px;text-align:left;font-size:10px">'+h+'</th>').join('')+'</tr></thead><tbody>'+
-    anom.map(a=>'<tr style="border-bottom:.5px solid #EEF0F4">'+
-      '<td style="padding:7px 9px"><span style="font-size:9px;font-weight:800;color:'+col[a.tipo]+';background:'+bg[a.tipo]+';border-radius:5px;padding:2px 7px">'+a.tipo+'</span></td>'+
-      '<td style="padding:7px 9px">'+a.ruta+'</td>'+
+  const fSrc=window._auditFecha||getColDate(-1);
+  const meta=document.getElementById('audit-meta');
+  if(meta)meta.innerHTML=anom.length?('Auditando <b>'+fSrc+'</b> · '+anom.length+' alerta(s) · '+_pesos(totMonto)+' en juego · PPAS: '+(window._auditPpasFuente||'—')):('Auditando <b>'+fSrc+'</b>');
+  if(!anom.length){cont.innerHTML='<div style="background:#ECFDF5;border-radius:12px;padding:22px;text-align:center;color:#059669;font-weight:700">✓ Sin desvíos detectados — todo lo liquidado el '+fSrc+' coincide con el pedido</div>';return;}
+  // Tarjetas resumen por tipo (clic filtra)
+  const resumen='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px">'+
+    Object.entries(porTipo).map(([tipo,v])=>
+      '<div onclick="haptic();document.getElementById(\'audit-fil-tipo\').value=\''+tipo+'\';filtrarAuditoria()" style="cursor:pointer;background:'+AUDIT_BG[tipo]+';border-radius:14px;padding:12px 14px;border:1.5px solid '+(filtro.tipo===tipo?AUDIT_COL[tipo]:'transparent')+'">'+
+        '<div style="font-size:10px;font-weight:800;color:'+AUDIT_COL[tipo]+';text-transform:uppercase;letter-spacing:.4px">'+tipo+'</div>'+
+        '<div style="font-size:20px;font-weight:900;color:'+AUDIT_COL[tipo]+';margin-top:2px">'+v.n+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+AUDIT_COL[tipo]+';opacity:.85">'+_pesos(v.monto)+'</div>'+
+        '<div style="font-size:10px;color:#6B7385;margin-top:5px;line-height:1.35">'+AUDIT_DESC[tipo]+'</div>'+
+      '</div>').join('')+'</div>';
+  // Filtros
+  const rutas=_auditRutas(anom);
+  const filtros='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">'+
+    '<select id="audit-fil-ruta" onchange="filtrarAuditoria()" style="height:34px;border:1px solid #E6E9EF;border-radius:9px;padding:0 10px;font-family:inherit;font-size:12px;font-weight:700"><option value="">Todas las rutas ('+rutas.length+')</option>'+
+      rutas.map(r=>'<option value="'+r+'"'+(filtro.ruta===r?' selected':'')+'>'+r+'</option>').join('')+'</select>'+
+    '<select id="audit-fil-tipo" onchange="filtrarAuditoria()" style="height:34px;border:1px solid #E6E9EF;border-radius:9px;padding:0 10px;font-family:inherit;font-size:12px;font-weight:700"><option value="">Todos los tipos</option>'+
+      Object.keys(porTipo).map(t=>'<option value="'+t+'"'+(filtro.tipo===t?' selected':'')+'>'+t+'</option>').join('')+'</select>'+
+    (filtro.ruta||filtro.tipo?'<button onclick="haptic();document.getElementById(\'audit-fil-ruta\').value=\'\';document.getElementById(\'audit-fil-tipo\').value=\'\';filtrarAuditoria()" style="height:34px;border:none;border-radius:9px;background:#F1F2F5;color:#4A5060;font-family:inherit;font-size:11.5px;font-weight:800;padding:0 12px;cursor:pointer">✕ Quitar filtros</button>':'')+
+    '</div>';
+  let filtrados=anom.filter(a=>(!filtro.ruta||a.ruta===filtro.ruta)&&(!filtro.tipo||a.tipo===filtro.tipo));
+  filtrados=filtrados.slice().sort((a,b)=>(b.monto||0)-(a.monto||0)); // lo más grave primero
+  const tabla=!filtrados.length?'<div style="background:#F7F8FA;border-radius:12px;padding:18px;text-align:center;color:#8A90A0">Sin resultados con ese filtro</div>':
+    '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#0F1117;color:#fff">'+
+    ['Tipo','Ruta entrega','Cliente','Cód.','SKU','Producto','Cajas','Valor liquidado','Detalle'].map(h=>'<th style="padding:8px 9px;text-align:left;font-size:10px">'+h+'</th>').join('')+'</tr></thead><tbody>'+
+    filtrados.map(a=>'<tr style="border-bottom:.5px solid #EEF0F4">'+
+      '<td style="padding:7px 9px"><span style="font-size:9px;font-weight:800;color:'+AUDIT_COL[a.tipo]+';background:'+AUDIT_BG[a.tipo]+';border-radius:5px;padding:2px 7px;white-space:nowrap">'+a.tipo+'</span></td>'+
+      '<td style="padding:7px 9px;white-space:nowrap">'+a.ruta+'</td>'+
       '<td style="padding:7px 9px;font-weight:700">'+(a.nombre||'')+'</td>'+
       '<td style="padding:7px 9px;color:#8A90A0">'+a.cod+'</td>'+
       '<td style="padding:7px 9px;color:#8A90A0">'+a.sku+'</td>'+
       '<td style="padding:7px 9px">'+(a.desc||'')+'</td>'+
-      '<td style="padding:7px 9px;font-weight:700">'+(a.caj||0)+(a.sub?' + '+a.sub+'u':'')+'</td>'+
-      '<td style="padding:7px 9px;font-weight:800;color:'+col[a.tipo]+'">'+_pesos(a.monto||0)+'</td></tr>').join('')+
+      '<td style="padding:7px 9px;font-weight:700;white-space:nowrap">'+(a.caj||0)+(a.sub?' + '+a.sub+'u':'')+'</td>'+
+      '<td style="padding:7px 9px;font-weight:800;color:'+AUDIT_COL[a.tipo]+'">'+_pesos(a.monto||0)+'</td>'+
+      '<td style="padding:7px 9px;color:#8A90A0;font-size:11px">'+(a.nota||'')+'</td></tr>').join('')+
     '</tbody></table>';
+  cont.innerHTML=resumen+filtros+'<div style="font-size:11px;color:#8A90A0;font-weight:600;margin-bottom:6px">Mostrando '+filtrados.length+' de '+anom.length+' · ordenado por valor liquidado, de mayor a menor</div>'+tabla;
 }
 async function exportarAuditoria(){
   const anom=window._auditAnom||[];if(!anom.length){toast('No hay alertas para exportar','err');return;}
   showLoad('Generando Excel...');
   try{await cargarXLSX();
-    const filas=anom.map(a=>({Tipo:a.tipo,'Ruta entrega':a.ruta,Cliente:a.nombre,Codigo:a.cod,SKU:a.sku,Producto:a.desc,Cajas:a.caj,SubUnidades:a.sub,'Valor liquidado':a.monto,Nota:a.nota||''}));
+    const filas=anom.map(a=>({Fecha:window._auditFecha||'',Tipo:a.tipo,'Ruta entrega':a.ruta,Cliente:a.nombre,Codigo:a.cod,SKU:a.sku,Producto:a.desc,Cajas:a.caj,SubUnidades:a.sub,'Valor liquidado':a.monto,Nota:a.nota||''}));
     const ws=XLSX.utils.json_to_sheet(filas);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Auditoria');
-    const offset=CFG.UTC_OFFSET||-5;const f=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
-    XLSX.writeFile(wb,'Auditoria_'+f+'.xlsx');hideLoad();
+    XLSX.writeFile(wb,'Auditoria_'+(window._auditFecha||getColDate())+'.xlsx');hideLoad();
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 function abrirAuditoria(){document.getElementById('scr-audit').style.display='flex';cargarAuditoria();}
 function cerrarAuditoria(){document.getElementById('scr-audit').style.display='none';}
+function cambiarFechaAuditoria(v){if(v)cargarAuditoria(v);}
 
 /* ══ OBSEQUIOS (ZG) — vista de supervisor: clientes con obsequio por ruta + estado de foto ══ */
 function abrirObsequiosSup(){document.getElementById('scr-obseq').style.display='flex';cargarObsequiosSup();}
@@ -6069,6 +6159,15 @@ async function uploadRoutes(ev){
       updateProg(60+(uploaded/clientes2.length)*35,'Subidos '+uploaded+' de '+clientes2.length+'...');
     }
     logProg(clientes2.length+' clientes subidos correctamente','ok');
+    // Snapshot histórico del PPAS del día — clientes_rutas se sobrescribe a diario, esto queda guardado para siempre
+    try{
+      const ppasMin={};clientes2.forEach(c=>{ppasMin[c.id]={ruta:c.ruta,nombre:c.nombre};});
+      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+getColDate()+'/PPAS_INDEX.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+        body:JSON.stringify(ppasMin)
+      });
+      logProg('Snapshot histórico del PPAS guardado ('+getColDate()+')','ok');
+    }catch(e){logProg('Aviso: no se pudo guardar el snapshot histórico del PPAS ('+e.message+')','err');}
     updateProg(100,'');
     endProg(true,'✓ '+clientes2.length+' clientes · '+rutasUnicas.length+' rutas');
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
