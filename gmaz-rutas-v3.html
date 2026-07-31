@@ -972,12 +972,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <div id="scr-obseq" style="position:fixed;inset:0;z-index:650;background:#F4F6F9;display:none;flex-direction:column;font-family:'DM Sans',sans-serif">
   <div class="asis-top">
     <b>🎁 Obsequios por ruta</b>
+    <input type="date" id="obseq-fecha" onchange="haptic();cargarObsequiosSup(this.value)" style="height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
     <span id="obseq-meta" style="font-size:11px;color:#B45309;font-weight:800"></span>
     <span style="flex:1"></span>
-    <button class="asis-btn g" onclick="haptic();cargarObsequiosSup()">↻ Actualizar</button>
+    <input type="search" id="obseq-busca" placeholder="Buscar cliente, código o SKU…" oninput="filtrarObsequiosBusqueda()" style="height:32px;width:220px;border:1px solid #E6E9EF;border-radius:8px;padding:0 10px;font-family:inherit;font-size:12px;font-weight:600;color:#0F1117">
+    <button class="asis-btn g" onclick="haptic();cargarObsequiosSup(document.getElementById('obseq-fecha').value)">↻ Actualizar</button>
     <button class="asis-btn c" onclick="haptic();cerrarObsequiosSup()">✕ Cerrar</button>
   </div>
-  <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Clientes con obsequio (ZG) por ruta y si el entregador ya tomó la <b>foto del obsequio entregado</b> — para validación en línea de los supervisores.</div>
+  <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Clientes con obsequio por ruta y si el entregador ya tomó la <b>foto de entrega realizada</b> — para validación en línea de los supervisores. Cambia la fecha arriba para ver otro día.</div>
   <div class="asis-wrap" id="obseq-body" style="padding:16px"></div>
 </div>
 
@@ -2238,10 +2240,10 @@ function actualizarBotonPedido(){
 }
 /* ══════════════ OBSEQUIOS (ZG): foto obligatoria del obsequio entregado ══════════════ */
 let obsequiosClientes={}; // {cod:{nombre,items:[{sku,desc,caj,bot,zg}]}}
-async function cargarIndiceObsequios(){
+async function cargarIndiceObsequios(fechaFija){
   obsequiosClientes={};
-  const offset=CFG.UTC_OFFSET||-5,ahora=new Date();
-  for(const fecha of [new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0],new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]]){
+  const fechas=fechaFija?[fechaFija]:[getColDate(),getColDate(-1)];
+  for(const fecha of fechas){
     try{const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/OBSEQUIOS_INDEX.json?t='+Date.now());
       if(res.ok){const d=await res.json();if(d&&Object.keys(d).length){obsequiosClientes=d;break;}}}catch(e){}
   }
@@ -6406,13 +6408,22 @@ function cambiarFechaAuditoria(v){if(v)cargarAuditoria(v);}
 /* ══ OBSEQUIOS (ZG) — vista de supervisor: clientes con obsequio por ruta + estado de foto ══ */
 function abrirObsequiosSup(){_embedHerramienta('scr-obseq','mod-obseq');activarModulo('obseq');cargarObsequiosSup();}
 function cerrarObsequiosSup(){activarModulo('operacion');}
-async function cargarObsequiosSup(){
+function filtrarObsequiosBusqueda(){
+  const q=(document.getElementById('obseq-busca')||{}).value||'';
+  renderObsequiosTablas(window._obsFilas,q);
+}
+async function cargarObsequiosSup(fechaFija){
   const cont=document.getElementById('obseq-body');if(!cont)return;
   cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cargando obsequios…</div>';
   const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
-  await cargarIndiceObsequios();
-  let cli2ruta={};try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}
-  const fecha=getColDate();const conFoto=new Set();
+  const fecha=fechaFija||getColDate();
+  const fInp=document.getElementById('obseq-fecha');if(fInp){fInp.max=getColDate();fInp.value=fecha;}
+  await cargarIndiceObsequios(fecha);
+  let cli2ruta={};
+  const ppasHist=await cargarPPASHistorico(fecha);
+  if(ppasHist){for(const cod in ppasHist)cli2ruta[cod]=ppasHist[cod].ruta;}
+  else if(fecha===getColDate()){try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}}
+  const conFoto=new Set();
   try{const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},_h),body:JSON.stringify({prefix:'OBSFOTO/'+fecha+'/',limit:1000})});
     if(lr.ok){const files=await lr.json();for(const f of (files||[])){if(f.name&&f.name.endsWith('.json'))conFoto.add(f.name.replace(/\.json$/,''));}}}catch(e){}
   const porRuta={};
@@ -6430,6 +6441,15 @@ async function cargarObsequiosSup(){
   }
   const totCli=new Set([...filasCero,...filasZG].map(f=>f.cod)).size;
   const totFoto=new Set([...filasCero,...filasZG].filter(f=>f.tieneFoto).map(f=>f.cod)).size;
+  const meta=document.getElementById('obseq-meta');if(meta)meta.textContent=totCli?(totFoto+'/'+totCli+' clientes con foto tomada · '+fecha):('Sin obsequios · '+fecha);
+  window._obsFilas={cero:filasCero,zg:filasZG};
+  renderObsequiosTablas(window._obsFilas,'');
+}
+function renderObsequiosTablas(filasObj,q){
+  const cont=document.getElementById('obseq-body');if(!cont||!filasObj)return;
+  q=(q||'').trim().toLowerCase();
+  const _match=f=>!q||(f.nombre||'').toLowerCase().includes(q)||(f.cod||'').toLowerCase().includes(q)||(f.sku||'').toLowerCase().includes(q)||(f.desc||'').toLowerCase().includes(q);
+  const filasCero=filasObj.cero.filter(_match),filasZG=filasObj.zg.filter(_match);
   const _tablaObs=(filas,vacioMsg)=>{
     if(!filas.length)return '<div style="background:#F7F8FA;border-radius:12px;padding:16px;text-align:center;color:#8A90A0;font-size:12px">'+vacioMsg+'</div>';
     filas=filas.slice().sort((a,b)=>a.ruta.localeCompare(b.ruta)||a.nombre.localeCompare(b.nombre));
@@ -6446,11 +6466,10 @@ async function cargarObsequiosSup(){
   };
   const html=
     '<div style="font-size:13px;font-weight:800;color:#0F1117;margin:0 2px 8px">Productos a $0 del pedido normal <span style="font-weight:600;color:#8A90A0">('+filasCero.length+')</span></div>'+
-    _tablaObs(filasCero,'Sin productos a $0 detectados en el pedido de hoy.')+
+    _tablaObs(filasCero,'Sin productos a $0 detectados.')+
     '<div style="font-size:13px;font-weight:800;color:#0F1117;margin:18px 2px 8px">Bonificaciones ZG (Promociones/Bonificaciones) <span style="font-weight:600;color:#8A90A0">('+filasZG.length+')</span></div>'+
-    _tablaObs(filasZG,'Sin bonificaciones ZG en el Libro de hoy.');
-  const meta=document.getElementById('obseq-meta');if(meta)meta.textContent=totCli?(totFoto+'/'+totCli+' clientes con foto tomada'):'';
-  cont.innerHTML=(filasCero.length||filasZG.length)?html:'<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">Sube el <b>Libro de pedidos</b> (con la sección de bonificaciones) para ver los obsequios.</div>';
+    _tablaObs(filasZG,'Sin bonificaciones ZG.');
+  cont.innerHTML=(filasObj.cero.length||filasObj.zg.length)?html:'<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">Sube el <b>Libro de pedidos</b> (con la sección de bonificaciones) para ver los obsequios de esa fecha.</div>';
 }
 
 async function uploadRoutes(ev){
