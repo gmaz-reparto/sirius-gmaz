@@ -821,6 +821,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .nov-foot{display:flex;flex-wrap:wrap;gap:11px;font-size:10.5px;color:var(--gris5);font-weight:600;margin-top:auto}
 .nov-foot b{color:#0F1117;font-weight:800}
 .nov-empty{grid-column:1/-1;text-align:center;color:#8A90A0;padding:26px;font-size:12.5px;font-weight:600}
+/* Detalle por SKU (producto/cantidad/valor) dentro de la tarjeta de novedad */
+.nov-det{margin-top:8px;padding-top:8px;border-top:1px dashed var(--gris2);display:flex;flex-direction:column;gap:3px}
+.nov-det-row{display:grid;grid-template-columns:44px 1fr auto auto;gap:7px;align-items:baseline;font-size:10px}
+.nov-det-sku{color:#B5BAC6;font-weight:700}
+.nov-det-desc{color:var(--gris5);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nov-det-cant{color:var(--gris4);font-weight:700;white-space:nowrap}
+.nov-det-val{color:#0F1117;font-weight:800;white-space:nowrap}
+.nov-det-tot{border-top:1px solid var(--gris2);margin-top:2px;padding-top:4px}
+.nov-det-tot .nov-det-desc{color:var(--negro);font-weight:800}
+.nov-det-tot .nov-det-val{color:var(--rojo)}
 #dash-volver{position:fixed;right:18px;bottom:18px;z-index:510;display:none;background:var(--negro);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.3)}
 #dash-volver.on{display:flex;align-items:center;gap:7px}
 
@@ -1378,7 +1388,9 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div id="rech-hoy">
         <div id="rechazos-graf" class="dgrid eq" style="margin-bottom:14px"></div>
         <div class="dcard">
-          <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades del día</h3><span class="dm" id="dash-nov-meta">—</span></div>
+          <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades por día</h3><span class="dm" id="dash-nov-meta">—</span>
+            <input type="date" id="nov-fecha" max="" onchange="haptic();verRechazosFecha(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+          </div>
           <div class="nov-grid" id="dash-nov" style="max-height:460px;overflow:auto"></div>
         </div>
       </div>
@@ -3156,7 +3168,61 @@ function motivoMeta(m){
   };
   return map[m]||{c:'#4A5060',bg:'#F1F2F5'};
 }
+const _estBadgeNov=est=>est==='afecta'?'<span class="nov-est afecta">Afecta comisión</span>':est==='omitida'?'<span class="nov-est omitida">Omitida</span>':'<span class="nov-est pendiente">Por revisar</span>';
+/* Tarjeta de una novedad/rechazo, con el detalle por SKU (producto/cantidad/valor) si existe.
+   Compartida entre el panel en vivo (cargarDash) y la vista histórica por fecha (verRechazosFecha). */
+function _novCardHTML(n,ctx){
+  const c=ctx.rutaColor[n.ruta]||'#4A5060';
+  const vd=ctx.vendCli?ctx.vendCli(n.codigo_cliente):'—';
+  const rd=ctx.rechCod[String(n.codigo_cliente)]||{};
+  const mm=motivoMeta(n.motivo);
+  const horaSrc=rd.hora||n.created_at;
+  const hora=horaSrc?new Date(horaSrc).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
+  const foto=n.foto_url;
+  const cajas=ctx.cajRech?ctx.cajRech(n.codigo_cliente):(rd.caj||0);
+  const detalle=rd.detalle||[];
+  const totValor=detalle.reduce((s,d)=>s+(d.valor||0),0);
+  const detalleHTML=detalle.length?
+    '<div class="nov-det">'+detalle.map(d=>
+      '<div class="nov-det-row"><span class="nov-det-sku">'+(d.cod||'')+'</span><span class="nov-det-desc">'+(d.desc||'')+'</span>'+
+      '<span class="nov-det-cant">'+(d.cajas?d.cajas+' cj':'')+(d.cajas&&d.und?' + ':'')+(d.und?d.und+' und':'')+'</span>'+
+      '<span class="nov-det-val">'+_pesos(d.valor||0)+'</span></div>').join('')+
+    (detalle.length>1?'<div class="nov-det-row nov-det-tot"><span class="nov-det-sku"></span><span class="nov-det-desc">Total devuelto</span><span class="nov-det-cant"></span><span class="nov-det-val">'+_pesos(totValor)+'</span></div>':'')+
+    '</div>':'';
+  return '<div class="nov-card">'+
+    (foto?'<div class="nov-photo" style="background-image:url(\''+foto+'\')" onclick="window.open(\''+foto+'\',\'_blank\')" title="Ver evidencia"><div class="nov-photo-zoom">🔍</div></div>'
+         :'<div class="nov-photo nov-photo-empty" title="Sin foto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>')+
+    '<div class="nov-body">'+
+      '<div class="nov-top"><b>'+(n.nombre_cliente||n.codigo_cliente)+'</b><span class="nov-cod">'+n.codigo_cliente+'</span></div>'+
+      '<div class="nov-tags"><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span>'+
+        '<span class="dtag" style="background:'+mm.bg+';color:'+mm.c+'">'+n.motivo+'</span>'+
+        _estBadgeNov(rd.estado)+
+      '</div>'+
+      '<div class="nov-foot"><span>🕒 '+hora+'</span><span>📦 <b>'+Math.round(cajas)+'</b> cajas</span>'+
+        (vd&&vd!=='—'?'<span>👤 '+vd+'</span>':'')+
+      '</div>'+
+      detalleHTML+
+    '</div></div>';
+}
 let _dashCargadoUnaVez=false;
+let _rechazosFechaVista=null,_novCtxLive=null; // null = viendo "hoy" en vivo; si no, una fecha fija (no la pisa el refresco cada 30s)
+/* Ver los rechazos + fotos de CUALQUIER día (no solo hoy) en el módulo Rechazos. */
+async function verRechazosFecha(fecha){
+  fecha=fecha||getColDate();
+  _rechazosFechaVista=(fecha===getColDate())?null:fecha; // si eligió hoy, vuelve al modo "en vivo"
+  const cont=document.getElementById('dash-nov');if(cont)cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cargando rechazos del '+fecha+'…</div>';
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url&fecha=eq.'+fecha,{headers:_h});
+    const novs=r.ok?await r.json():[];
+    const rechCod=await mapaCajasRechazadas(novs,fecha);
+    let rutaVend={};try{const rv=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_VEND+'?select=codigo,ruta_vendedor',{headers:_h})).json();(rv||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');}catch(e){}
+    const ctx={rutaColor,vendCli:cod=>rutaVend[String(cod)]||'—',rechCod,cajRech:cod=>(rechCod[String(cod)]?rechCod[String(cod)].caj:0)};
+    const cajasRej=novs.reduce((s,n)=>s+ctx.cajRech(n.codigo_cliente),0);
+    const meta=document.getElementById('dash-nov-meta');if(meta)meta.textContent=novs.length+' rechazos · '+Math.round(cajasRej)+' cajas · '+fecha;
+    if(cont)cont.innerHTML=novs.length?novs.map(n=>_novCardHTML(n,ctx)).join(''):'<div class="nov-empty">Sin novedades registradas el '+fecha+' ✓</div>';
+  }catch(e){if(cont)cont.innerHTML='<div class="nov-empty">Error al cargar: '+e.message+'</div>';}
+}
 async function cargarDash(){
   try{
     // Skeleton solo la primera carga (los refrescos cada 30s no deben parpadear)
@@ -3226,29 +3292,11 @@ async function cargarDash(){
     poblarFiltroRutas(Object.keys(porRuta).sort());
     // Tabla novedades
     document.getElementById('dash-nov-meta').textContent=totNov+' rechazos · '+Math.round(cajasRej)+' cajas';
-    const _estBadge=est=>est==='afecta'?'<span class="nov-est afecta">Afecta comisión</span>':est==='omitida'?'<span class="nov-est omitida">Omitida</span>':'<span class="nov-est pendiente">Por revisar</span>';
-    document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>{
-      const c=rutaColor[n.ruta]||'#4A5060';
-      const vd=vendCli(n.codigo_cliente);
-      const rd=rechCod[String(n.codigo_cliente)]||{};
-      const mm=motivoMeta(n.motivo);
-      const horaSrc=rd.hora||n.created_at;
-      const hora=horaSrc?new Date(horaSrc).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
-      const foto=n.foto_url;
-      return '<div class="nov-card">'+
-        (foto?'<div class="nov-photo" style="background-image:url(\''+foto+'\')" onclick="window.open(\''+foto+'\',\'_blank\')" title="Ver evidencia"><div class="nov-photo-zoom">🔍</div></div>'
-             :'<div class="nov-photo nov-photo-empty" title="Sin foto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>')+
-        '<div class="nov-body">'+
-          '<div class="nov-top"><b>'+(n.nombre_cliente||n.codigo_cliente)+'</b><span class="nov-cod">'+n.codigo_cliente+'</span></div>'+
-          '<div class="nov-tags"><span class="dtag" style="background:'+c+'1A;color:'+c+'">'+n.ruta+'</span>'+
-            '<span class="dtag" style="background:'+mm.bg+';color:'+mm.c+'">'+n.motivo+'</span>'+
-            _estBadge(rd.estado)+
-          '</div>'+
-          '<div class="nov-foot"><span>🕒 '+hora+'</span><span>📦 <b>'+Math.round(cajRech(n.codigo_cliente))+'</b> cajas</span>'+
-            (vd&&vd!=='—'?'<span>👤 '+vd+'</span>':'')+
-          '</div>'+
-        '</div></div>';
-    }).join(''):'<div class="nov-empty">Sin novedades registradas hoy ✓</div>';
+    _novCtxLive={rutaColor,vendCli,rechCod,cajRech};
+    if(!_rechazosFechaVista||_rechazosFechaVista===fecha){
+      const fInp=document.getElementById('nov-fecha');if(fInp){fInp.max=fecha;if(!fInp.value)fInp.value=fecha;}
+      document.getElementById('dash-nov').innerHTML=novedades_.length?novedades_.map(n=>_novCardHTML(n,_novCtxLive)).join(''):'<div class="nov-empty">Sin novedades registradas hoy ✓</div>';
+    }
     // Mapa
     document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
     await actualizarGeocercas(clientes_); // geocercas listas antes de pintar la flota (no bloquea si ya estaban calculadas)
