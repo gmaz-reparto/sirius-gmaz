@@ -1,5 +1,5 @@
 // GMAZ Rutas — Service Worker (PWA instalable + caché de librerías)
-const CACHE = 'gmaz-rutas-v3';
+const CACHE = 'gmaz-rutas-v4';
 const LIBS = 'gmaz-libs-v2';
 const ESENCIALES = [
   './gmaz-rutas-v3.html',
@@ -37,11 +37,12 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 2) Archivos propios de la app: red primero, caché de respaldo si no hay señal
+  // 2) Archivos propios de la app: red primero SIEMPRE fresca (no respetar el Cache-Control
+  // de GitHub Pages, que puede servir una copia de hasta 10 min), caché de respaldo si no hay señal
   const esApp = ESENCIALES.some(f => url.endsWith(f.replace('./', '')));
   if (esApp) {
     e.respondWith(
-      fetch(e.request).then(r => {
+      fetch(e.request, { cache: 'no-store' }).then(r => {
         const copia = r.clone();
         caches.open(CACHE).then(c => c.put(e.request, copia));
         return r;
