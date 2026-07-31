@@ -6218,6 +6218,11 @@ const AUDIT_DESC={
   'RECHAZO FALSO':'El entregador marcó el producto como rechazado en la app, pero LiquiYa muestra que sí se liquidó (sí se entregó y se cobró).'
 };
 function _auditRutas(anom){return[...new Set(anom.map(a=>a.ruta))].sort();}
+function ordenarAuditoria(col){
+  const cur=window._auditSort||{col:'monto',dir:'desc'};
+  window._auditSort=(cur.col===col)?{col,dir:cur.dir==='asc'?'desc':'asc'}:{col,dir:col==='cliente'||col==='ruta'||col==='tipo'?'asc':'desc'};
+  renderAuditoria(window._auditAnom||[],false);
+}
 function filtrarAuditoria(){
   const f={ruta:(document.getElementById('audit-fil-ruta')||{}).value||'',tipo:(document.getElementById('audit-fil-tipo')||{}).value||''};
   window._auditFiltro=f;
@@ -6252,22 +6257,46 @@ function renderAuditoria(anom,resetFiltro=true){
     (filtro.ruta||filtro.tipo?'<button onclick="haptic();document.getElementById(\'audit-fil-ruta\').value=\'\';document.getElementById(\'audit-fil-tipo\').value=\'\';filtrarAuditoria()" style="height:34px;border:none;border-radius:9px;background:#F1F2F5;color:#4A5060;font-family:inherit;font-size:11.5px;font-weight:800;padding:0 12px;cursor:pointer">✕ Quitar filtros</button>':'')+
     '</div>';
   let filtrados=anom.filter(a=>(!filtro.ruta||a.ruta===filtro.ruta)&&(!filtro.tipo||a.tipo===filtro.tipo));
-  filtrados=filtrados.slice().sort((a,b)=>(b.monto||0)-(a.monto||0)); // lo más grave primero
+  const sortSt=window._auditSort||{col:'monto',dir:'desc'};window._auditSort=sortSt;
+  const _val=(a,col)=>col==='monto'?(a.monto||0):col==='caj'?(a.caj||0):col==='cliente'?(a.nombre||''):col==='ruta'?(a.ruta||''):(a.tipo||'');
+  filtrados=filtrados.slice().sort((a,b)=>{
+    const va=_val(a,sortSt.col),vb=_val(b,sortSt.col);
+    const cmp=typeof va==='string'?va.localeCompare(vb):va-vb;
+    return sortSt.dir==='asc'?cmp:-cmp;
+  });
+  const maxMonto=Math.max(1,...filtrados.map(a=>a.monto||0));
+  const _th=(label,col,align)=>{
+    const on=sortSt.col===col;
+    const caret=on?(sortSt.dir==='asc'?'▲':'▼'):'';
+    return '<th onclick="haptic();ordenarAuditoria(\''+col+'\')" style="padding:10px 9px;text-align:'+(align||'left')+';font-size:10px;font-weight:800;text-transform:uppercase;color:'+(on?'#0F1117':'#9AA1B2')+';border-bottom:1px solid #EEF0F4;cursor:pointer;white-space:nowrap;user-select:none">'+label+' <span style="font-size:8px">'+caret+'</span></th>';
+  };
   const tabla=!filtrados.length?'<div style="background:#F7F8FA;border-radius:12px;padding:18px;text-align:center;color:#8A90A0">Sin resultados con ese filtro</div>':
     '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,17,23,.04)"><thead><tr style="background:#FBFBFD">'+
-    ['Tipo','Ruta entrega','Cliente','Cód.','SKU','Producto','Cajas','Valor liquidado','Detalle'].map(h=>'<th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">'+h+'</th>').join('')+'</tr></thead><tbody>'+
-    filtrados.map(a=>'<tr style="border-bottom:.5px solid #EEF0F4">'+
+    _th('Tipo','tipo')+_th('Ruta entrega','ruta')+_th('Cliente','cliente')+
+    '<th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Cód.</th>'+
+    '<th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">SKU</th>'+
+    '<th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Producto</th>'+
+    _th('Cajas','caj','right')+_th('Valor liquidado','monto','right')+
+    '<th style="padding:10px 9px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:#9AA1B2;border-bottom:1px solid #EEF0F4">Detalle</th>'+
+    '</tr></thead><tbody>'+
+    filtrados.map(a=>{
+      const barPct=Math.max(3,Math.round((a.monto||0)/maxMonto*100));
+      return '<tr style="border-bottom:.5px solid #EEF0F4">'+
       '<td style="padding:7px 9px"><span style="font-size:9px;font-weight:800;color:'+AUDIT_COL[a.tipo]+';background:'+AUDIT_BG[a.tipo]+';border-radius:5px;padding:2px 7px;white-space:nowrap">'+a.tipo+'</span></td>'+
       '<td style="padding:7px 9px;white-space:nowrap">'+a.ruta+'</td>'+
       '<td style="padding:7px 9px;font-weight:700">'+(a.nombre||'')+'</td>'+
       '<td style="padding:7px 9px;color:#8A90A0">'+a.cod+'</td>'+
       '<td style="padding:7px 9px;color:#8A90A0">'+a.sku+'</td>'+
       '<td style="padding:7px 9px">'+(a.desc||'')+'</td>'+
-      '<td style="padding:7px 9px;font-weight:700;white-space:nowrap">'+(a.caj||0)+(a.sub?' + '+a.sub+'u':'')+'</td>'+
-      '<td style="padding:7px 9px;font-weight:800;color:'+AUDIT_COL[a.tipo]+'">'+_pesos(a.monto||0)+'</td>'+
-      '<td style="padding:7px 9px;color:#8A90A0;font-size:11px">'+(a.nota||'')+'</td></tr>').join('')+
+      '<td style="padding:7px 9px;font-weight:700;white-space:nowrap;text-align:right">'+(a.caj||0)+(a.sub?' + '+a.sub+'u':'')+'</td>'+
+      '<td style="padding:7px 9px;text-align:right;min-width:110px">'+
+        '<div style="font-weight:800;color:'+AUDIT_COL[a.tipo]+'">'+_pesos(a.monto||0)+'</div>'+
+        '<div style="height:3px;background:#F1F2F5;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+barPct+'%;background:'+AUDIT_COL[a.tipo]+';border-radius:3px;margin-left:auto"></div></div>'+
+      '</td>'+
+      '<td style="padding:7px 9px;color:#8A90A0;font-size:11px">'+(a.nota||'')+'</td></tr>';
+    }).join('')+
     '</tbody></table>';
-  cont.innerHTML=resumen+filtros+'<div style="font-size:11px;color:#8A90A0;font-weight:600;margin-bottom:6px">Mostrando '+filtrados.length+' de '+anom.length+' · ordenado por valor liquidado, de mayor a menor</div>'+tabla;
+  cont.innerHTML=resumen+filtros+'<div style="font-size:11px;color:#8A90A0;font-weight:600;margin-bottom:6px">Mostrando '+filtrados.length+' de '+anom.length+' · clic en un encabezado para ordenar</div>'+tabla;
 }
 async function exportarAuditoria(){
   const anom=window._auditAnom||[];if(!anom.length){toast('No hay alertas para exportar','err');return;}
