@@ -274,6 +274,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .pc-estado-ok{background:var(--verde-s);color:var(--verde);border:1px solid rgba(5,150,105,.2)}
 .pc-estado-warn{background:var(--amarillo-s);color:var(--amarillo);border:1px solid rgba(217,119,6,.2)}
 .pc-estado-empty{background:var(--gris1);color:var(--gris4);border:1px solid var(--gris2)}
+/* ══ RUTINA DIARIA: tarjetas de subida con dropzone (estilo GMAZ Comercial) ══ */
+.rut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.rut-card{background:#fff;border:1px solid var(--gris2);border-radius:var(--radio-lg,16px);padding:15px;box-shadow:var(--sh-card,0 1px 2px rgba(15,17,23,.05));display:flex;flex-direction:column;gap:11px}
+.rut-top{display:flex;align-items:flex-start;gap:10px}
+.rut-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex-shrink:0}
+.rut-ti{flex:1;min-width:0}
+.rut-t{font-size:12.5px;font-weight:800;color:var(--negro)}
+.rut-detail{font-size:10px;color:var(--gris4);font-weight:600;margin-top:2px;line-height:1.4}
+.rut-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--gris3);border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s;color:var(--gris4)}
+.rut-drop:hover,.rut-drop.dragover{border-color:var(--rojo);background:var(--rojo-s);color:var(--rojo)}
+.rut-drop span{font-size:10.5px;font-weight:700;color:inherit}
+.rut-actions{display:flex;gap:10px;justify-content:flex-end}
+.rut-link{font-size:10.5px;font-weight:800;color:var(--azul);cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.rut-link.danger{color:var(--rojo)}
 
 /* ══ PROGRESO ══ */
 #prog-overlay{position:fixed;inset:0;z-index:850;background:rgba(15,17,23,.72);display:none;align-items:flex-end;backdrop-filter:blur(2px)}
@@ -1266,6 +1280,11 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <button class="dnav" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></i>Rechazos<span class="dnav-b" id="dtab-rech">0</span></button>
       <button class="dnav" data-mod="alertas" onclick="haptic();activarModulo('alertas')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></i>Alertas<span class="dnav-b warn" id="dtab-alert">0</span></button>
       <button class="dnav" data-mod="indicadores" onclick="haptic();activarModulo('indicadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/></svg></i>Indicadores</button>
+      <div style="font-size:10px;font-weight:800;color:var(--gris4);letter-spacing:.6px;text-transform:uppercase;padding:14px 12px 6px">Herramientas</div>
+      <button class="dnav" onclick="haptic();abrirRutinaDesdeDash()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></i>Rutina diaria</button>
+      <button class="dnav" onclick="haptic();abrirAsistencia()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>Asistencia</button>
+      <button class="dnav" onclick="haptic();abrirAuditoria()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></i>Auditoría</button>
+      <button class="dnav" onclick="haptic();abrirObsequiosSup()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M3 12v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M12 8c-1.5 0-3-1-3-2.5S10 3 12 5c0-1.5 1.5-2.5 3-2.5S18 4 18 5.5 16.5 8 15 8"/></svg></i>Obsequios</button>
     </nav>
     <div class="dside-foot"><span class="dlive"><i></i>Operación en vivo</span></div>
   </aside>
@@ -1276,12 +1295,6 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="dtb-status"><span class="dlive"><i></i>En vivo</span><span class="dtb-sep">·</span><span id="dash-fecha"></span><span class="dtb-sep">·</span><span>Pasto, Nariño</span></div>
       </div>
       <div class="dtb-right">
-        <div class="dtb-tools">
-          <button class="dtool" onclick="haptic();abrirRutinaDesdeDash()" title="Rutina diaria"><span>📋</span></button>
-          <button class="dtool" onclick="haptic();abrirAsistencia()" title="Asistencia"><span>🗓️</span></button>
-          <button class="dtool" onclick="haptic();abrirAuditoria()" title="Auditoría"><span>🔎</span></button>
-          <button class="dtool" onclick="haptic();abrirObsequiosSup()" title="Obsequios"><span>🎁</span></button>
-        </div>
         <button class="dchip rojo" onclick="haptic();verComoEntregador()">Ver como entregador</button>
         <button class="dtool" onclick="haptic();cerrarSesion()" title="Cerrar sesión"><span>⎋</span></button>
         <div class="dtb-user"><div class="dtb-av">CC</div><div class="dtb-ut"><b>Coordinador</b><span>Centro de control</span></div></div>
@@ -1330,6 +1343,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 
     <!-- ══ MÓDULO VEHÍCULOS ══ -->
     <section class="mod" id="mod-vehiculos">
+      <div class="dcard" style="margin-bottom:14px">
+        <div class="dcard-h"><h3><span class="h3ic">🕒</span>Buscar cualquier vehículo · recorrido histórico</h3><span class="dm">Toda la flota, así no esté asignado hoy</span></div>
+        <div style="padding:14px 17px;display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+          <select id="veh-buscar-select" style="flex:1;min-width:220px;height:38px;border:1px solid var(--gris3);border-radius:10px;padding:0 11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--negro)"><option value="">Cargando flota…</option></select>
+          <input type="date" id="veh-buscar-fecha" style="height:38px;border:1px solid var(--gris3);border-radius:10px;padding:0 11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--negro)">
+          <button class="vp-btn pri" style="flex:0 0 auto;padding:10px 16px" onclick="haptic();buscarRecorridoVehiculo()">Ver recorrido ▶</button>
+        </div>
+      </div>
       <div id="veh-cards" class="veh-cards"><div class="veh-cargando">Abre este módulo para ver las tarjetas por vehículo…</div></div>
       <div class="dcard" style="margin-top:14px">
         <div class="dcard-h"><h3><span class="h3ic">🔑</span>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
@@ -1552,14 +1573,47 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <div id="pctab-content-1" style="flex:1;overflow-y:auto">
     <div class="pc-body">
       <div class="pc-date" id="pc-date">Cargando...</div>
-      <div class="pc-lbl">Ejecutar cada mañana en orden</div>
-      <div class="pc-step ps1"><div class="pc-num pn1">1</div><div class="pc-info"><div class="pc-action">Descargar Excel de novedades</div><div class="pc-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span><button class="pc-btn" id="pb1" onclick="haptic();switchPcTab(3)">Ver histórico</button></div>
-      <div class="pc-step ps2"><div class="pc-num pn2">2</div><div class="pc-info"><div class="pc-action">Limpiar fotos antiguas (+2 meses)</div><div class="pc-detail" id="pc-det-fotos">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span><button class="pc-btn" id="pb2" onclick="haptic();cleanPhotos()">Limpiar +2 meses</button></div>
-      <div class="pc-step ps3"><div class="pc-num pn3">3</div><div class="pc-info"><div class="pc-action">Subir rutas del día</div><div class="pc-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb3" onclick="haptic();document.getElementById('inp-rutas').click()">↑ Subir</button><button class="pc-btn" style="background:#7f1d1d;font-size:8px;padding:4px 8px" onclick="haptic();borrarRutas()">Borrar</button></div><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></div>
-      <div class="pc-step ps4"><div class="pc-num pn4" style="background:#4F46E5">4</div><div class="pc-info"><div class="pc-action">Subir Libro de pedidos</div><div class="pc-detail" id="pc-det-ped">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-ped">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pbped" onclick="haptic();document.getElementById('inp-ped').click()">↑ Subir</button><button class="pc-btn" style="background:#3730a3;font-size:8px;padding:4px 8px" onclick="haptic();borrarPedidosHoy()">Borrar</button></div><input type="file" id="inp-ped" accept=".pdf" multiple style="display:none" onchange="uploadLibroPedidos(event)"></div>
-      <div class="pc-step ps4"><div class="pc-num pn4" style="background:#0EA5E9">5</div><div class="pc-info"><div class="pc-action">Subir Hoja de cargue</div><div class="pc-detail" id="pc-det-hoja">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-hoja">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pbhoja" onclick="haptic();document.getElementById('inp-hoja').click()">↑ Subir</button><button class="pc-btn" style="background:#075985;font-size:8px;padding:4px 8px" onclick="haptic();borrarHojasHoy()">Borrar</button></div><input type="file" id="inp-hoja" accept=".pdf" multiple style="display:none" onchange="uploadHojaCarga(event)"></div>
-      <div class="pc-step ps4"><div class="pc-num pn4">6</div><div class="pc-info"><div class="pc-action">Subir facturas y soportes</div><div class="pc-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb4" onclick="haptic();document.getElementById('inp-fact').click()">↑ Subir</button><button class="pc-btn" style="background:#1e3a5c;font-size:8px;padding:4px 8px" onclick="haptic();borrarFacturasHoy()">Borrar</button></div><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></div>
-      <div class="pc-step ps5"><div class="pc-num pn5">7</div><div class="pc-info"><div class="pc-action">Actualizar maestro de clientes</div><div class="pc-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><button class="pc-btn" id="pb5" onclick="haptic();document.getElementById('inp-maestro').click()">↑ Subir</button><button class="pc-btn" style="background:#3b1f5e;font-size:8px;padding:4px 8px" onclick="haptic();borrarMaestro()">Borrar</button></div><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></div>
+      <div class="pc-lbl">Archivos diarios · sube o arrastra cada uno</div>
+      <div class="rut-grid">
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#1A56DB"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="rut-ti"><div class="rut-t">Excel de novedades</div><div class="rut-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span></div>
+          <div class="rut-actions" style="justify-content:flex-start"><button class="rut-link" onclick="haptic();switchPcTab(3)">Ver histórico →</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#8A90A0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="rut-ti"><div class="rut-t">Limpiar fotos antiguas</div><div class="rut-detail" id="pc-det-fotos">+2 meses</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span></div>
+          <div class="rut-actions" style="justify-content:flex-start"><button class="rut-link" onclick="haptic();cleanPhotos()">Limpiar +2 meses</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#7f1d1d"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="rut-ti"><div class="rut-t">Rutas del día (PPAS)</div><div class="rut-detail" id="pc-det-rutas">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-rutas">...</span></div>
+          <label class="rut-drop" data-input="inp-rutas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-rutas" accept=".xlsx,.xls" style="display:none" onchange="uploadRoutes(event)"></label>
+          <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarRutas()">Borrar</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#4F46E5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div class="rut-ti"><div class="rut-t">Libro de pedidos</div><div class="rut-detail" id="pc-det-ped">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-ped">...</span></div>
+          <label class="rut-drop" data-input="inp-ped"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-ped" accept=".pdf" multiple style="display:none" onchange="uploadLibroPedidos(event)"></label>
+          <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarPedidosHoy()">Borrar</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#0EA5E9"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div class="rut-ti"><div class="rut-t">Hoja de cargue</div><div class="rut-detail" id="pc-det-hoja">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-hoja">...</span></div>
+          <label class="rut-drop" data-input="inp-hoja"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-hoja" accept=".pdf" multiple style="display:none" onchange="uploadHojaCarga(event)"></label>
+          <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarHojasHoy()">Borrar</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#1e3a5c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></div><div class="rut-ti"><div class="rut-t">Facturas y soportes</div><div class="rut-detail" id="pc-det-fact">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fact">...</span></div>
+          <label class="rut-drop" data-input="inp-fact"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-fact" accept=".pdf" multiple style="display:none" onchange="uploadInvoices(event)"></label>
+          <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarFacturasHoy()">Borrar</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#059669"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="rut-ti"><div class="rut-t">Liquidación (LiquiYa)</div><div class="rut-detail" id="pc-det-liq">Reporte de Angelita — para la Auditoría</div></div><span class="pc-estado pc-estado-empty" id="pc-est-liq">...</span></div>
+          <label class="rut-drop" data-input="inp-liq"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-liq" accept=".xlsx,.xls" multiple style="display:none" onchange="uploadLiquidacion(event)"></label>
+          <div class="rut-actions"><button class="rut-link" onclick="haptic();abrirAuditoria()">Ver Auditoría →</button></div>
+        </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#3b1f5e"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="rut-ti"><div class="rut-t">Maestro de clientes</div><div class="rut-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span></div>
+          <label class="rut-drop" data-input="inp-maestro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></label>
+          <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarMaestro()">Borrar</button></div>
+        </div>
+      </div>
     </div>
   </div>
   <!-- TAB 2: OPERACIÓN HOY -->
@@ -3223,8 +3277,28 @@ function _estadoVehiculo(unitId,u){
   if(enc)return['Encendido','#0891B2','#ECFEFF'];
   return['Detenido','#D97706','#FFF7ED'];
 }
+/* Selector de "cualquier vehículo" para ver recorrido histórico aunque hoy no esté asignado a ninguna ruta
+   (ej: se accidentó ayer y hoy no aparece en la asignación del día — sin esto era imposible ver su recorrido). */
+async function poblarBuscarVehiculo(){
+  const sel=document.getElementById('veh-buscar-select');if(!sel)return;
+  if(!_vehCache){try{_vehCache=await secVehiculos()||[];}catch(e){_vehCache=[];}}
+  const fInp=document.getElementById('veh-buscar-fecha');if(fInp&&!fInp.value)fInp.value=getColDate();
+  const actual=sel.value;
+  sel.innerHTML='<option value="">Selecciona un vehículo…</option>'+
+    _vehCache.slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')).map(v=>
+      '<option value="'+v.nombre+'"'+(v.nombre===actual?' selected':'')+'>'+v.nombre+' · '+(v.marca||'')+' '+(v.modelo||'')+'</option>').join('');
+}
+function buscarRecorridoVehiculo(){
+  const unitId=(document.getElementById('veh-buscar-select')||{}).value;
+  const fecha=(document.getElementById('veh-buscar-fecha')||{}).value||getColDate();
+  if(!unitId){toast('Elige un vehículo','err');return;}
+  const ruta=(_flotaCache&&_flotaCache.rutaPorUnit&&_flotaCache.rutaPorUnit[unitId])||'';
+  activarModulo('operacion');
+  toggleRecorrido(unitId,ruta,fecha);
+}
 function renderVehiculoCards(){
   const cont=document.getElementById('veh-cards');if(!cont)return;
+  poblarBuscarVehiculo();
   const fc=_flotaCache,dd=_dashData;
   if(!fc||!dd){cont.innerHTML='<div class="veh-cargando">Cargando datos de la flota…</div>';return;}
   const units=Object.keys(fc.rutaPorUnit);
@@ -5432,6 +5506,7 @@ function openCoord(){
   document.getElementById('panel-coord').classList.add('show');
   switchPcTab(1);
   verificarEstadoPanel();
+  initRutDropzones();
 }
 
 let resumenInterval=null;
@@ -5655,7 +5730,48 @@ async function verificarEstadoPanel(){
       setEst('pc-est-maest','pc-det-maest',false,'⚠ Vacío','Sin vendedores — sube el maestro');
     }
   }catch(e){setEst('pc-est-maest','pc-det-maest',null,'?','Error al verificar');}
+
+  // ── Verificar Libro de pedidos e Hoja de cargue (índice de hoy)
+  const _chkIndice=async(idEst,idDet,archivo,etiqueta)=>{
+    setEst(idEst,idDet,null,'...','Verificando...');
+    try{
+      const url=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+hoy+'/'+archivo;
+      const r=await fetch(url+'?t='+Date.now());
+      if(r.ok){const d=await r.json();const n=Object.keys(d||{}).length;
+        setEst(idEst,idDet,true,'✓ '+n+' '+etiqueta,'Índice de hoy ('+hoy+') listo');
+      }else{setEst(idEst,idDet,false,'⚠ Sin subir','No hay '+etiqueta+' de hoy — sube el archivo');}
+    }catch(e){setEst(idEst,idDet,null,'?','Error al verificar');}
+  };
+  await _chkIndice('pc-est-ped','pc-det-ped','PEDIDOS_INDEX.json','clientes');
+  await _chkIndice('pc-est-hoja','pc-det-hoja','HOJAS_INDEX.json','rutas');
+
+  // ── Verificar Liquidación (LiquiYa) — se guarda con la fecha REAL del archivo, normalmente ayer
+  setEst('pc-est-liq','pc-det-liq',null,'...','Verificando...');
+  try{
+    const url=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+ayer+'/LIQUIDACION_INDEX.json';
+    const r=await fetch(url+'?t='+Date.now());
+    if(r.ok){const d=await r.json();const n=Object.keys(d||{}).length;
+      setEst('pc-est-liq','pc-det-liq',true,'✓ '+n+' clientes','Liquidación de ayer ('+ayer+') lista para auditar');
+    }else{setEst('pc-est-liq','pc-det-liq',false,'⚠ Falta','Sin liquidación de ayer ('+ayer+') — súbela cuando la envíe Angelita');}
+  }catch(e){setEst('pc-est-liq','pc-det-liq',null,'?','Error al verificar');}
 }
+/* Arrastrar y soltar archivos sobre las tarjetas de la Rutina diaria (reusa los mismos <input> ocultos). */
+function initRutDropzones(){
+  document.querySelectorAll('.rut-drop').forEach(z=>{
+    if(z._dndListo)return;z._dndListo=true;
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('dragover');});
+    z.addEventListener('dragleave',()=>z.classList.remove('dragover'));
+    z.addEventListener('drop',e=>{
+      e.preventDefault();z.classList.remove('dragover');
+      const inp=document.getElementById(z.dataset.input);
+      if(inp&&e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length){
+        inp.files=e.dataTransfer.files;
+        inp.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded',initRutDropzones);
 function closeCoord(){
   document.getElementById('panel-coord').classList.remove('show');
   if(resumenInterval){clearInterval(resumenInterval);resumenInterval=null;}
