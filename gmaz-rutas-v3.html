@@ -1378,9 +1378,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
     <!-- ══ MÓDULO CLIENTES ══ -->
     <section class="mod" id="mod-clientes">
       <div id="clientes-kpis" class="dkpis" style="grid-template-columns:repeat(4,1fr)"></div>
-      <div class="dcard">
+      <div class="dcard" style="margin-bottom:14px">
         <div class="dcard-h"><h3><span class="h3ic">📊</span>Cumplimiento por ruta</h3><span class="dm">% cierre en vivo</span></div>
         <div class="drk" id="dash-ranking"></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-h"><h3><span class="h3ic">🔍</span>Buscar cliente</h3><span class="dm" id="clitbl-meta">—</span></div>
+        <div style="padding:12px 17px;display:flex;gap:9px;flex-wrap:wrap;border-bottom:1px solid var(--gris2)">
+          <input type="search" id="clitbl-busca" placeholder="Nombre o código del cliente…" oninput="filtrarTablaClientes()" style="flex:1;min-width:200px;height:36px;border:1px solid var(--gris3);border-radius:9px;padding:0 11px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--negro)">
+          <select id="clitbl-ruta" onchange="filtrarTablaClientes()" style="height:36px;border:1px solid var(--gris3);border-radius:9px;padding:0 10px;font-family:inherit;font-size:12px;font-weight:700"><option value="">Todas las rutas</option></select>
+          <select id="clitbl-estado" onchange="filtrarTablaClientes()" style="height:36px;border:1px solid var(--gris3);border-radius:9px;padding:0 10px;font-family:inherit;font-size:12px;font-weight:700">
+            <option value="">Todos los estados</option><option value="entregado">Entregados</option><option value="novedad">Con novedad</option>
+          </select>
+        </div>
+        <div style="overflow:auto;max-height:460px"><table class="dtbl" id="clitbl"><thead><tr><th>Cliente</th><th>Código</th><th>Ruta</th><th>Dirección</th><th style="text-align:right">Cajas</th><th>Estado</th></tr></thead><tbody id="clitbl-body"></tbody></table></div>
       </div>
     </section>
 
@@ -3424,6 +3435,39 @@ function renderClientesModulo(){
     {v:Math.round(d.cajasEnt).toLocaleString('es-CO'),l:'Cajas entregadas'}
   ];
   cont.innerHTML=K.map(k=>'<div class="dkpi simple"><span class="dk-l">'+k.l+'</span><div class="dk-v">'+k.v+'</div></div>').join('');
+  // Tabla buscable de clientes individuales (antes este módulo solo repetía el ranking por ruta)
+  const selRuta=document.getElementById('clitbl-ruta');
+  if(selRuta&&selRuta.options.length<=1){
+    const rutas=[...new Set(d.clientes_.map(c=>c.ruta).filter(Boolean))].sort();
+    selRuta.innerHTML='<option value="">Todas las rutas</option>'+rutas.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
+  }
+  filtrarTablaClientes();
+}
+function filtrarTablaClientes(){
+  const d=_dashData;const body=document.getElementById('clitbl-body');if(!d||!body)return;
+  const q=((document.getElementById('clitbl-busca')||{}).value||'').trim().toLowerCase();
+  const rutaSel=(document.getElementById('clitbl-ruta')||{}).value||'';
+  const estSel=(document.getElementById('clitbl-estado')||{}).value||'';
+  let filas=d.clientes_.map(c=>{
+    const cod=String(c.id);
+    const estado=d.novSet.has(cod)?'novedad':'entregado';
+    const cajas=d.cajasCod[cod]||0;
+    return{nombre:c.nombre||'',cod,ruta:c.ruta||'—',direccion:c.direccion||'',cajas,estado};
+  });
+  if(q)filas=filas.filter(f=>f.nombre.toLowerCase().includes(q)||f.cod.includes(q));
+  if(rutaSel)filas=filas.filter(f=>f.ruta===rutaSel);
+  if(estSel)filas=filas.filter(f=>f.estado===estSel);
+  filas.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const meta=document.getElementById('clitbl-meta');if(meta)meta.textContent=filas.length+' de '+d.clientes_.length+' clientes';
+  const MAX=300; // no renderizar miles de filas de una — se afina con el buscador/filtros
+  body.innerHTML=filas.slice(0,MAX).map(f=>
+    '<tr><td style="font-weight:700">'+f.nombre+'</td><td style="color:#8A90A0">'+f.cod+'</td>'+
+    '<td><span class="dtag" style="background:'+(rutaColor[f.ruta]||'#4A5060')+'1A;color:'+(rutaColor[f.ruta]||'#4A5060')+'">'+f.ruta+'</span></td>'+
+    '<td style="color:#6B7385;font-size:11.5px">'+f.direccion+'</td>'+
+    '<td style="text-align:right;font-weight:700">'+Math.round(f.cajas)+'</td>'+
+    '<td>'+(f.estado==='entregado'?'<span class="nov-est" style="background:var(--verde-s);color:var(--verde)">✓ Entregado</span>':'<span class="nov-est pendiente">⚠ Con novedad</span>')+'</td></tr>'
+  ).join('')||'<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:20px">Sin resultados</td></tr>';
+  if(filas.length>MAX){const tr=document.createElement('tr');tr.innerHTML='<td colspan="6" style="text-align:center;color:#8A90A0;font-size:11px;padding:10px">Mostrando los primeros '+MAX+' — usa el buscador para acotar</td>';body.appendChild(tr);}
 }
 /* ══ MÓDULO RECHAZOS: donut por motivo + KPIs ══ */
 function renderRechazosGraf(){
