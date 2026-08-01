@@ -767,6 +767,15 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .rp-head .rp-meta{font-size:11px;color:var(--gris4);font-weight:700}
 .rp-head .rp-x{margin-left:auto;width:32px;height:32px;border-radius:10px;background:var(--gris1);border:none;font-size:15px;cursor:pointer;font-family:inherit;transition:background .12s}
 .rp-head .rp-x:hover{background:var(--gris2)}
+/* Tira de métricas del recorrido (km, tiempos) sobre la tabla de paradas */
+#rp-metricas{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--gris2);
+  border-bottom:1px solid var(--gris2);flex-shrink:0}
+#rp-metricas:empty{display:none}
+.rpm{background:#fff;padding:9px 12px 10px}
+.rpm-l{font-size:9.5px;font-weight:700;color:var(--gris4);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:3px;line-height:1.3}
+.rpm-v{font-size:16px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.rpm-w{grid-column:1/-1;background:#FFF8E6}
 .rp-body{overflow:auto;flex:1}
 /* ── Vista múltiple ── */
 #multi-ovl{position:fixed;inset:0;z-index:620;background:#F4F5F9;display:none;flex-direction:column}
@@ -1486,6 +1495,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 <!-- ══ PANEL DE RECORRIDO / PARADAS ══ -->
 <div id="rec-panel">
   <div class="rp-head"><b id="rp-titulo">Recorrido</b><span class="rp-meta" id="rp-meta">—</span><button class="rp-x" onclick="haptic();cerrarRecorridoPanel()">✕</button></div>
+  <div id="rp-metricas"></div>
   <div class="rp-body"><table class="dtbl"><thead><tr><th>#</th><th>Parada / Cliente</th><th>Llegó</th><th>Salió</th><th>Detenido</th><th>Dist. cliente</th></tr></thead><tbody id="rp-tbody"></tbody></table></div>
 </div>
 
@@ -1712,6 +1722,14 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div id="hi-body" style="padding:10px 17px 16px">
           <div class="veh-cargando">Elige una fecha para ver el resumen completo del día…</div>
         </div>
+        <div style="border-top:1px solid #EEF0F4;padding:12px 17px 16px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap">
+            <div style="font-size:12.5px;font-weight:800;color:#0F1117">Flota · kilómetros y tiempos</div>
+            <button id="hi-flota-btn" onclick="haptic();cargarMetricasFlota()" style="margin-left:auto;height:30px;border:1px solid #E6E9EF;background:#fff;border-radius:8px;padding:0 12px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117;cursor:pointer">Calcular del GPS</button>
+          </div>
+          <div style="font-size:11px;color:var(--gris4);margin-bottom:8px">Recorrido real de cada vehículo: kilómetros, tiempo en ruta, tiempo detenido fuera de cliente y tiempo en planta.</div>
+          <div id="hi-flota-body"><div class="veh-cargando">Pulsa «Calcular del GPS» — se lee el recorrido guardado de cada vehículo de ese día.</div></div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;color:var(--negro);flex:1">Novedades por fecha</div>
@@ -1815,6 +1833,10 @@ const CFG={
   SEC_USER:'GMAZSAS',SEC_PASS:'901436120-6',
   // Planta Coca-Cola: de donde salen y a donde vuelven los vehículos (Av. Mijitayo, Pasto)
   PLANTA:{lat:1.205398,lng:-77.295223,radio:250},
+  // Puntos GPS que se piden por vehículo y día. Con 600 quedaban huecos de hasta 60 min y la
+  // cobertura del día bajaba al 55 %, lo que distorsionaba los tiempos (un hueco entre dos
+  // puntos quietos parecía una hora detenido). 3000 ≈ un punto cada 30 s en una jornada de 12 h.
+  GPS_PUNTOS_DIA:3000,
   BCK_PED:'facturas_Gmaz' // el índice de pedidos vive en el mismo bucket, junto a las facturas
 };
 
@@ -4109,7 +4131,7 @@ async function _recorridoStorageGet(unitId,fecha){
 async function obtenerHistorialVehiculo(v,fecha){
   const guardado=await _recorridoStorageGet(v.nombre,fecha);
   if(guardado)return guardado;
-  return await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
+  return await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',CFG.GPS_PUNTOS_DIA);
 }
 /* Respaldo automático del día anterior (ya cerrado) — se dispara una vez al día al abrir la Rutina.
    No bloquea la UI; si un vehículo falla, sigue con los demás. */
@@ -4126,7 +4148,7 @@ async function respaldarRecorridosDia(){
     let ok=0,vacios=0,fallos=0;
     for(const v of _vehCache){
       try{
-        const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',600);
+        const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',CFG.GPS_PUNTOS_DIA);
         if(puntos&&puntos.length){
           await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/'+encodeURIComponent(v.nombre)+'.json',{
             method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
@@ -4380,6 +4402,75 @@ function detectarParadas(pts,clientesRuta){
   }
   return paradas;
 }
+/* ══ MÉTRICAS DE RECORRIDO ══
+   detectarParadas() ya sabía la duración de cada parada, si el motor estuvo encendido y si ocurrió
+   en la planta — pero nada de eso se sumaba nunca. Esto lo totaliza: kilómetros, tiempo en ruta,
+   tiempo detenido (parado FUERA de planta y FUERA de cliente = el que cuesta plata), tiempo en
+   planta y tiempo atendiendo clientes. Recibe los puntos ya en orden cronológico y filtrados. */
+function metricasRecorrido(pts,clientesRuta,paradasYa){
+  const R={km:0,minRuta:0,minMoviendo:0,minDetenido:0,minPlanta:0,minCliente:0,minSinDato:0,
+           paradas:0,paradasLargas:[],velMax:0,horaIni:null,horaFin:null,
+           salidaPlanta:null,regresoPlanta:null,cobertura:100};
+  if(!pts||pts.length<2)return R;
+  // El GPS reporta con huecos (se han visto saltos de hasta 60 min). Un hueco entre dos puntos
+  // quietos NO prueba que el vehículo estuviera detenido todo ese rato, así que los tramos con
+  // más de MAXGAP minutos no se le atribuyen a ninguna categoría: se cuentan como sin cobertura.
+  const MAXGAP=10;
+  const cli=(clientesRuta||[]).filter(c=>c.lat&&c.lng);
+  const cercaCliente=(la,ln)=>{for(const c of cli){if(_distM({lat:la,lng:ln},{lat:c.lat,lng:c.lng})<150)return true;}return false;};
+  const conMov=pts.filter(p=>(parseFloat(p.velocidad)||0)>5);
+  if(conMov.length){
+    R.horaIni=conMov[0].hora||null;
+    R.horaFin=conMov[conMov.length-1].hora||null;
+    const dur=Math.round((_tsPt(conMov[conMov.length-1])-_tsPt(conMov[0]))/60000);
+    R.minRuta=dur>0?dur:0;
+  }
+  // Solo se miden los tramos dentro de la jornada (primer y último movimiento): lo de antes y
+  // después es el vehículo parqueado de noche, no operación.
+  const tIni=conMov.length?_tsPt(conMov[0]):_tsPt(pts[0]);
+  const tFin=conMov.length?_tsPt(conMov[conMov.length-1]):_tsPt(pts[pts.length-1]);
+  let dentro=null;
+  for(let i=0;i<pts.length-1;i++){
+    const p=pts[i],q=pts[i+1];
+    const la=+p.latitud,ln=+p.longitud;
+    const v=parseFloat(p.velocidad)||0; if(v>R.velMax)R.velMax=v;
+    if(!la||!ln)continue;
+    // Salida y regreso a planta (se evalúa en todo el día, no solo en jornada)
+    const enPl=esPlanta(la,ln);
+    if(dentro===true&&enPl===false&&!R.salidaPlanta)R.salidaPlanta=p.hora||null;
+    if(dentro===false&&enPl===true)R.regresoPlanta=p.hora||null;
+    dentro=enPl;
+    const t=_tsPt(p); if(t<tIni||t>tFin)continue;
+    const dt=(_tsPt(q)-t)/60000;
+    if(dt<0)continue;
+    const lb=+q.latitud,lnb=+q.longitud;
+    const d=(lb&&lnb)?_distM({lat:la,lng:ln},{lat:lb,lng:lnb}):0;
+    if(dt>MAXGAP){R.minSinDato+=dt;continue;} // hueco de señal: no se le atribuye a nada
+    const vq=parseFloat(q.velocidad)||0;
+    if(v>3||vq>3||d>=60){
+      R.minMoviendo+=dt;
+      // <15 m es ruido del GPS parado; >4 km entre dos reportes seguidos es pérdida de señal
+      // (el tramo real no fue en línea recta), no kilómetros ciertos.
+      if(d>=15&&d<=4000)R.km+=d/1000;
+    }
+    else if(enPl)R.minPlanta+=dt;
+    else if(cercaCliente(la,ln))R.minCliente+=dt;
+    else R.minDetenido+=dt;
+  }
+  const medido=R.minMoviendo+R.minDetenido+R.minPlanta+R.minCliente;
+  R.cobertura=(medido+R.minSinDato)>0?Math.round(medido/(medido+R.minSinDato)*100):100;
+  // Las paradas largas siguen saliendo de detectarParadas(), que es lo que pinta el mapa
+  const paradas=paradasYa||detectarParadas(pts,clientesRuta||[]);
+  R.paradas=paradas.length;
+  R.paradasLargas=paradas.filter(p=>!p.enPlanta&&!p.planta&&!p.cliente&&p.durMin>=15&&p.durMin<=MAXGAP*6);
+  return R;
+}
+/* "7h 08m" a partir de minutos — formato corto para tarjetas y tablas. */
+function _hm(min){
+  min=Math.max(0,Math.round(min||0));
+  const h=Math.floor(min/60),m=min%60;
+  return h?h+'h '+String(m).padStart(2,'0')+'m':m+'m';
+}
 async function toggleRecorrido(unitId,ruta,fechaSel){
   const fecha=fechaSel||getColDate();
   if(recorridoCapa&&recorridoCapa.unitId===unitId&&recorridoCapa.fecha===fecha){limpiarRecorrido();return;}
@@ -4428,7 +4519,8 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
         icon:{path:google.maps.SymbolPath.CIRCLE,scale:p.planta?13:11,fillColor:cP,fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
         title:'Parada '+(ix+1)+' · '+p.durMin+' min'}));
     });
-    let km=0;if(window.turf)for(let k=1;k<path.length;k++)km+=turf.distance(turf.point([path[k-1].lng,path[k-1].lat]),turf.point([path[k].lng,path[k].lat]),{units:'kilometers'});
+    const met=metricasRecorrido(ord,clientesRuta,paradas);
+    const km=met.km;
     const bounds=new google.maps.LatLngBounds();path.forEach(p=>bounds.extend(p));dashMap.fitBounds(bounds);
     recorridoCapa={unitId,ruta,fecha,overlays,timer:null,paradas};
     // Camión 🚚 animado recorriendo la ruta (en vez de las flechas confusas cuando pasó varias veces por el mismo punto)
@@ -4441,17 +4533,34 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
       truck.setPosition(path[_ti]);_ti+=_tstep;if(_ti>=path.length)_ti=0;
     },70);
     recorridoCapa.timer=_truckTimer;
-    mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord);
+    mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord,met);
     toast('Recorrido '+unitId+' ('+fecha+'): '+paradas.length+' paradas · ~'+km.toFixed(1)+' km','ok');
   }catch(e){toast('Error cargando recorrido: '+e.message,'err');_recorridoAbierto=false;}
 }
-function mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord){
+function mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord,met){
   const p=document.getElementById('rec-panel');if(!p)return;
   const col=rutaColor[ruta]||'#1A56DB';
   document.getElementById('rp-titulo').innerHTML='<span style="color:'+col+'">'+ruta+' · '+unitId+'</span>';
-  const ini=(ord[0]&&ord[0].hora?ord[0].hora:'').slice(0,5)||'—';
-  const fin=(ord[ord.length-1]&&ord[ord.length-1].hora?ord[ord.length-1].hora:'').slice(0,5)||'—';
+  // Jornada real (primer y último movimiento), no el primer/último punto del día: el vehículo
+  // sigue reportando parqueado de noche y eso hacía ver rangos como "00:36–23:36".
+  const ini=((met&&met.horaIni)||(ord[0]&&ord[0].hora)||'').slice(0,5)||'—';
+  const fin=((met&&met.horaFin)||(ord[ord.length-1]&&ord[ord.length-1].hora)||'').slice(0,5)||'—';
   document.getElementById('rp-meta').textContent=fecha+' · '+ini+'–'+fin+' · '+paradas.length+' paradas · '+km.toFixed(1)+' km';
+  // Tira de métricas del día: lo que antes se calculaba y se botaba
+  const st=document.getElementById('rp-metricas');
+  if(st&&met){
+    const M=[
+      ['Kilómetros',met.km.toFixed(1),'#0F1117'],
+      ['En ruta',_hm(met.minRuta),'#0F1117'],
+      ['Detenido',_hm(met.minDetenido),met.minDetenido>=45?'#E30613':met.minDetenido>=20?'#D97706':'#0F1117'],
+      ['En planta',_hm(met.minPlanta),'#0F1117'],
+      ['En clientes',_hm(met.minCliente),'#0E9F6E'],
+      ['Vel. máx',Math.round(met.velMax)+' km/h',met.velMax>80?'#E30613':'#0F1117']
+    ];
+    st.innerHTML=M.map(m=>'<div class="rpm"><div class="rpm-l">'+m[0]+'</div><div class="rpm-v" style="color:'+m[2]+'">'+m[1]+'</div></div>').join('')+
+      (met.paradasLargas.length?'<div class="rpm rpm-w"><div class="rpm-l">Paradas largas sin cliente</div>'+
+        '<div class="rpm-v" style="color:#D97706">'+met.paradasLargas.length+' · '+_hm(met.paradasLargas.reduce((s,x)=>s+x.durMin,0))+'</div></div>':'');
+  }
   const tb=document.getElementById('rp-tbody');
   if(!paradas.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Sin paradas de 3+ min detectadas ese día</td></tr>';}
   else tb.innerHTML=paradas.map((p,i)=>{
@@ -6293,6 +6402,114 @@ async function cargarHistoricoInteligente(fecha){
   });
   html+='</tbody></table></div>';
   cont.innerHTML=html;
+}
+/* ══ MÉTRICAS DE FLOTA DE UNA FECHA ══
+   Recorre los vehículos, lee el recorrido de ese día (primero el respaldo propio en Storage, si no
+   hay, SecuritaGPS en vivo) y totaliza con metricasRecorrido(). Va bajo demanda porque son N
+   llamadas de red; para fechas pasadas casi siempre sale del respaldo y es rápido. */
+async function cargarMetricasFlota(){
+  const fecha=document.getElementById('hi-fecha')?.value;
+  const cont=document.getElementById('hi-flota-body');if(!cont)return;
+  if(!fecha){cont.innerHTML='<div class="veh-cargando">Elige primero una fecha arriba.</div>';return;}
+  const btn=document.getElementById('hi-flota-btn');
+  if(btn){btn.disabled=true;btn.textContent='Calculando…';}
+  cont.innerHTML='<div class="veh-cargando">Leyendo recorridos del '+fecha+'…</div>';
+  try{
+    if(!window.google||!google.maps||!google.maps.geometry){
+      cont.innerHTML='<div style="background:#FFF8E6;border-radius:10px;padding:14px;font-size:11.5px;color:#B45309">Abre primero el mapa de Operación una vez — las distancias se calculan con la librería de geometría de Google Maps.</div>';
+      return;
+    }
+    if(!_vehCache)_vehCache=await secVehiculos()||[];
+    // PPAS del día → clientes por ruta, para saber si una parada fue en cliente o no
+    const ppas=await cargarPPASHistorico(fecha)||{};
+    const cliPorRuta={};const todosCli=[];
+    for(const cod in ppas){const c=ppas[cod];if(!c.ruta||!c.lat||!c.lng)continue;
+      const cl={id:cod,nombre:c.nombre,lat:+c.lat,lng:+c.lng};
+      (cliPorRuta[c.ruta]=cliPorRuta[c.ruta]||[]).push(cl);todosCli.push(cl);}
+    // Ruta asignada a cada vehículo ESE día (la asignación es por fecha, no la de hoy)
+    const veh2ruta={};
+    try{
+      const rA=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha,
+        {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+      if(rA.ok)(await rA.json()||[]).forEach(a=>{if(a.unit_id)veh2ruta[a.unit_id]=a.ruta;});
+    }catch(e){}
+    const filas=[];let hechos=0;
+    for(const v of _vehCache){
+      hechos++;
+      cont.innerHTML='<div class="veh-cargando">Leyendo recorridos… '+hechos+' de '+_vehCache.length+'</div>';
+      try{
+        const pts=await obtenerHistorialVehiculo(v,fecha);
+        if(!pts||pts.length<2)continue;
+        const ord=filtrarOutliersGPS(pts.slice().reverse());
+        if(ord.length<2)continue;
+        const ruta=veh2ruta[v.nombre]||'';
+        // Sin ruta asignada se cruza contra TODOS los clientes del día: una parada sobre cualquier
+        // cliente sigue siendo una entrega. Si no, sus paradas se contarían como tiempo detenido.
+        const m=metricasRecorrido(ord,ruta?(cliPorRuta[ruta]||todosCli):todosCli);
+        if(m.km<0.5&&m.minRuta<5)continue; // vehículo que no salió: no ensucia la tabla
+        filas.push({veh:v.nombre,ruta,...m});
+      }catch(e){}
+    }
+    if(!filas.length){
+      cont.innerHTML='<div style="background:var(--gris1);border-radius:10px;padding:14px;text-align:center;font-size:11.5px;color:var(--gris4)">Sin recorridos GPS guardados para el '+fecha+'.</div>';
+      return;
+    }
+    filas.sort((a,b)=>b.km-a.km);
+    const T=filas.reduce((s,f)=>({km:s.km+f.km,minRuta:s.minRuta+f.minRuta,minDet:s.minDet+f.minDetenido,
+      minPl:s.minPl+f.minPlanta,minCli:s.minCli+f.minCliente,par:s.par+f.paradas,largas:s.largas+f.paradasLargas.length}),
+      {km:0,minRuta:0,minDet:0,minPl:0,minCli:0,par:0,largas:0});
+    let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-bottom:12px">'+
+      '<div class="dkpi simple"><div class="dk-v">'+T.km.toFixed(0)+'</div><div class="dk-l">Km del día</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+(T.km/filas.length).toFixed(1)+'</div><div class="dk-l">Km por vehículo</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+_hm(T.minRuta/filas.length)+'</div><div class="dk-l">Jornada promedio</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(T.minDet>filas.length*45?'#E30613':'#D97706')+'">'+_hm(T.minDet)+'</div><div class="dk-l">Detenido sin cliente</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+_hm(T.minPl)+'</div><div class="dk-l">Tiempo en planta</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(T.largas?'#D97706':'inherit')+'">'+T.largas+'</div><div class="dk-l">Paradas largas</div></div>'+
+      '</div>';
+    html+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="text-align:left;color:var(--gris4);font-size:10px;text-transform:uppercase;letter-spacing:.4px">'+
+      '<th style="padding:6px 8px">Vehículo</th><th style="padding:6px 8px">Ruta</th>'+
+      '<th style="padding:6px 8px;text-align:right">Km</th><th style="padding:6px 8px">Salió</th><th style="padding:6px 8px">Regresó</th>'+
+      '<th style="padding:6px 8px;text-align:right">En ruta</th><th style="padding:6px 8px;text-align:right">Detenido</th>'+
+      '<th style="padding:6px 8px;text-align:right">En planta</th><th style="padding:6px 8px;text-align:right">En clientes</th>'+
+      '<th style="padding:6px 8px;text-align:right">Paradas</th><th style="padding:6px 8px;text-align:right">Vel. máx</th>'+
+      '<th style="padding:6px 8px;text-align:right">Señal</th></tr></thead><tbody>';
+    filas.forEach(f=>{
+      const detCol=f.minDetenido>=45?'#E30613':f.minDetenido>=20?'#D97706':'#0F1117';
+      const cobCol=f.cobertura>=85?'#0E9F6E':f.cobertura>=60?'#D97706':'#E30613';
+      html+='<tr style="border-top:1px solid #EEF0F4'+(f.cobertura<60?';opacity:.55':'')+'">'+
+        '<td style="padding:7px 8px;font-weight:800">'+f.veh+'</td>'+
+        '<td style="padding:7px 8px">'+(f.ruta||'<span style="color:#8A90A0">—</span>')+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;font-variant-numeric:tabular-nums">'+f.km.toFixed(1)+'</td>'+
+        '<td style="padding:7px 8px">'+((f.salidaPlanta||f.horaIni||'—').slice(0,5))+'</td>'+
+        '<td style="padding:7px 8px">'+((f.regresoPlanta||f.horaFin||'—').slice(0,5))+'</td>'+
+        '<td style="padding:7px 8px;text-align:right">'+_hm(f.minRuta)+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;color:'+detCol+';font-weight:'+(f.minDetenido>=20?'800':'400')+'">'+_hm(f.minDetenido)+'</td>'+
+        '<td style="padding:7px 8px;text-align:right">'+_hm(f.minPlanta)+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;color:#0E9F6E">'+_hm(f.minCliente)+'</td>'+
+        '<td style="padding:7px 8px;text-align:right">'+f.paradas+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;color:'+(f.velMax>80?'#E30613':'inherit')+'">'+Math.round(f.velMax)+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;color:'+cobCol+';font-weight:700" title="'+_hm(f.minSinDato)+' sin reporte GPS">'+f.cobertura+'%</td>'+
+      '</tr>';
+    });
+    html+='</tbody><tfoot><tr style="border-top:2px solid #E6E9EF;font-weight:800">'+
+      '<td style="padding:7px 8px">'+filas.length+' vehículos</td><td></td>'+
+      '<td style="padding:7px 8px;text-align:right">'+T.km.toFixed(1)+'</td><td></td><td></td>'+
+      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minRuta)+'</td>'+
+      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minDet)+'</td>'+
+      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minPl)+'</td>'+
+      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minCli)+'</td>'+
+      '<td style="padding:7px 8px;text-align:right">'+T.par+'</td><td></td>'+
+      '<td style="padding:7px 8px;text-align:right">'+Math.round(filas.reduce((s,f)=>s+f.cobertura,0)/filas.length)+'%</td>'+
+      '</tr></tfoot></table></div>';
+    const cobProm=Math.round(filas.reduce((s,f)=>s+f.cobertura,0)/filas.length);
+    if(cobProm<85)html+='<div style="margin-top:9px;background:#FFF8E6;border-radius:9px;padding:10px 12px;font-size:11px;color:#B45309">'+
+      '<b>Señal GPS al '+cobProm+'%.</b> Los tramos sin reporte no se le suman a ninguna categoría, así que los tiempos de esta fecha son un mínimo, no el total exacto. Los días nuevos se guardan con más detalle.</div>';
+    cont.innerHTML=html;
+  }catch(e){
+    cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudieron leer los recorridos: '+e.message+'</div>';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Recalcular del GPS';}
+  }
 }
 /* Ver las novedades de CUALQUIER fecha elegida (no solo los últimos 7 días). */
 async function verNovedadesFecha(fecha){
