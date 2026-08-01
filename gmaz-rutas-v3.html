@@ -4143,7 +4143,13 @@ async function respaldarRecorridosDia(){
 }
 /* ══ LIMPIEZA AUTOMÁTICA (+2 meses): recorridos guardados y snapshot histórico del PPAS.
    Se ejecuta sola (sin botón) una vez al día, igual disparador que el respaldo de recorridos. */
+/* Desactivada a pedido explícito del usuario (2026-08-01): "que no borre nada y deje los
+   históricos de todo". Antes purgaba RECORRIDOS y PPAS_INDEX de +2 meses; ahora se conserva
+   todo sin límite de tiempo (PPAS_INDEX además lo usa el Histórico Inteligente para fechas
+   antiguas, borrarlo rompería esa pantalla). Se deja el cuerpo sin usar por si se pide reactivar. */
 async function limpiarDatosAntiguosAuto(){
+  return;
+  // eslint-disable-next-line no-unreachable
   const hoyLS='gmaz_cleanupAuto_'+getColDate();
   if(localStorage.getItem(hoyLS))return;
   const limite=getColDate(-60);
@@ -6863,8 +6869,6 @@ async function uploadHojaCarga(ev){
     }
     if(!nR){endProg(false,'No se detectaron rutas en la Hoja (¿es la Hoja de Carga del ERP?)');ev.target.value='';return;}
     updateProg(90,'Subiendo índice de cargue...');
-    const ayerStr=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]+'/';
-    try{await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+ayerStr+'HOJAS_INDEX.json',{method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});}catch(e){}
     const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'HOJAS_INDEX.json',{
       method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
       body:JSON.stringify(index)});
@@ -6930,9 +6934,6 @@ async function uploadLibroPedidos(ev){
     }
     if(!nCli){endProg(false,'No se detectaron pedidos en el PDF (¿es el Reporte Detallado de Pedidos?)');ev.target.value='';return;}
     updateProg(88,'Subiendo índice de pedidos...');
-    // Borrar índice de ayer
-    const ayerStr=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]+'/';
-    try{await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+ayerStr+'PEDIDOS_INDEX.json',{method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});}catch(e){}
     const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'PEDIDOS_INDEX.json',{
       method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
       body:JSON.stringify(index)
@@ -6982,23 +6983,7 @@ async function uploadInvoices(ev){
   files.forEach(f=>{nombreMap[f.name]=limpiarNombre(f.name);});
   logProg(files.length+' PDFs seleccionados para el '+hoyStr,'info');
   const{idx:_hashIdx,nuevos:_hashNuevos}=await _chequearDuplicados(files,'facturas',hoyStr);
-  // 1. Borrar archivos de ayer
-  updateProg(5,'Borrando archivos de ayer...');
-  const ayerStr=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]+'/';
-  try{
-    const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_FACT,{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({prefix:ayerStr,limit:50})
-    });
-    if(lr.ok){const viejos=await lr.json();if(Array.isArray(viejos)&&viejos.length){
-      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT,{
-        method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
-        body:JSON.stringify({prefixes:viejos.map(f=>ayerStr+f.name)})
-      });
-      logProg('Archivos de ayer eliminados','ok');
-    }}
-  }catch(e){logProg('No se pudieron borrar archivos de ayer','info');}
-  // 2. Subir PDFs
+  // Subir PDFs (no se borra nada de días anteriores — el histórico se conserva completo)
   let subidos=0;
   for(const file of files){
     const nl=nombreMap[file.name];
