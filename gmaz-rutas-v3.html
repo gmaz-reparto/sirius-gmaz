@@ -515,6 +515,20 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#E8920E,#D97706);box-shadow:0 6px 16px rgba(217,119,6,.32);animation:novpulsa 2s infinite}
 .ip-btn-nov.tiene-nov .ip-nov-lbl{color:#fff}
 @keyframes novpulsa{0%,100%{box-shadow:0 6px 16px rgba(217,119,6,.32)}50%{box-shadow:0 6px 22px rgba(217,119,6,.55)}}
+/* Diálogo "¿quién está entregando hoy?" — bloquea el inicio de ruta hasta identificarse */
+#ent-pick-ovl{display:none;position:fixed;inset:0;z-index:2400;background:rgba(15,17,23,.62);
+  backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:22px}
+#ent-pick-card{background:#fff;border-radius:20px;padding:26px 22px 22px;width:100%;max-width:380px;
+  box-shadow:0 24px 60px rgba(0,0,0,.3);text-align:center}
+.ep-ic{font-size:38px;line-height:1;margin-bottom:12px}
+.ep-t{font-size:18px;font-weight:900;letter-spacing:-.4px;margin-bottom:7px;color:#0F1117}
+.ep-s{font-size:12.5px;color:#6B7385;line-height:1.5;margin-bottom:18px}
+#ent-pick-sel{width:100%;height:46px;border:1.5px solid #E6E9EF;border-radius:12px;padding:0 12px;
+  font-family:inherit;font-size:13.5px;font-weight:600;color:#0F1117;background:#fff;margin-bottom:14px}
+.ep-ok{width:100%;background:linear-gradient(135deg,#F0263A,#E30613);color:#fff;border:none;
+  border-radius:12px;padding:14px;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;
+  box-shadow:0 6px 16px rgba(227,6,19,.28)}
+.ep-ok:active{transform:scale(.98)}
 /* Confirmar entrega: sella la HORA en que el cliente quedó atendido. Antes no existía —
    se daba por entregado todo lo que no tuviera novedad, así que no había hora de entrega. */
 .ip-btn-ent{background:linear-gradient(135deg,#0EA36E,#059669);border:none;border-radius:13px;
@@ -1349,6 +1363,7 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <button class="dnav on" data-mod="operacion" onclick="haptic();activarModulo('operacion')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></i>Operación</button>
       <button class="dnav" data-mod="vehiculos" onclick="haptic();activarModulo('vehiculos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></i>Vehículos</button>
       <button class="dnav" data-mod="clientes" onclick="haptic();activarModulo('clientes')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>Clientes</button>
+      <button class="dnav" data-mod="entregadores" onclick="haptic();activarModulo('entregadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-1.5-1.5"/></svg></i>Entregadores</button>
       <button class="dnav" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></i>Rechazos<span class="dnav-b" id="dtab-rech">0</span></button>
       <button class="dnav" data-mod="alertas" onclick="haptic();activarModulo('alertas')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></i>Alertas<span class="dnav-b warn" id="dtab-alert">0</span></button>
       <button class="dnav" data-mod="indicadores" onclick="haptic();activarModulo('indicadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/></svg></i>Indicadores</button>
@@ -1427,6 +1442,18 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
       <div class="dcard" style="margin-top:14px">
         <div class="dcard-h"><h3><span class="h3ic">🔑</span>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
         <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
+      </div>
+    </section>
+
+    <!-- ══ MÓDULO ENTREGADORES ══ -->
+    <section class="mod" id="mod-entregadores">
+      <div id="ent-kpis" class="dkpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+      <div class="dcard" style="margin-top:14px">
+        <div class="dcard-h"><h3><span class="h3ic">🧑‍🔧</span>Desempeño por entregador</h3>
+          <input type="month" id="ent-mes" onchange="haptic();cargarEntregadores(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+        </div>
+        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">El semáforo compara contra el promedio de la propia operación, no contra una meta fija — una ruta con más clientes difíciles no debe leerse como mal desempeño.</div>
+        <div style="overflow:auto;padding:10px 17px 16px" id="ent-body"><div class="veh-cargando">Elige un mes…</div></div>
       </div>
     </section>
 
@@ -1760,6 +1787,17 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
   </div><!-- /rutina-suite -->
   <div class="pc-footer">Excel generado a las 9:45pm · Actualización automática cada 30s</div>
+</div>
+
+<!-- ¿QUIÉN ESTÁ ENTREGANDO? — se pregunta una vez al día, antes de iniciar la primera ruta -->
+<div id="ent-pick-ovl">
+  <div id="ent-pick-card">
+    <div class="ep-ic">🧑‍🔧</div>
+    <div class="ep-t">¿Quién está entregando hoy?</div>
+    <div class="ep-s">Se pregunta una sola vez al día. Sirve para saber de quién es cada entrega y cada novedad.</div>
+    <select id="ent-pick-sel"></select>
+    <button class="ep-ok" onclick="haptic();confirmarEntregadorPick()">Continuar</button>
+  </div>
 </div>
 
 <!-- PROGRESS PANEL -->
@@ -3460,11 +3498,12 @@ function _alertasActivas(){
 }
 function refrescarModulo(m){
   if(m==='vehiculos')renderVehiculoCards();
+  else if(m==='entregadores')cargarEntregadores();
   else if(m==='clientes')renderClientesModulo();
   else if(m==='rechazos')renderRechazosGraf();
   else if(m==='indicadores')renderIndicadores();
 }
-const _MODINFO={operacion:['Operación','Centro de control en vivo'],vehiculos:['Vehículos','Estado y GPS de la flota'],clientes:['Clientes','Cumplimiento de atención'],rechazos:['Rechazos','Novedades y devoluciones'],alertas:['Alertas','Geocercas y alarmas de vehículos'],indicadores:['Indicadores','Análisis ejecutivo de la operación'],rutina:['Rutina diaria','Checklist de la operación del día'],asis:['Asistencia','Marcación mensual del personal de entrega'],audit:['Auditoría','LiquiYa vs. reportado por el entregador'],obseq:['Obsequios','Bonificaciones ZG y productos a $0 por ruta']};
+const _MODINFO={operacion:['Operación','Centro de control en vivo'],vehiculos:['Vehículos','Estado y GPS de la flota'],clientes:['Clientes','Cumplimiento de atención'],entregadores:['Entregadores','Cumplimiento y productividad por persona'],rechazos:['Rechazos','Novedades y devoluciones'],alertas:['Alertas','Geocercas y alarmas de vehículos'],indicadores:['Indicadores','Análisis ejecutivo de la operación'],rutina:['Rutina diaria','Checklist de la operación del día'],asis:['Asistencia','Marcación mensual del personal de entrega'],audit:['Auditoría','LiquiYa vs. reportado por el entregador'],obseq:['Obsequios','Bonificaciones ZG y productos a $0 por ruta']};
 function activarModulo(m){
   document.querySelectorAll('.dnav').forEach(t=>t.classList.toggle('on',t.dataset.mod===m));
   document.querySelectorAll('.mod').forEach(s=>s.classList.toggle('on',s.id==='mod-'+m));
@@ -5056,7 +5095,50 @@ async function guardarAsignacionRuta(sel){
   }catch(e){toast('Error asignando vehículo','err');}
 }
 
+/* ══ QUIÉN ESTÁ ENTREGANDO ══
+   El login del entregador es por rol con clave compartida, así que la app nunca supo quién iba en
+   cada ruta: novedades.conductor se guardaba con el texto fijo "Repartidor" en las 815 filas de
+   julio. Sin ese vínculo persona↔ruta no hay forma de medir a nadie. Se pregunta una vez al día
+   y queda recordado en el equipo. */
+const _ROLES_ENTREGA=['CONDUCTOR DE ENTREGA','CONDUCTOR ENTREGA','AUXILIAR DE ENTREGA','SUPERNUMERARIO','CONDUCTOR AUTOVENTA'];
+function entregadoresDisponibles(){
+  return EMPLEADOS_ASIS.filter(e=>_ROLES_ENTREGA.includes(String(e[2]).toUpperCase()))
+    .map(e=>({nombre:e[0],ced:e[1],cargo:e[2]}))
+    .sort((a,b)=>a.nombre.localeCompare(b.nombre));
+}
+function entregadorActual(){
+  try{const d=JSON.parse(localStorage.getItem('gmaz_entregador')||'null');
+    if(d&&d.fecha===getColDate()&&d.nombre)return d;}catch(e){}
+  return null;
+}
+function guardarEntregador(ced){
+  const p=entregadoresDisponibles().find(x=>x.ced===ced);
+  if(!p)return null;
+  const d={nombre:p.nombre,ced:p.ced,fecha:getColDate()};
+  localStorage.setItem('gmaz_entregador',JSON.stringify(d));
+  return d;
+}
+function pedirEntregador(cb){
+  const ya=entregadorActual();
+  if(ya){cb(ya);return;}
+  const ovl=document.getElementById('ent-pick-ovl');
+  const sel=document.getElementById('ent-pick-sel');
+  sel.innerHTML='<option value="">Selecciona tu nombre…</option>'+
+    entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
+  ovl.style.display='flex';
+  window._entPickCb=cb;
+}
+function confirmarEntregadorPick(){
+  const ced=document.getElementById('ent-pick-sel').value;
+  if(!ced){toast('Selecciona tu nombre para continuar','err');return;}
+  const d=guardarEntregador(ced);
+  document.getElementById('ent-pick-ovl').style.display='none';
+  toast('Bienvenido, '+d.nombre.split(' ').slice(-2).join(' '),'ok');
+  if(window._entPickCb){const cb=window._entPickCb;window._entPickCb=null;cb(d);}
+}
 function startRoute(ruta,lista){
+  // Antes de arrancar hay que saber quién va a entregar; si ya se identificó hoy, no se vuelve a pedir.
+  if(!entregadorActual()){pedirEntregador(()=>startRoute(ruta,lista));return;}
   rutaActual=ruta;
   clientes=lista.map(c=>({...c,_st:'pendiente'}));
   calcularZonaRuta(); // zona de la ruta para el aviso "fuera de tu zona"
@@ -5621,7 +5703,9 @@ async function guardarEstadoCliente(i,st){
       body:JSON.stringify({
         fecha,codigo_cliente:cod,
         nombre_cliente:clientes[i].nombre||getF(clientes[i],CFG.COL_NOMBRE)||'',
-        estado:st,ruta:rutaActual
+        // 'motivo' se reutiliza para dejar de quién fue la entrega: la tabla no tiene columna de
+        // entregador y este campo va vacío en los registros de entrega (solo lo usan los rechazos).
+        estado:st,ruta:rutaActual,motivo:st==='entregado'?((entregadorActual()||{}).nombre||''):undefined
       })
     });
   }catch(e){console.log('Error guardando estado:',e);}
@@ -5892,7 +5976,7 @@ async function submitNovedad(){
     // 2. Guardar novedad
     const{error:ie}=await sb.from(CFG.TBL_NOV).insert({
       fecha,codigo_cliente:cod,nombre_cliente:nom,motivo,
-      foto_url:fotoUrl,ruta:rutaActual,conductor:'Repartidor'
+      foto_url:fotoUrl,ruta:rutaActual,conductor:(entregadorActual()||{}).nombre||'Repartidor'
     });
     if(ie)throw ie;
     // 2b. Guardar detalle del rechazo por SKU en storage (sin tocar el esquema de la tabla)
@@ -6493,6 +6577,95 @@ async function cargarHistoricoInteligente(fecha){
   });
   html+='</tbody></table></div>';
   cont.innerHTML=html;
+}
+/* ══ MÓDULO ENTREGADORES ══
+   Cruza rechazos (novedades.conductor) con entregas confirmadas (estados_entrega) y asistencia.
+   El vínculo persona↔ruta solo existe desde que la app pregunta "¿quién está entregando hoy?";
+   los meses anteriores traen el texto fijo "Repartidor" y por eso se avisa en pantalla. */
+async function cargarEntregadores(mesSel){
+  const mes=mesSel||document.getElementById('ent-mes')?.value||_mesActualStr();
+  const inp=document.getElementById('ent-mes');if(inp)inp.value=mes;
+  const cont=document.getElementById('ent-body');if(!cont)return;
+  cont.innerHTML='<div class="veh-cargando">Cruzando entregas, rechazos y asistencia de '+mes+'…</div>';
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  // _mesFin() usa el período global de Indicadores, aquí hace falta el del mes elegido
+  const [aa,mm]=mes.split('-').map(Number);
+  const ini=mes+'-01',fin=mes+'-'+String(new Date(aa,mm,0).getDate()).padStart(2,'0');
+  try{
+    const [rN,rE]=await Promise.all([
+      fetch(CFG.SUPABASE_URL+'/rest/v1/novedades?select=conductor,ruta,fecha,codigo_cliente&fecha=gte.'+ini+'&fecha=lte.'+fin+'&limit=5000',{headers:_h}),
+      fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=motivo,ruta,fecha,codigo_cliente,created_at,estado&fecha=gte.'+ini+'&fecha=lte.'+fin+'&limit=10000',{headers:_h})
+    ]);
+    const novs=rN.ok?await rN.json()||[]:[];
+    const ests=rE.ok?await rE.json()||[]:[];
+    const entregas=ests.filter(x=>x.estado==='entregado');
+    const P={}; // nombre → acumulado
+    const get=n=>P[n]||(P[n]={nombre:n,ent:0,rech:0,dias:new Set(),rutas:new Set(),horas:[]});
+    entregas.forEach(e=>{const n=(e.motivo||'').trim();if(!n)return;
+      const p=get(n);p.ent++;p.dias.add(e.fecha);if(e.ruta)p.rutas.add(e.ruta);
+      if(e.created_at)p.horas.push({f:e.fecha,t:new Date(e.created_at).getTime()});});
+    novs.forEach(x=>{const n=(x.conductor||'').trim();if(!n||n==='Repartidor')return;
+      const p=get(n);p.rech++;p.dias.add(x.fecha);if(x.ruta)p.rutas.add(x.ruta);});
+    const genericos=novs.filter(x=>(x.conductor||'').trim()==='Repartidor').length;
+    const filas=Object.values(P).map(p=>{
+      const tot=p.ent+p.rech;
+      // Productividad: entregas por hora efectiva, midiendo cada día de la primera a la última entrega
+      const porDia={};p.horas.forEach(h=>{(porDia[h.f]=porDia[h.f]||[]).push(h.t);});
+      let minTot=0,entConHora=0;
+      for(const f in porDia){const v=porDia[f].sort((a,b)=>a-b);
+        if(v.length>1){minTot+=(v[v.length-1]-v[0])/60000;entConHora+=v.length;}}
+      return{...p,tot,dias:p.dias.size,rutas:[...p.rutas].sort().join(', '),
+        pct:tot?Math.round(p.ent/tot*100):0,
+        porHora:minTot>30?+(entConHora/(minTot/60)).toFixed(1):null,
+        minPorEnt:entConHora>1?Math.round(minTot/entConHora):null};
+    }).sort((a,b)=>b.tot-a.tot);
+    let html='';
+    if(!filas.length){
+      html='<div style="background:#FFF8E6;border-radius:11px;padding:16px;font-size:12px;color:#B45309;line-height:1.55">'+
+        '<b>Todavía no hay datos por persona en '+mes+'.</b><br>'+
+        'Hasta ahora la app no sabía quién iba en cada ruta: el login del entregador es por rol con clave compartida y las novedades se guardaban con el texto fijo «Repartidor»'+
+        (genericos?' ('+genericos+' registros de este mes)':'')+'.<br><br>'+
+        'Desde esta versión se pregunta <b>«¿quién está entregando hoy?»</b> al iniciar la primera ruta del día. A medida que los entregadores se identifiquen, esta tabla se va llenando sola.</div>';
+      document.getElementById('ent-kpis').innerHTML='';
+      cont.innerHTML=html;return;
+    }
+    const T=filas.reduce((s,f)=>({ent:s.ent+f.ent,rech:s.rech+f.rech,tot:s.tot+f.tot}),{ent:0,rech:0,tot:0});
+    const pctProm=T.tot?Math.round(T.ent/T.tot*100):0;
+    document.getElementById('ent-kpis').innerHTML=
+      '<div class="dkpi simple"><div class="dk-v">'+filas.length+'</div><div class="dk-l">Entregadores activos</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+T.ent.toLocaleString('es-CO')+'</div><div class="dk-l">Entregas confirmadas</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:#E30613">'+T.rech.toLocaleString('es-CO')+'</div><div class="dk-l">Rechazos</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(pctProm>=95?'#059669':pctProm>=85?'#D97706':'#E30613')+'">'+pctProm+'%</div><div class="dk-l">Cumplimiento promedio</div></div>';
+    html='<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr style="text-align:left;color:var(--gris4);font-size:10px;text-transform:uppercase;letter-spacing:.4px">'+
+      '<th style="padding:6px 8px">Entregador</th><th style="padding:6px 8px">Rutas</th>'+
+      '<th style="padding:6px 8px;text-align:right">Días</th><th style="padding:6px 8px;text-align:right">Entregas</th>'+
+      '<th style="padding:6px 8px;text-align:right">Rechazos</th><th style="padding:6px 8px;text-align:right">Cumpl.</th>'+
+      '<th style="padding:6px 8px;text-align:right">Entregas/h</th><th style="padding:6px 8px;text-align:right">Min/entrega</th>'+
+      '<th style="padding:6px 8px">Semáforo</th></tr></thead><tbody>';
+    filas.forEach(f=>{
+      // El semáforo compara contra el promedio de la operación, no contra una meta fija
+      const d=f.pct-pctProm;
+      const sem=d>=3?['Referente','#ECFDF5','#059669']:d>=-3?['En meta','#ECFDF5','#059669']:
+                d>=-8?['Seguimiento','#FFF8E6','#B45309']:['Atención','#FEE2E2','#B91C1C'];
+      html+='<tr style="border-top:1px solid #EEF0F4">'+
+        '<td style="padding:7px 8px;font-weight:800">'+f.nombre+'</td>'+
+        '<td style="padding:7px 8px;color:var(--gris4)">'+(f.rutas||'—')+'</td>'+
+        '<td style="padding:7px 8px;text-align:right">'+f.dias+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;font-variant-numeric:tabular-nums">'+f.ent+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;color:'+(f.rech?'#E30613':'inherit')+';font-weight:'+(f.rech?'800':'400')+'">'+f.rech+'</td>'+
+        '<td style="padding:7px 8px;text-align:right;font-weight:800;color:'+(f.pct>=95?'#059669':f.pct>=85?'#D97706':'#E30613')+'">'+f.pct+'%</td>'+
+        '<td style="padding:7px 8px;text-align:right">'+(f.porHora!=null?f.porHora:'<span style="color:#8A90A0">—</span>')+'</td>'+
+        '<td style="padding:7px 8px;text-align:right">'+(f.minPorEnt!=null?f.minPorEnt:'<span style="color:#8A90A0">—</span>')+'</td>'+
+        '<td style="padding:7px 8px"><span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+sem[1]+';color:'+sem[2]+'">'+sem[0]+'</span></td>'+
+      '</tr>';
+    });
+    html+='</tbody></table>';
+    if(genericos)html+='<div style="margin-top:10px;background:var(--gris1);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--gris4)">'+
+      genericos+' rechazo(s) de este mes quedaron sin persona («Repartidor») porque se registraron antes de que la app preguntara quién entrega. No se reparten entre nadie.</div>';
+    cont.innerHTML=html;
+  }catch(e){
+    cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
+  }
 }
 /* ══ MÉTRICAS DE FLOTA DE UNA FECHA ══
    Recorre los vehículos, lee el recorrido de ese día (primero el respaldo propio en Storage, si no
