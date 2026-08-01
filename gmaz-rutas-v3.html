@@ -1704,6 +1704,15 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   <!-- TAB 3: HISTÓRICO -->
   <div id="pctab-content-3" style="flex:1;overflow-y:auto;display:none">
     <div style="padding:14px">
+      <div class="dcard" style="margin-bottom:18px">
+        <div class="dcard-h"><h3><span class="h3ic">🧠</span>Histórico inteligente — día completo</h3>
+          <input type="date" id="hi-fecha" onchange="haptic();cargarHistoricoInteligente(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+        </div>
+        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">Libro · Hoja de cargue · Facturas · Rechazos · Liquidación — todo cruzado por ruta, en una sola pantalla.</div>
+        <div id="hi-body" style="padding:10px 17px 16px">
+          <div class="veh-cargando">Elige una fecha para ver el resumen completo del día…</div>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;color:var(--negro);flex:1">Novedades por fecha</div>
         <input type="date" id="pc-hist-fecha" onchange="verNovedadesFecha(this.value)" style="border:1px solid var(--gris2);border-radius:8px;padding:6px 9px;font-size:11px;font-family:inherit;color:var(--negro)">
@@ -6205,6 +6214,80 @@ async function cargarHistoricoNovedades(mesSel){
     :'<div style="font-size:11.5px;color:var(--gris4);text-align:center;padding:18px">Sin novedades registradas en '+mes+' ✓</div>';
 }
 
+/* ══ HISTÓRICO INTELIGENTE: una sola pantalla con TODO lo del día, cruzado por ruta ══
+   Lee (sin tocar los índices en vivo que usa el resto de la app, salvo liqIndex que ya
+   comparte cargarAuditoria): PEDIDOS_INDEX, HOJAS_INDEX, FACTURAS_INDEX, PPAS_INDEX,
+   RECHAZOS/{fecha}/*, LIQUIDACION_INDEX, OBSEQUIOS_INDEX — y arma una tabla por ruta con
+   lo que sí llegó y lo que falta (alertas), para no tener que ir pantalla por pantalla. */
+async function cargarHistoricoInteligente(fecha){
+  fecha=fecha||document.getElementById('hi-fecha')?.value||getColDate(-1);
+  const inp=document.getElementById('hi-fecha');if(inp)inp.value=fecha;
+  const cont=document.getElementById('hi-body');if(!cont)return;
+  cont.innerHTML='<div class="veh-cargando">Cruzando Libro · Hoja · Facturas · Rechazos · Liquidación de '+fecha+'…</div>';
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  const _get=async(archivo)=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/'+archivo+'?t='+Date.now());if(r.ok)return await r.json();}catch(e){}return null;};
+  const[pedIdx,hojasIdx,factIdx,ppasIdx,rechIdx,liqIdx,obsIdx]=await Promise.all([
+    _get('PEDIDOS_INDEX.json'),_get('HOJAS_INDEX.json'),
+    fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FACT+'/'+fecha+'/FACTURAS_INDEX.json?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+    cargarPPASHistorico(fecha),cargarRechazosDelDia(fecha),
+    _get('LIQUIDACION_INDEX.json'),_get('OBSEQUIOS_INDEX.json')
+  ]);
+  const P=pedIdx||{},H=hojasIdx||{},F=factIdx||{},PP=ppasIdx||{},R=rechIdx||{},L=liqIdx||{},O=obsIdx||{};
+  const cli2ruta={};for(const cod in PP)cli2ruta[cod]=PP[cod].ruta;
+  // Rutas detectadas: unión de Hoja, PPAS y Rechazos
+  const rutas=new Set();Object.keys(H).forEach(r=>rutas.add(r));Object.values(PP).forEach(p=>p.ruta&&rutas.add(p.ruta));Object.keys(R).forEach(r=>rutas.add(r));
+  for(const cod in P)if(P[cod].r)rutas.add(P[cod].r);
+  const porRuta={};[...rutas].sort().forEach(r=>porRuta[r]={hoja:H[r]||null,pedClientes:0,pedCaj:0,pedBot:0,factCods:0,rech:R[r]||null});
+  let totClientesPed=0,totCajPed=0,totBotPed=0;
+  for(const cod in P){const c=P[cod];const r=c.r||'(sin ruta)';if(!porRuta[r])porRuta[r]={hoja:H[r]||null,pedClientes:0,pedCaj:0,pedBot:0,factCods:0,rech:R[r]||null};
+    porRuta[r].pedClientes++;totClientesPed++;
+    (c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{porRuta[r].pedCaj+=it[2]||0;porRuta[r].pedBot+=it[3]||0;totCajPed+=it[2]||0;totBotPed+=it[3]||0;}));
+  }
+  const factCods=Object.keys(F);
+  factCods.forEach(cod=>{const r=cli2ruta[cod]||P[cod]?.r;if(r&&porRuta[r])porRuta[r].factCods++;});
+  const rutasArr=Object.keys(porRuta).sort();
+  const presentes={Libro:!!pedIdx,Hoja:!!hojasIdx,Facturas:!!factIdx,PPAS:!!ppasIdx,Liquidación:!!liqIdx,Obsequios:!!obsIdx};
+  const chip=(k,ok)=>'<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:'+(ok?'#DCFCE7':'#FEE2E2')+';color:'+(ok?'#166534':'#B91C1C')+'">'+(ok?'✓':'✕')+' '+k+'</span>';
+  let totRechCli=0,totRechCaj=0;Object.values(R).forEach(r=>{totRechCli+=(r.clientes||[]).length;totRechCaj+=r.caj||0;});
+  let html='<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px">'+Object.keys(presentes).map(k=>chip(k,presentes[k])).join('')+'</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px">'+
+    '<div class="dkpi simple"><div class="dk-v">'+rutasArr.length+'</div><div class="dk-l">Rutas</div></div>'+
+    '<div class="dkpi simple"><div class="dk-v">'+totClientesPed+'</div><div class="dk-l">Clientes (Libro)</div></div>'+
+    '<div class="dkpi simple"><div class="dk-v">'+totCajPed+'</div><div class="dk-l">Cajas pedidas</div></div>'+
+    '<div class="dkpi simple"><div class="dk-v">'+factCods.length+'</div><div class="dk-l">Clientes con factura</div></div>'+
+    '<div class="dkpi simple"><div class="dk-v" style="color:'+(totRechCli?'#B91C1C':'inherit')+'">'+totRechCli+'</div><div class="dk-l">Rechazos (clientes)</div></div>'+
+    '</div>';
+  if(!rutasArr.length){
+    cont.innerHTML=html+'<div style="background:var(--gris1);border-radius:9px;padding:16px;text-align:center;font-size:11px;color:var(--gris4)">No hay datos de rutas para el '+fecha+' (ni Hoja de cargue, ni PPAS, ni Rechazos, ni Libro con ruta).</div>';
+    return;
+  }
+  html+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="text-align:left;color:var(--gris4);font-size:10px;text-transform:uppercase;letter-spacing:.4px">'+
+    '<th style="padding:6px 8px">Ruta</th><th style="padding:6px 8px">Placa / Transp.</th><th style="padding:6px 8px">Entregas prog.</th>'+
+    '<th style="padding:6px 8px">Clientes libro</th><th style="padding:6px 8px">Cajas pedidas</th><th style="padding:6px 8px">Cajas cargadas</th>'+
+    '<th style="padding:6px 8px">Facturas</th><th style="padding:6px 8px">Rechazos</th><th style="padding:6px 8px">Alertas</th></tr></thead><tbody>';
+  rutasArr.forEach(r=>{
+    const d=porRuta[r];const hj=d.hoja;const rech=d.rech;
+    const alertas=[];
+    if(!hj)alertas.push('Sin hoja de cargue');
+    if(!d.pedClientes)alertas.push('Sin libro');
+    if(!d.factCods)alertas.push('Sin facturas');
+    if(hj&&d.pedCaj&&Math.abs(hj.cargueCaj-d.pedCaj)>Math.max(3,d.pedCaj*0.05))alertas.push('Cuadre: pidió '+d.pedCaj+' cj, cargó '+hj.cargueCaj+' cj');
+    if(rech&&rech.caj>0)alertas.push(rech.clientes.length+' rechazo(s), '+rech.caj+' cj');
+    html+='<tr style="border-top:1px solid #EEF0F4">'+
+      '<td style="padding:7px 8px;font-weight:800">'+r+'</td>'+
+      '<td style="padding:7px 8px">'+(hj?(hj.placa||'—')+' · T'+(hj.transporte||'—'):'—')+'</td>'+
+      '<td style="padding:7px 8px">'+(hj?hj.entregas||0:'—')+'</td>'+
+      '<td style="padding:7px 8px">'+d.pedClientes+'</td>'+
+      '<td style="padding:7px 8px">'+d.pedCaj+'</td>'+
+      '<td style="padding:7px 8px">'+(hj?hj.cargueCaj:'—')+'</td>'+
+      '<td style="padding:7px 8px">'+d.factCods+'</td>'+
+      '<td style="padding:7px 8px">'+(rech?rech.clientes.length+' / '+rech.caj+' cj':'—')+'</td>'+
+      '<td style="padding:7px 8px">'+(alertas.length?'<span style="color:#B45309;font-weight:700">'+alertas.join(' · ')+'</span>':'<span style="color:#166534">✓ ok</span>')+'</td>'+
+    '</tr>';
+  });
+  html+='</tbody></table></div>';
+  cont.innerHTML=html;
+}
 /* Ver las novedades de CUALQUIER fecha elegida (no solo los últimos 7 días). */
 async function verNovedadesFecha(fecha){
   const cont=document.getElementById('pc-hist-detalle');if(!cont)return;
