@@ -515,6 +515,17 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#E8920E,#D97706);box-shadow:0 6px 16px rgba(217,119,6,.32);animation:novpulsa 2s infinite}
 .ip-btn-nov.tiene-nov .ip-nov-lbl{color:#fff}
 @keyframes novpulsa{0%,100%{box-shadow:0 6px 16px rgba(217,119,6,.32)}50%{box-shadow:0 6px 22px rgba(217,119,6,.55)}}
+/* Confirmar entrega: sella la HORA en que el cliente quedó atendido. Antes no existía —
+   se daba por entregado todo lo que no tuviera novedad, así que no había hora de entrega. */
+.ip-btn-ent{background:linear-gradient(135deg,#0EA36E,#059669);border:none;border-radius:13px;
+  padding:13px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  transition:transform .1s;flex-shrink:0;box-shadow:0 6px 16px rgba(5,150,105,.28);color:#fff;margin-bottom:9px}
+.ip-btn-ent:active{transform:scale(.97)}
+.ip-ent-lbl{font-size:14px;font-weight:800;letter-spacing:-.2px;color:#fff}
+.ip-btn-ent.hecho{background:var(--verde-s,#ECFDF5);border:1.5px solid rgba(5,150,105,.3);
+  box-shadow:none;color:var(--verde)}
+.ip-btn-ent.hecho .ip-ent-lbl{color:var(--verde)}
+.ip-btn-ent.hecho svg{stroke:var(--verde)!important}
 .ip-btn-nov.ya-entregado{background:var(--verde-suave,#ECFDF5);border:1.5px solid rgba(5,150,105,.3);box-shadow:none;color:var(--verde)}
 .ip-btn-nov.ya-entregado .ip-nov-lbl{color:var(--verde)}
 .ip-btn-nov.ya-entregado svg{stroke:var(--verde)!important}
@@ -1227,6 +1238,10 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
         <div class="ipchip" style="background:#ECFDF5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
         <div class="ip-btn-lbl btn-call-lbl">Llamar</div>
       </div>
+    </div>
+    <div class="ip-btn-ent" id="ip-btn-ent" onclick="haptic();confirmarEntrega()">
+      <div id="ip-ent-ico" style="display:flex"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="ip-ent-lbl" id="ip-ent-lbl">Confirmar entrega</div>
     </div>
     <div class="ip-btn-nov" id="ip-btn-nov" onclick="haptic();startOrBorrarNovedad()">
       <div id="ip-nov-ico" style="display:flex"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.7 2.6h6.6a2 2 0 0 1 1.42.59l4.09 4.09a2 2 0 0 1 .59 1.42v6.6a2 2 0 0 1-.59 1.42l-4.09 4.09a2 2 0 0 1-1.42.59H8.7a2 2 0 0 1-1.42-.59l-4.09-4.09a2 2 0 0 1-.59-1.42V8.7a2 2 0 0 1 .59-1.42l4.09-4.09a2 2 0 0 1 1.42-.59z"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
@@ -3054,19 +3069,21 @@ async function restaurarEstadosDia(){
   const fecha=getColDate();
   try{
     const res=await fetch(
-      CFG.SUPABASE_URL+'/rest/v1/estados_entrega?fecha=eq.'+fecha+'&ruta=eq.'+encodeURIComponent(rutaActual)+'&select=codigo_cliente,estado',
+      CFG.SUPABASE_URL+'/rest/v1/estados_entrega?fecha=eq.'+fecha+'&ruta=eq.'+encodeURIComponent(rutaActual)+'&select=codigo_cliente,estado,created_at',
       {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}}
     );
     if(!res.ok)return;
     const estados=await res.json();
     if(!estados||!estados.length)return;
-    const mapaEstados={};
-    estados.forEach(e=>mapaEstados[e.codigo_cliente]=e.estado);
+    const mapaEstados={},mapaHora={};
+    estados.forEach(e=>{mapaEstados[e.codigo_cliente]=e.estado;
+      if(e.created_at)mapaHora[e.codigo_cliente]=new Date(e.created_at).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});});
     let restaurados=0;
     clientes.forEach((cl,i)=>{
       const cod=String(cl.id||getF(cl,CFG.COL_CODIGO));
       if(mapaEstados[cod]&&mapaEstados[cod]!=='pendiente'){
         clientes[i]._st=mapaEstados[cod];
+        if(mapaHora[cod])clientes[i]._stHora=mapaHora[cod];
         restaurados++;
       }
     });
@@ -3367,7 +3384,23 @@ async function cargarDash(){
     // KPIs — modelo de cumplimiento en retroceso
     const pend=totCli-totEnt;
     const colPct=p=>p>=95?'#059669':p>=85?'#D97706':'#E30613';
+    // AVANCE CONFIRMADO: clientes con entrega sellada por el entregador (con su hora).
+    // El cumplimiento de arriba se infiere ("todo lo que no tiene novedad está entregado") y por eso
+    // marca 100 % desde la madrugada; este cuenta solo lo confirmado, así que sí avanza durante el día.
+    let confirmados=0,ultimaEnt=null;
+    try{
+      const rc=await fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=codigo_cliente,created_at&fecha=eq.'+fecha+'&estado=eq.entregado',
+        {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+      if(rc.ok){const ce=await rc.json()||[];
+        confirmados=new Set(ce.map(x=>String(x.codigo_cliente))).size;
+        const ts=ce.filter(x=>x.created_at).map(x=>new Date(x.created_at).getTime());
+        if(ts.length)ultimaEnt=new Date(Math.max(...ts)).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+      }
+    }catch(e){}
+    const pctConf=totCli?Math.round(confirmados/totCli*100):0;
     const K=[
+      {i:'target',v:confirmados+' / '+totCli,l:'Avance confirmado',pct:pctConf,pc:pctConf>=90?'#059669':pctConf>=50?'#1A56DB':'#8A90A0',
+       foot:confirmados?['Última entrega','<b>'+(ultimaEnt||'—')+'</b>']:['Sin confirmaciones','<b style="color:#8A90A0">aún</b>']},
       {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
       {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
       {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
@@ -5450,7 +5483,37 @@ async function cargarHistorialCliente(cod){
 }
 
 /* ══ BOTÓN NOVEDAD: 2 ESTADOS VISUALES ══ */
+/* Marca el cliente como entregado y deja el sello de hora en estados_entrega. Ese registro es el
+   que permite saber a qué hora se atendió cada cliente — antes solo se guardaban los rechazos, así
+   que el cumplimiento se infería ("todo lo que no tiene novedad está entregado") y no había hora. */
+function confirmarEntrega(){
+  const cl=clientes[clienteIdx];if(!cl)return;
+  if(cl._st==='novedad'){toast('Este cliente tiene una novedad. Usa el botón de abajo para revertirla.','err');return;}
+  if(cl._st==='entregado'){toast('Ya estaba marcado como entregado'+(cl._stHora?' a las '+cl._stHora:''),'ok');return;}
+  cl._stHora=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+  setClientSt(clienteIdx,'entregado');
+  toast('✅ Entrega confirmada · '+cl._stHora,'ok');haptic([50,30,50]);
+}
+function pintarBtnEnt(){
+  const b=document.getElementById('ip-btn-ent');
+  const l=document.getElementById('ip-ent-lbl');
+  const ico=document.getElementById('ip-ent-ico');
+  const cl=clientes[clienteIdx];
+  if(!b||!cl)return;
+  if(cl._st==='novedad'){b.style.display='none';return;}
+  b.style.display='flex';
+  if(cl._st==='entregado'){
+    b.className='ip-btn-ent hecho';
+    l.textContent='Entregado'+(cl._stHora?' · '+cl._stHora:'');
+    ico.innerHTML='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  }else{
+    b.className='ip-btn-ent';
+    l.textContent='Confirmar entrega';
+    ico.innerHTML='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  }
+}
 function pintarBtnNov(){
+  pintarBtnEnt();
   const b=document.getElementById('ip-btn-nov');
   const l=document.getElementById('ip-nov-lbl');
   const ico=document.getElementById('ip-nov-ico');
@@ -5461,9 +5524,11 @@ function pintarBtnNov(){
     l.textContent='Tiene novedad — ¿Lograste entregar?';
     ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
   }else if(st==='entregado'){
-    b.className='ip-btn-nov ya-entregado';
-    l.textContent='Cliente entregado';
-    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+    // El estado "entregado" ya lo muestra el botón verde de arriba; aquí se deja la salida por si
+    // el entregador confirmó de más y necesita reportar la novedad después.
+    b.className='ip-btn-nov';
+    l.textContent='Reportar novedad';
+    ico.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   }else{
     b.className='ip-btn-nov';
     l.textContent='Reportar novedad';
@@ -5669,7 +5734,6 @@ function startOrBorrarNovedad(){
     abrirSheetEnt();
     return;
   }
-  if(clientes[clienteIdx]._st==='entregado'){toast('✓ Este cliente ya está entregado','ok');return;}
   startNovedad();
 }
 
