@@ -6420,12 +6420,53 @@ function parseLiquiYaXLSX(wb){
   let fecha=null,max=0;for(const f in fechasVistas)if(fechasVistas[f]>max){max=fechasVistas[f];fecha=f;}
   return{liq,fecha};
 }
+/* ══ DETECCIÓN DE ARCHIVOS YA SUBIDOS (hash), para no volver a procesar por error ══
+   Un solo índice en la raíz del bucket ('HASHES_INDEX.json'): {hash: {tipo,fecha,nombre,subidoEn}}.
+   No bloquea la subida — el índice del día se sobreescribe igual con x-upsert — solo AVISA cuando
+   el MISMO archivo (byte a byte, SHA-256) ya se había subido antes con OTRA fecha: el error clásico
+   de arrastrar por accidente el PDF de ayer. */
+async function _hashArchivo(file){
+  const buf=await file.arrayBuffer();
+  const digest=await crypto.subtle.digest('SHA-256',buf);
+  return[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _cargarHashesIndex(){
+  try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/HASHES_INDEX.json?t='+Date.now());
+    if(r.ok)return await r.json();}catch(e){}
+  return{};
+}
+/* Revisa un lote de archivos contra el índice de hashes y AVISA (logProg) los que ya se habían
+   subido antes con otra fecha. Devuelve {idx,nuevos} — el llamador debe fusionar y guardar
+   'nuevos' con _registrarHashes() solo tras confirmar que la subida fue exitosa. */
+async function _chequearDuplicados(files,tipo,fecha){
+  const idx=await _cargarHashesIndex();
+  const nuevos={};
+  for(const file of files){
+    try{
+      const h=await _hashArchivo(file);
+      const prev=idx[h];
+      if(prev&&prev.tipo===tipo&&prev.fecha!==fecha)
+        logProg('⚠ "'+file.name+'" es idéntico a un archivo ya subido el '+prev.fecha+' ("'+prev.nombre+'") — verifica que sea el correcto para hoy.','info');
+      nuevos[h]={tipo,fecha,nombre:file.name,subidoEn:new Date().toISOString()};
+    }catch(e){}
+  }
+  return{idx,nuevos};
+}
+async function _registrarHashes(idx,nuevos){
+  try{
+    Object.assign(idx,nuevos);
+    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/HASHES_INDEX.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+      body:JSON.stringify(idx)});
+  }catch(e){}
+}
 async function uploadLiquidacion(ev){
   const files=Array.from(ev.target.files).filter(f=>/\.xls[xm]?$/i.test(f.name));
   if(!files.length)return;
   openProg('Subiendo Liquidación (LiquiYa)',files.length+' archivo(s) de Angelita');
   try{
     updateProg(8,'Cargando motor Excel...');await cargarXLSX();
+    const _hashIdx=await _cargarHashesIndex(),_hashNuevos={};
     // Se agrupa por la fecha REAL de la operación (columna "Entrega" del archivo), NO por el día en que
     // se sube — Angelita sube en la mañana la liquidación del día anterior, si se guardara con la fecha
     // de subida el cruce contra el pedido/PPAS de ese día nunca cuadraría.
@@ -6435,6 +6476,10 @@ async function uploadLiquidacion(ev){
       const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
       const{liq,fecha:fechaDetectada}=parseLiquiYaXLSX(wb);
       const fecha=fechaDetectada||getColDate(-1);
+      try{const h=await _hashArchivo(file);const prev=_hashIdx[h];
+        if(prev&&prev.tipo==='liquidacion'&&prev.fecha!==fecha)logProg('⚠ "'+file.name+'" es idéntico a un archivo ya subido el '+prev.fecha+' ("'+prev.nombre+'") — verifica que sea el correcto.','info');
+        _hashNuevos[h]={tipo:'liquidacion',fecha,nombre:file.name,subidoEn:new Date().toISOString()};
+      }catch(e){}
       logProg((fechaDetectada?'Fecha detectada en el archivo: ':'No se detectó fecha en el archivo, se asume ayer: ')+fecha,fechaDetectada?'ok':'err');
       const acc=accPorFecha[fecha]||(accPorFecha[fecha]={});
       for(const cod in liq){ if(!acc[cod]){acc[cod]=liq[cod];continue;}
@@ -6453,6 +6498,7 @@ async function uploadLiquidacion(ev){
     }
     liqIndex=accPorFecha[fechas[fechas.length-1]]||{};
     window._auditFecha=fechas[fechas.length-1];
+    await _registrarHashes(_hashIdx,_hashNuevos);
     updateProg(100,'');endProg(true,'✓ Liquidación subida · '+totCli+' clientes · '+fechas.join(', '));
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir la liquidación');}
   ev.target.value='';
@@ -6712,6 +6758,7 @@ async function uploadRoutes(ev){
   logProg('Leyendo: '+file.name,'info');updateProg(10,'Leyendo Excel...');
   try{
     await cargarXLSX();
+    const{idx:_hashIdx,nuevos:_hashNuevos}=await _chequearDuplicados([file],'rutas',getColDate());
     const ab=await file.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
@@ -6778,6 +6825,7 @@ async function uploadRoutes(ev){
       });
       logProg('Snapshot histórico del PPAS guardado ('+getColDate()+')','ok');
     }catch(e){logProg('Aviso: no se pudo guardar el snapshot histórico del PPAS ('+e.message+')','err');}
+    await _registrarHashes(_hashIdx,_hashNuevos);
     updateProg(100,'');
     endProg(true,'✓ '+clientes2.length+' clientes · '+rutasUnicas.length+' rutas');
     const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
@@ -6796,6 +6844,7 @@ async function uploadHojaCarga(ev){
   const folder=hoyStr+'/';
   try{
     updateProg(8,'Cargando motor PDF.js...');await cargarPdfJs();
+    const{idx:_hashIdx,nuevos:_hashNuevos}=await _chequearDuplicados(files,'hoja',hoyStr);
     const acc={};
     for(let fi=0;fi<files.length;fi++){
       const file=files[fi];logProg('Leyendo '+file.name+'...','info');
@@ -6821,6 +6870,7 @@ async function uploadHojaCarga(ev){
       body:JSON.stringify(index)});
     if(!res.ok){const t=await res.text();throw new Error(t);}
     logProg(nR+' rutas · '+okCuadre+'/'+nR+' cuadran con el Sub-Total del ERP','ok');
+    await _registrarHashes(_hashIdx,_hashNuevos);
     await cargarIndiceHojas();
     updateProg(100,'');endProg(true,'✓ '+nR+' rutas de cargue · '+okCuadre+'/'+nR+' verificadas');
     const b=document.getElementById('pbhoja');if(b){b.textContent='✓ Subido';b.classList.add('done');}
@@ -6850,6 +6900,7 @@ async function uploadLibroPedidos(ev){
   try{
     updateProg(8,'Cargando motor PDF.js...');
     await cargarPdfJs();
+    const{idx:_hashIdx,nuevos:_hashNuevos}=await _chequearDuplicados(files,'libro',hoyStr);
     const acc={};
     for(let fi=0;fi<files.length;fi++){
       const file=files[fi];
@@ -6895,6 +6946,7 @@ async function uploadLibroPedidos(ev){
     }catch(e){}
     logProg(nCli+' clientes · '+nItems+' líneas de producto indexadas','ok');
     if(nSku.size)logProg('⚠ '+nSku.size+' SKU nuevos sin maestro: '+[...nSku].slice(0,8).join(', '),'info');
+    await _registrarHashes(_hashIdx,_hashNuevos);
     await cargarIndicePedidos();
     updateProg(100,'');
     endProg(true,'✓ '+nCli+' pedidos · '+nItems+' productos'+(nSku.size?' · '+nSku.size+' SKU nuevos':''));
@@ -6929,6 +6981,7 @@ async function uploadInvoices(ev){
   const nombreMap={};
   files.forEach(f=>{nombreMap[f.name]=limpiarNombre(f.name);});
   logProg(files.length+' PDFs seleccionados para el '+hoyStr,'info');
+  const{idx:_hashIdx,nuevos:_hashNuevos}=await _chequearDuplicados(files,'facturas',hoyStr);
   // 1. Borrar archivos de ayer
   updateProg(5,'Borrando archivos de ayer...');
   const ayerStr=new Date(ahora.getTime()+offset*3600000-86400000).toISOString().split('T')[0]+'/';
@@ -6994,6 +7047,7 @@ async function uploadInvoices(ev){
     body:JSON.stringify(index)
   });
   logProg('Índice FACTURAS_INDEX.json subido ✓','ok');
+  await _registrarHashes(_hashIdx,_hashNuevos);
   // 5. Recargar índice en memoria
   factClientes={};
   await cargarIndiceFacturas();
