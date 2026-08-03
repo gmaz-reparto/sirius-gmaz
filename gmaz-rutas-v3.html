@@ -8460,7 +8460,7 @@ async function uploadRoutes(ev){
     await _registrarHashes(_hashIdx,_hashNuevos);
     updateProg(100,'');
     endProg(true,'✓ '+clientes2.length+' clientes · '+rutasUnicas.length+' rutas');
-    const b=document.getElementById('pb3');b.textContent='✓ Subido';b.classList.add('done');
+    const b=document.getElementById('pb3');if(b){b.textContent='✓ Subido';b.classList.add('done');}
     clientes=[];renderClientList();
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir rutas');}
   ev.target.value='';
@@ -8684,7 +8684,7 @@ async function uploadInvoices(ev){
   await cargarIndiceFacturas();
   updateProg(100,'');
   endProg(true,'✓ '+subidos+' PDFs subidos · '+nCods+' clientes indexados');
-  const b=document.getElementById('pb4');b.textContent='✓ '+subidos+' subidos';b.classList.add('done');
+  const b=document.getElementById('pb4');if(b){b.textContent='✓ '+subidos+' subidos';b.classList.add('done');}
   ev.target.value='';
 }
 
@@ -8732,7 +8732,7 @@ async function uploadMaster(ev){
     registros.slice(0,3).forEach(r=>logProg('Cod: '+r.codigo+' · Vendedor: '+r.ruta_vendedor+' · Cel: '+r.celular_vendedor,'ok'));
     if(registros.length>3)logProg('... y '+(registros.length-3)+' más','info');
     updateProg(100,'');endProg(true,'✓ '+registros.length+' clientes en el maestro');
-    const b=document.getElementById('pb5');b.textContent='✓ Actualizado';b.classList.add('done');
+    const b=document.getElementById('pb5');if(b){b.textContent='✓ Actualizado';b.classList.add('done');}
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al actualizar maestro');}
   ev.target.value='';
 }
@@ -8747,7 +8747,7 @@ async function borrarRutas(){
     });
     clientes=[];renderClientList();
     hideLoad();toast('Rutas borradas ✓','ok');
-    document.getElementById('pb3').textContent='↑ Subir';document.getElementById('pb3').classList.remove('done');
+    const b3=document.getElementById('pb3');if(b3){b3.textContent='↑ Subir';b3.classList.remove('done');}
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
@@ -8771,7 +8771,7 @@ async function borrarFacturasHoy(){
       }
     }
     factClientes={};hideLoad();toast('Facturas borradas ✓','ok');
-    document.getElementById('pb4').textContent='↑ Subir';document.getElementById('pb4').classList.remove('done');
+    const b4=document.getElementById('pb4');if(b4){b4.textContent='↑ Subir';b4.classList.remove('done');}
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
@@ -8783,7 +8783,7 @@ async function borrarMaestro(){
       method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
     });
     hideLoad();toast('Maestro borrado ✓','ok');
-    document.getElementById('pb5').textContent='↑ Subir';document.getElementById('pb5').classList.remove('done');
+    const b5=document.getElementById('pb5');if(b5){b5.textContent='↑ Subir';b5.classList.remove('done');}
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 
