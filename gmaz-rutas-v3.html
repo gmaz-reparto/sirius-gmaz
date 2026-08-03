@@ -515,6 +515,30 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#E8920E,#D97706);box-shadow:0 6px 16px rgba(217,119,6,.32);animation:novpulsa 2s infinite}
 .ip-btn-nov.tiene-nov .ip-nov-lbl{color:#fff}
 @keyframes novpulsa{0%,100%{box-shadow:0 6px 16px rgba(217,119,6,.32)}50%{box-shadow:0 6px 22px rgba(217,119,6,.55)}}
+/* ══ Tabla GMAZ: un solo componente para todas las tablas operativas ══ */
+.tg-top{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+.tg-buscar{flex:1;min-width:150px;max-width:280px;height:32px;border:1px solid var(--gris2);
+  border-radius:9px;padding:0 11px;font-family:inherit;font-size:12px;color:var(--negro);background:#fff}
+.tg-buscar:focus{outline:none;border-color:var(--gris3);box-shadow:0 0 0 3px rgba(15,17,23,.05)}
+.tg-meta{font-size:10.5px;color:var(--gris4);font-weight:600;margin-left:auto}
+.tg-exp{height:32px;border:1px solid var(--gris2);background:#fff;border-radius:9px;padding:0 11px;
+  font-family:inherit;font-size:11.5px;font-weight:700;color:var(--negro);cursor:pointer;white-space:nowrap}
+.tg-exp:hover{background:var(--gris1);border-color:var(--gris3)}
+.tg-wrap{overflow:auto;border:1px solid var(--gris2);border-radius:12px;background:#fff}
+table.tg{width:100%;border-collapse:collapse;font-size:11.5px}
+table.tg th{position:sticky;top:0;z-index:2;background:#FBFBFD;text-align:left;padding:9px 10px;
+  font-size:9.5px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--gris2);white-space:nowrap;user-select:none}
+table.tg th:hover{color:var(--negro)}
+table.tg th.num,table.tg td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.tg .tg-fl{font-size:8px;color:var(--rojo)}
+table.tg td{padding:8px 10px;border-bottom:1px solid #F2F4F7;vertical-align:middle}
+table.tg tbody tr:last-child td{border-bottom:0}
+table.tg tbody tr.tg-click{cursor:pointer}
+table.tg tbody tr.tg-click:hover{background:#FBFBFD}
+table.tg tfoot td{padding:9px 10px;border-top:2px solid var(--gris2);font-weight:800;
+  background:#FBFBFD;position:sticky;bottom:0}
+.tg-vacio{text-align:center;padding:26px 14px;color:var(--gris4);font-size:11.5px}
 /* Drill-down: del KPI al registro individual, con migas de pan para volver a subir de nivel */
 #drill-ovl{display:none;position:fixed;inset:0;z-index:2300;background:rgba(15,17,23,.5);
   backdrop-filter:blur(2px);align-items:flex-end;justify-content:center}
@@ -6625,12 +6649,10 @@ async function cargarHistoricoInteligente(fecha){
     cont.innerHTML=html+'<div style="background:var(--gris1);border-radius:9px;padding:16px;text-align:center;font-size:11px;color:var(--gris4)">No hay datos de rutas para el '+fecha+' (ni Hoja de cargue, ni PPAS, ni Rechazos, ni Libro con ruta).</div>';
     return;
   }
-  html+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="text-align:left;color:var(--gris4);font-size:10px;text-transform:uppercase;letter-spacing:.4px">'+
-    '<th style="padding:6px 8px">Ruta</th><th style="padding:6px 8px">Placa / Transp.</th><th style="padding:6px 8px">Entregas prog.</th>'+
-    '<th style="padding:6px 8px">Clientes libro</th><th style="padding:6px 8px">Cajas pedidas</th><th style="padding:6px 8px">Cajas cargadas</th>'+
-    '<th style="padding:6px 8px">Facturas</th><th style="padding:6px 8px">Rechazos</th><th style="padding:6px 8px">Alertas</th></tr></thead><tbody>';
-  rutasArr.forEach(r=>{
-    const d=porRuta[r];const hj=d.hoja;const rech=d.rech;
+  html+='<div id="tbl-hi"></div>';
+  cont.innerHTML=html;
+  const filasHI=rutasArr.map(r=>{
+    const d=porRuta[r],hj=d.hoja,rech=d.rech;
     const alertas=[];
     if(!hj)alertas.push('Sin hoja de cargue');
     if(!d.pedClientes)alertas.push('Sin libro');
@@ -6639,20 +6661,142 @@ async function cargarHistoricoInteligente(fecha){
     if(rech&&rech.caj>0)alertas.push(rech.clientes.length+' rechazo(s), '+rech.caj+' cj');
     const fs=fueraSec[r];
     if(fs&&fs.saltos>Math.max(2,fs.total*0.15))alertas.push(fs.saltos+' visitas fuera de secuencia de '+fs.total);
-    html+='<tr style="border-top:1px solid #EEF0F4">'+
-      '<td style="padding:7px 8px;font-weight:800">'+r+'</td>'+
-      '<td style="padding:7px 8px">'+(hj?(hj.placa||'—')+' · T'+(hj.transporte||'—'):'—')+'</td>'+
-      '<td style="padding:7px 8px">'+(hj?hj.entregas||0:'—')+'</td>'+
-      '<td style="padding:7px 8px">'+d.pedClientes+'</td>'+
-      '<td style="padding:7px 8px">'+d.pedCaj+'</td>'+
-      '<td style="padding:7px 8px">'+(hj?hj.cargueCaj:'—')+'</td>'+
-      '<td style="padding:7px 8px">'+d.factCods+'</td>'+
-      '<td style="padding:7px 8px">'+(rech?rech.clientes.length+' / '+rech.caj+' cj':'—')+'</td>'+
-      '<td style="padding:7px 8px">'+(alertas.length?'<span style="color:#B45309;font-weight:700">'+alertas.join(' · ')+'</span>':'<span style="color:#166534">✓ ok</span>')+'</td>'+
-    '</tr>';
+    return{ruta:r,vehiculo:hj?((hj.placa||'—')+' · T'+(hj.transporte||'—')):'—',
+      entregasProg:hj?(hj.entregas||0):null,clientes:d.pedClientes,pedCaj:d.pedCaj,
+      cargCaj:hj?hj.cargueCaj:null,facturas:d.factCods,
+      rechCli:rech?rech.clientes.length:0,rechCaj:rech?rech.caj:0,
+      alertas:alertas.join(' · '),nAlertas:alertas.length};
   });
-  html+='</tbody></table></div>';
-  cont.innerHTML=html;
+  montarTabla('tbl-hi',{
+    archivo:'historico-'+fecha, unidad:'rutas', buscar:['ruta','vehiculo','alertas'],
+    placeholder:'Buscar ruta, placa o alerta…', orden:{k:'nAlertas',dir:'desc'},
+    cols:[
+      {k:'ruta',t:'Ruta',b:true},
+      {k:'vehiculo',t:'Placa / Transp.'},
+      {k:'entregasProg',t:'Entregas prog.',num:true,fmt:v=>v==null?'—':v},
+      {k:'clientes',t:'Clientes libro',num:true,tot:'sum'},
+      {k:'pedCaj',t:'Cajas pedidas',num:true,tot:'sum'},
+      {k:'cargCaj',t:'Cajas cargadas',num:true,tot:'sum',fmt:v=>v==null?'—':v},
+      {k:'facturas',t:'Facturas',num:true,tot:'sum'},
+      {k:'rechCli',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
+      {k:'rechCaj',t:'Cajas rech.',num:true,tot:'sum',col:v=>v?'#E30613':null},
+      {k:'alertas',t:'Alertas',noOrd:true,
+       fmt:v=>v?'<span style="color:#B45309;font-weight:700">'+v+'</span>':'<span style="color:#166534">✓ ok</span>'}
+    ],
+    filas:filasHI, vacio:'Sin rutas con datos para esta fecha.'
+  });
+}
+/* ══════════════ TABLA GMAZ — componente único ══════════════
+   Las tablas de la app se armaban a mano, cada una con sus estilos en línea y ninguna con orden,
+   búsqueda ni exportación. Esto las reemplaza: se declara qué columnas hay y de dónde sale cada
+   valor, y el componente resuelve encabezado ordenable, buscador, totales al pie y CSV.
+
+   montarTabla('id-del-div',{
+     cols:[{k:'veh',t:'Vehículo',b:true},
+           {k:'km',t:'Km',num:true,fmt:v=>v.toFixed(1),tot:'sum'}],
+     filas:[...], buscar:['veh'], orden:{k:'km',dir:'desc'}, vacio:'…'
+   })                                                                             */
+const _TABLAS={};
+function montarTabla(contId,cfg){
+  _TABLAS[contId]=cfg;
+  cfg._q=cfg._q||'';
+  cfg._ord=cfg._ord||cfg.orden||null;
+  _renderTabla(contId);
+}
+function _tablaOrdenar(contId,k){
+  const c=_TABLAS[contId];if(!c)return;
+  const col=c.cols.find(x=>x.k===k);if(!col||col.noOrd)return;
+  c._ord=(c._ord&&c._ord.k===k)?{k,dir:c._ord.dir==='asc'?'desc':'asc'}
+        :{k,dir:col.num?'desc':'asc'};
+  _renderTabla(contId);
+}
+function _tablaBuscar(contId,v){
+  const c=_TABLAS[contId];if(!c)return;
+  c._q=(v||'').trim().toLowerCase();
+  _renderTabla(contId,true);
+}
+function _tablaFilas(c){
+  let f=c.filas.slice();
+  if(c._q&&c.buscar&&c.buscar.length)
+    f=f.filter(x=>c.buscar.some(k=>String(x[k]==null?'':x[k]).toLowerCase().includes(c._q)));
+  if(c._ord){
+    const col=c.cols.find(x=>x.k===c._ord.k)||{};
+    const s=c._ord.dir==='asc'?1:-1;
+    f.sort((a,b)=>{
+      const va=a[c._ord.k],vb=b[c._ord.k];
+      if(col.num)return s*((+va||0)-(+vb||0));
+      return s*String(va==null?'':va).localeCompare(String(vb==null?'':vb),'es');
+    });
+  }
+  return f;
+}
+function _tablaExportar(contId){
+  const c=_TABLAS[contId];if(!c)return;
+  const filas=_tablaFilas(c);
+  const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const cab=c.cols.map(x=>esc(x.t)).join(';');
+  const cuerpo=filas.map(f=>c.cols.map(x=>{
+    const v=f[x.k];
+    // El CSV lleva el valor crudo (no el formateado) para que Excel pueda sumarlo
+    return esc(x.num&&v!=null?String(v).replace('.',','):v);
+  }).join(';')).join('\n');
+  // BOM explícito: sin él, Excel en español abre el CSV en ANSI y rompe los acentos
+  const blob=new Blob(['﻿'+cab+'\n'+cuerpo],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(c.archivo||contId)+'.csv';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('CSV descargado · '+filas.length+' filas','ok');
+}
+function _renderTabla(contId,soloCuerpo){
+  const cont=document.getElementById(contId),c=_TABLAS[contId];
+  if(!cont||!c)return;
+  const filas=_tablaFilas(c);
+  const flechita=k=>c._ord&&c._ord.k===k?(c._ord.dir==='asc'?' ▲':' ▼'):'';
+  let h='';
+  if(!soloCuerpo||!cont.querySelector('.tg-wrap')){
+    h+='<div class="tg-top">';
+    if(c.buscar&&c.buscar.length)
+      h+='<input class="tg-buscar" type="search" placeholder="'+(c.placeholder||'Buscar…')+'" value="'+(c._q||'')+'" oninput="_tablaBuscar(\''+contId+'\',this.value)">';
+    h+='<span class="tg-meta" id="'+contId+'-meta"></span>';
+    if(c.exportar!==false)h+='<button class="tg-exp" onclick="haptic();_tablaExportar(\''+contId+'\')">Exportar CSV ↓</button>';
+    h+='</div><div class="tg-wrap"><table class="tg"><thead><tr>'+
+      c.cols.map(x=>'<th'+(x.num?' class="num"':'')+(x.noOrd?'':' onclick="haptic();_tablaOrdenar(\''+contId+'\',\''+x.k+'\')" style="cursor:pointer"')+'>'+x.t+'<span class="tg-fl">'+flechita(x.k)+'</span></th>').join('')+
+      '</tr></thead><tbody id="'+contId+'-tb"></tbody>'+
+      (c.cols.some(x=>x.tot)?'<tfoot id="'+contId+'-tf"></tfoot>':'')+
+      '</table></div>';
+    cont.innerHTML=h;
+  }else{
+    // Solo cambió la búsqueda: se repinta el cuerpo y se dejan quietos el input y el foco
+    cont.querySelectorAll('.tg thead th .tg-fl').forEach((el,i)=>el.textContent=flechita(c.cols[i].k));
+  }
+  const tb=document.getElementById(contId+'-tb');
+  if(!filas.length){
+    tb.innerHTML='<tr><td colspan="'+c.cols.length+'" class="tg-vacio">'+(c._q?'Ningún resultado para «'+c._q+'».':(c.vacio||'Sin registros.'))+'</td></tr>';
+  }else{
+    tb.innerHTML=filas.map((f,i)=>{
+      const click=c.onRow?c.onRow(f,i):null;
+      return '<tr'+(click?' class="tg-click" onclick="haptic();'+click+'"':'')+(f._dim?' style="opacity:.55"':'')+'>'+
+        c.cols.map(x=>{
+          const v=f[x.k];
+          const txt=x.fmt?x.fmt(v,f):(v==null?'—':v);
+          const col=x.col?x.col(v,f):null;
+          const peso=x.b?';font-weight:800':'';
+          return '<td'+(x.num?' class="num"':'')+(col||peso?' style="'+(col?'color:'+col+';':'')+(peso?'font-weight:800':'')+'"':'')+'>'+txt+'</td>';
+        }).join('')+'</tr>';
+    }).join('');
+  }
+  const tf=document.getElementById(contId+'-tf');
+  if(tf){
+    tf.innerHTML='<tr>'+c.cols.map((x,i)=>{
+      if(!x.tot)return '<td'+(x.num?' class="num"':'')+'>'+(i===0?filas.length+' '+(c.unidad||'filas'):'')+'</td>';
+      const s=filas.reduce((a,f)=>a+(+f[x.k]||0),0);
+      const val=x.tot==='avg'?(filas.length?s/filas.length:0):s;
+      return '<td'+(x.num?' class="num"':'')+'>'+(x.fmt?x.fmt(val):Math.round(val))+'</td>';
+    }).join('')+'</tr>';
+  }
+  const meta=document.getElementById(contId+'-meta');
+  if(meta)meta.textContent=filas.length+' de '+c.filas.length+' '+(c.unidad||'filas');
 }
 /* ══════════════ DRILL-DOWN ══════════════
    Un KPI deja de ser un número muerto: al tocarlo se baja por niveles hasta el registro individual
@@ -6830,10 +6974,16 @@ async function cargarEntregadores(mesSel){
       let minTot=0,entConHora=0;
       for(const f in porDia){const v=porDia[f].sort((a,b)=>a-b);
         if(v.length>1){minTot+=(v[v.length-1]-v[0])/60000;entConHora+=v.length;}}
-      return{...p,tot,dias:p.dias.size,rutas:[...p.rutas].sort().join(', '),
-        pct:tot?Math.round(p.ent/tot*100):0,
-        porHora:minTot>30?+(entConHora/(minTot/60)).toFixed(1):null,
-        minPorEnt:entConHora>1?Math.round(minTot/entConHora):null};
+      // El cumplimiento SOLO es interpretable si la persona usó el botón "Confirmar entrega".
+      // Si reportó rechazos pero casi no confirmó entregas, el porcentaje no mide su desempeño
+      // sino la adopción del botón: una ruta real atiende 50-100 clientes al día, así que menos de
+      // 10 confirmaciones por día trabajado significa que el dato todavía no dice nada de la persona.
+      const dias=p.dias.size||1;
+      const fiable=p.ent>=10*dias;
+      return{...p,tot,dias,rutas:[...p.rutas].sort().join(', '),fiable,
+        pct:fiable&&tot?Math.round(p.ent/tot*100):null,
+        porHora:fiable&&minTot>30?+(entConHora/(minTot/60)).toFixed(1):null,
+        minPorEnt:fiable&&entConHora>1?Math.round(minTot/entConHora):null};
     }).sort((a,b)=>b.tot-a.tot);
     let html='';
     if(!filas.length){
@@ -6846,39 +6996,47 @@ async function cargarEntregadores(mesSel){
       cont.innerHTML=html;return;
     }
     const T=filas.reduce((s,f)=>({ent:s.ent+f.ent,rech:s.rech+f.rech,tot:s.tot+f.tot}),{ent:0,rech:0,tot:0});
-    const pctProm=T.tot?Math.round(T.ent/T.tot*100):0;
+    const conf=filas.filter(f=>f.fiable);
+    // El promedio se calcula SOLO con quienes tienen datos suficientes; si no hay ninguno, no se inventa
+    const pctProm=conf.length?Math.round(conf.reduce((s,f)=>s+f.pct,0)/conf.length):null;
     document.getElementById('ent-kpis').innerHTML=
       '<div class="dkpi simple"><div class="dk-v">'+filas.length+'</div><div class="dk-l">Entregadores activos</div></div>'+
       '<div class="dkpi simple"><div class="dk-v">'+T.ent.toLocaleString('es-CO')+'</div><div class="dk-l">Entregas confirmadas</div></div>'+
       '<div class="dkpi simple"><div class="dk-v" style="color:#E30613">'+T.rech.toLocaleString('es-CO')+'</div><div class="dk-l">Rechazos</div></div>'+
-      '<div class="dkpi simple"><div class="dk-v" style="color:'+(pctProm>=95?'#059669':pctProm>=85?'#D97706':'#E30613')+'">'+pctProm+'%</div><div class="dk-l">Cumplimiento promedio</div></div>';
-    html='<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr style="text-align:left;color:var(--gris4);font-size:10px;text-transform:uppercase;letter-spacing:.4px">'+
-      '<th style="padding:6px 8px">Entregador</th><th style="padding:6px 8px">Rutas</th>'+
-      '<th style="padding:6px 8px;text-align:right">Días</th><th style="padding:6px 8px;text-align:right">Entregas</th>'+
-      '<th style="padding:6px 8px;text-align:right">Rechazos</th><th style="padding:6px 8px;text-align:right">Cumpl.</th>'+
-      '<th style="padding:6px 8px;text-align:right">Entregas/h</th><th style="padding:6px 8px;text-align:right">Min/entrega</th>'+
-      '<th style="padding:6px 8px">Semáforo</th></tr></thead><tbody>';
-    filas.forEach(f=>{
-      // El semáforo compara contra el promedio de la operación, no contra una meta fija
-      const d=f.pct-pctProm;
-      const sem=d>=3?['Referente','#ECFDF5','#059669']:d>=-3?['En meta','#ECFDF5','#059669']:
-                d>=-8?['Seguimiento','#FFF8E6','#B45309']:['Atención','#FEE2E2','#B91C1C'];
-      html+='<tr style="border-top:1px solid #EEF0F4">'+
-        '<td style="padding:7px 8px;font-weight:800">'+f.nombre+'</td>'+
-        '<td style="padding:7px 8px;color:var(--gris4)">'+(f.rutas||'—')+'</td>'+
-        '<td style="padding:7px 8px;text-align:right">'+f.dias+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;font-variant-numeric:tabular-nums">'+f.ent+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;color:'+(f.rech?'#E30613':'inherit')+';font-weight:'+(f.rech?'800':'400')+'">'+f.rech+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;font-weight:800;color:'+(f.pct>=95?'#059669':f.pct>=85?'#D97706':'#E30613')+'">'+f.pct+'%</td>'+
-        '<td style="padding:7px 8px;text-align:right">'+(f.porHora!=null?f.porHora:'<span style="color:#8A90A0">—</span>')+'</td>'+
-        '<td style="padding:7px 8px;text-align:right">'+(f.minPorEnt!=null?f.minPorEnt:'<span style="color:#8A90A0">—</span>')+'</td>'+
-        '<td style="padding:7px 8px"><span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+sem[1]+';color:'+sem[2]+'">'+sem[0]+'</span></td>'+
-      '</tr>';
-    });
-    html+='</tbody></table>';
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(pctProm==null?'#8A90A0':pctProm>=95?'#059669':pctProm>=85?'#D97706':'#E30613')+'">'+(pctProm==null?'—':pctProm+'%')+'</div><div class="dk-l">Cumplimiento promedio</div></div>';
+    html='';
+    const sinDatos=filas.length-conf.length;
+    if(sinDatos)html+='<div style="margin-bottom:10px;background:#EFF6FF;border-radius:10px;padding:11px 13px;font-size:11.5px;color:#1E429F;line-height:1.5">'+
+      '<b>'+sinDatos+' de '+filas.length+' entregadores todavía sin cumplimiento calculable.</b> '+
+      'Reportaron rechazos pero aún casi no usan el botón «Confirmar entrega», y una ruta atiende 50-100 clientes al día. '+
+      'Mostrar su porcentaje sería medir la adopción del botón, no su trabajo — por eso aparece «—» y no un 0 %.</div>';
+    html+='<div id="tbl-ent"></div>';
     if(genericos)html+='<div style="margin-top:10px;background:var(--gris1);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--gris4)">'+
       genericos+' rechazo(s) de este mes quedaron sin persona («Repartidor») porque se registraron antes de que la app preguntara quién entrega. No se reparten entre nadie.</div>';
     cont.innerHTML=html;
+    // El semáforo compara contra el promedio de la operación, no contra una meta fija
+    filas.forEach(f=>{f.dif=f.fiable&&pctProm!=null?f.pct-pctProm:null;});
+    const _sem=d=>d==null?['Sin datos aún','#F1F3F7','#6B7385']:
+                d>=3?['Referente','#ECFDF5','#059669']:d>=-3?['En meta','#ECFDF5','#059669']:
+                d>=-8?['Seguimiento','#FFF8E6','#B45309']:['Atención','#FEE2E2','#B91C1C'];
+    montarTabla('tbl-ent',{
+      archivo:'entregadores-'+mes, unidad:'entregadores', buscar:['nombre','rutas'],
+      placeholder:'Buscar entregador o ruta…', orden:{k:'tot',dir:'desc'},
+      cols:[
+        {k:'nombre',t:'Entregador',b:true},
+        {k:'rutas',t:'Rutas',fmt:v=>v||'—'},
+        {k:'dias',t:'Días',num:true},
+        {k:'ent',t:'Entregas',num:true,tot:'sum'},
+        {k:'rech',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
+        {k:'pct',t:'Cumpl.',num:true,fmt:v=>v==null?'<span style="color:#8A90A0" title="Aún no usa el botón Confirmar entrega lo suficiente">—</span>':Math.round(v)+'%',
+         col:v=>v==null?null:v>=95?'#059669':v>=85?'#D97706':'#E30613'},
+        {k:'porHora',t:'Entregas/h',num:true,fmt:v=>v!=null?v:'<span style="color:#8A90A0">—</span>'},
+        {k:'minPorEnt',t:'Min/entrega',num:true,fmt:v=>v!=null?v:'<span style="color:#8A90A0">—</span>'},
+        {k:'dif',t:'Semáforo',noOrd:false,fmt:v=>{const s=_sem(v);
+          return '<span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+s[1]+';color:'+s[2]+'">'+s[0]+'</span>';}}
+      ],
+      filas, vacio:'Sin entregadores con actividad este mes.'
+    });
   }catch(e){
     cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
   }
@@ -6947,45 +7105,36 @@ async function cargarMetricasFlota(){
       '<div class="dkpi simple"><div class="dk-v">'+_hm(T.minPl)+'</div><div class="dk-l">Tiempo en planta</div></div>'+
       '<div class="dkpi simple"><div class="dk-v" style="color:'+(T.largas?'#D97706':'inherit')+'">'+T.largas+'</div><div class="dk-l">Paradas largas</div></div>'+
       '</div>';
-    html+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="text-align:left;color:var(--gris4);font-size:10px;text-transform:uppercase;letter-spacing:.4px">'+
-      '<th style="padding:6px 8px">Vehículo</th><th style="padding:6px 8px">Ruta</th>'+
-      '<th style="padding:6px 8px;text-align:right">Km</th><th style="padding:6px 8px">Salió</th><th style="padding:6px 8px">Regresó</th>'+
-      '<th style="padding:6px 8px;text-align:right">En ruta</th><th style="padding:6px 8px;text-align:right">Detenido</th>'+
-      '<th style="padding:6px 8px;text-align:right">En planta</th><th style="padding:6px 8px;text-align:right">En clientes</th>'+
-      '<th style="padding:6px 8px;text-align:right">Paradas</th><th style="padding:6px 8px;text-align:right">Vel. máx</th>'+
-      '<th style="padding:6px 8px;text-align:right">Señal</th></tr></thead><tbody>';
-    filas.forEach(f=>{
-      const detCol=f.minDetenido>=45?'#E30613':f.minDetenido>=20?'#D97706':'#0F1117';
-      const cobCol=f.cobertura>=85?'#0E9F6E':f.cobertura>=60?'#D97706':'#E30613';
-      html+='<tr style="border-top:1px solid #EEF0F4'+(f.cobertura<60?';opacity:.55':'')+'">'+
-        '<td style="padding:7px 8px;font-weight:800">'+f.veh+'</td>'+
-        '<td style="padding:7px 8px">'+(f.ruta||'<span style="color:#8A90A0">—</span>')+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;font-variant-numeric:tabular-nums">'+f.km.toFixed(1)+'</td>'+
-        '<td style="padding:7px 8px">'+((f.salidaPlanta||f.horaIni||'—').slice(0,5))+'</td>'+
-        '<td style="padding:7px 8px">'+((f.regresoPlanta||f.horaFin||'—').slice(0,5))+'</td>'+
-        '<td style="padding:7px 8px;text-align:right">'+_hm(f.minRuta)+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;color:'+detCol+';font-weight:'+(f.minDetenido>=20?'800':'400')+'">'+_hm(f.minDetenido)+'</td>'+
-        '<td style="padding:7px 8px;text-align:right">'+_hm(f.minPlanta)+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;color:#0E9F6E">'+_hm(f.minCliente)+'</td>'+
-        '<td style="padding:7px 8px;text-align:right">'+f.paradas+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;color:'+(f.velMax>80?'#E30613':'inherit')+'">'+Math.round(f.velMax)+'</td>'+
-        '<td style="padding:7px 8px;text-align:right;color:'+cobCol+';font-weight:700" title="'+_hm(f.minSinDato)+' sin reporte GPS">'+f.cobertura+'%</td>'+
-      '</tr>';
-    });
-    html+='</tbody><tfoot><tr style="border-top:2px solid #E6E9EF;font-weight:800">'+
-      '<td style="padding:7px 8px">'+filas.length+' vehículos</td><td></td>'+
-      '<td style="padding:7px 8px;text-align:right">'+T.km.toFixed(1)+'</td><td></td><td></td>'+
-      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minRuta)+'</td>'+
-      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minDet)+'</td>'+
-      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minPl)+'</td>'+
-      '<td style="padding:7px 8px;text-align:right">'+_hm(T.minCli)+'</td>'+
-      '<td style="padding:7px 8px;text-align:right">'+T.par+'</td><td></td>'+
-      '<td style="padding:7px 8px;text-align:right">'+Math.round(filas.reduce((s,f)=>s+f.cobertura,0)/filas.length)+'%</td>'+
-      '</tr></tfoot></table></div>';
     const cobProm=Math.round(filas.reduce((s,f)=>s+f.cobertura,0)/filas.length);
-    if(cobProm<85)html+='<div style="margin-top:9px;background:#FFF8E6;border-radius:9px;padding:10px 12px;font-size:11px;color:#B45309">'+
+    if(cobProm<85)html+='<div style="margin-bottom:10px;background:#FFF8E6;border-radius:9px;padding:10px 12px;font-size:11px;color:#B45309">'+
       '<b>Señal GPS al '+cobProm+'%.</b> Los tramos sin reporte no se le suman a ninguna categoría, así que los tiempos de esta fecha son un mínimo, no el total exacto. Los días nuevos se guardan con más detalle.</div>';
+    html+='<div id="tbl-flota"></div>';
     cont.innerHTML=html;
+    // Las filas con poca señal se atenúan: su dato es un mínimo, no una medición confiable
+    filas.forEach(f=>{f._dim=f.cobertura<60;f.salio=(f.salidaPlanta||f.horaIni||'').slice(0,5);
+      f.regreso=(f.regresoPlanta||f.horaFin||'').slice(0,5);f.largas=f.paradasLargas.length;});
+    montarTabla('tbl-flota',{
+      archivo:'flota-'+fecha, unidad:'vehículos', buscar:['veh','ruta'], placeholder:'Buscar vehículo o ruta…',
+      orden:{k:'km',dir:'desc'},
+      cols:[
+        {k:'veh',t:'Vehículo',b:true},
+        {k:'ruta',t:'Ruta',fmt:v=>v||'<span style="color:#8A90A0">—</span>'},
+        {k:'km',t:'Km',num:true,tot:'sum',fmt:v=>(+v||0).toFixed(1)},
+        {k:'salio',t:'Salió',fmt:v=>v||'—'},
+        {k:'regreso',t:'Regresó',fmt:v=>v||'—'},
+        {k:'minRuta',t:'En ruta',num:true,tot:'sum',fmt:_hm},
+        {k:'minDetenido',t:'Detenido',num:true,tot:'sum',fmt:_hm,
+         col:v=>v>=45?'#E30613':v>=20?'#D97706':null},
+        {k:'minPlanta',t:'En planta',num:true,tot:'sum',fmt:_hm},
+        {k:'minCliente',t:'En clientes',num:true,tot:'sum',fmt:_hm,col:()=>'#0E9F6E'},
+        {k:'paradas',t:'Paradas',num:true,tot:'sum'},
+        {k:'largas',t:'Largas',num:true,tot:'sum',col:v=>v?'#D97706':null},
+        {k:'velMax',t:'Vel. máx',num:true,fmt:v=>Math.round(v),col:v=>v>80?'#E30613':null},
+        {k:'cobertura',t:'Señal',num:true,tot:'avg',fmt:v=>Math.round(v)+'%',
+         col:v=>v>=85?'#0E9F6E':v>=60?'#D97706':'#E30613'}
+      ],
+      filas, vacio:'Sin recorridos GPS para esta fecha.'
+    });
   }catch(e){
     cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudieron leer los recorridos: '+e.message+'</div>';
   }finally{
