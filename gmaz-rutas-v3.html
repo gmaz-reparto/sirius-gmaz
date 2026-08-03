@@ -1831,6 +1831,17 @@ table.tg tfoot td{padding:9px 10px;border-top:2px solid var(--gris2);font-weight
         </div>
         <div style="border-top:1px solid #EEF0F4;padding:12px 17px 16px">
           <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap">
+            <div style="font-size:12.5px;font-weight:800;color:#0F1117">Acumulado por rango</div>
+            <input type="date" id="hi-desde" style="height:30px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117">
+            <span style="font-size:11px;color:var(--gris4)">a</span>
+            <input type="date" id="hi-hasta" style="height:30px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117">
+            <button id="hi-rango-btn" onclick="haptic();cargarHistoricoRango()" style="height:30px;border:1px solid #E6E9EF;background:#fff;border-radius:8px;padding:0 12px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117;cursor:pointer">Ver acumulado</button>
+          </div>
+          <div style="font-size:11px;color:var(--gris4);margin-bottom:8px">Los patrones solo aparecen en el acumulado: qué motivo de rechazo pesa más, qué ruta se repite, qué cliente rechaza siempre.</div>
+          <div id="hi-rango-body"><div class="veh-cargando">Elige un rango y pulsa «Ver acumulado».</div></div>
+        </div>
+        <div style="border-top:1px solid #EEF0F4;padding:12px 17px 16px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap">
             <div style="font-size:12.5px;font-weight:800;color:#0F1117">Flota · kilómetros y tiempos</div>
             <button id="hi-flota-btn" onclick="haptic();cargarMetricasFlota()" style="margin-left:auto;height:30px;border:1px solid #E6E9EF;background:#fff;border-radius:8px;padding:0 12px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117;cursor:pointer">Calcular del GPS</button>
           </div>
@@ -6729,11 +6740,13 @@ function ventaPorRuta(pedIdx){
     m[r]=(m[r]||0)+ventaDeCliente(c);}
   return m;
 }
-/* "$48,2M" / "$812K" — para tarjetas donde no cabe la cifra completa */
+/* "$1.077M" / "$48,2M" / "$812K" — para tarjetas donde no cabe la cifra completa */
 function _pesosCorto(n){
   n=Math.round(n||0);
-  if(Math.abs(n)>=1e6)return '$'+(n/1e6).toFixed(1).replace('.',',')+'M';
-  if(Math.abs(n)>=1000)return '$'+Math.round(n/1000)+'K';
+  const a=Math.abs(n);
+  if(a>=1e9)return '$'+(n/1e6).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'M';
+  if(a>=1e6)return '$'+(n/1e6).toFixed(1).replace('.',',')+'M';
+  if(a>=1000)return '$'+Math.round(n/1000)+'K';
   return '$'+n;
 }
 /* ══════════════ TABLA GMAZ — componente único ══════════════
@@ -7152,6 +7165,149 @@ async function cargarEntregadores(mesSel){
     });
   }catch(e){
     cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
+  }
+}
+/* ══ HISTÓRICO POR RANGO ══
+   El histórico era un día a la vez, y los patrones no se ven en un día: que «cliente cerrado»
+   concentre un tercio de los rechazos, o que un cliente devuelva todas las semanas, solo aparece
+   al acumular. Recorre las fechas del rango leyendo los índices ya guardados. */
+async function cargarHistoricoRango(){
+  const d1=document.getElementById('hi-desde').value,d2=document.getElementById('hi-hasta').value;
+  const cont=document.getElementById('hi-rango-body');if(!cont)return;
+  if(!d1||!d2){cont.innerHTML='<div class="veh-cargando">Elige las dos fechas del rango.</div>';return;}
+  if(d1>d2){cont.innerHTML='<div style="background:#FFF8E6;border-radius:9px;padding:12px;font-size:11.5px;color:#B45309">La fecha inicial es posterior a la final.</div>';return;}
+  const dias=[];
+  for(let t=new Date(d1+'T12:00:00');t<=new Date(d2+'T12:00:00');t.setDate(t.getDate()+1))
+    dias.push(t.toISOString().slice(0,10));
+  if(dias.length>62){cont.innerHTML='<div style="background:#FFF8E6;border-radius:9px;padding:12px;font-size:11.5px;color:#B45309">El rango es de '+dias.length+' días. Elige máximo 62 (dos meses) para que no tarde demasiado.</div>';return;}
+  const btn=document.getElementById('hi-rango-btn');
+  if(btn){btn.disabled=true;btn.textContent='Cargando…';}
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  try{
+    // El detalle por SKU de cada rechazo (que trae el valor) solo existe desde el 28-jul-2026; antes
+    // solo se guardaba el motivo. Hay que distinguir "devolvió $0" de "no se sabe cuánto devolvió":
+    // pintar $0 donde el dato no existe haría creer que ese rechazo no costó plata.
+    const T={dias:0,clientes:0,cajas:0,venta:0,rechCli:0,rechCaj:0,rechVenta:0,rechSinDetalle:0};
+    const porRuta={},porMotivo={},porCliente={},porDia=[];
+    for(let i=0;i<dias.length;i++){
+      const f=dias[i];
+      cont.innerHTML='<div class="veh-cargando">Leyendo '+f+'… ('+(i+1)+' de '+dias.length+')</div>';
+      let ped=null;
+      try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+f+'/PEDIDOS_INDEX.json?t='+Date.now());
+        if(r.ok)ped=await r.json();}catch(e){}
+      if(!ped||!Object.keys(ped).length)continue;
+      T.dias++;
+      let cliD=0,cajD=0,vtaD=0;
+      for(const cod in ped){
+        const c=ped[cod],r=c.r||'—';
+        const v=ventaDeCliente(c);
+        let caj=0;(c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{caj+=it[2]||0;}));
+        if(!pasaFiltroRuta(r))continue;
+        cliD++;cajD+=caj;vtaD+=v;
+        const pr=porRuta[r]||(porRuta[r]={ruta:r,dias:new Set(),clientes:0,cajas:0,venta:0,rechCli:0,rechVenta:0});
+        pr.dias.add(f);pr.clientes++;pr.cajas+=caj;pr.venta+=v;
+      }
+      T.clientes+=cliD;T.cajas+=cajD;T.venta+=vtaD;
+      // Rechazos del día (novedades da el motivo; el detalle guardado da el valor)
+      let novs=[];
+      try{const rn=await fetch(CFG.SUPABASE_URL+'/rest/v1/novedades?select=codigo_cliente,nombre_cliente,ruta,motivo&fecha=eq.'+f,{headers:_h});
+        if(rn.ok)novs=await rn.json()||[];}catch(e){}
+      let rCajD=0,rVtaD=0,rCliD=0,dSinDet=0;
+      const delDia=novs.filter(n=>pasaFiltroRuta(n.ruta));
+      // El detalle de cada rechazo es un archivo por cliente: en serie eran ~20 s por día,
+      // así que se piden todos los del día a la vez.
+      const detalles=await Promise.all(delDia.map(n=>
+        fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+f+'/'+encodeURIComponent(String(n.codigo_cliente))+'.json?t='+Date.now())
+          .then(r=>r.ok?r.json():null).catch(()=>null)));
+      delDia.forEach((n,ix)=>{
+        rCliD++;
+        const m=(n.motivo||'SIN MOTIVO').toUpperCase();
+        const pm=porMotivo[m]||(porMotivo[m]={motivo:m,veces:0,cajas:0,venta:0,conDet:0});
+        pm.veces++;
+        const cod=String(n.codigo_cliente);
+        const pc=porCliente[cod]||(porCliente[cod]={cod,nombre:n.nombre_cliente||('Cliente '+cod),veces:0,venta:0,conDet:0,rutas:new Set(),motivos:new Set()});
+        pc.veces++;pc.rutas.add(n.ruta||'—');pc.motivos.add(m);
+        const d=detalles[ix];
+        if(d){
+          const cj=d.total_cajas||0;let vl=0;(d.detalle||[]).forEach(x=>{vl+=x.valor||0;});
+          rCajD+=cj;rVtaD+=vl;pm.cajas+=cj;pm.venta+=vl;pm.conDet++;pc.venta+=vl;pc.conDet++;
+          const pr2=porRuta[d.ruta||n.ruta];if(pr2){pr2.rechCli++;pr2.rechVenta+=vl;pr2.conDet=(pr2.conDet||0)+1;}
+        }else{T.rechSinDetalle++;dSinDet++;}
+      });
+      T.rechCli+=rCliD;T.rechCaj+=rCajD;T.rechVenta+=rVtaD;
+      porDia.push({fecha:f,clientes:cliD,cajas:cajD,venta:vtaD,rechCli:rCliD,
+        rechVenta:(rCliD&&dSinDet===rCliD)?null:rVtaD});
+    }
+    if(!T.dias){cont.innerHTML='<div style="background:var(--gris1);border-radius:10px;padding:16px;text-align:center;font-size:11.5px;color:var(--gris4)">Sin Libro de pedidos guardado en ese rango.</div>';return;}
+    const pctRechVenta=T.venta?(T.rechVenta/T.venta*100):0;
+    let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px">'+
+      '<div class="dkpi simple"><div class="dk-v">'+T.dias+'</div><div class="dk-l">Días con operación</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+T.clientes.toLocaleString('es-CO')+'</div><div class="dk-l">Clientes atendidos</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+Math.round(T.clientes/T.dias)+'</div><div class="dk-l">Promedio por día</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+_pesosCorto(T.venta)+'</div><div class="dk-l">Venta pedida</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:#E30613">'+_pesosCorto(T.rechVenta)+'</div><div class="dk-l">Venta rechazada</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(pctRechVenta>5?'#E30613':'#D97706')+'">'+pctRechVenta.toFixed(1).replace('.',',')+'%</div><div class="dk-l">% de rechazo</div></div>'+
+      '</div>';
+    if(T.rechSinDetalle)html+='<div style="background:#EFF6FF;border-radius:10px;padding:11px 13px;font-size:11.5px;color:#1E429F;line-height:1.5;margin-bottom:12px">'+
+      '<b>'+T.rechSinDetalle+' de '+T.rechCli+' rechazos del rango no tienen detalle por producto.</b> '+
+      'La app empezó a guardar qué se devolvió y cuánto valía el <b>28 de julio de 2026</b>; antes solo registraba el motivo. '+
+      'Donde el valor no se sabe aparece «—» y no «$0», y esos rechazos no suman al total de venta rechazada.</div>';
+    html+='<div style="font-size:12px;font-weight:800;margin:14px 0 7px">Por motivo de rechazo</div><div id="tbl-rgo-mot"></div>';
+    html+='<div style="font-size:12px;font-weight:800;margin:16px 0 7px">Clientes que más rechazan</div><div id="tbl-rgo-cli"></div>';
+    html+='<div style="font-size:12px;font-weight:800;margin:16px 0 7px">Por ruta</div><div id="tbl-rgo-ruta"></div>';
+    html+='<div style="font-size:12px;font-weight:800;margin:16px 0 7px">Día a día</div><div id="tbl-rgo-dia"></div>';
+    cont.innerHTML=html;
+    const rango=d1+'_'+d2;
+    const mot=Object.values(porMotivo).map(m=>({...m,pct:T.rechCli?m.veces/T.rechCli*100:0}));
+    montarTabla('tbl-rgo-mot',{archivo:'motivos-'+rango,unidad:'motivos',buscar:['motivo'],
+      orden:{k:'veces',dir:'desc'},exportar:true,
+      cols:[{k:'motivo',t:'Motivo',b:true},
+        {k:'veces',t:'Veces',num:true,tot:'sum'},
+        {k:'pct',t:'% del total',num:true,fmt:v=>v.toFixed(1).replace('.',',')+'%'},
+        {k:'cajas',t:'Cajas',num:true,tot:'sum'},
+        {k:'venta',t:'Valor',num:true,tot:'sum',
+         fmt:(v,f)=>f&&!f.conDet?'<span style="color:#8A90A0" title="Sin detalle guardado para estos rechazos">—</span>':_pesos(v),
+         col:(v,f)=>f&&!f.conDet?null:'#E30613'},
+        {k:'conDet',t:'Con detalle',num:true,fmt:(v,f)=>v+' de '+f.veces}],
+      filas:mot,vacio:'Sin rechazos en el rango.'});
+    const cli=Object.values(porCliente).map(c=>({...c,rutas:[...c.rutas].join(', '),motivos:[...c.motivos].join(', ')}))
+      .filter(c=>c.veces>1);
+    montarTabla('tbl-rgo-cli',{archivo:'clientes-recurrentes-'+rango,unidad:'clientes',buscar:['nombre','cod','motivos'],
+      placeholder:'Buscar cliente o motivo…',orden:{k:'veces',dir:'desc'},
+      cols:[{k:'nombre',t:'Cliente',b:true},{k:'cod',t:'Código'},{k:'rutas',t:'Ruta(s)'},
+        {k:'veces',t:'Rechazos',num:true,tot:'sum',col:v=>v>=4?'#E30613':'#D97706'},
+        {k:'venta',t:'Valor devuelto',num:true,tot:'sum',
+         fmt:(v,f)=>f&&!f.conDet?'<span style="color:#8A90A0" title="Sin detalle guardado">—</span>':_pesos(v)},
+        {k:'motivos',t:'Motivos',noOrd:true}],
+      filas:cli,vacio:'Ningún cliente rechazó más de una vez en el rango.'});
+    const rut=Object.values(porRuta).map(r=>({...r,dias:r.dias.size,
+      pctRech:r.venta?r.rechVenta/r.venta*100:0}));
+    montarTabla('tbl-rgo-ruta',{archivo:'rutas-'+rango,unidad:'rutas',buscar:['ruta'],
+      orden:{k:'venta',dir:'desc'},
+      cols:[{k:'ruta',t:'Ruta',b:true},{k:'dias',t:'Días',num:true},
+        {k:'clientes',t:'Clientes',num:true,tot:'sum'},{k:'cajas',t:'Cajas',num:true,tot:'sum'},
+        {k:'venta',t:'Venta pedida',num:true,tot:'sum',fmt:_pesos},
+        {k:'rechCli',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
+        {k:'rechVenta',t:'Valor rech.',num:true,tot:'sum',
+         fmt:(v,f)=>f&&f.rechCli&&!f.conDet?'<span style="color:#8A90A0" title="Sin detalle guardado">—</span>':_pesos(v),
+         col:v=>v?'#E30613':null},
+        {k:'pctRech',t:'% rech.',num:true,fmt:v=>v.toFixed(1).replace('.',',')+'%',
+         col:v=>v>5?'#E30613':v>2?'#D97706':null}],
+      filas:rut,vacio:'Sin rutas en el rango.'});
+    montarTabla('tbl-rgo-dia',{archivo:'dias-'+rango,unidad:'días',buscar:['fecha'],
+      orden:{k:'fecha',dir:'asc'},
+      cols:[{k:'fecha',t:'Fecha',b:true},{k:'clientes',t:'Clientes',num:true,tot:'sum'},
+        {k:'cajas',t:'Cajas',num:true,tot:'sum'},
+        {k:'venta',t:'Venta pedida',num:true,tot:'sum',fmt:_pesos},
+        {k:'rechCli',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
+        {k:'rechVenta',t:'Valor rech.',num:true,tot:'sum',
+         fmt:v=>v==null?'<span style="color:#8A90A0" title="Ese día no se guardaba el detalle del rechazo">—</span>':_pesos(v),
+         col:v=>v?'#E30613':null}],
+      filas:porDia,vacio:'Sin días con operación.'});
+  }catch(e){
+    cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar el rango: '+e.message+'</div>';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Ver acumulado';}
   }
 }
 /* ══ MÉTRICAS DE FLOTA DE UNA FECHA ══
