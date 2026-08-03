@@ -539,6 +539,25 @@ table.tg tbody tr.tg-click:hover{background:#FBFBFD}
 table.tg tfoot td{padding:9px 10px;border-top:2px solid var(--gris2);font-weight:800;
   background:#FBFBFD;position:sticky;bottom:0}
 .tg-vacio{text-align:center;padding:26px 14px;color:var(--gris4);font-size:11.5px}
+/* Ficha desplegable: abre debajo de la fila, sin sacar al coordinador de la lista */
+table.tg td.tg-chev{color:var(--gris3);text-align:center;padding:8px 2px;user-select:none;font-size:10px}
+table.tg tbody tr.tg-abierta{background:#FBFBFD}
+table.tg tbody tr.tg-abierta td{border-bottom-color:var(--gris2)}
+table.tg tbody tr.tg-abierta td.tg-chev{color:var(--rojo)}
+table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1px solid var(--gris2)}
+.tgx{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:11px}
+.tgx-box{border:1px solid var(--gris2);border-radius:10px;padding:11px 13px;background:#fff}
+.tgx-t{font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--gris4);margin-bottom:8px}
+.tgx-l{display:flex;justify-content:space-between;gap:10px;padding:3.5px 0;font-size:11.5px;
+  border-bottom:1px dotted var(--gris2);align-items:baseline}
+.tgx-l:last-child{border-bottom:0}
+.tgx-l span{color:var(--gris5)}
+.tgx-l b{font-variant-numeric:tabular-nums;font-weight:700;text-align:right;white-space:nowrap}
+.tgx-acc{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.tgx-btn{border:1px solid var(--gris2);background:#fff;border-radius:8px;padding:6px 11px;
+  font-family:inherit;font-size:11px;font-weight:700;color:var(--negro);cursor:pointer}
+.tgx-btn:hover{background:var(--gris1);border-color:var(--gris3)}
 /* Drill-down: del KPI al registro individual, con migas de pan para volver a subir de nivel */
 #drill-ovl{display:none;position:fixed;inset:0;z-index:2300;background:rgba(15,17,23,.5);
   backdrop-filter:blur(2px);align-items:flex-end;justify-content:center}
@@ -1821,6 +1840,13 @@ table.tg tfoot td{padding:9px 10px;border-top:2px solid var(--gris2);font-weight
   <!-- TAB 2: OPERACIÓN HOY -->
   <div id="pctab-content-2" style="flex:1;overflow-y:auto;display:none">
     <div style="padding:14px">
+      <!-- Bandeja de excepciones: en el celular el coordinador no necesita el tablero completo,
+           necesita saber QUÉ ESTÁ MAL AHORA. Va primero, ordenada por gravedad. -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+        <div style="font-size:12px;font-weight:800;color:var(--negro);flex:1">Requiere atención</div>
+        <button onclick="haptic();cargarExcepciones()" style="height:28px;border:1px solid var(--gris2);background:#fff;border-radius:8px;padding:0 10px;font-family:inherit;font-size:11px;font-weight:700;color:var(--negro);cursor:pointer">Actualizar</button>
+      </div>
+      <div id="pc-excep" style="margin-bottom:16px"><div class="veh-cargando">Revisando la operación…</div></div>
       <div id="pc-cargue" style="margin-bottom:14px"></div>
       <div id="pc-resumen" style="font-size:11px;color:var(--gris4);text-align:center;padding:12px">Cargando...</div>
     </div>
@@ -6565,7 +6591,7 @@ function switchPcTab(n){
     }
   });
   // Cargar contenido según pestaña
-  if(n===2){cargarResumenCargue();cargarResumenOperacion();}
+  if(n===2){cargarExcepciones();cargarResumenCargue();cargarResumenOperacion();}
   if(n===3)cargarHistoricoNovedades();
 }
 
@@ -6721,7 +6747,40 @@ async function cargarHistoricoInteligente(fecha){
       {k:'alertas',t:'Alertas',noOrd:true,
        fmt:v=>v?'<span style="color:#B45309;font-weight:700">'+v+'</span>':'<span style="color:#166534">✓ ok</span>'}
     ],
-    filas:filasHI, vacio:'Sin rutas con datos para esta fecha.'
+    filas:filasHI, vacio:'Sin rutas con datos para esta fecha.',
+    // Ficha de la ruta desplegada en su sitio (el patrón que pedía el mockup): todo lo del día de
+    // esa ruta junto, más los saltos a los otros módulos ya filtrados por ella.
+    expandir:(f)=>{
+      const hj=(porRuta[f.ruta]||{}).hoja;
+      const dif=(f.cargCaj!=null&&f.pedCaj)?f.cargCaj-f.pedCaj:null;
+      const ent=Math.max(0,(f.ventaPed||0)-(f.ventaRech||0));
+      const L=(l,v)=>'<div class="tgx-l"><span>'+l+'</span><b>'+v+'</b></div>';
+      return '<div class="tgx">'+
+        '<div class="tgx-box"><div class="tgx-t">Vehículo y cargue</div>'+
+          L('Placa · transporte',f.vehiculo)+
+          L('Entregas programadas',f.entregasProg==null?'—':f.entregasProg)+
+          L('Cajas pedidas',f.pedCaj)+
+          L('Cajas cargadas',f.cargCaj==null?'—':f.cargCaj)+
+          L('Diferencia',dif==null?'—':'<span style="color:'+(Math.abs(dif)>Math.max(3,f.pedCaj*0.05)?'#E30613':'#059669')+'">'+(dif>0?'+':'')+dif+' cj</span>')+
+          (hj?L('Botellas cargadas',hj.cargueBot||0):'')+
+        '</div>'+
+        '<div class="tgx-box"><div class="tgx-t">Clientes y venta</div>'+
+          L('Clientes en el Libro',f.clientes)+
+          L('Clientes con factura',f.facturas)+
+          L('Venta pedida',_pesos(f.ventaPed||0))+
+          L('Venta rechazada','<span style="color:'+(f.ventaRech?'#E30613':'inherit')+'">'+_pesos(f.ventaRech||0)+'</span>')+
+          L('Venta entregada','<b style="color:#059669">'+_pesos(ent)+'</b>')+
+          L('Rechazos',f.rechCli+' cliente(s) · '+f.rechCaj+' cj')+
+        '</div>'+
+        (f.alertas?'<div class="tgx-box" style="border-color:#FDE68A;background:#FFFBEB"><div class="tgx-t" style="color:#B45309">Alertas del día</div>'+
+          f.alertas.split(' · ').map(a=>'<div class="tgx-l"><span style="color:#B45309">'+a+'</span></div>').join('')+'</div>':'')+
+        '</div>'+
+        '<div class="tgx-acc">'+
+          (f.rechCli?'<button class="tgx-btn" onclick="event.stopPropagation();haptic();drillRechazosRuta(\''+fecha+'\',\''+f.ruta+'\')">Ver los '+f.rechCli+' rechazos</button>':'')+
+          '<button class="tgx-btn" onclick="event.stopPropagation();haptic();drillVentaRuta(\''+fecha+'\',\''+f.ruta+'\')">Ver la venta por cliente</button>'+
+          '<button class="tgx-btn" onclick="event.stopPropagation();haptic();document.getElementById(\'fil-ruta\').value=\''+f.ruta+'\';filtrarPorRutaSel(\''+f.ruta+'\');toast(\'Filtrado por '+f.ruta+'\',\'ok\')">Filtrar todo por '+f.ruta+'</button>'+
+        '</div>';
+    }
   });
 }
 /* ══════════════ VENTA EN PESOS ══════════════
@@ -6800,6 +6859,17 @@ function _tablaFilas(c){
   }
   return f;
 }
+/* Abre/cierra la ficha de una fila SIN salir de la tabla: el coordinador no pierde la lista donde
+   venía mirando. Solo una abierta a la vez — dos fichas largas hacen perder el hilo. */
+function _tablaExpandir(contId,i){
+  const c=_TABLAS[contId];if(!c||!c.expandir)return;
+  c._abierta=(c._abierta===i)?null:i;
+  _renderTabla(contId,true);
+  if(c._abierta!=null){
+    const tr=document.querySelector('#'+contId+' tbody tr.tg-exp');
+    if(tr&&tr.scrollIntoView)tr.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+}
 function _tablaExportar(contId){
   const c=_TABLAS[contId];if(!c)return;
   const filas=_tablaFilas(c);
@@ -6831,6 +6901,7 @@ function _renderTabla(contId,soloCuerpo){
     h+='<span class="tg-meta" id="'+contId+'-meta"></span>';
     if(c.exportar!==false)h+='<button class="tg-exp" onclick="haptic();_tablaExportar(\''+contId+'\')">Exportar CSV ↓</button>';
     h+='</div><div class="tg-wrap"><table class="tg"><thead><tr>'+
+      (c.expandir?'<th style="width:22px"></th>':'')+
       c.cols.map(x=>'<th'+(x.num?' class="num"':'')+(x.noOrd?'':' onclick="haptic();_tablaOrdenar(\''+contId+'\',\''+x.k+'\')" style="cursor:pointer"')+'>'+x.t+'<span class="tg-fl">'+flechita(x.k)+'</span></th>').join('')+
       '</tr></thead><tbody id="'+contId+'-tb"></tbody>'+
       (c.cols.some(x=>x.tot)?'<tfoot id="'+contId+'-tf"></tfoot>':'')+
@@ -6841,12 +6912,16 @@ function _renderTabla(contId,soloCuerpo){
     cont.querySelectorAll('.tg thead th .tg-fl').forEach((el,i)=>el.textContent=flechita(c.cols[i].k));
   }
   const tb=document.getElementById(contId+'-tb');
+  const nCols=c.cols.length+(c.expandir?1:0);
   if(!filas.length){
-    tb.innerHTML='<tr><td colspan="'+c.cols.length+'" class="tg-vacio">'+(c._q?'Ningún resultado para «'+c._q+'».':(c.vacio||'Sin registros.'))+'</td></tr>';
+    tb.innerHTML='<tr><td colspan="'+nCols+'" class="tg-vacio">'+(c._q?'Ningún resultado para «'+c._q+'».':(c.vacio||'Sin registros.'))+'</td></tr>';
   }else{
     tb.innerHTML=filas.map((f,i)=>{
       const click=c.onRow?c.onRow(f,i):null;
-      return '<tr'+(click?' class="tg-click" onclick="haptic();'+click+'"':'')+(f._dim?' style="opacity:.55"':'')+'>'+
+      const abierta=c.expandir&&c._abierta===i;
+      const acc=c.expandir?' onclick="haptic();_tablaExpandir(\''+contId+'\','+i+')"':(click?' onclick="haptic();'+click+'"':'');
+      let tr='<tr'+((click||c.expandir)?' class="tg-click'+(abierta?' tg-abierta':'')+'"':'')+acc+(f._dim?' style="opacity:.55"':'')+'>'+
+        (c.expandir?'<td class="tg-chev">'+(abierta?'▾':'▸')+'</td>':'')+
         c.cols.map(x=>{
           const v=f[x.k];
           const txt=x.fmt?x.fmt(v,f):(v==null?'—':v);
@@ -6854,11 +6929,13 @@ function _renderTabla(contId,soloCuerpo){
           const peso=x.b?';font-weight:800':'';
           return '<td'+(x.num?' class="num"':'')+(col||peso?' style="'+(col?'color:'+col+';':'')+(peso?'font-weight:800':'')+'"':'')+'>'+txt+'</td>';
         }).join('')+'</tr>';
+      if(abierta)tr+='<tr class="tg-exp"><td colspan="'+nCols+'">'+c.expandir(f,i)+'</td></tr>';
+      return tr;
     }).join('');
   }
   const tf=document.getElementById(contId+'-tf');
   if(tf){
-    tf.innerHTML='<tr>'+c.cols.map((x,i)=>{
+    tf.innerHTML='<tr>'+(c.expandir?'<td></td>':'')+c.cols.map((x,i)=>{
       if(!x.tot)return '<td'+(x.num?' class="num"':'')+'>'+(i===0?filas.length+' '+(c.unidad||'filas'):'')+'</td>';
       const s=filas.reduce((a,f)=>a+(+f[x.k]||0),0);
       const val=x.tot==='avg'?(filas.length?s/filas.length:0):s;
@@ -7202,6 +7279,94 @@ async function cargarEntregadores(mesSel){
     cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
   }
 }
+/* ══ BANDEJA DE EXCEPCIONES ══
+   En el celular el coordinador no necesita el tablero completo: necesita saber qué está mal AHORA.
+   Reúne en una sola lista, ordenada por gravedad, lo que hoy había que ir a buscar módulo por
+   módulo: rutas sin iniciar, vehículos detenidos, descuadres de cargue, rechazos y archivos que
+   faltan. Cada tarjeta trae ya el dato para decidir sin abrir nada más. */
+async function cargarExcepciones(fechaFija){
+  const cont=document.getElementById('pc-excep');if(!cont)return;
+  const fecha=fechaFija||getColDate();
+  cont.innerHTML='<div class="veh-cargando">Revisando la operación…</div>';
+  const ex=[];
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  const _get=async n=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/'+n+'?t='+Date.now());
+    return r.ok?await r.json():null;}catch(e){return null;}};
+  try{
+    const [ped,hoj]=await Promise.all([_get('PEDIDOS_INDEX.json'),_get('HOJAS_INDEX.json')]);
+    // 1. Archivos del día que faltan — bloquean todo lo demás
+    if(!ped)ex.push({g:1,t:'Falta el Libro de pedidos',s:'Sin él no hay pedidos, ni venta, ni cuadre del día'});
+    if(!hoj)ex.push({g:2,t:'Falta la Hoja de cargue',s:'Sin ella no se puede verificar qué subieron a los camiones'});
+    // 2. Descuadre de cargue — todavía corregible si los vehículos no han salido
+    if(ped&&hoj){
+      const pr={};
+      for(const cod in ped){const c=ped[cod],r=c.r||'—';
+        (c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{pr[r]=(pr[r]||0)+(it[2]||0);}));}
+      Object.keys(hoj).forEach(r=>{
+        const p=pr[r]||0,h=hoj[r].cargueCaj||0;if(!p)return;
+        const d=h-p;
+        if(Math.abs(d)>Math.max(3,p*0.05))
+          ex.push({g:1,t:'Cuadre '+r+': '+(d>0?'+':'')+d+' cajas',
+            s:'Pidió '+p+' cj y cargó '+h+' cj · revísalo en bodega antes de despachar'});
+      });
+    }
+    // 3. Estado real de la flota (GPS)
+    try{
+      const rA=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha,{headers:_h});
+      const asign=rA.ok?await rA.json()||[]:[];
+      const pos=await secPosiciones()||[];
+      const porUnit={};pos.forEach(p=>{porUnit[p.Nombre||p.nombre]=p;});
+      const ahora=Date.now();
+      asign.forEach(a=>{
+        const u=porUnit[a.unit_id];if(!u)return;
+        const enc=String(u.Ignicion||u.ignicion||'0')==='1';
+        const vel=parseFloat(u.GpsSpeed||u.velocidad)||0;
+        const t=u.GpsFecha||u.fecha;
+        const min=t?Math.round((ahora-new Date(String(t).replace(' ','T')).getTime())/60000):null;
+        if(!enc&&vel===0&&min!=null&&min>90)
+          ex.push({g:2,t:a.ruta+' sin movimiento hace '+_hm(min),s:a.unit_id+' · motor apagado'});
+        else if(min!=null&&min>180)
+          ex.push({g:2,t:a.ruta+' sin reportar GPS hace '+_hm(min),s:a.unit_id+' · puede ser falla del equipo'});
+      });
+    }catch(e){}
+    // 4. Rechazos del día
+    try{
+      const rn=await fetch(CFG.SUPABASE_URL+'/rest/v1/novedades?select=ruta,motivo&fecha=eq.'+fecha,{headers:_h});
+      const novs=rn.ok?await rn.json()||[]:[];
+      if(novs.length){
+        const porR={};novs.forEach(n=>{porR[n.ruta||'—']=(porR[n.ruta||'—']||0)+1;});
+        const peor=Object.entries(porR).sort((a,b)=>b[1]-a[1])[0];
+        ex.push({g:novs.length>=15?2:3,t:novs.length+' rechazo(s) hoy',
+          s:'La ruta con más es '+peor[0]+' con '+peor[1],
+          acc:"closeCoord();drillRechazos('"+fecha+"')"});
+      }
+    }catch(e){}
+    // 5. Entregas confirmadas — si nadie usa el botón, el avance del día es ciego
+    try{
+      const rc=await fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=id&fecha=eq.'+fecha+'&estado=eq.entregado&limit=1',
+        {headers:Object.assign({'Prefer':'count=exact','Range':'0-0'},_h)});
+      const n=parseInt((rc.headers.get('content-range')||'/0').split('/')[1])||0;
+      const totCli=ped?Object.keys(ped).length:0;
+      if(totCli&&n<totCli*0.15)
+        ex.push({g:3,t:'Solo '+n+' entregas confirmadas de '+totCli,
+          s:'Sin el botón «Confirmar entrega» no se sabe el avance real del día'});
+    }catch(e){}
+  }catch(e){}
+  if(!ex.length){
+    cont.innerHTML='<div style="background:#ECFDF5;border-radius:12px;padding:18px;text-align:center;color:#059669;font-weight:800;font-size:12.5px">✓ Nada pendiente de atención</div>';
+    return;
+  }
+  ex.sort((a,b)=>a.g-b.g);
+  const COL={1:['#E30613','#FEE2E2'],2:['#B45309','#FFF8E6'],3:['#1E429F','#EFF6FF']};
+  cont.innerHTML=ex.map(x=>{
+    const c=COL[x.g]||COL[3];
+    return '<div style="border:1px solid var(--gris2);border-left:3px solid '+c[0]+';border-radius:10px;padding:9px 11px;margin-bottom:7px;background:#fff'+(x.acc?';cursor:pointer':'')+'"'+
+      (x.acc?' onclick="haptic();'+x.acc+'"':'')+'>'+
+      '<div style="font-size:12px;font-weight:800;color:var(--negro);line-height:1.3">'+x.t+'</div>'+
+      '<div style="font-size:10.5px;color:var(--gris4);margin-top:2px;line-height:1.35">'+x.s+'</div>'+
+    '</div>';
+  }).join('');
+}
 /* ══ CUADRE DEL CARGUE (antes de que salgan los vehículos) ══
    El descuadre entre lo pedido y lo cargado ya se veía en el Histórico Inteligente, pero al día
    siguiente, cuando el camión ya salió y volvió. Aquí se revisa apenas están el Libro y la Hoja,
@@ -7503,7 +7668,36 @@ async function cargarMetricasFlota(){
         {k:'cobertura',t:'Señal',num:true,tot:'avg',fmt:v=>Math.round(v)+'%',
          col:v=>v>=85?'#0E9F6E':v>=60?'#D97706':'#E30613'}
       ],
-      filas, vacio:'Sin recorridos GPS para esta fecha.'
+      filas, vacio:'Sin recorridos GPS para esta fecha.',
+      expandir:(f)=>{
+        const L=(l,v)=>'<div class="tgx-l"><span>'+l+'</span><b>'+v+'</b></div>';
+        const medido=f.minMoviendo+f.minDetenido+f.minPlanta+f.minCliente;
+        const largas=(f.paradasLargas||[]).slice(0,5);
+        return '<div class="tgx">'+
+          '<div class="tgx-box"><div class="tgx-t">Jornada</div>'+
+            L('Salió de planta',(f.salidaPlanta||f.horaIni||'—').slice(0,5))+
+            L('Regresó',(f.regresoPlanta||f.horaFin||'—').slice(0,5))+
+            L('Kilómetros',f.km.toFixed(1)+' km')+
+            L('En movimiento',_hm(f.minMoviendo))+
+            L('Velocidad máxima','<span style="color:'+(f.velMax>80?'#E30613':'inherit')+'">'+Math.round(f.velMax)+' km/h</span>')+
+          '</div>'+
+          '<div class="tgx-box"><div class="tgx-t">En qué se fue el tiempo</div>'+
+            L('Atendiendo clientes','<span style="color:#0E9F6E">'+_hm(f.minCliente)+'</span>')+
+            L('En planta',_hm(f.minPlanta))+
+            L('Detenido sin cliente','<span style="color:'+(f.minDetenido>=45?'#E30613':f.minDetenido>=20?'#D97706':'inherit')+'">'+_hm(f.minDetenido)+'</span>')+
+            L('Total medido',_hm(medido))+
+            L('Sin señal GPS','<span style="color:#8A90A0">'+_hm(f.minSinDato)+' ('+(100-f.cobertura)+'%)</span>')+
+            L('Paradas de 3+ min',f.paradas)+
+          '</div>'+
+          (largas.length?'<div class="tgx-box" style="border-color:#FDE68A;background:#FFFBEB">'+
+            '<div class="tgx-t" style="color:#B45309">Paradas largas sin cliente cerca</div>'+
+            largas.map(p=>'<div class="tgx-l"><span>'+(p.ini||'').slice(0,5)+'–'+(p.fin||'').slice(0,5)+
+              (p.distCliente!=null?' · cliente a '+p.distCliente+' m':'')+'</span><b style="color:#B45309">'+p.durMin+' min</b></div>').join('')+
+            ((f.paradasLargas||[]).length>5?'<div class="tgx-l"><span style="color:#8A90A0">y '+((f.paradasLargas||[]).length-5)+' más…</span></div>':'')+
+          '</div>':'')+
+          '</div>'+
+          (f.cobertura<60?'<div style="margin-top:10px;font-size:11px;color:#B45309">La señal GPS de este vehículo cubrió solo el '+f.cobertura+'% del día: sus tiempos son un mínimo, no el total.</div>':'');
+      }
     });
   }catch(e){
     cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudieron leer los recorridos: '+e.message+'</div>';
