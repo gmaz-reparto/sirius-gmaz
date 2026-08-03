@@ -1803,6 +1803,13 @@ table.tg tfoot td{padding:9px 10px;border-top:2px solid var(--gris2);font-weight
         </div>
       </div>
       <div class="dcard" style="margin-top:16px">
+        <div class="dcard-h"><h3><span class="h3ic">⚖️</span>Cuadre del cargue de hoy</h3>
+          <button onclick="haptic();chequearCuadreCargue()" style="margin-left:auto;height:30px;border:1px solid #E6E9EF;background:#fff;border-radius:8px;padding:0 11px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117;cursor:pointer">Revisar</button>
+        </div>
+        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">Compara lo pedido en el Libro contra lo cargado en la Hoja, <b>antes</b> de que salgan los vehículos — no al día siguiente en la auditoría.</div>
+        <div style="padding:10px 17px 16px" id="cuadre-body"><div class="veh-cargando">Sube el Libro y la Hoja de cargue del día para revisar el cuadre.</div></div>
+      </div>
+      <div class="dcard" style="margin-top:16px">
         <div class="dcard-h"><h3><span class="h3ic">🗂️</span>Historial de archivos</h3>
           <input type="month" id="hist-arch-mes" onchange="haptic();cargarHistorialArchivos(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
         </div>
@@ -7195,6 +7202,72 @@ async function cargarEntregadores(mesSel){
     cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
   }
 }
+/* ══ CUADRE DEL CARGUE (antes de que salgan los vehículos) ══
+   El descuadre entre lo pedido y lo cargado ya se veía en el Histórico Inteligente, pero al día
+   siguiente, cuando el camión ya salió y volvió. Aquí se revisa apenas están el Libro y la Hoja,
+   que es cuando todavía se puede corregir en la bodega. */
+async function chequearCuadreCargue(fechaFija){
+  const fecha=fechaFija||getColDate();
+  const cont=document.getElementById('cuadre-body');if(!cont)return;
+  cont.innerHTML='<div class="veh-cargando">Cruzando Libro y Hoja de cargue del '+fecha+'…</div>';
+  const _get=async n=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/'+n+'?t='+Date.now());
+    return r.ok?await r.json():null;}catch(e){return null;}};
+  const [ped,hoj]=await Promise.all([_get('PEDIDOS_INDEX.json'),_get('HOJAS_INDEX.json')]);
+  if(!ped||!Object.keys(ped).length||!hoj||!Object.keys(hoj).length){
+    cont.innerHTML='<div style="background:var(--gris1);border-radius:10px;padding:14px;font-size:11.5px;color:var(--gris4)">'+
+      'Falta '+(!ped?'<b>el Libro de pedidos</b>':'')+((!ped&&!hoj)?' y ':'')+(!hoj?'<b>la Hoja de cargue</b>':'')+
+      ' del '+fecha+'. El cuadre necesita los dos.</div>';return;
+  }
+  // Cajas pedidas por ruta (Libro) y cajas cargadas por ruta (Hoja)
+  const pedRuta={},pedSku={};
+  for(const cod in ped){const c=ped[cod],r=c.r||'—';
+    (c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{
+      pedRuta[r]=(pedRuta[r]||0)+(it[2]||0);
+      const k=r+'|'+it[0];pedSku[k]=(pedSku[k]||0)+(it[2]||0);
+    }));}
+  const filas=[];
+  const rutas=[...new Set([...Object.keys(pedRuta),...Object.keys(hoj)])].sort();
+  rutas.forEach(r=>{
+    if(!pasaFiltroRuta(r))return;
+    const p=pedRuta[r]||0,h=hoj[r]?hoj[r].cargueCaj||0:null;
+    if(h==null){filas.push({ruta:r,pedido:p,cargado:null,dif:null,estado:'Sin hoja de cargue',orden:2});return;}
+    if(!p){filas.push({ruta:r,pedido:0,cargado:h,dif:h,estado:'Cargó sin pedido en el Libro',orden:0});return;}
+    const d=h-p;
+    const tol=Math.max(3,p*0.05);
+    filas.push({ruta:r,pedido:p,cargado:h,dif:d,
+      estado:Math.abs(d)<=tol?'Cuadra':(d>0?'Cargó de más':'Cargó de menos'),
+      orden:Math.abs(d)<=tol?3:0});
+  });
+  const problemas=filas.filter(f=>f.orden<3);
+  const dTot=filas.reduce((s,f)=>s+(f.dif||0),0);
+  let html='';
+  if(!problemas.length){
+    html='<div style="background:#ECFDF5;border-radius:12px;padding:18px;text-align:center;color:#059669;font-weight:700;font-size:12.5px">'+
+      '✓ Las '+filas.length+' rutas cuadran — lo cargado coincide con lo pedido (tolerancia 5%)</div>';
+  }else{
+    html='<div style="background:'+(Math.abs(dTot)>50?'#FEE2E2':'#FFF8E6')+';border-radius:11px;padding:12px 14px;margin-bottom:11px;font-size:12px;color:'+(Math.abs(dTot)>50?'#B91C1C':'#B45309')+';line-height:1.5">'+
+      '<b>'+problemas.length+' ruta(s) sin cuadrar</b> · diferencia neta '+(dTot>0?'+':'')+Math.round(dTot)+' cajas. '+
+      'Revísalo en bodega antes de despachar: después de que salga el vehículo esto solo se puede auditar, ya no corregir.</div>';
+  }
+  html+='<div id="tbl-cuadre"></div>';
+  cont.innerHTML=html;
+  filas.sort((a,b)=>a.orden-b.orden||Math.abs(b.dif||0)-Math.abs(a.dif||0));
+  montarTabla('tbl-cuadre',{
+    archivo:'cuadre-'+fecha, unidad:'rutas', buscar:['ruta','estado'], placeholder:'Buscar ruta…',
+    cols:[
+      {k:'ruta',t:'Ruta',b:true},
+      {k:'pedido',t:'Cajas pedidas',num:true,tot:'sum'},
+      {k:'cargado',t:'Cajas cargadas',num:true,tot:'sum',fmt:v=>v==null?'—':v},
+      {k:'dif',t:'Diferencia',num:true,tot:'sum',
+       fmt:v=>v==null?'—':(v>0?'+':'')+Math.round(v),
+       col:v=>v==null?null:Math.abs(v)>10?'#E30613':v?'#D97706':'#059669'},
+      {k:'estado',t:'Estado',fmt:(v,f)=>{
+        const c=f.orden===3?['#ECFDF5','#059669']:f.orden===2?['#F1F3F7','#6B7385']:['#FEE2E2','#B91C1C'];
+        return '<span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+c[0]+';color:'+c[1]+'">'+v+'</span>';}}
+    ],
+    filas, vacio:'Sin rutas para comparar.'
+  });
+}
 /* ══ HISTÓRICO POR RANGO ══
    El histórico era un día a la vez, y los patrones no se ven en un día: que «cliente cerrado»
    concentre un tercio de los rechazos, o que un cliente devuelva todas las semanas, solo aparece
@@ -8026,6 +8099,26 @@ async function uploadHojaCarga(ev){
     logProg(nR+' rutas · '+okCuadre+'/'+nR+' cuadran con el Sub-Total del ERP','ok');
     await _registrarHashes(_hashIdx,_hashNuevos);
     await cargarIndiceHojas();
+    // Ya están el Libro y la Hoja: es EL momento de avisar el descuadre, con los vehículos en bodega
+    try{
+      const pi=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+hoyStr+'/PEDIDOS_INDEX.json?t='+Date.now())).json();
+      if(pi&&Object.keys(pi).length){
+        const pr={};
+        for(const cod in pi){const c=pi[cod],r=c.r||'—';
+          (c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{pr[r]=(pr[r]||0)+(it[2]||0);}));}
+        let malas=0;
+        Object.keys(index).forEach(r=>{
+          const p=pr[r]||0,h=index[r].cargueCaj||0;
+          if(!p)return;
+          const d=h-p;
+          if(Math.abs(d)>Math.max(3,p*0.05)){malas++;
+            logProg('⚠ '+r+': pidió '+p+' cj y cargó '+h+' cj ('+(d>0?'+':'')+d+')','err');}
+        });
+        if(malas)logProg('Revisa el cuadre en bodega antes de despachar — '+malas+' ruta(s) sin cuadrar','err');
+        else logProg('Cuadre contra el Libro: todas las rutas cuadran ✓','ok');
+      }
+    }catch(e){}
+    setTimeout(()=>{try{chequearCuadreCargue();}catch(e){}},400);
     updateProg(100,'');endProg(true,'✓ '+nR+' rutas de cargue · '+okCuadre+'/'+nR+' verificadas');
     const b=document.getElementById('pbhoja');if(b){b.textContent='✓ Subido';b.classList.add('done');}
   }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al subir la hoja de cargue');}
