@@ -3545,9 +3545,9 @@ async function cargarDash(){
       {i:'target',v:confirmados+' / '+totCli,l:'Avance confirmado',pct:pctConf,pc:pctConf>=90?'#059669':pctConf>=50?'#1A56DB':'#8A90A0',
        drill:"drillAvance('"+fecha+"')",
        foot:confirmados?['Última entrega','<b>'+(ultimaEnt||'—')+'</b>']:['Sin confirmaciones','<b style="color:#8A90A0">aún</b>']},
-      {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
-      {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
-      {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
+      {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),drill:"drillCumplimiento('"+fecha+"')",foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
+      {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',drill:"drillCumplimiento('"+fecha+"')",foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
+      {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',drill:"drillCumplimiento('"+fecha+"')",foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
       {i:'box',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',drill:"drillRechazos('"+fecha+"')",foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
       {i:'truck',v:Object.keys(rutaColor).length,l:'Rutas activas',foot:['Vehículos','<b>SecuritaGPS</b>']},
       {i:'alert',v:totNov,l:'Rechazos hoy',drill:"drillRechazos('"+fecha+"')",foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
@@ -6974,6 +6974,34 @@ function drillRechazoCliente(fecha,ruta,idx){
     fecha+' · '+ruta+' · '+Math.round(c.total_cajas||0)+' cajas devueltas',
     (c.nombre_cliente||cod).slice(0,22),
     filas,()=>drillRechazoCliente(fecha,ruta,idx),'Sin detalle de productos.');
+}
+/* NIVEL 1 — Cumplimiento por ruta: cuántos clientes quedaron con novedad y cuántas cajas volvieron */
+async function drillCumplimiento(fecha){
+  fecha=fecha||getColDate();
+  _drillPila=[];
+  const rech=(window._drillRechFecha===fecha&&window._drillRech)?window._drillRech:await cargarRechazosDelDia(fecha);
+  window._drillRech=rech;window._drillRechFecha=fecha;
+  const porRuta={};
+  (_clientesCache||[]).forEach(c=>{const r=c.ruta||'—';
+    const p=porRuta[r]||(porRuta[r]={tot:0,nov:0,caj:0,cajRech:0});
+    p.tot++;p.caj+=parseFloat(String(c.CAJA_||0).replace(',','.'))||0;});
+  for(const r in rech){
+    const p=porRuta[r]||(porRuta[r]={tot:0,nov:0,caj:0,cajRech:0});
+    p.nov=(rech[r].clientes||[]).length;p.cajRech=rech[r].caj||0;
+  }
+  const rutas=Object.keys(porRuta).sort();
+  const filas=rutas.map(r=>{
+    const p=porRuta[r],ent=p.tot-p.nov,pct=p.tot?Math.round(ent/p.tot*100):100;
+    return{n:r,s:ent+' de '+p.tot+' clientes'+(p.nov?' · '+p.nov+' con novedad · '+Math.round(p.cajRech)+' cj devueltas':' · sin novedades'),
+      v:pct+'%',vl:'cumplimiento',col:pct>=95?'#059669':pct>=85?'#D97706':'#E30613',
+      onclick:p.nov?"drillRechazosRuta('"+fecha+"','"+r+"')":null};
+  });
+  const tT=rutas.reduce((s,r)=>s+porRuta[r].tot,0);
+  const tN=rutas.reduce((s,r)=>s+porRuta[r].nov,0);
+  _drillNivel('Cumplimiento · '+fecha,
+    (tT-tN)+' de '+tT+' clientes sin novedad · toca una ruta con novedades para ver quiénes',
+    'Cumplimiento',filas,()=>drillCumplimiento(fecha),
+    'Sin clientes cargados para el '+fecha+'.');
 }
 /* NIVEL 1 — Venta del día por ruta: pedido, rechazado y lo que queda entregado */
 async function drillVenta(fecha){
