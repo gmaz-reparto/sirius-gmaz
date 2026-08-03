@@ -515,6 +515,41 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ip-btn-nov.tiene-nov{background:linear-gradient(135deg,#E8920E,#D97706);box-shadow:0 6px 16px rgba(217,119,6,.32);animation:novpulsa 2s infinite}
 .ip-btn-nov.tiene-nov .ip-nov-lbl{color:#fff}
 @keyframes novpulsa{0%,100%{box-shadow:0 6px 16px rgba(217,119,6,.32)}50%{box-shadow:0 6px 22px rgba(217,119,6,.55)}}
+/* Drill-down: del KPI al registro individual, con migas de pan para volver a subir de nivel */
+#drill-ovl{display:none;position:fixed;inset:0;z-index:2300;background:rgba(15,17,23,.5);
+  backdrop-filter:blur(2px);align-items:flex-end;justify-content:center}
+#drill-ovl.on{display:flex}
+#drill-card{background:#fff;border-radius:20px 20px 0 0;width:min(980px,100%);max-height:88vh;
+  display:flex;flex-direction:column;box-shadow:0 -18px 50px rgba(0,0,0,.24);animation:drUp .22s cubic-bezier(.4,0,.2,1)}
+@keyframes drUp{from{transform:translateY(28px);opacity:.6}to{transform:translateY(0);opacity:1}}
+@media(min-width:900px){#drill-ovl{align-items:center}#drill-card{border-radius:20px;max-height:84vh}}
+.dr-head{display:flex;align-items:flex-start;gap:12px;padding:17px 20px 13px;border-bottom:1px solid var(--gris2);flex-shrink:0}
+.dr-t{font-size:16px;font-weight:900;letter-spacing:-.4px;color:#0F1117}
+.dr-s{font-size:11.5px;color:var(--gris4);margin-top:2px}
+.dr-x{width:32px;height:32px;border-radius:10px;background:var(--gris1);border:none;font-size:15px;
+  cursor:pointer;font-family:inherit;flex-shrink:0}
+.dr-x:hover{background:var(--gris2)}
+.dr-migas{display:flex;align-items:center;gap:0;padding:10px 20px;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid var(--gris2);background:#FBFBFD}
+.dr-migas:empty{display:none}
+.dr-miga{flex:0 0 auto;background:none;border:none;font-family:inherit;font-size:11.5px;font-weight:700;
+  color:var(--azul);cursor:pointer;padding:3px 2px;white-space:nowrap}
+.dr-miga:disabled{color:#0F1117;cursor:default}
+.dr-sep{flex:0 0 auto;color:var(--gris3);font-size:11px;padding:0 7px;user-select:none}
+.dr-body{overflow:auto;flex:1;padding:14px 20px 22px}
+.dr-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--gris2);
+  border-radius:11px;margin-bottom:7px;cursor:pointer;transition:border-color .12s,background .12s}
+.dr-row:hover{border-color:var(--gris3);background:#FBFBFD}
+.dr-row.plano{cursor:default}
+.dr-row.plano:hover{border-color:var(--gris2);background:#fff}
+.dr-ri{flex:1;min-width:0}
+.dr-rn{font-size:12.5px;font-weight:800;color:#0F1117;letter-spacing:-.1px}
+.dr-rs{font-size:10.5px;color:var(--gris4);margin-top:2px}
+.dr-rv{text-align:right;flex-shrink:0}
+.dr-rv b{font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums;display:block}
+.dr-rv small{font-size:9.5px;color:var(--gris4);text-transform:uppercase;letter-spacing:.4px}
+.dr-chev{color:var(--gris3);flex-shrink:0;font-size:15px}
+.dr-vacio{text-align:center;padding:30px 16px;color:var(--gris4);font-size:12px}
 /* Diálogo "¿quién está entregando hoy?" — bloquea el inicio de ruta hasta identificarse */
 #ent-pick-ovl{display:none;position:fixed;inset:0;z-index:2400;background:rgba(15,17,23,.62);
   backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:22px}
@@ -723,6 +758,12 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .dkpi .dk-leader .fill{flex:1;border-bottom:1px dotted #D1D5DE;margin-bottom:3px;min-width:8px}
 .dkpi .dk-leader b{color:#4A5060;font-weight:800;white-space:nowrap}
 /* Variante simple: sin ícono ni progreso (Clientes/Rechazos/etc, como "Ventas por Día") */
+/* KPI navegable: la flecha avisa que detrás del número hay registros */
+.dkpi.drillable{cursor:pointer;position:relative}
+.dkpi.drillable::after{content:"↗";position:absolute;top:13px;right:34px;font-size:11px;
+  color:var(--gris3);transition:color .12s}
+.dkpi.drillable:hover{border-color:var(--gris3);box-shadow:var(--sh-card-hov)}
+.dkpi.drillable:hover::after{color:var(--rojo)}
 .dkpi.simple{padding:15px 17px}
 .dkpi.simple .dk-l{margin-bottom:8px}
 .dkpi.simple .dk-v{font-size:24px}
@@ -1787,6 +1828,21 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
   </div>
   </div><!-- /rutina-suite -->
   <div class="pc-footer">Excel generado a las 9:45pm · Actualización automática cada 30s</div>
+</div>
+
+<!-- DRILL-DOWN: panel que baja del KPI al registro individual sin salir de la pantalla -->
+<div id="drill-ovl" onclick="if(event.target===this)cerrarDrill()">
+  <div id="drill-card">
+    <div class="dr-head">
+      <div style="flex:1;min-width:0">
+        <div class="dr-t" id="drill-t">Detalle</div>
+        <div class="dr-s" id="drill-s">—</div>
+      </div>
+      <button class="dr-x" onclick="haptic();cerrarDrill()">✕</button>
+    </div>
+    <div class="dr-migas" id="drill-migas"></div>
+    <div class="dr-body" id="drill-body"></div>
+  </div>
 </div>
 
 <!-- ¿QUIÉN ESTÁ ENTREGANDO? — se pregunta una vez al día, antes de iniciar la primera ruta -->
@@ -3438,16 +3494,17 @@ async function cargarDash(){
     const pctConf=totCli?Math.round(confirmados/totCli*100):0;
     const K=[
       {i:'target',v:confirmados+' / '+totCli,l:'Avance confirmado',pct:pctConf,pc:pctConf>=90?'#059669':pctConf>=50?'#1A56DB':'#8A90A0',
+       drill:"drillAvance('"+fecha+"')",
        foot:confirmados?['Última entrega','<b>'+(ultimaEnt||'—')+'</b>']:['Sin confirmaciones','<b style="color:#8A90A0">aún</b>']},
       {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
       {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
       {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
-      {i:'box',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
+      {i:'box',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',drill:"drillRechazos('"+fecha+"')",foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
       {i:'truck',v:Object.keys(rutaColor).length,l:'Rutas activas',foot:['Vehículos','<b>SecuritaGPS</b>']},
-      {i:'alert',v:totNov,l:'Rechazos hoy',foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
+      {i:'alert',v:totNov,l:'Rechazos hoy',drill:"drillRechazos('"+fecha+"')",foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
-      '<div class="dkpi"><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic">'+icoSvg(k.i,16,2)+'</span></div>'+
+      '<div class="dkpi'+(k.drill?' drillable" onclick="haptic();'+k.drill+'"':'"')+'><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic">'+icoSvg(k.i,16,2)+'</span></div>'+
       '<div class="dk-v">'+k.v+'</div>'+
       (k.pct!=null?'<div class="dk-pbar"><div class="bt"><i style="width:'+Math.min(k.pct,100)+'%;background:'+k.pc+'"></i></div><span class="pv" style="color:'+k.pc+'">'+k.pct+'%</span></div>':'')+
       (k.foot?'<div class="dk-leader"><span>'+k.foot[0]+'</span><span class="fill"></span>'+k.foot[1]+'</div>':'')+
@@ -6577,6 +6634,144 @@ async function cargarHistoricoInteligente(fecha){
   });
   html+='</tbody></table></div>';
   cont.innerHTML=html;
+}
+/* ══════════════ DRILL-DOWN ══════════════
+   Un KPI deja de ser un número muerto: al tocarlo se baja por niveles hasta el registro individual
+   —Rechazos → Ruta → Cliente → Productos → Evidencia— sin salir de la pantalla ni perder el camino.
+   _drillPila guarda los niveles recorridos, así las migas de pan pueden devolver a cualquiera. */
+let _drillPila=[];
+function cerrarDrill(){document.getElementById('drill-ovl').classList.remove('on');_drillPila=[];}
+/* La hora del rechazo se guarda como ISO completo ("2026-08-01T14:42:57Z"), no como "HH:MM". */
+function _drillHora(h){
+  if(!h)return '';
+  if(/^\d{2}:\d{2}/.test(h))return String(h).slice(0,5);
+  const d=new Date(h);
+  return isNaN(d)?'':d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+function _drillMigas(){
+  const c=document.getElementById('drill-migas');if(!c)return;
+  c.innerHTML=_drillPila.map((n,i)=>
+    '<button class="dr-miga" '+(i===_drillPila.length-1?'disabled':'onclick="haptic();_drillVolver('+i+')"')+'>'+n.miga+'</button>'+
+    (i<_drillPila.length-1?'<span class="dr-sep">›</span>':'')).join('');
+}
+function _drillVolver(i){
+  const n=_drillPila[i];
+  _drillPila=_drillPila.slice(0,i);
+  n.abrir();
+}
+/* Pinta un nivel. filas: [{n,s,v,vl,col,onclick,badge}] */
+function _drillNivel(titulo,sub,miga,filas,abrirSelf,vacio){
+  _drillPila.push({miga,abrir:abrirSelf});
+  document.getElementById('drill-t').textContent=titulo;
+  document.getElementById('drill-s').textContent=sub||'';
+  _drillMigas();
+  const b=document.getElementById('drill-body');
+  b.innerHTML=filas.length?filas.map(f=>
+    '<div class="dr-row'+(f.onclick?'':' plano')+'"'+(f.onclick?' onclick="haptic();'+f.onclick+'"':'')+'>'+
+      '<div class="dr-ri"><div class="dr-rn">'+f.n+'</div>'+(f.s?'<div class="dr-rs">'+f.s+'</div>':'')+'</div>'+
+      (f.v!=null?'<div class="dr-rv"><b'+(f.col?' style="color:'+f.col+'"':'')+'>'+f.v+'</b>'+(f.vl?'<small>'+f.vl+'</small>':'')+'</div>':'')+
+      (f.onclick?'<span class="dr-chev">›</span>':'')+
+    '</div>').join(''):'<div class="dr-vacio">'+(vacio||'Sin registros en este nivel.')+'</div>';
+  b.scrollTop=0;
+  document.getElementById('drill-ovl').classList.add('on');
+}
+/* NIVEL 1 — Rechazos del día agrupados por ruta */
+async function drillRechazos(fecha){
+  fecha=fecha||_rechazosFechaVista||getColDate();
+  _drillPila=[];
+  // cargarRechazosDelDia hace una petición por cada rechazo (30 s en un día cargado); sin caché,
+  // volver un nivel con las migas obligaría a esperar todo otra vez.
+  let rech;
+  if(window._drillRechFecha===fecha&&window._drillRech)rech=window._drillRech;
+  else{
+    document.getElementById('drill-t').textContent='Rechazos · '+fecha;
+    document.getElementById('drill-s').textContent='Cargando el detalle de cada rechazo…';
+    document.getElementById('drill-migas').innerHTML='';
+    document.getElementById('drill-body').innerHTML='<div class="dr-vacio">Leyendo rechazos del '+fecha+'…</div>';
+    document.getElementById('drill-ovl').classList.add('on');
+    rech=await cargarRechazosDelDia(fecha);
+    window._drillRechFecha=fecha;
+  }
+  const rutas=Object.keys(rech).sort();
+  const totCli=rutas.reduce((s,r)=>s+(rech[r].clientes||[]).length,0);
+  const totCaj=rutas.reduce((s,r)=>s+(rech[r].caj||0),0);
+  window._drillRech=rech;
+  const filas=rutas.map(r=>({
+    n:r,s:(rech[r].clientes||[]).length+' cliente(s) con novedad',
+    v:Math.round(rech[r].caj||0),vl:'cajas',col:'#E30613',
+    onclick:"drillRechazosRuta('"+fecha+"','"+r+"')"
+  }));
+  _drillNivel('Rechazos · '+fecha,totCli+' clientes · '+Math.round(totCaj)+' cajas devueltas','Rechazos',
+    filas,()=>drillRechazos(fecha),'Sin rechazos registrados el '+fecha+'.');
+}
+/* NIVEL 2 — Clientes con rechazo de una ruta */
+function drillRechazosRuta(fecha,ruta){
+  const rech=window._drillRech||{};
+  const cls=(rech[ruta]&&rech[ruta].clientes)||[];
+  window._drillRuta=ruta;
+  const filas=cls.map((c,i)=>({
+    n:(c.nombre_cliente||'Cliente '+c.codigo_cliente),
+    s:'#'+c.codigo_cliente+' · '+(c.motivo||'sin motivo')+(_drillHora(c.hora)?' · '+_drillHora(c.hora):''),
+    v:Math.round(c.total_cajas||0),vl:'cajas',col:'#E30613',
+    onclick:"drillRechazoCliente('"+fecha+"','"+ruta+"',"+i+")"
+  }));
+  _drillNivel('Rechazos · '+ruta,fecha+' · '+cls.length+' cliente(s)',ruta,
+    filas,()=>drillRechazosRuta(fecha,ruta),'Sin clientes con rechazo en esta ruta.');
+}
+/* NIVEL 3 — Productos devueltos por un cliente + evidencia */
+function drillRechazoCliente(fecha,ruta,idx){
+  const rech=window._drillRech||{};
+  const c=((rech[ruta]&&rech[ruta].clientes)||[])[idx];
+  if(!c)return;
+  const det=c.detalle||[];
+  // El detalle guardado usa 'cajas'/'und'/'valor' (no 'caj'/'bot')
+  const filas=det.map(d=>({
+    n:(d.desc||('SKU '+d.cod)),
+    s:'SKU '+d.cod+(d.valor?' · '+_pesos(d.valor):''),
+    v:_qtyTxt(d.cajas||0,d.und||0),vl:'devuelto'
+  }));
+  if(!filas.length&&(c.total_cajas||c.total_und))
+    filas.push({n:'Rechazo total del pedido',s:'sin desglose por producto',
+      v:_qtyTxt(c.total_cajas||0,c.total_und||0),vl:'devuelto'});
+  const hh=_drillHora(c.hora);
+  filas.push({n:c.motivo||'Sin motivo',s:'motivo reportado'+(hh?' a las '+hh:'')+' · estado: '+(c.estado||'pendiente'),v:null});
+  const valTot=det.reduce((s,d)=>s+(d.valor||0),0);
+  if(valTot)filas.push({n:'Valor devuelto',s:'suma de los productos rechazados',v:_pesos(valTot),vl:'',col:'#E30613'});
+  if(c.foto_url)filas.push({n:'Evidencia fotográfica','s':'toca para abrir la foto',v:'📷',
+    onclick:"window.open('"+c.foto_url+"','_blank')"});
+  const cod=String(c.codigo_cliente);
+  const fc=factClientes&&factClientes[cod];
+  if(fc&&fc.paginas&&fc.paginas.length)
+    filas.push({n:'Ver factura del cliente',s:fc.paginas.length+' página(s) indexada(s)',v:'📄',
+      onclick:"cerrarDrill();abrirDetalleFactura(factClientes['"+cod+"'])"});
+  _drillNivel(c.nombre_cliente||('Cliente '+cod),
+    fecha+' · '+ruta+' · '+Math.round(c.total_cajas||0)+' cajas devueltas',
+    (c.nombre_cliente||cod).slice(0,22),
+    filas,()=>drillRechazoCliente(fecha,ruta,idx),'Sin detalle de productos.');
+}
+/* NIVEL 1 — Avance del día: rutas con lo confirmado vs. lo cargado */
+async function drillAvance(fecha){
+  fecha=fecha||getColDate();
+  _drillPila=[];
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  let ests=[];
+  try{const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=codigo_cliente,ruta,motivo,created_at&fecha=eq.'+fecha+'&estado=eq.entregado',{headers:_h});
+    if(r.ok)ests=await r.json()||[];}catch(e){}
+  const porRuta={};
+  (_clientesCache||[]).forEach(c=>{const r=c.ruta||'—';(porRuta[r]=porRuta[r]||{tot:0,conf:0,horas:[]}).tot++;});
+  ests.forEach(e=>{const r=e.ruta||'—';const p=porRuta[r]||(porRuta[r]={tot:0,conf:0,horas:[]});
+    p.conf++;if(e.created_at)p.horas.push(new Date(e.created_at).getTime());});
+  const rutas=Object.keys(porRuta).sort();
+  const filas=rutas.map(r=>{
+    const p=porRuta[r],pct=p.tot?Math.round(p.conf/p.tot*100):0;
+    const ult=p.horas.length?new Date(Math.max(...p.horas)).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):null;
+    return{n:r,s:p.conf+' de '+p.tot+' confirmados'+(ult?' · última '+ult:' · sin confirmaciones'),
+      v:pct+'%',vl:'avance',col:pct>=90?'#059669':pct>=50?'#1A56DB':'#8A90A0'};
+  });
+  const totC=ests.length,totT=(_clientesCache||[]).length;
+  _drillNivel('Avance confirmado · '+fecha,
+    totC+' de '+totT+' clientes con entrega sellada','Avance',filas,()=>drillAvance(fecha),
+    'Todavía no hay entregas confirmadas. El sello de hora se registra cuando el entregador pulsa «Confirmar entrega».');
 }
 /* ══ MÓDULO ENTREGADORES ══
    Cruza rechazos (novedades.conductor) con entregas confirmadas (estados_entrega) y asistencia.
