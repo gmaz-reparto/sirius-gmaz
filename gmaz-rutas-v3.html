@@ -3516,7 +3516,21 @@ async function cargarDash(){
       }
     }catch(e){}
     const pctConf=totCli?Math.round(confirmados/totCli*100):0;
+    // VENTA EN PESOS — sobre la base del Libro (lo pedido). Lo rechazado sale del campo 'valor'
+    // que guarda cada rechazo, que está en la misma base (verificado: cajas × precio = valor).
+    let ventaPed=0;
+    for(const cod in pedidosClientes)ventaPed+=ventaDeCliente(pedidosClientes[cod]);
+    let ventaRech=0;
+    Object.values(rechCod||{}).forEach(x=>(x.detalle||[]).forEach(d=>{ventaRech+=d.valor||0;}));
+    const ventaEnt=Math.max(0,ventaPed-ventaRech);
+    const pctVenta=ventaPed?Math.round(ventaEnt/ventaPed*100):100;
     const K=[
+      {i:'target',v:_pesosCorto(ventaEnt),l:'Venta entregada',pct:ventaPed?pctVenta:null,pc:pctVenta>=95?'#059669':pctVenta>=85?'#D97706':'#E30613',
+       drill:"drillVenta('"+fecha+"')",
+       foot:['Pedida','<b>'+_pesosCorto(ventaPed)+'</b>']},
+      {i:'alert',v:_pesosCorto(ventaRech),l:'Venta rechazada',
+       drill:"drillRechazos('"+fecha+"')",
+       foot:['Del pedido del día','<b style="color:'+(ventaRech?'#E30613':'#059669')+'">'+(ventaPed?(ventaRech/ventaPed*100).toFixed(1).replace('.',','):'0')+'%</b>']},
       {i:'target',v:confirmados+' / '+totCli,l:'Avance confirmado',pct:pctConf,pc:pctConf>=90?'#059669':pctConf>=50?'#1A56DB':'#8A90A0',
        drill:"drillAvance('"+fecha+"')",
        foot:confirmados?['Última entrega','<b>'+(ultimaEnt||'—')+'</b>']:['Sin confirmaciones','<b style="color:#8A90A0">aún</b>']},
@@ -6651,6 +6665,7 @@ async function cargarHistoricoInteligente(fecha){
   }
   html+='<div id="tbl-hi"></div>';
   cont.innerHTML=html;
+  const vtaRuta=ventaPorRuta(P);
   const filasHI=rutasArr.map(r=>{
     const d=porRuta[r],hj=d.hoja,rech=d.rech;
     const alertas=[];
@@ -6661,9 +6676,12 @@ async function cargarHistoricoInteligente(fecha){
     if(rech&&rech.caj>0)alertas.push(rech.clientes.length+' rechazo(s), '+rech.caj+' cj');
     const fs=fueraSec[r];
     if(fs&&fs.saltos>Math.max(2,fs.total*0.15))alertas.push(fs.saltos+' visitas fuera de secuencia de '+fs.total);
+    let vRech=0;
+    if(rech)(rech.clientes||[]).forEach(c=>(c.detalle||[]).forEach(x=>{vRech+=x.valor||0;}));
     return{ruta:r,vehiculo:hj?((hj.placa||'—')+' · T'+(hj.transporte||'—')):'—',
       entregasProg:hj?(hj.entregas||0):null,clientes:d.pedClientes,pedCaj:d.pedCaj,
       cargCaj:hj?hj.cargueCaj:null,facturas:d.factCods,
+      ventaPed:vtaRuta[r]||0,ventaRech:vRech,
       rechCli:rech?rech.clientes.length:0,rechCaj:rech?rech.caj:0,
       alertas:alertas.join(' · '),nAlertas:alertas.length};
   });
@@ -6678,6 +6696,8 @@ async function cargarHistoricoInteligente(fecha){
       {k:'pedCaj',t:'Cajas pedidas',num:true,tot:'sum'},
       {k:'cargCaj',t:'Cajas cargadas',num:true,tot:'sum',fmt:v=>v==null?'—':v},
       {k:'facturas',t:'Facturas',num:true,tot:'sum'},
+      {k:'ventaPed',t:'Venta pedida',num:true,tot:'sum',fmt:v=>_pesos(v)},
+      {k:'ventaRech',t:'Venta rech.',num:true,tot:'sum',fmt:v=>_pesos(v),col:v=>v?'#E30613':null},
       {k:'rechCli',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
       {k:'rechCaj',t:'Cajas rech.',num:true,tot:'sum',col:v=>v?'#E30613':null},
       {k:'alertas',t:'Alertas',noOrd:true,
@@ -6685,6 +6705,36 @@ async function cargarHistoricoInteligente(fecha){
     ],
     filas:filasHI, vacio:'Sin rutas con datos para esta fecha.'
   });
+}
+/* ══════════════ VENTA EN PESOS ══════════════
+   El Libro guarda por línea [sku, desc, cajas, botellas, precio] — el precio unitario, no el
+   importe. La venta de una línea es cajas × precio: se verificó contra el campo 'valor' que la app
+   ya guarda en cada rechazo y coincide exactamente (razón 1,000 en líneas de 1, 2 y 5 cajas).
+
+   Ojo con qué mide cada cifra: el Libro es lo PEDIDO. LiquiYa es lo LIQUIDADO y no cuadra con el
+   Libro (en el 27 de julio: $82,5M pedido contra $94,0M liquidado, con 617 clientes liquidados
+   frente a 535 pedidos). Esa diferencia es justo lo que persigue el módulo de Auditoría, así que
+   aquí no se mezclan: esto es venta pedida, entregada y rechazada, todo sobre la base del Libro. */
+function ventaDeCliente(c){
+  let v=0;
+  (c&&c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{
+    const p=_moneyLibro(it[4]);
+    if(!isNaN(p))v+=(it[2]||0)*p;
+  }));
+  return v;
+}
+function ventaPorRuta(pedIdx){
+  const m={};
+  for(const cod in pedIdx){const c=pedIdx[cod];const r=c.r||'—';
+    m[r]=(m[r]||0)+ventaDeCliente(c);}
+  return m;
+}
+/* "$48,2M" / "$812K" — para tarjetas donde no cabe la cifra completa */
+function _pesosCorto(n){
+  n=Math.round(n||0);
+  if(Math.abs(n)>=1e6)return '$'+(n/1e6).toFixed(1).replace('.',',')+'M';
+  if(Math.abs(n)>=1000)return '$'+Math.round(n/1000)+'K';
+  return '$'+n;
 }
 /* ══════════════ TABLA GMAZ — componente único ══════════════
    Las tablas de la app se armaban a mano, cada una con sus estilos en línea y ninguna con orden,
@@ -6911,6 +6961,69 @@ function drillRechazoCliente(fecha,ruta,idx){
     fecha+' · '+ruta+' · '+Math.round(c.total_cajas||0)+' cajas devueltas',
     (c.nombre_cliente||cod).slice(0,22),
     filas,()=>drillRechazoCliente(fecha,ruta,idx),'Sin detalle de productos.');
+}
+/* NIVEL 1 — Venta del día por ruta: pedido, rechazado y lo que queda entregado */
+async function drillVenta(fecha){
+  fecha=fecha||getColDate();
+  _drillPila=[];
+  const ped=await (async()=>{try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/PEDIDOS_INDEX.json?t='+Date.now());
+    return r.ok?await r.json():{};}catch(e){return{};}})();
+  const vRuta=ventaPorRuta(ped);
+  // Lo rechazado del día, por ruta, desde el detalle guardado de cada rechazo
+  const rech=(window._drillRechFecha===fecha&&window._drillRech)?window._drillRech:await cargarRechazosDelDia(fecha);
+  window._drillRech=rech;window._drillRechFecha=fecha;
+  const rRuta={};
+  for(const r in rech)(rech[r].clientes||[]).forEach(c=>(c.detalle||[]).forEach(d=>{rRuta[r]=(rRuta[r]||0)+(d.valor||0);}));
+  const rutas=[...new Set([...Object.keys(vRuta),...Object.keys(rRuta)])].sort();
+  window._drillVentaPed=ped;
+  const filas=rutas.map(r=>{
+    const p=vRuta[r]||0,q=rRuta[r]||0,e=Math.max(0,p-q);
+    return{n:r,s:'Pedido '+_pesos(p)+(q?' · rechazado '+_pesos(q):''),
+      v:_pesosCorto(e),vl:'entregado',col:q/(p||1)>0.05?'#D97706':'#059669',
+      onclick:"drillVentaRuta('"+fecha+"','"+r+"')"};
+  });
+  const tP=Object.values(vRuta).reduce((a,b)=>a+b,0);
+  const tQ=Object.values(rRuta).reduce((a,b)=>a+b,0);
+  _drillNivel('Venta · '+fecha,
+    'Pedido '+_pesos(tP)+' · rechazado '+_pesos(tQ)+' · entregado '+_pesos(Math.max(0,tP-tQ)),
+    'Venta',filas,()=>drillVenta(fecha),
+    'Sin Libro de pedidos cargado para el '+fecha+'.');
+}
+/* NIVEL 2 — Clientes de una ruta ordenados por lo que pesan en la venta */
+function drillVentaRuta(fecha,ruta){
+  const ped=window._drillVentaPed||{};
+  const rech=window._drillRech||{};
+  const rCli={};
+  ((rech[ruta]&&rech[ruta].clientes)||[]).forEach(c=>{
+    (c.detalle||[]).forEach(d=>{rCli[String(c.codigo_cliente)]=(rCli[String(c.codigo_cliente)]||0)+(d.valor||0);});
+  });
+  const filas=Object.keys(ped).filter(cod=>(ped[cod].r||'')===ruta)
+    .map(cod=>{const v=ventaDeCliente(ped[cod]),q=rCli[cod]||0;
+      return{cod,n:ped[cod].n||('Cliente '+cod),v,q};})
+    .sort((a,b)=>b.v-a.v)
+    .map(x=>({n:x.n,s:'#'+x.cod+(x.q?' · rechazó '+_pesos(x.q):''),
+      v:_pesos(x.v),vl:x.q?'pedido':'entregado',col:x.q?'#E30613':null,
+      onclick:"drillVentaCliente('"+fecha+"','"+ruta+"','"+x.cod+"')"}));
+  const tot=filas.length;
+  _drillNivel('Venta · '+ruta,fecha+' · '+tot+' cliente(s) con pedido',ruta,
+    filas,()=>drillVentaRuta(fecha,ruta),'Sin clientes con pedido en esta ruta.');
+}
+/* NIVEL 3 — Los productos que componen la venta de un cliente */
+function drillVentaCliente(fecha,ruta,cod){
+  const c=(window._drillVentaPed||{})[cod];
+  if(!c)return;
+  const filas=[];
+  (c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{
+    const p=_moneyLibro(it[4]),caj=it[2]||0;
+    filas.push({n:it[1]||('SKU '+it[0]),
+      s:'SKU '+it[0]+' · '+_qtyTxt(caj,it[3]||0)+' × '+_pesos(isNaN(p)?0:p)+(b.t?' · '+b.t:''),
+      v:_pesos(isNaN(p)?0:caj*p),vl:''});
+  }));
+  filas.sort((a,b)=>_moneyLibro(String(b.v).replace('$',''))-_moneyLibro(String(a.v).replace('$','')));
+  _drillNivel(c.n||('Cliente '+cod),
+    fecha+' · '+ruta+' · '+_pesos(ventaDeCliente(c))+' pedidos',
+    (c.n||cod).slice(0,22),filas,()=>drillVentaCliente(fecha,ruta,cod),'Sin líneas de producto.');
 }
 /* NIVEL 1 — Avance del día: rutas con lo confirmado vs. lo cargado */
 async function drillAvance(fecha){
