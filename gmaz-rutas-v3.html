@@ -607,6 +607,29 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
   border-radius:12px;padding:14px;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;
   box-shadow:0 6px 16px rgba(227,6,19,.28)}
 .ep-ok:active{transform:scale(.98)}
+/* Lista de tripulantes agregados (chips con nombre + rol + quitar) */
+.ep-lista{display:flex;flex-wrap:wrap;gap:6px;text-align:left}
+.ep-vacio{font-size:11.5px;color:#9AA1B2;padding:2px 0}
+.ep-chip{display:flex;align-items:center;gap:6px;background:#F7F8FA;border:1px solid #E6E9EF;
+  border-radius:20px;padding:5px 6px 5px 11px;font-size:11.5px}
+.ep-chip b{font-weight:800;color:#0F1117;white-space:nowrap}
+.ep-chip span{color:#6B7385;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.ep-chip i{font-style:normal;width:18px;height:18px;border-radius:50%;background:#E6E9EF;
+  display:grid;place-items:center;cursor:pointer;color:#4A5060;font-size:10px}
+.ep-chip i:hover{background:#D1D5DE}
+/* Chips clicables (elegir rol / elegir quién reporta) */
+.ep-chip-pick{cursor:pointer;border-color:#E6E9EF;transition:border-color .12s,background .12s}
+.ep-chip-pick:hover{background:#F1F2F5}
+.ep-chip-pick.sel{background:#FFF0F1;border-color:#E30613}
+.ep-chip-pick.sel b{color:#B5000F}
+/* Toggle Conductor / Auxiliar */
+.ep-rol{display:flex;gap:8px;margin:11px 0 12px}
+.ep-rol-btn{flex:1;border:1.5px solid #E6E9EF;background:#fff;border-radius:11px;padding:10px 6px;
+  font-family:inherit;font-size:12.5px;font-weight:700;color:#6B7385;cursor:pointer;transition:.12s}
+.ep-rol-btn.on{background:#0F1117;border-color:#0F1117;color:#fff}
+.ep-add{width:100%;background:#fff;border:1.5px dashed #D1D5DE;border-radius:12px;padding:11px;
+  font-family:inherit;font-size:12.5px;font-weight:700;color:#0F1117;cursor:pointer;margin-bottom:12px}
+.ep-add:hover{background:#F7F8FA;border-color:#9AA1B2}
 /* Confirmar entrega: sella la HORA en que el cliente quedó atendido. Antes no existía —
    se daba por entregado todo lo que no tuviera novedad, así que no había hora de entrega. */
 .ip-btn-ent{background:linear-gradient(135deg,#0EA36E,#059669);border:none;border-radius:13px;
@@ -1280,6 +1303,7 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
     <!-- La tarjeta "cliente más cercano" se quitó: el más cercano ya aparece como #1 en el listado. -->
     <div class="cp-header">
       <div><div class="cp-title" id="cp-title">Clientes de ruta</div><div class="cp-count" id="cp-count">0 puntos</div></div>
+      <button id="btn-tripulacion" onclick="haptic();agregarTripulanteTarde()" title="Agregar o ver quién va hoy en la ruta" style="margin-left:auto;background:#fff;color:#0F1117;border:1.5px solid #E6E9EF;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px">🧑‍🔧 <span id="btn-tripulacion-n">0</span></button>
       <button id="btn-finruta" onclick="haptic();finalizarRuta()" style="margin-left:auto;background:#0F1117;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Finalizar ruta</button>
     </div>
     <div class="cp-search-wrap">
@@ -1729,6 +1753,11 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
     <div class="ns-photo-badge">✓ Foto tomada</div>
   </div>
   <div class="ns-body">
+    <!-- Solo aparece si hoy van 2+ personas en la ruta: cada quien reporta lo suyo. -->
+    <div id="ns-reportero" style="display:none">
+      <div class="ns-lbl">¿Quién reporta esta novedad?</div>
+      <div id="ns-reportero-chips" class="ep-lista" style="margin-bottom:14px"></div>
+    </div>
     <div class="ns-lbl">Motivo del rechazo</div>
     <div class="ns-opt" onclick="haptic();pickReason('CLIENTE CERRADO',this)">
       <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Cliente cerrado</div>
@@ -1847,6 +1876,12 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
         <button onclick="haptic();cargarExcepciones()" style="height:28px;border:1px solid var(--gris2);background:#fff;border-radius:8px;padding:0 10px;font-family:inherit;font-size:11px;font-weight:700;color:var(--negro);cursor:pointer">Actualizar</button>
       </div>
       <div id="pc-excep" style="margin-bottom:16px"><div class="veh-cargando">Revisando la operación…</div></div>
+      <!-- Tripulación registrada hoy: qué ruta lleva quién y con qué rol, y quién todavía no se ha registrado. -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+        <div style="font-size:12px;font-weight:800;color:var(--negro);flex:1">Tripulación de hoy</div>
+        <button onclick="haptic();cargarTripulacionHoy()" style="height:28px;border:1px solid var(--gris2);background:#fff;border-radius:8px;padding:0 10px;font-family:inherit;font-size:11px;font-weight:700;color:var(--negro);cursor:pointer">Actualizar</button>
+      </div>
+      <div id="pc-tripulacion" style="margin-bottom:16px"><div class="veh-cargando">Revisando quién se ha registrado…</div></div>
       <div id="pc-cargue" style="margin-bottom:14px"></div>
       <div id="pc-resumen" style="font-size:11px;color:var(--gris4);text-align:center;padding:12px">Cargando...</div>
     </div>
@@ -1913,14 +1948,20 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
   </div>
 </div>
 
-<!-- ¿QUIÉN ESTÁ ENTREGANDO? — se pregunta una vez al día, antes de iniciar la primera ruta -->
+<!-- ¿QUIÉN VA HOY EN LA RUTA? — tripulación completa (conductor + auxiliares), una vez al día -->
 <div id="ent-pick-ovl">
   <div id="ent-pick-card">
     <div class="ep-ic">🧑‍🔧</div>
-    <div class="ep-t">¿Quién está entregando hoy?</div>
-    <div class="ep-s">Se pregunta una sola vez al día. Sirve para saber de quién es cada entrega y cada novedad.</div>
+    <div class="ep-t">¿Quién va hoy en <span id="ep-ruta">la ruta</span>?</div>
+    <div class="ep-s">Agrega a todos los que van en el vehículo. Cada uno reporta sus propias novedades.</div>
+    <div id="ep-lista" class="ep-lista" style="margin-bottom:14px"></div>
     <select id="ent-pick-sel"></select>
-    <button class="ep-ok" onclick="haptic();confirmarEntregadorPick()">Continuar</button>
+    <div class="ep-rol">
+      <button type="button" class="ep-rol-btn on" data-rol="conductor" onclick="haptic();_epPickRol(this)">Conductor</button>
+      <button type="button" class="ep-rol-btn" data-rol="auxiliar" onclick="haptic();_epPickRol(this)">Auxiliar</button>
+    </div>
+    <button class="ep-add" onclick="haptic();agregarTripulante()">+ Agregar a la lista</button>
+    <button class="ep-ok" onclick="haptic();confirmarTripulacion()">Iniciar ruta</button>
   </div>
 </div>
 
@@ -2134,6 +2175,7 @@ let rechazoDetalle=null; // detalle del rechazo confirmado: [{cod,desc,cajas,und
 let sb,gmap,gpano,svSvc,truckMk,dirRenderer;
 let clientes=[],markers=[],rutaActual='',clienteIdx=0,vendedorActual=null;
 let motivo=null,photoFile=null,photoPreviewUrl=null;
+let _novReportero=null; // {ced,nombre} — quién de la tripulación reporta ESTA novedad
 let logoTaps=0,logoTimer=null,coordUnlocked=false;
 let ultimaPosGPS=null; // Última posición GPS del watchPosition
 
@@ -5253,50 +5295,143 @@ async function guardarAsignacionRuta(sel){
   }catch(e){toast('Error asignando vehículo','err');}
 }
 
-/* ══ QUIÉN ESTÁ ENTREGANDO ══
+/* ══ TRIPULACIÓN DE LA RUTA ══
    El login del entregador es por rol con clave compartida, así que la app nunca supo quién iba en
    cada ruta: novedades.conductor se guardaba con el texto fijo "Repartidor" en las 815 filas de
-   julio. Sin ese vínculo persona↔ruta no hay forma de medir a nadie. Se pregunta una vez al día
-   y queda recordado en el equipo. */
-const _ROLES_ENTREGA=['CONDUCTOR DE ENTREGA','CONDUCTOR ENTREGA','AUXILIAR DE ENTREGA','SUPERNUMERARIO','CONDUCTOR AUTOVENTA'];
+   julio. Además una ruta suele llevar más de una persona (conductor + auxiliar) que se reparten las
+   entregas, así que atribuir todo a "la primera persona del día" tampoco alcanza: cada quien debe
+   poder reportar sus propias novedades.
+
+   Por eso el registro es de GRUPO, no de una sola persona: al iniciar la ruta se pregunta quiénes
+   van hoy (cada uno como Conductor o Auxiliar), y esa tripulación queda tanto en el dispositivo
+   (para no volver a preguntar) como en un registro central en Supabase Storage
+   ({fecha}/REGISTRO_ENTREGA.json, {ruta:[{ced,nombre,cargo,rol,hora}]}) que el coordinador puede
+   consultar para saber quién ya se registró y con qué rol.
+
+   Los cargos permitidos los definió el coordinador explícitamente (2026-08-03): solo estos seis,
+   ni Supernumerario ni "Conductor Entrega" (sin "de") cuentan, aunque existan en el maestro. */
+const _ROLES_ENTREGA=['AUXILIAR DE REFRIGERACION','AUXILIAR DE ENTREGA','CONDUCTOR AUTOVENTA','AUXILIAR AUTOVENTA','CONDUCTOR DE ENTREGA','CONDUCTOR DE NEVERAS'];
 function entregadoresDisponibles(){
-  return EMPLEADOS_ASIS.filter(e=>_ROLES_ENTREGA.includes(String(e[2]).toUpperCase()))
+  return EMPLEADOS_ASIS.filter(e=>_ROLES_ENTREGA.includes(String(e[2]).trim().toUpperCase()))
     .map(e=>({nombre:e[0],ced:e[1],cargo:e[2]}))
     .sort((a,b)=>a.nombre.localeCompare(b.nombre));
 }
-function entregadorActual(){
-  try{const d=JSON.parse(localStorage.getItem('gmaz_entregador')||'null');
-    if(d&&d.fecha===getColDate()&&d.nombre)return d;}catch(e){}
-  return null;
+/* Registro central del día: un archivo POR PERSONA (REGISTRO/{fecha}/{ruta}__{ced}.json), no un
+   único JSON compartido entre todas las rutas. Se probó directamente contra Supabase (crear un
+   objeto: 200 · sobrescribirlo después, misma sesión, mismo dato o distinto: 400 SIEMPRE) — con la
+   llave anónima esta app puede CREAR objetos nuevos pero no ACTUALIZAR uno que ya existe. Un JSON
+   compartido por fecha se habría roto apenas se registrara la segunda ruta del día. Con un archivo
+   por persona, cada registro es SIEMPRE una creación nueva — mismo patrón que ya usan
+   RECHAZOS/{fecha}/{cod}.json y OBSFOTO/{fecha}/{cod}.json. */
+async function cargarRegistroDia(fecha){
+  const reg={};
+  try{
+    const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:'REGISTRO/'+fecha+'/',limit:500})});
+    if(!lr.ok)return reg;
+    const files=(await lr.json()||[]).filter(f=>f.name&&f.name.endsWith('.json'));
+    const datos=await Promise.all(files.map(f=>
+      fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/REGISTRO/'+fecha+'/'+encodeURIComponent(f.name)+'?t='+Date.now())
+        .then(r=>r.ok?r.json():null).catch(()=>null)));
+    datos.forEach(d=>{if(d&&d.ruta)(reg[d.ruta]=reg[d.ruta]||[]).push(d);});
+  }catch(e){}
+  return reg;
 }
-function guardarEntregador(ced){
-  const p=entregadoresDisponibles().find(x=>x.ced===ced);
-  if(!p)return null;
-  const d={nombre:p.nombre,ced:p.ced,fecha:getColDate()};
-  localStorage.setItem('gmaz_entregador',JSON.stringify(d));
-  return d;
+async function _guardarRegistroRuta(fecha,ruta,personas){
+  // Cada persona es un archivo propio: si ya existía (re-registro del mismo día) la escritura
+  // fallará por el bloqueo de sobrescritura, pero eso es inofensivo — su dato ya estaba guardado bien.
+  await Promise.all(personas.map(p=>{
+    const nombreArchivo=ruta+'__'+p.ced+'.json';
+    return fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+fecha+'/'+encodeURIComponent(nombreArchivo),{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+      body:JSON.stringify({...p,ruta})}).catch(()=>null);
+  }));
 }
-function pedirEntregador(cb){
-  const ya=entregadorActual();
-  if(ya){cb(ya);return;}
-  const ovl=document.getElementById('ent-pick-ovl');
+/* Cache local — para no depender de red en cada rechazo, y para no volver a preguntar si el
+   dispositivo ya registró tripulación hoy para esta ruta. */
+function _tripulacionLocal(ruta){
+  try{const d=JSON.parse(localStorage.getItem('gmaz_tripulacion')||'null');
+    if(d&&d.fecha===getColDate()&&d.ruta===ruta)return d.personas||[];}catch(e){}
+  return[];
+}
+function _guardarTripulacionLocal(ruta,personas){
+  localStorage.setItem('gmaz_tripulacion',JSON.stringify({fecha:getColDate(),ruta,personas}));
+}
+function tripulacionActual(ruta){return _tripulacionLocal(ruta||rutaActual||'');}
+/* Responsable por defecto (confirmar entrega, etc.): el marcado Conductor, o si no hay, el primero. */
+function _tripulacionPrincipal(ruta){
+  const t=tripulacionActual(ruta);
+  return t.find(p=>p.rol==='conductor')||t[0]||null;
+}
+window._epRolSel='conductor';
+function _epPickRol(btn){
+  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');window._epRolSel=btn.dataset.rol;
+}
+function _epRenderLista(){
+  const c=document.getElementById('ep-lista');if(!c)return;
+  const arr=window._epTripulacion||[];
+  if(!arr.length){c.innerHTML='<div class="ep-vacio">Aún no has agregado a nadie.</div>';return;}
+  c.innerHTML=arr.map((p,i)=>'<div class="ep-chip"><b>'+p.nombre.split(' ').slice(0,2).join(' ')+'</b>'+
+    '<span>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+'</span>'+
+    '<i onclick="haptic();quitarTripulante('+i+')">✕</i></div>').join('');
+}
+function agregarTripulante(){
   const sel=document.getElementById('ent-pick-sel');
-  sel.innerHTML='<option value="">Selecciona tu nombre…</option>'+
-    entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
-  ovl.style.display='flex';
-  window._entPickCb=cb;
+  const ced=sel.value;if(!ced){toast('Selecciona un nombre','err');return;}
+  const p=entregadoresDisponibles().find(x=>x.ced===ced);if(!p)return;
+  window._epTripulacion=window._epTripulacion||[];
+  if(window._epTripulacion.some(x=>x.ced===ced)){toast('Ya está en la lista','err');return;}
+  window._epTripulacion.push({ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol:window._epRolSel,hora:new Date().toISOString()});
+  sel.value='';_epRenderLista();
 }
-function confirmarEntregadorPick(){
-  const ced=document.getElementById('ent-pick-sel').value;
-  if(!ced){toast('Selecciona tu nombre para continuar','err');return;}
-  const d=guardarEntregador(ced);
+function quitarTripulante(i){
+  (window._epTripulacion||[]).splice(i,1);_epRenderLista();
+}
+/* Pide la tripulación de la ruta; si el dispositivo ya la registró hoy, no vuelve a preguntar. */
+function pedirTripulacion(ruta,cb){
+  const ya=_tripulacionLocal(ruta);
+  if(ya.length){cb(ya);return;}
+  window._epTripulacion=[];window._epRolSel='conductor';
+  const rEl=document.getElementById('ep-ruta');if(rEl)rEl.textContent=ruta;
+  const sel=document.getElementById('ent-pick-sel');
+  sel.innerHTML='<option value="">Selecciona un nombre…</option>'+
+    entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
+  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol==='conductor'));
+  _epRenderLista();
+  document.getElementById('ent-pick-ovl').style.display='flex';
+  window._entPickCtx={ruta,cb};
+}
+async function confirmarTripulacion(){
+  const arr=window._epTripulacion||[];
+  if(!arr.length){toast('Agrega al menos una persona para continuar','err');return;}
+  const ctx=window._entPickCtx||{};
   document.getElementById('ent-pick-ovl').style.display='none';
-  toast('Bienvenido, '+d.nombre.split(' ').slice(-2).join(' '),'ok');
-  if(window._entPickCb){const cb=window._entPickCb;window._entPickCb=null;cb(d);}
+  _guardarTripulacionLocal(ctx.ruta,arr);
+  toast('Tripulación registrada: '+arr.length+' persona'+(arr.length>1?'s':''),'ok');
+  _guardarRegistroRuta(getColDate(),ctx.ruta,arr); // en segundo plano, no bloquea el inicio de ruta
+  const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent=arr.length;
+  if(ctx.cb)ctx.cb(arr);
+}
+/* Agregar tripulantes más tarde (alguien se sube a mitad del día) sin bloquear ni perder lo ya
+   registrado — mismo diálogo, pero arranca con quienes ya están. */
+function agregarTripulanteTarde(){
+  if(!rutaActual)return;
+  window._epTripulacion=_tripulacionLocal(rutaActual).slice();
+  window._epRolSel='conductor';
+  const rEl=document.getElementById('ep-ruta');if(rEl)rEl.textContent=rutaActual;
+  const sel=document.getElementById('ent-pick-sel');
+  sel.innerHTML='<option value="">Selecciona un nombre…</option>'+
+    entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
+  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol==='conductor'));
+  _epRenderLista();
+  document.getElementById('ent-pick-ovl').style.display='flex';
+  window._entPickCtx={ruta:rutaActual,cb:()=>{}};
 }
 function startRoute(ruta,lista){
-  // Antes de arrancar hay que saber quién va a entregar; si ya se identificó hoy, no se vuelve a pedir.
-  if(!entregadorActual()){pedirEntregador(()=>startRoute(ruta,lista));return;}
+  // Antes de arrancar hay que saber quién va hoy en la ruta; si el dispositivo ya la registró, no se vuelve a pedir.
+  if(!_tripulacionLocal(ruta).length){pedirTripulacion(ruta,()=>startRoute(ruta,lista));return;}
   rutaActual=ruta;
   clientes=lista.map(c=>({...c,_st:'pendiente'}));
   calcularZonaRuta(); // zona de la ruta para el aviso "fuera de tu zona"
@@ -5313,6 +5448,7 @@ function startRoute(ruta,lista){
     document.getElementById('map-strip-ruta').textContent=ruta;
     document.getElementById('cp-title').textContent='Clientes · '+ruta;
     document.getElementById('cp-count').textContent=clientes.length+' puntos';
+    document.getElementById('btn-tripulacion-n').textContent=_tripulacionLocal(ruta).length;
     // Restaurar estados del día desde Supabase y renderizar
     (async()=>{
       await restaurarEstadosDia();
@@ -5863,7 +5999,7 @@ async function guardarEstadoCliente(i,st){
         nombre_cliente:clientes[i].nombre||getF(clientes[i],CFG.COL_NOMBRE)||'',
         // 'motivo' se reutiliza para dejar de quién fue la entrega: la tabla no tiene columna de
         // entregador y este campo va vacío en los registros de entrega (solo lo usan los rechazos).
-        estado:st,ruta:rutaActual,motivo:st==='entregado'?((entregadorActual()||{}).nombre||''):undefined
+        estado:st,ruta:rutaActual,motivo:st==='entregado'?((_tripulacionPrincipal(rutaActual)||{}).nombre||''):undefined
       })
     });
   }catch(e){console.log('Error guardando estado:',e);}
@@ -6082,6 +6218,18 @@ function startNovedad(){
     document.getElementById('ns-photo-wrap').style.display='';
     document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
     const _t=document.getElementById('ns-tabla');if(_t){_t.style.display='none';_t.innerHTML='';} // la tabla aparece tras elegir motivo
+    // Si hoy van 2+ personas en la ruta, cada quien reporta lo suyo — se pregunta quién antes de habilitar Confirmar.
+    const trip=tripulacionActual(rutaActual);
+    const wrapRep=document.getElementById('ns-reportero');
+    if(trip.length>1){
+      _novReportero=null;
+      wrapRep.style.display='';
+      document.getElementById('ns-reportero-chips').innerHTML=trip.map((p,i)=>
+        '<div class="ep-chip ep-chip-pick" onclick="haptic();pickReportero('+i+')"><b>'+p.nombre.split(' ').slice(0,2).join(' ')+'</b><span>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+'</span></div>').join('');
+    }else{
+      _novReportero=trip[0]||null;
+      wrapRep.style.display='none';
+    }
     document.getElementById('ns-ok').disabled=true;
     document.getElementById('modal-nov').classList.add('show');
   };
@@ -6101,6 +6249,19 @@ function retakePhoto(){
   inp.click();
 }
 
+/* Elegir quién de la tripulación reporta esta novedad (solo visible con 2+ personas hoy). */
+function pickReportero(i){
+  const trip=tripulacionActual(rutaActual);
+  _novReportero=trip[i];if(!_novReportero)return;
+  document.querySelectorAll('#ns-reportero-chips .ep-chip-pick').forEach((c,j)=>c.classList.toggle('sel',j===i));
+  _nsActualizarOk();
+}
+/* El botón "Confirmar y avisar" necesita motivo elegido y, si hay 2+ tripulantes, también reportero. */
+function _nsActualizarOk(){
+  const trip=tripulacionActual(rutaActual);
+  const falta=!motivo||(trip.length>1&&!_novReportero);
+  document.getElementById('ns-ok').disabled=falta;
+}
 function pickReason(m,el){
   haptic();
   document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
@@ -6110,7 +6271,7 @@ function pickReason(m,el){
   if(!tabla||tabla.style.display==='none'||!Object.keys(devSel).length)renderTablaDevolucion();
   // "Cliente cerrado" → devolver todo el pedido automáticamente.
   if(Object.keys(devSel).length&&_motivoEsTotal(m))rechazarTodoPedido();
-  document.getElementById('ns-ok').disabled=false;
+  _nsActualizarOk();
 }
 
 function closeNovModal(){document.getElementById('modal-nov').classList.remove('show');_editNovCod=null;const w=document.getElementById('ns-photo-wrap');if(w)w.style.display='';const t=document.getElementById('ns-title');if(t)t.textContent='Registrar novedad';}
@@ -6119,6 +6280,8 @@ function bdClose(e){if(e.target===document.getElementById('modal-nov'))closeNovM
 async function submitNovedad(){
   if(_editNovCod)return guardarEdicionNovedad(); // modo edición: ajustar una entrega parcial existente
   if(!motivo||!photoFile)return;
+  const trip=tripulacionActual(rutaActual);
+  if(trip.length>1&&!_novReportero){toast('Elige quién reporta esta novedad','err');return;}
   rechazoDetalle=_construirRechazoDetalle(); // devolución marcada en la tabla
   const cl=clientes[clienteIdx];
   const cod=getF(cl,CFG.COL_CODIGO),nom=getF(cl,CFG.COL_NOMBRE),dir=getF(cl,CFG.COL_DIR)||'—';
@@ -6134,7 +6297,7 @@ async function submitNovedad(){
     // 2. Guardar novedad
     const{error:ie}=await sb.from(CFG.TBL_NOV).insert({
       fecha,codigo_cliente:cod,nombre_cliente:nom,motivo,
-      foto_url:fotoUrl,ruta:rutaActual,conductor:(entregadorActual()||{}).nombre||'Repartidor'
+      foto_url:fotoUrl,ruta:rutaActual,conductor:(_novReportero||_tripulacionPrincipal(rutaActual)||{}).nombre||'Repartidor'
     });
     if(ie)throw ie;
     // 2b. Guardar detalle del rechazo por SKU en storage (sin tocar el esquema de la tabla)
@@ -6591,7 +6754,7 @@ function switchPcTab(n){
     }
   });
   // Cargar contenido según pestaña
-  if(n===2){cargarExcepciones();cargarResumenCargue();cargarResumenOperacion();}
+  if(n===2){cargarExcepciones();cargarTripulacionHoy();cargarResumenCargue();cargarResumenOperacion();}
   if(n===3)cargarHistoricoNovedades();
 }
 
@@ -7366,6 +7529,52 @@ async function cargarExcepciones(fechaFija){
       '<div style="font-size:10.5px;color:var(--gris4);margin-top:2px;line-height:1.35">'+x.s+'</div>'+
     '</div>';
   }).join('');
+}
+/* ══ TRIPULACIÓN DE HOY (tabla del coordinador) ══
+   Ruta → quién ya se registró (nombre, cargo, rol, hora) — y qué rutas siguen sin nadie, que es
+   justo lo que el coordinador pidió poder ver de un vistazo por la mañana. */
+async function cargarTripulacionHoy(){
+  const cont=document.getElementById('pc-tripulacion');if(!cont)return;
+  const fecha=getColDate();
+  cont.innerHTML='<div class="veh-cargando">Leyendo el registro de hoy…</div>';
+  try{
+    const reg=await cargarRegistroDia(fecha);
+    // Rutas activas hoy: las que tienen clientes cargados (mismo criterio que el resto del panel)
+    const rutasHoy=[...new Set((_clientesCache||[]).map(c=>c.ruta).filter(Boolean))].sort();
+    const filas=[];
+    const rutasTodas=[...new Set([...rutasHoy,...Object.keys(reg)])].sort();
+    rutasTodas.forEach(r=>{
+      const personas=reg[r]||[];
+      if(!personas.length){filas.push({ruta:r,nombre:null,cargo:'',rol:'',hora:''});return;}
+      personas.forEach(p=>filas.push({ruta:r,nombre:p.nombre,cargo:p.cargo,
+        rol:p.rol==='conductor'?'Conductor':'Auxiliar',
+        hora:p.hora?new Date(p.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):''}));
+    });
+    if(!filas.length){
+      cont.innerHTML='<div style="background:var(--gris1);border-radius:10px;padding:14px;text-align:center;font-size:11.5px;color:var(--gris4)">Aún no hay rutas cargadas hoy.</div>';
+      return;
+    }
+    const sinRegistrar=rutasTodas.filter(r=>!(reg[r]||[]).length);
+    let html='';
+    if(sinRegistrar.length)html+='<div style="background:#FFF8E6;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:11.5px;color:#B45309">'+
+      '<b>'+sinRegistrar.length+' ruta(s) sin nadie registrado:</b> '+sinRegistrar.join(', ')+'</div>';
+    html+='<div id="tbl-trip"></div>';
+    cont.innerHTML=html;
+    montarTabla('tbl-trip',{
+      archivo:'tripulacion-'+fecha, unidad:'registros', buscar:['ruta','nombre','cargo'],
+      placeholder:'Buscar ruta o nombre…', orden:{k:'ruta',dir:'asc'},
+      cols:[
+        {k:'ruta',t:'Ruta',b:true},
+        {k:'nombre',t:'Tripulante',fmt:v=>v||'<span style="color:#E30613;font-weight:700">Sin registrar aún</span>'},
+        {k:'cargo',t:'Cargo'},
+        {k:'rol',t:'Rol',fmt:v=>v?('<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:'+(v==='Conductor'?'#EFF6FF':'#F1F3F7')+';color:'+(v==='Conductor'?'#1E429F':'#4A5060')+'">'+v+'</span>'):''},
+        {k:'hora',t:'Registrado',fmt:v=>v||'—'}
+      ],
+      filas, vacio:'Sin registros.'
+    });
+  }catch(e){
+    cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
+  }
 }
 /* ══ CUADRE DEL CARGUE (antes de que salgan los vehículos) ══
    El descuadre entre lo pedido y lo cargado ya se veía en el Histórico Inteligente, pero al día
