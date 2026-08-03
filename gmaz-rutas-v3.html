@@ -8354,9 +8354,20 @@ async function cargarObsequiosSup(fechaFija){
   const ppasHist=await cargarPPASHistorico(fecha);
   if(ppasHist){for(const cod in ppasHist)cli2ruta[cod]=ppasHist[cod].ruta;}
   else if(fecha===getColDate()){try{const cr=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/clientes_rutas?select=id,ruta&limit=3000',{headers:_h})).json();(cr||[]).forEach(x=>cli2ruta[String(x.id)]=x.ruta);}catch(e){}}
-  const conFoto=new Set();
+  // No basta con saber QUÉ clientes tienen foto (el listado solo da nombres de archivo) — para poder
+  // abrirla al hacer clic hace falta el foto_url de cada uno, así que se lee el contenido de cada
+  // OBSFOTO/{fecha}/{cod}.json en paralelo (mismo patrón que ya usa el drill-down de rechazos).
+  const fotoUrlPorCod={};
   try{const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},_h),body:JSON.stringify({prefix:'OBSFOTO/'+fecha+'/',limit:1000})});
-    if(lr.ok){const files=await lr.json();for(const f of (files||[])){if(f.name&&f.name.endsWith('.json'))conFoto.add(f.name.replace(/\.json$/,''));}}}catch(e){}
+    if(lr.ok){
+      const files=(await lr.json()||[]).filter(f=>f.name&&f.name.endsWith('.json'));
+      const datos=await Promise.all(files.map(f=>
+        fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/OBSFOTO/'+fecha+'/'+encodeURIComponent(f.name)+'?t='+Date.now())
+          .then(r=>r.ok?r.json():null).catch(()=>null)));
+      files.forEach((f,i)=>{const d=datos[i];if(d&&d.foto_url)fotoUrlPorCod[f.name.replace(/\.json$/,'')]=d.foto_url;});
+    }
+  }catch(e){}
+  const conFoto=new Set(Object.keys(fotoUrlPorCod));
   const porRuta={};
   for(const cod in obsequiosClientes){const ob=obsequiosClientes[cod];const r=cli2ruta[cod]||'(sin ruta)';(porRuta[r]=porRuta[r]||[]).push(Object.assign({cod},ob));}
   // Se dividen en dos: productos del pedido normal que llegaron a $0, y bonificaciones ZG oficiales
@@ -8365,7 +8376,7 @@ async function cargarObsequiosSup(fechaFija){
   for(const r in porRuta){
     porRuta[r].forEach(c=>{
       (c.items||[]).forEach(it=>{
-        const fila={ruta:r,nombre:c.nombre,cod:c.cod,sku:it.sku,desc:prodInfo(it.sku,it.desc).desc,tieneFoto:conFoto.has(c.cod)};
+        const fila={ruta:r,nombre:c.nombre,cod:c.cod,sku:it.sku,desc:prodInfo(it.sku,it.desc).desc,tieneFoto:conFoto.has(c.cod),fotoUrl:fotoUrlPorCod[c.cod]||null};
         if(it.zg==='$0')filasCero.push(fila);else filasZG.push(fila);
       });
     });
@@ -8376,6 +8387,8 @@ async function cargarObsequiosSup(fechaFija){
   window._obsFilas={cero:filasCero,zg:filasZG};
   renderObsequiosTablas(window._obsFilas,'');
 }
+/* Abre la evidencia del obsequio — mismo patrón que la evidencia de rechazos y novedades. */
+function verFotoObsequio(url){if(url)window.open(url,'_blank');}
 function renderObsequiosTablas(filasObj,q){
   const cont=document.getElementById('obseq-body');if(!cont||!filasObj)return;
   q=(q||'').trim().toLowerCase();
@@ -8392,7 +8405,7 @@ function renderObsequiosTablas(filasObj,q){
         '<td style="padding:7px 9px;color:#8A90A0">'+f.cod+'</td>'+
         '<td style="padding:7px 9px;color:#8A90A0">'+f.sku+'</td>'+
         '<td style="padding:7px 9px">'+f.desc+'</td>'+
-        '<td style="padding:7px 9px">'+(f.tieneFoto?'<span style="color:#059669;font-weight:800">✓ Foto</span>':'<span style="color:#B45309;font-weight:800">⏳ Pendiente</span>')+'</td></tr>').join('')+
+        '<td style="padding:7px 9px">'+(f.tieneFoto&&f.fotoUrl?'<span style="color:#059669;font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:2px" onclick="verFotoObsequio(\''+f.fotoUrl.replace(/'/g,'')+'\')">✓ Foto</span>':f.tieneFoto?'<span style="color:#059669;font-weight:800">✓ Foto</span>':'<span style="color:#B45309;font-weight:800">⏳ Pendiente</span>')+'</td></tr>').join('')+
       '</tbody></table>';
   };
   const html=
