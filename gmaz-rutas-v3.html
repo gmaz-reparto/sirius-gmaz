@@ -3228,6 +3228,12 @@ async function enviarWhatsAppFact(){
 
 const getF=(o,c)=>{for(const k of c){if(o[k]!=null&&String(o[k]).trim()!=='')return o[k];}return '';};
 const getColDate=(d=0)=>{const n=new Date();const c=new Date(n.getTime()+CFG.UTC_OFFSET*3600000);c.setDate(c.getDate()+d);return c.toISOString().split('T')[0];};
+/* GMAZ no opera los domingos — salvo que ESE domingo se haya subido el Libro de pedidos, la señal
+   más clara de que sí hubo rutina ese día (instrucción explícita del coordinador, 2026-08-03: "solo
+   cuando yo suba todo lo de rutina un domingo significa que trabajamos, de lo contrario no debe
+   solicitar este archivo"). Se usa para no mostrar "falta el Libro/la Hoja/la Liquidación" como si
+   fuera una alerta un día que de por sí no se trabaja. */
+function _esDomingo(fecha){return new Date(fecha+'T12:00:00').getDay()===0;}
 const showLoad=(t='Cargando...')=>{document.getElementById('load-txt').textContent=t;document.getElementById('loading').classList.add('show');};
 const hideLoad=()=>document.getElementById('loading').classList.remove('show');
 let toastT;
@@ -7462,9 +7468,12 @@ async function cargarExcepciones(fechaFija){
     return r.ok?await r.json():null;}catch(e){return null;}};
   try{
     const [ped,hoj]=await Promise.all([_get('PEDIDOS_INDEX.json'),_get('HOJAS_INDEX.json')]);
-    // 1. Archivos del día que faltan — bloquean todo lo demás
-    if(!ped)ex.push({g:1,t:'Falta el Libro de pedidos',s:'Sin él no hay pedidos, ni venta, ni cuadre del día'});
-    if(!hoj)ex.push({g:2,t:'Falta la Hoja de cargue',s:'Sin ella no se puede verificar qué subieron a los camiones'});
+    const domingoLibre=_esDomingo(fecha)&&!ped; // domingo sin rutina subida = no se trabajó, no es una excepción
+    // 1. Archivos del día que faltan — bloquean todo lo demás (salvo domingo sin operación)
+    if(!domingoLibre){
+      if(!ped)ex.push({g:1,t:'Falta el Libro de pedidos',s:'Sin él no hay pedidos, ni venta, ni cuadre del día'});
+      if(!hoj)ex.push({g:2,t:'Falta la Hoja de cargue',s:'Sin ella no se puede verificar qué subieron a los camiones'});
+    }
     // 2. Descuadre de cargue — todavía corregible si los vehículos no han salido
     if(ped&&hoj){
       const pr={};
@@ -7593,6 +7602,9 @@ async function chequearCuadreCargue(fechaFija){
     return r.ok?await r.json():null;}catch(e){return null;}};
   const [ped,hoj]=await Promise.all([_get('PEDIDOS_INDEX.json'),_get('HOJAS_INDEX.json')]);
   if(!ped||!Object.keys(ped).length||!hoj||!Object.keys(hoj).length){
+    if(_esDomingo(fecha)&&(!ped||!Object.keys(ped).length)){
+      cont.innerHTML='<div style="background:#F1F3F7;border-radius:10px;padding:14px;font-size:11.5px;color:#4A5060">📅 Domingo '+fecha+' — no se trabaja. El cuadre solo aplica si ese domingo se subió la rutina.</div>';return;
+    }
     cont.innerHTML='<div style="background:var(--gris1);border-radius:10px;padding:14px;font-size:11.5px;color:var(--gris4)">'+
       'Falta '+(!ped?'<b>el Libro de pedidos</b>':'')+((!ped&&!hoj)?' y ':'')+(!hoj?'<b>la Hoja de cargue</b>':'')+
       ' del '+fecha+'. El cuadre necesita los dos.</div>';return;
@@ -8166,7 +8178,15 @@ async function cargarAuditoria(fecha){
   window._auditPpasFuente=ppasFuente;
   const rech=await cargarRechazosDelDia(fecha);
   const rechPorCod={};Object.values(rech).forEach(r=>(r.clientes||[]).forEach(c=>rechPorCod[String(c.codigo_cliente)]=c));
-  if(!Object.keys(liqIndex).length){if(cont)cont.innerHTML='<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">No hay <b>Liquidación (LiquiYa)</b> guardada para el '+fecha+'. Súbela con "↑ Subir Liquidación" o elige otra fecha.</div>';const m=document.getElementById('audit-meta');if(m)m.textContent='';return;}
+  if(!Object.keys(liqIndex).length){
+    if(cont){
+      if(_esDomingo(fecha)&&!Object.keys(pedidosClientes).length)
+        cont.innerHTML='<div style="background:#F1F3F7;border-radius:12px;padding:18px;text-align:center;color:#4A5060">📅 <b>Domingo '+fecha+'</b> — no se trabaja. Solo hace falta la Liquidación si ese domingo sí se subió la rutina completa.</div>';
+      else
+        cont.innerHTML='<div style="background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309">No hay <b>Liquidación (LiquiYa)</b> guardada para el '+fecha+'. Súbela con "↑ Subir Liquidación" o elige otra fecha.</div>';
+    }
+    const m=document.getElementById('audit-meta');if(m)m.textContent='';return;
+  }
   const anom=[];
   for(const cod in liqIndex){
     const L=liqIndex[cod], ped=pedidosClientes[cod], rutaE=cli2ruta[cod]||'(no en PPAS)';
