@@ -3673,8 +3673,13 @@ function actualizarBadgesModulos(){
   const ba=document.getElementById('dtab-alert');if(ba){const n=_alertasActivas();ba.textContent=n;ba.classList.toggle('hide',n===0);}
 }
 function _alertasActivas(){
-  // desvíos de geocerca abiertos (vehículos actualmente fuera)
-  let fuera=0;try{Object.values(geocercaEstado||{}).forEach(e=>{if(e&&e.dentro===false)fuera++;});}catch(e){}
+  // Desvíos de geocerca ABIERTOS: cuenta solo vehículos con una SALIDA detectada (e.salidaEn) que
+  // aún no ha vuelto a entrar. No cuenta el vehículo cuyo primer reporte GPS de la sesión ya lo
+  // ubicó fuera de su zona (línea base) — evaluarGeocercaVehiculo() deliberadamente no dispara
+  // alerta en ese caso ("fija línea base, no dispara alerta"), así que la insignia tampoco debe
+  // contarlo: antes sí lo hacía, y por eso el número de la insignia (6) no coincidía con nada
+  // visible en la pantalla de Alertas (que solo lista salidas/entradas realmente detectadas).
+  let fuera=0;try{Object.values(geocercaEstado||{}).forEach(e=>{if(e&&e.dentro===false&&e.salidaEn)fuera++;});}catch(e){}
   return fuera;
 }
 function refrescarModulo(m){
