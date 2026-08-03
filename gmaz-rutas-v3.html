@@ -3566,7 +3566,8 @@ function activarModulo(m){
   document.querySelectorAll('.mod').forEach(s=>s.classList.toggle('on',s.id==='mod-'+m));
   const info=_MODINFO[m]||['',''];
   const pt=document.getElementById('dpage-t');if(pt)pt.textContent=info[0];
-  const ps=document.getElementById('dpage-s');if(ps)ps.textContent=info[1];
+  window._modActual=m;
+  _pintarSubtitulo(m);
   document.querySelector('.dash-main').scrollTop=0;
   if(m==='operacion'&&dashMap){setTimeout(()=>google.maps.event.trigger(dashMap,'resize'),80);}
   refrescarModulo(m);
@@ -3795,15 +3796,33 @@ function poblarFiltros(){
 }
 function poblarFiltroRutas(rutas){
   const rs=document.getElementById('fil-ruta');if(!rs)return;
-  const actual=rs.value;
+  // Recuperar la ruta elegida antes (sobrevive al refresco de la página)
+  let actual=rs.value;
+  if(!actual){try{actual=localStorage.getItem('gmaz_filRuta')||'';}catch(e){}}
   rs.innerHTML='<option value="">Todas las rutas</option>'+rutas.map(r=>'<option value="'+r+'"'+(r===actual?' selected':'')+'>'+r+'</option>').join('');
+  if(actual&&rutas.includes(actual))rutasVisibles=new Set([actual]);
 }
+/* ══ FILTRO GLOBAL DE RUTA ══
+   Antes este selector solo filtraba el mapa y además obligaba a saltar a Operación, así que había
+   que volver a elegir la ruta en cada módulo. Ahora la selección se recuerda, la respetan todos los
+   módulos que muestran datos por ruta y no cambia la pantalla en la que está el coordinador. */
+function rutaFiltrada(){return (document.getElementById('fil-ruta')||{}).value||'';}
+/* Si hay una ruta filtrada se dice en el subtítulo: un total parcial no debe leerse como el total. */
+function _pintarSubtitulo(m){
+  const ps=document.getElementById('dpage-s');if(!ps)return;
+  const info=_MODINFO[m||window._modActual]||['',''];
+  const fr=rutaFiltrada();
+  ps.innerHTML=info[1]+(fr?' · <b style="color:#E30613">solo '+fr+'</b>':'');
+}
+function pasaFiltroRuta(r){const f=rutaFiltrada();return !f||String(r||'')===f;}
 function filtrarPorRutaSel(ruta){
   rutasVisibles=ruta?new Set([ruta]):null;
+  try{localStorage.setItem('gmaz_filRuta',ruta||'');}catch(e){}
   if(typeof renderRutasFiltro==='function')renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort());
   if(typeof aplicarFiltroRutas==='function')aplicarFiltroRutas();
+  // Refrescar el módulo abierto para que respete el filtro, sin sacar al usuario de donde está
   const act=document.querySelector('.dnav.on');
-  if(act&&act.dataset.mod!=='operacion')activarModulo('operacion');
+  if(act&&act.dataset.mod){_pintarSubtitulo(act.dataset.mod);refrescarModulo(act.dataset.mod);}
 }
 function cambiarPeriodo(){
   const ms=document.getElementById('fil-mes'), as=document.getElementById('fil-anio');
@@ -6797,9 +6816,11 @@ async function cargarEntregadores(mesSel){
     const P={}; // nombre → acumulado
     const get=n=>P[n]||(P[n]={nombre:n,ent:0,rech:0,dias:new Set(),rutas:new Set(),horas:[]});
     entregas.forEach(e=>{const n=(e.motivo||'').trim();if(!n)return;
+      if(!pasaFiltroRuta(e.ruta))return; // respeta el filtro global de ruta
       const p=get(n);p.ent++;p.dias.add(e.fecha);if(e.ruta)p.rutas.add(e.ruta);
       if(e.created_at)p.horas.push({f:e.fecha,t:new Date(e.created_at).getTime()});});
     novs.forEach(x=>{const n=(x.conductor||'').trim();if(!n||n==='Repartidor')return;
+      if(!pasaFiltroRuta(x.ruta))return;
       const p=get(n);p.rech++;p.dias.add(x.fecha);if(x.ruta)p.rutas.add(x.ruta);});
     const genericos=novs.filter(x=>(x.conductor||'').trim()==='Repartidor').length;
     const filas=Object.values(P).map(p=>{
@@ -6906,6 +6927,7 @@ async function cargarMetricasFlota(){
         // cliente sigue siendo una entrega. Si no, sus paradas se contarían como tiempo detenido.
         const m=metricasRecorrido(ord,ruta?(cliPorRuta[ruta]||todosCli):todosCli);
         if(m.km<0.5&&m.minRuta<5)continue; // vehículo que no salió: no ensucia la tabla
+        if(!pasaFiltroRuta(ruta)&&rutaFiltrada())continue; // respeta el filtro global de ruta
         filas.push({veh:v.nombre,ruta,...m});
       }catch(e){}
     }
