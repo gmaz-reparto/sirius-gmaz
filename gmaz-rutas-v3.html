@@ -8055,9 +8055,15 @@ function parseLiquiYaXLSX(wb){
     const sku=String(r[6]||'').replace(/\D/g,'').padStart(6,'0');
     const desc=String(r[7]||'').trim();
     const caj=parseFloat(r[8])||0, sub=parseFloat(r[9])||0, monto=parseFloat(r[10])||0;
+    // Columna "Promocion" (col. L) — antes se ignoraba por completo. Trae un descuento aplicado
+    // ("370941 - C. 1 Mas Vendidos - 3%"), NO un producto gratis: eso es un caso aparte (ver
+    // 'monto===0' en la auditoría, que sí es obsequio). Rara — 2 de 2428 líneas en un día típico —
+    // y puede salir en cualquier ruta, no solo autoventa.
+    const promo=String(r[11]||'').trim();
     if(!liq[cod])liq[cod]={nombre,rutaVend,prods:{}};
-    const p=liq[cod].prods[sku]||(liq[cod].prods[sku]={caj:0,sub:0,monto:0,desc});
+    const p=liq[cod].prods[sku]||(liq[cod].prods[sku]={caj:0,sub:0,monto:0,desc,promo:''});
     p.caj+=caj;p.sub+=sub;p.monto+=monto;
+    if(promo&&!p.promo)p.promo=promo;
   }
   // Fecha del reporte = la más frecuente en la columna "Entrega" (casi siempre todas iguales).
   let fecha=null,max=0;for(const f in fechasVistas)if(fechasVistas[f]>max){max=fechasVistas[f];fecha=f;}
@@ -8160,6 +8166,10 @@ async function cargarIndiceLiquidacion(fechaFija){
    Todo se cruza para la MISMA fecha operativa (por defecto ayer, porque Angelita sube la liquidación
    del día anterior en la mañana). clientes_rutas (PPAS) es solo el snapshot del día en vivo — para
    fechas pasadas se usa el snapshot histórico guardado por uploadRoutes() en PPAS_INDEX.json. */
+/* Rutas donde NO tener Libro es normal, no un desvío — confirmado con el coordinador 2026-08-04:
+   V03/V04 son autoventa (cargan y liquidan el mismo día, sin pedido previo); V63 mezcla clientes de
+   entrega normal con mayoristas foráneos "lista T" que cargan directo en bodega con precio especial. */
+const _RUTAS_SIN_LIBRO=['KA4V03','KA4V04','KA4V63'];
 async function cargarAuditoria(fecha){
   fecha=fecha||window._auditFecha||getColDate(-1);
   window._auditFecha=fecha;
@@ -8205,7 +8215,23 @@ async function cargarAuditoria(fecha){
     let pedMap=null;
     if(ped){pedMap={};ped.b.forEach(b=>(b.i||[]).forEach(it=>{const s=it[0];if(!pedMap[s])pedMap[s]={caj:0,bot:0};pedMap[s].caj+=(it[2]||0);pedMap[s].bot+=(it[3]||0);}));}
     for(const sku in L.prods){const p=L.prods[sku];if(p.caj<=0&&p.sub<=0)continue;
-      if(!ped){anom.push({tipo:'CLIENTE ADICIONAL',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:p.monto});continue;}
+      // Promoción aplicada (columna "Promocion" del LiquiYa, antes ignorada): un descuento real, no
+      // un producto gratis — se muestra en CUALQUIER ruta, tenga o no Libro (confirmado con el
+      // coordinador 2026-08-04: debe verse como alerta en todas las rutas, no solo autoventa).
+      if(p.promo)anom.push({tipo:'PROMOCIÓN APLICADA',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:p.monto,nota:p.promo});
+      // Obsequio de autoventa: producto liquidado en $0 en V03/V04. Estas rutas no tienen Libro (se
+      // cargan y venden el mismo día), así que no existe la sección de Bonificaciones/ZG que ya
+      // detecta obsequios en las rutas de entrega — esta es su versión.
+      if(p.monto===0&&(L.rutaVend==='KA4V03'||L.rutaVend==='KA4V04'))
+        anom.push({tipo:'OBSEQUIO AUTOVENTA',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:0});
+      if(!ped){
+        // V03/V04 (autoventa: cargan y liquidan el mismo día, sin Libro) y los mayoristas "lista T"
+        // de V63 (cargan directo en bodega) nunca van a tener Libro — no es un desvío, es cómo
+        // opera ese canal. Confirmado con el coordinador 2026-08-04.
+        if(!_RUTAS_SIN_LIBRO.includes(L.rutaVend))
+          anom.push({tipo:'CLIENTE ADICIONAL',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:p.monto});
+        continue;
+      }
       if(!(sku in pedMap)){anom.push({tipo:'PRODUCTO ADICIONAL',ruta:rutaE,cod,nombre:L.nombre,rutaVend:L.rutaVend,sku,desc:p.desc,caj:p.caj,sub:p.sub,monto:p.monto});continue;}
       // Mismo SKU pero LIQUIDÓ MÁS CAJAS que lo pedido en el libro → excedente
       const pedCaj=pedMap[sku].caj, exCaj=p.caj-pedCaj;
@@ -8220,14 +8246,18 @@ async function cargarAuditoria(fecha){
   window._auditAnom=anom;
   renderAuditoria(anom);
 }
-const AUDIT_COL={'CLIENTE ADICIONAL':'#B91C1C','PRODUCTO ADICIONAL':'#B45309','CANTIDAD DE MÁS':'#9A3412','RECHAZO FALSO':'#7C2D12'};
-const AUDIT_BG={'CLIENTE ADICIONAL':'#FEE2E2','PRODUCTO ADICIONAL':'#FEF3C7','CANTIDAD DE MÁS':'#FFEDD5','RECHAZO FALSO':'#FED7AA'};
+const AUDIT_COL={'CLIENTE ADICIONAL':'#B91C1C','PRODUCTO ADICIONAL':'#B45309','CANTIDAD DE MÁS':'#9A3412','RECHAZO FALSO':'#7C2D12','PROMOCIÓN APLICADA':'#1D4ED8','OBSEQUIO AUTOVENTA':'#059669'};
+const AUDIT_BG={'CLIENTE ADICIONAL':'#FEE2E2','PRODUCTO ADICIONAL':'#FEF3C7','CANTIDAD DE MÁS':'#FFEDD5','RECHAZO FALSO':'#FED7AA','PROMOCIÓN APLICADA':'#DBEAFE','OBSEQUIO AUTOVENTA':'#D1FAE5'};
 const AUDIT_DESC={
   'CLIENTE ADICIONAL':'Se liquidó a un cliente que NO tenía pedido ese día — típico de mover producto a un cliente de descuento/mayorista.',
   'PRODUCTO ADICIONAL':'El cliente sí tenía pedido, pero se le liquidó un producto que no pidió.',
   'CANTIDAD DE MÁS':'El cliente pidió cierta cantidad de un producto y se liquidó más cajas de las que pidió.',
-  'RECHAZO FALSO':'El entregador marcó el producto como rechazado en la app, pero LiquiYa muestra que sí se liquidó (sí se entregó y se cobró).'
+  'RECHAZO FALSO':'El entregador marcó el producto como rechazado en la app, pero LiquiYa muestra que sí se liquidó (sí se entregó y se cobró).',
+  'PROMOCIÓN APLICADA':'Descuento aplicado en LiquiYa (columna Promoción) — informativo, no es un desvío: revisa que el % corresponda a una promoción real vigente.',
+  'OBSEQUIO AUTOVENTA':'Producto liquidado en $0 en una ruta de autoventa (V03/V04) — informativo, es el equivalente a las bonificaciones ZG de las rutas de entrega.'
 };
+/* No suman al "en juego": son informativas (descuento legítimo / obsequio), no dinero desviado. */
+const AUDIT_TIPOS_INFORMATIVOS=new Set(['PROMOCIÓN APLICADA','OBSEQUIO AUTOVENTA']);
 function _auditRutas(anom){return[...new Set(anom.map(a=>a.ruta))].sort();}
 /* Rutina diaria desde escritorio: mueve #rutina-suite (pestañas Rutina/Operación/Histórico +
    sus 3 contenidos) DENTRO de #mod-rutina — mismo nodo que usa el celular en #panel-coord,
@@ -8269,7 +8299,8 @@ function renderAuditoria(anom,resetFiltro=true){
   if(resetFiltro)window._auditFiltro={ruta:'',tipo:''};
   const filtro=window._auditFiltro||{ruta:'',tipo:''};
   const porTipo={};anom.forEach(a=>{porTipo[a.tipo]=porTipo[a.tipo]||{n:0,monto:0};porTipo[a.tipo].n++;porTipo[a.tipo].monto+=a.monto||0;});
-  const totMonto=anom.reduce((s,a)=>s+(a.monto||0),0);
+  // Promoción/Obsequio autoventa son informativos, no cuentan como dinero en riesgo.
+  const totMonto=anom.filter(a=>!AUDIT_TIPOS_INFORMATIVOS.has(a.tipo)).reduce((s,a)=>s+(a.monto||0),0);
   const fSrc=window._auditFecha||getColDate(-1);
   const meta=document.getElementById('audit-meta');
   if(meta)meta.innerHTML=anom.length?('Auditando <b>'+fSrc+'</b> · '+anom.length+' alerta(s) · '+_pesos(totMonto)+' en juego · PPAS: '+(window._auditPpasFuente||'—')):('Auditando <b>'+fSrc+'</b>');
