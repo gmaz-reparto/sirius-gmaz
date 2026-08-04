@@ -281,6 +281,33 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .rut-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex-shrink:0}
 .rut-ti{flex:1;min-width:0}
 .rut-t{font-size:12.5px;font-weight:800;color:var(--negro)}
+/* Pestaña "Más" del Panel Coordinador: mosaico de accesos a los módulos que antes solo existían
+   en el escritorio */
+.pc-tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:11px}
+.pc-tile{background:#fff;border:1px solid var(--gris2);border-radius:var(--radio-lg,16px);
+  padding:14px 13px;box-shadow:var(--sh-card,0 1px 2px rgba(15,17,23,.05));cursor:pointer;
+  transition:border-color .12s,box-shadow .12s}
+.pc-tile:active{transform:scale(.97)}
+.pc-tile:hover{border-color:var(--gris3);box-shadow:var(--sh-card-hov,0 3px 10px rgba(15,17,23,.08))}
+.pc-tile-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  font-size:16px;margin-bottom:9px}
+.pc-tile-t{font-size:12.5px;font-weight:800;color:var(--negro)}
+.pc-tile-s{font-size:10px;color:var(--gris4);font-weight:600;margin-top:2px;line-height:1.3}
+/* Visor de módulo del celular: pantalla completa, recibe la MISMA sección .mod-X del escritorio */
+#mob-mod-ovl{display:none;position:fixed;inset:0;z-index:2200;background:var(--gris1,#F7F8FA);
+  flex-direction:column}
+#mob-mod-ovl.show{display:flex}
+#mob-mod-head{display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fff;
+  border-bottom:1px solid var(--gris2);flex-shrink:0}
+#mob-mod-head b{font-size:14px;font-weight:900;color:var(--negro);flex:1}
+#mob-mod-head button{background:var(--gris1);border:none;border-radius:9px;padding:8px 13px;
+  font-family:inherit;font-size:11.5px;font-weight:800;color:var(--negro);cursor:pointer}
+#mob-mod-body{flex:1;overflow-y:auto;padding:14px}
+/* Dentro del visor móvil, la sección .mod-X pierde el ancho fijo/columnas pensadas para escritorio */
+#mob-mod-body .mod.on{display:block}
+#mob-mod-body .dgrid{grid-template-columns:1fr!important}
+#mob-mod-body .asis-top{position:static;flex-wrap:wrap}
+#mob-mod-body #scr-asis,#mob-mod-body #scr-audit,#mob-mod-body #scr-obseq{position:static;inset:auto}
 .rut-detail{font-size:10px;color:var(--gris4);font-weight:600;margin-top:2px;line-height:1.4}
 .rut-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--gris3);border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;transition:border-color .15s,background .15s;color:var(--gris4)}
 .rut-drop:hover,.rut-drop.dragover{border-color:var(--rojo);background:var(--rojo-s);color:var(--rojo)}
@@ -1804,6 +1831,7 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
     <button id="pctab-1" onclick="haptic();switchPcTab(1)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--rojo);border-bottom:2px solid var(--rojo);margin-bottom:-2px;cursor:pointer">Rutina</button>
     <button id="pctab-2" onclick="haptic();switchPcTab(2)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">Operación</button>
     <button id="pctab-3" onclick="haptic();switchPcTab(3)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">Histórico</button>
+    <button id="pctab-4" onclick="haptic();switchPcTab(4)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--gris4);cursor:pointer">Más</button>
   </div>
   <!-- TAB 1: RUTINA DIARIA -->
   <div id="pctab-content-1" style="flex:1;overflow-y:auto">
@@ -1931,8 +1959,39 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
       <div id="pc-hist-lista"><div style="font-size:11px;color:var(--gris4)">Cargando...</div></div>
     </div>
   </div>
+  <!-- TAB 4: MÁS — todo lo que antes solo existía en el escritorio (Vehículos, Clientes,
+       Entregadores, Alertas, Indicadores, Asistencia, Auditoría, Obsequios). Cada mosaico mueve
+       la MISMA sección .mod-X del escritorio a la vista de módulo del celular (#mob-mod-ovl) —
+       ninguna lógica ni pantalla se duplica, es el mismo patrón que ya usaba Rutina/Auditoría. -->
+  <div id="pctab-content-4" style="flex:1;overflow-y:auto;display:none">
+    <div style="padding:14px">
+      <div style="font-size:11px;color:var(--gris4);margin-bottom:12px">Todo el panel del coordinador, también desde el celular.</div>
+      <div class="pc-tile-grid">
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('vehiculos')"><div class="pc-tile-ic" style="background:#1A56DB">🚚</div><div class="pc-tile-t">Vehículos</div><div class="pc-tile-s">Flota y GPS</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('clientes')"><div class="pc-tile-ic" style="background:#3b1f5e">🏬</div><div class="pc-tile-t">Clientes</div><div class="pc-tile-s">Cumplimiento de atención</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('entregadores')"><div class="pc-tile-ic" style="background:#0EA5E9">🧑‍🔧</div><div class="pc-tile-t">Entregadores</div><div class="pc-tile-s">Cumplimiento y productividad</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('alertas')"><div class="pc-tile-ic" style="background:#B45309">🚨</div><div class="pc-tile-t">Alertas</div><div class="pc-tile-s">Geocercas y alarmas</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('indicadores')"><div class="pc-tile-ic" style="background:#065F46">📊</div><div class="pc-tile-t">Indicadores</div><div class="pc-tile-s">Análisis ejecutivo</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('asis')"><div class="pc-tile-ic" style="background:#4F46E5">🗓️</div><div class="pc-tile-t">Asistencia</div><div class="pc-tile-s">Marcación mensual</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('audit')"><div class="pc-tile-ic" style="background:#7C2D12">🔎</div><div class="pc-tile-t">Auditoría</div><div class="pc-tile-s">LiquiYa vs. reportado</div></div>
+        <div class="pc-tile" onclick="haptic();abrirModuloMovil('obseq')"><div class="pc-tile-ic" style="background:#059669">🎁</div><div class="pc-tile-t">Obsequios</div><div class="pc-tile-s">Bonificaciones ZG</div></div>
+      </div>
+    </div>
+  </div>
   </div><!-- /rutina-suite -->
   <div class="pc-footer">Excel generado a las 9:45pm · Actualización automática cada 30s</div>
+</div>
+
+<!-- VISOR DE MÓDULO (celular): recibe cualquier sección .mod-X del escritorio, a pantalla completa.
+     Vehículos/Clientes/Entregadores/Alertas/Indicadores no traen su propio encabezado (viven dentro
+     del escritorio, con su sidebar) — por eso mob-mod-head existe. Asistencia/Auditoría/Obsequios ya
+     traen el suyo (título, filtros, cerrar), así que mob-mod-head se oculta para ellas. -->
+<div id="mob-mod-ovl">
+  <div id="mob-mod-head">
+    <b id="mob-mod-title">Módulo</b>
+    <button onclick="haptic();cerrarModuloMovil()">✕ Cerrar</button>
+  </div>
+  <div id="mob-mod-body"></div>
 </div>
 
 <!-- DRILL-DOWN: panel que baja del KPI al registro individual sin salir de la pantalla -->
@@ -3417,7 +3476,7 @@ async function abrirAsistencia(){
   document.getElementById('asis-legend').innerHTML=ASIS_CODES.map(c=>'<span class="asis-lg"><i style="background:'+(c.col||'#fff')+'"></i>'+(c.k?c.k+' · ':'')+c.lbl+(c.cuenta?' ✓':'')+'</span>').join('')+'<span class="asis-lg" style="margin-left:auto;color:#9AA0AE">Clic en una celda para cambiar el estado</span>';
   await cargarAsistenciaMes();renderAsistencia();
 }
-function cerrarAsistencia(){activarModulo('operacion');}
+function cerrarAsistencia(){if(window._mobModAbierto){cerrarModuloMovil();return;}activarModulo('operacion');}
 async function cambiarMesAsis(){asisMes=document.getElementById('asis-mes').value;await cargarAsistenciaMes();renderAsistencia();}
 async function cargarAsistenciaMes(){
   asisData={};
@@ -6813,7 +6872,7 @@ async function downloadReport(){}
 
 
 function switchPcTab(n){
-  [1,2,3].forEach(i=>{
+  [1,2,3,4].forEach(i=>{
     const btn=document.getElementById('pctab-'+i);
     const content=document.getElementById('pctab-content-'+i);
     const activo=i===n;
@@ -8333,6 +8392,53 @@ function _embedHerramienta(scrId,modId){
   }
   scr.style.display='flex';
 }
+/* ══ VISOR DE MÓDULO EN EL CELULAR ══
+   Todos los módulos del sidebar de escritorio (Vehículos, Clientes, Entregadores, Alertas,
+   Indicadores) y las herramientas (Asistencia, Auditoría, Obsequios) vivían SOLO ahí: sus botones
+   de abrir (abrirAuditoria() y hermanas) siempre empotraban la pantalla dentro de #dash, y #dash
+   permanece oculto en el celular (rutearVistaInicial() solo llama a mostrarDash() en escritorio) —
+   así que tocar "Ver Auditoría →" desde el celular no mostraba nada, la pantalla quedaba movida
+   dentro de un contenedor invisible.
+
+   En vez de duplicar cada pantalla, se mueve la MISMA sección .mod-X (con su misma lógica, sus
+   mismos ids) a un visor de pantalla completa propio del celular, y se devuelve a su lugar en
+   #dash al cerrar — igual patrón que activarModuloRutina() ya usa para "Rutina diaria". */
+const _HERRAMIENTAS_MOVIL=['audit','asis','obseq'];
+async function abrirModuloMovil(m){
+  // Vehículos/Clientes/Indicadores leen de _dashData, que solo se llena si corrió cargarDash() —
+  // en el celular eso nunca pasa solo (mostrarDash() es de escritorio), así que se fuerza aquí.
+  if(!_dashData)await cargarDash();
+  if(m==='audit')abrirAuditoria();
+  else if(m==='asis')abrirAsistencia();
+  else if(m==='obseq')abrirObsequiosSup();
+  else{
+    activarModulo(m);
+    if(m==='alertas'){cargarEventosGeocerca();cargarAlarmasSecurita();} // no están en refrescarModulo()
+    if(m==='vehiculos'){
+      // _flotaCache lo llena pintarFlotaEnVivo(), que cargarDash() dispara SIN esperar (dibuja el
+      // mapa en segundo plano) — la primera pintada de arriba puede llegar antes de que exista.
+      for(let i=0;i<12&&!_flotaCache;i++)await new Promise(r=>setTimeout(r,400));
+      renderVehiculoCards();
+    }
+  }
+  const mod=document.getElementById('mod-'+m),body=document.getElementById('mob-mod-body');
+  if(!mod||!body)return;
+  if(mod.parentElement!==body)body.appendChild(mod);
+  mod.classList.add('on');
+  const esHerramienta=_HERRAMIENTAS_MOVIL.includes(m);
+  const head=document.getElementById('mob-mod-head');
+  if(head)head.style.display=esHerramienta?'none':'flex';
+  if(!esHerramienta){const info=_MODINFO[m]||['',''];document.getElementById('mob-mod-title').textContent=info[0];}
+  window._mobModAbierto=m;
+  document.getElementById('mob-mod-ovl').classList.add('show');
+}
+function cerrarModuloMovil(){
+  const m=window._mobModAbierto;window._mobModAbierto=null;
+  const ovl=document.getElementById('mob-mod-ovl');if(ovl)ovl.classList.remove('show');
+  if(!m)return;
+  const mod=document.getElementById('mod-'+m),dashMain=document.querySelector('.dash-main');
+  if(mod&&dashMain){mod.classList.remove('on');dashMain.appendChild(mod);}
+}
 function ordenarAuditoria(col){
   const cur=window._auditSort||{col:'monto',dir:'desc'};
   window._auditSort=(cur.col===col)?{col,dir:cur.dir==='asc'?'desc':'asc'}:{col,dir:col==='cliente'||col==='ruta'||col==='tipo'?'asc':'desc'};
@@ -8424,12 +8530,12 @@ async function exportarAuditoria(){
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 function abrirAuditoria(){_embedHerramienta('scr-audit','mod-audit');activarModulo('audit');cargarAuditoria();}
-function cerrarAuditoria(){activarModulo('operacion');}
+function cerrarAuditoria(){if(window._mobModAbierto){cerrarModuloMovil();return;}activarModulo('operacion');}
 function cambiarFechaAuditoria(v){if(v)cargarAuditoria(v);}
 
 /* ══ OBSEQUIOS (ZG) — vista de supervisor: clientes con obsequio por ruta + estado de foto ══ */
 function abrirObsequiosSup(){_embedHerramienta('scr-obseq','mod-obseq');activarModulo('obseq');cargarObsequiosSup();}
-function cerrarObsequiosSup(){activarModulo('operacion');}
+function cerrarObsequiosSup(){if(window._mobModAbierto){cerrarModuloMovil();return;}activarModulo('operacion');}
 function filtrarObsequiosBusqueda(){
   const q=(document.getElementById('obseq-busca')||{}).value||'';
   renderObsequiosTablas(window._obsFilas,q);
