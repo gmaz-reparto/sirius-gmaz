@@ -6324,28 +6324,45 @@ async function submitNovedad(){
     }
     setClientSt(clienteIdx,'novedad');
     hideLoad();closeNovModal();
-    // 3. Construir mensaje WhatsApp (igual al v3 original)
-    const fechaHora=new Date().toLocaleString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    let detBlock='';
+    // 3. Buscar vendedor por código del cliente — el celular para enviar, y su ruta_vendedor para
+    // el "Ruta venta" del mensaje (distinta de la ruta de entrega: el vendedor se organiza por su
+    // propia ruta comercial, no por la ruta física que reparte el pedido).
+    const{data:vend}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('codigo',cod).maybeSingle();
+    // 4. Construir mensaje WhatsApp — con quién reporta (nombre + cédula), acordado con el
+    // coordinador el 2026-08-04: antes el mensaje no decía quién de la tripulación lo enviaba.
+    const reportero=_novReportero||_tripulacionPrincipal(rutaActual);
+    const rolTxt=reportero&&reportero.rol==='conductor'?'Conductor':'Auxiliar';
+    const fechaFmt=new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const horaFmt=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const div='━━━━━━━━━━━━━━━━━━';
+    let prodBlock;
     if(rechazoDetalle&&rechazoDetalle.length){
       const totVal=rechazoDetalle.reduce((a,d)=>a+(d.valor||0),0);
-      detBlock=`❌ *Devolución (rechazo):*\n`+
-        rechazoDetalle.map(d=>` • *${d.cod}* ${d.desc}\n    `+(d.cajas?d.cajas+' caja'+(d.cajas===1?'':'s'):'')+(d.cajas&&d.und?' + ':'')+(d.und?d.und+' und':'')+` · ${_pesos(d.valor||0)}`).join('\n')+
-        `\n*Total devuelto:* ${_resumenDetalle(rechazoDetalle)} · ${_pesos(totVal)}\n\n`;
+      prodBlock=rechazoDetalle.map(d=>{
+        const qty=(d.cajas?d.cajas+' caja'+(d.cajas===1?'':'s'):'')+(d.cajas&&d.und?' + ':'')+(d.und?d.und+' und':'');
+        return `* ${d.desc} × ${qty} — ${_pesos(d.valor||0)}`;
+      }).join('\n\n')+`\n\n*TOTAL RECHAZO:* ${_pesos(totVal)}`;
+    }else{
+      prodBlock='Rechazo total del pedido (sin desglose por producto)';
     }
     const msg=
-      `🚨 *NOVEDAD DE ENTREGA - GMAZ*\n\n`+
-      `📦 *Cliente:* ${nom}\n`+
-      `🔢 *Codigo:* ${cod}\n`+
-      `📍 *Direccion:* ${dir}\n`+
-      `🚚 *Ruta entrega:* ${rutaActual}\n`+
-      `🕐 *Hora:* ${fechaHora}\n`+
-      `❌ *Motivo:* ${motivo}\n\n`+
-      detBlock+
-      `📸 *Foto de evidencia:*\n${fotoUrl}\n\n`+
-      `_Enviado desde GMAZ Rutas_`;
-    // 4. Buscar vendedor por código del cliente y enviar WhatsApp
-    const{data:vend}=await sb.from(CFG.TBL_VEND).select('ruta_vendedor,celular_vendedor').eq('codigo',cod).maybeSingle();
+      `🚨 *NOVEDAD DE ENTREGA GMAZ*\n${div}\n`+
+      `👤 *REPORTADO POR*\n\n`+
+      `${reportero?.nombre||'Repartidor'}\n`+
+      `🪪 C.C. ${reportero?.ced||'—'}\n`+
+      `${rolTxt} · Ruta ${rutaActual}\n${div}\n`+
+      `📦 *CLIENTE*\n\n`+
+      `${nom}\n`+
+      `Código: ${cod}\n`+
+      `Ruta venta: ${vend?.ruta_vendedor||'—'}\n`+
+      `Dirección: ${dir}\n${div}\n`+
+      `❌ *MOTIVO DEL RECHAZO*\n${motivo}\n\n`+
+      `📦 *PRODUCTO AFECTADO*\n\n`+
+      `${prodBlock}\n${div}\n`+
+      `🕐 *FECHA Y HORA*\n${fechaFmt} · ${horaFmt}\n${div}\n`+
+      `📸 *EVIDENCIA*\n👉 ${fotoUrl}\n\n`+
+      `⚠️ *IMPORTANTE:* Validar la novedad y realizar la gestión correspondiente para evitar que vuelva a presentarse en próximos cargues.`;
+    // 5. Enviar WhatsApp
     if(vend?.celular_vendedor){
       let cel=String(vend.celular_vendedor).replace(/[^0-9]/g,'');
       if(cel.length===10)cel='57'+cel;
