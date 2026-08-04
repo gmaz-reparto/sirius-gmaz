@@ -1917,11 +1917,13 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
           <div id="hi-flota-body"><div class="veh-cargando">Pulsa «Calcular del GPS» — se lee el recorrido guardado de cada vehículo de ese día.</div></div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;color:var(--negro);flex:1">Novedades por fecha</div>
-        <input type="date" id="pc-hist-fecha" onchange="verNovedadesFecha(this.value)" style="border:1px solid var(--gris2);border-radius:8px;padding:6px 9px;font-size:11px;font-family:inherit;color:var(--negro)">
+      <div class="dcard" style="margin-bottom:16px">
+        <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades por día</h3><span class="dm" id="pc-rech-meta">—</span>
+          <input type="date" id="pc-rech-fecha" onchange="haptic();cargarRechazosFechaMovil(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+        </div>
+        <div style="padding:12px 17px 4px;display:flex;flex-direction:column;gap:12px" id="pc-rechazos-graf"></div>
+        <div class="nov-grid" id="pc-rech-nov" style="padding:6px 17px 16px"></div>
       </div>
-      <div id="pc-hist-detalle"></div>
       <div style="display:flex;align-items:center;gap:9px;margin:18px 0 10px">
         <div style="font-size:10.5px;font-weight:800;color:var(--gris4);text-transform:uppercase;letter-spacing:.6px;flex:1">Novedades por mes</div>
         <input type="month" id="pc-hist-mes" onchange="haptic();cargarHistoricoNovedades(this.value)" style="border:1px solid var(--gris3);border-radius:9px;padding:7px 10px;font-size:12px;font-weight:700;font-family:inherit;color:var(--negro)">
@@ -3553,6 +3555,50 @@ async function verRechazosFecha(fecha){
     const meta=document.getElementById('dash-nov-meta');if(meta)meta.textContent=novs.length+' rechazos · '+Math.round(cajasRej)+' cajas · '+fecha;
     if(cont)cont.innerHTML=novs.length?novs.map(n=>_novCardHTML(n,ctx)).join(''):'<div class="nov-empty">Sin novedades registradas el '+fecha+' ✓</div>';
   }catch(e){if(cont)cont.innerHTML='<div class="nov-empty">Error al cargar: '+e.message+'</div>';}
+}
+/* ══ RECHAZOS EN EL PANEL COORDINADOR (móvil) ══
+   Mismo reporte que el módulo "Rechazos" del escritorio (donut por motivo, impacto en cajas,
+   tarjetas con foto/producto/valor) para poder revisarlo desde el celular sin abrir el escritorio.
+   A diferencia del escritorio — donde el donut siempre es de HOY aunque cambies la fecha de las
+   tarjetas, porque sale de _dashData — aquí todo (donut, impacto, tarjetas) se recalcula con la
+   MISMA fecha elegida, así nunca queda un dato de hoy mezclado con tarjetas de otro día. */
+async function cargarRechazosFechaMovil(fecha){
+  fecha=fecha||getColDate();
+  const fInp=document.getElementById('pc-rech-fecha');if(fInp){fInp.max=getColDate();fInp.value=fecha;}
+  const grafCont=document.getElementById('pc-rechazos-graf'),cardsCont=document.getElementById('pc-rech-nov');
+  if(grafCont)grafCont.innerHTML='<div class="veh-cargando">Cargando rechazos del '+fecha+'…</div>';
+  if(cardsCont)cardsCont.innerHTML='';
+  const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url&fecha=eq.'+fecha,{headers:_h});
+    const novs=r.ok?await r.json():[];
+    const rechCod=await mapaCajasRechazadas(novs,fecha);
+    let rutaVend={};try{const rv=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_VEND+'?select=codigo,ruta_vendedor',{headers:_h})).json();(rv||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');}catch(e){}
+    const ctx={rutaColor,vendCli:cod=>rutaVend[String(cod)]||'—',rechCod,cajRech:cod=>(rechCod[String(cod)]?rechCod[String(cod)].caj:0)};
+    const cajasRej=novs.reduce((s,n)=>s+ctx.cajRech(n.codigo_cliente),0);
+    // Cajas programadas ese día — del snapshot histórico del PPAS (no de clientes_rutas, que es solo
+    // el snapshot de HOY); si esa fecha no tiene snapshot guardado, se omite el "% del total".
+    let cajasProg=null;
+    try{const ppas=await cargarPPASHistorico(fecha);if(ppas)cajasProg=Object.values(ppas).reduce((s,c)=>s+(parseFloat(c.caj)||0),0);}catch(e){}
+    const meta=document.getElementById('pc-rech-meta');if(meta)meta.textContent=novs.length+' rechazos · '+Math.round(cajasRej)+' cajas · '+fecha;
+    if(grafCont){
+      const porMotivo={};novs.forEach(n=>{const m=(n.motivo||'Otro');porMotivo[m]=(porMotivo[m]||0)+1;});
+      const PAL=['#E30613','#D97706','#7C3AED','#0891B2','#DB2777','#65A30D','#EA580C','#475569'];
+      const segs=Object.keys(porMotivo).sort((a,b)=>porMotivo[b]-porMotivo[a]).map((m,i)=>({n:m,v:porMotivo[m],c:PAL[i%PAL.length]}));
+      const leyenda=segs.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:'+s.c+';flex-shrink:0"></span><span style="flex:1">'+s.n+'</span><b>'+s.v+'</b></div>').join('');
+      grafCont.innerHTML=
+        '<div class="graf-card"><h4>Rechazos por motivo</h4><div class="gq">¿Por qué están devolviendo?</div>'+
+          (segs.length?'<div style="display:flex;align-items:center;gap:18px"><div style="position:relative;flex-shrink:0">'+donutSvg(segs,110,17)+'<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:21px;font-weight:900">'+novs.length+'</div><div style="font-size:8.5px;font-weight:800;color:#8A90A0">RECHAZOS</div></div></div></div><div style="flex:1">'+leyenda+'</div></div>':'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos ese día</div>')+
+        '</div>'+
+        '<div class="graf-card"><h4>Impacto en cajas</h4><div class="gq">Cuántas cajas se dejaron de entregar</div>'+
+          '<div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><div style="font-size:30px;font-weight:900;color:#E30613">'+Math.round(cajasRej).toLocaleString('es-CO')+'</div><div style="font-size:11.5px;color:#8A90A0;font-weight:700">cajas rechazadas</div></div>'+
+          (cajasProg!=null?'<div style="font-size:11px;color:#6B7385;font-weight:600;margin-top:8px">De '+Math.round(cajasProg).toLocaleString('es-CO')+' programadas · '+(cajasProg?Math.round(cajasRej/cajasProg*100):0)+'% del total</div>':'')+
+        '</div>';
+    }
+    if(cardsCont)cardsCont.innerHTML=novs.length?novs.map(n=>_novCardHTML(n,ctx)).join(''):'<div class="nov-empty">Sin novedades registradas el '+fecha+' ✓</div>';
+  }catch(e){
+    if(grafCont)grafCont.innerHTML='<div class="nov-empty">Error al cargar: '+e.message+'</div>';
+  }
 }
 async function cargarDash(){
   try{
@@ -6783,7 +6829,7 @@ function switchPcTab(n){
   });
   // Cargar contenido según pestaña
   if(n===2){cargarExcepciones();cargarTripulacionHoy();cargarResumenCargue();cargarResumenOperacion();}
-  if(n===3)cargarHistoricoNovedades();
+  if(n===3){cargarHistoricoNovedades();if(!document.getElementById('pc-rech-fecha').value)cargarRechazosFechaMovil();}
 }
 
 function toggleHistorico(){
@@ -6825,7 +6871,7 @@ async function cargarHistoricoNovedades(mesSel){
       return '<div class="pc-hist-row">'+
         '<div class="pc-hist-fechabox"><b>'+f.fecha.slice(8,10)+'</b><span>'+diaSem.replace('.','')+'</span></div>'+
         '<div class="pc-hist-info"><b>'+f.n+' novedad'+(f.n>1?'es':'')+'</b><span>'+f.fecha+'</span></div>'+
-        '<button class="rut-link" onclick="haptic();verNovedadesFecha(\''+f.fecha+'\');document.getElementById(\'pc-hist-fecha\').value=\''+f.fecha+'\'">Ver →</button>'+
+        '<button class="rut-link" onclick="haptic();cargarRechazosFechaMovil(\''+f.fecha+'\');document.getElementById(\'pc-rech-fecha\').scrollIntoView({behavior:\'smooth\',block:\'center\'})">Ver →</button>'+
         '<button onclick="haptic();descargarNovedasFecha(\''+f.fecha+'\')" style="background:var(--negro);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:inherit">↓ Excel</button>'+
       '</div>';
     }).join('')
@@ -7948,20 +7994,6 @@ async function cargarMetricasFlota(){
     if(btn){btn.disabled=false;btn.textContent='Recalcular del GPS';}
   }
 }
-/* Ver las novedades de CUALQUIER fecha elegida (no solo los últimos 7 días). */
-async function verNovedadesFecha(fecha){
-  const cont=document.getElementById('pc-hist-detalle');if(!cont)return;
-  if(!fecha){cont.innerHTML='';return;}
-  cont.innerHTML='<div style="font-size:10px;color:var(--gris4);padding:8px">Cargando '+fecha+'...</div>';
-  try{
-    const{data:novs}=await sb.from(CFG.TBL_NOV).select('ruta,nombre_cliente,motivo,codigo_cliente').eq('fecha',fecha).order('ruta');
-    if(!novs||!novs.length){cont.innerHTML='<div style="background:var(--gris1);border-radius:9px;padding:14px;text-align:center;font-size:11px;color:var(--gris4)">Sin novedades el '+fecha+'</div>';return;}
-    let html='<div style="background:#FEF2F2;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between"><div><b style="font-size:14px;color:#E30613">'+novs.length+' novedad'+(novs.length>1?'es':'')+'</b><div style="font-size:9px;color:#B91C1C">'+fecha+'</div></div><button onclick="haptic();descargarNovedasFecha(\''+fecha+'\')" style="background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:10px;font-weight:800;cursor:pointer">↓ Excel</button></div>';
-    html+=novs.map(n=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 9px;border-bottom:.5px solid var(--gris2);font-size:11px"><div style="flex:1;min-width:0"><b>'+(n.nombre_cliente||n.codigo_cliente)+'</b><div style="font-size:9px;color:var(--gris4)">'+(n.codigo_cliente||'')+' · '+(n.ruta||'')+'</div></div><span style="color:#B45309;font-weight:700;font-size:10px;text-align:right;flex-shrink:0">'+(n.motivo||'')+'</span></div>').join('');
-    cont.innerHTML=html;
-  }catch(e){cont.innerHTML='<div style="font-size:10px;color:#E30613;padding:8px">Error: '+e.message+'</div>';}
-}
-
 async function descargarNovedasFecha(fecha){
   showLoad('Generando Excel de '+fecha+'...');
   try{
