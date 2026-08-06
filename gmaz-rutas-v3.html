@@ -1877,6 +1877,12 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
           <label class="rut-drop" data-input="inp-maestro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></label>
           <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarMaestro()">Borrar</button></div>
         </div>
+        <div class="rut-card">
+          <div class="rut-top"><div class="rut-ic" style="background:#0F766E"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg></div><div class="rut-ti"><div class="rut-t">Canal de clientes (Trad./Moderno)</div><div class="rut-detail" id="pc-det-canal">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-canal">...</span></div>
+          <div style="padding:0 17px 4px;font-size:10.5px;color:var(--gris4)">Maestro Consolidado de KOF (nacional) — mensual, se filtra solo a la jefatura OKV al subirlo. Puede tardar por ser un archivo grande.</div>
+          <label class="rut-drop" data-input="inp-canal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar (Maestro Consolidado.xls)</span><input type="file" id="inp-canal" accept=".xlsx,.xls" style="display:none" onchange="uploadMaestroConsolidado(event)"></label>
+          <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarMaestroConsolidado()">Borrar</button></div>
+        </div>
       </div>
       <div class="dcard" style="margin-top:16px">
         <div class="dcard-h"><h3><span class="h3ic">⚖️</span>Cuadre del cargue de hoy</h3>
@@ -3465,6 +3471,12 @@ const _asisCod={};ASIS_CODES.forEach(c=>_asisCod[c.k]=c);
 let asisMes=null, asisData={}; // {cedula:{dia:code}}  (solo marcas ≠ normal)
 const _DOWA=['D','L','M','X','J','V','S'];
 function _mesActualStr(){const o=CFG.UTC_OFFSET||-5;return new Date(Date.now()+o*3600000).toISOString().slice(0,7);}
+function _mesAnteriorStr(){
+  const o=CFG.UTC_OFFSET||-5;
+  const now=new Date(Date.now()+o*3600000);
+  const pm=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-1,1));
+  return pm.toISOString().slice(0,7);
+}
 function _diasDelMes(mes){const [y,m]=mes.split('-').map(Number);const n=new Date(y,m,0).getDate();const a=[];for(let d=1;d<=n;d++){const dow=new Date(y,m-1,d).getDay();a.push({d,dow,dom:dow===0});}return a;}
 function _asisGet(ced,d){return (asisData[ced]&&asisData[ced][d])||'';}
 function _asisHabiles(){return _diasDelMes(asisMes).filter(x=>!x.dom).length;}
@@ -4114,9 +4126,21 @@ async function cargarRechazosMes(){
     const topCli=Object.values(porCliRk).sort((a,b)=>b.n-a.n).slice(0,10);
     const topRuta=Object.entries(porRutaRk).sort((a,b)=>b[1]-a[1]).slice(0,10);
     const maxCli=topCli.length?topCli[0].n:0, maxRuta=topRuta.length?topRuta[0][1]:0;
+    // Desglose Tradicional/Moderno — requiere el índice de canal (Rutina diaria → Canal de clientes)
+    const canalIdx=await cargarMaestroClientesCanal();
+    let modN=0,tradN=0;
+    rows.forEach(n=>{const info=canalIdx[String(n.codigo_cliente||'')];if(!info)return;if(info.tipo==='Moderno')modN++;else tradN++;});
+    const totCanal=modN+tradN;
+    const bloqueCanal=totCanal?
+      '<div style="display:flex;gap:10px;margin-bottom:14px">'+
+        '<div style="flex:1;background:#F1F2F6;border-radius:8px;padding:10px 14px"><div style="font-size:11px;font-weight:700;color:#8A90A0">MODERNO</div><div style="font-size:20px;font-weight:800;color:#0F1117">'+Math.round(modN/totCanal*100)+'%</div><div style="font-size:11px;color:#8A90A0">'+modN+' rechazos</div></div>'+
+        '<div style="flex:1;background:#F1F2F6;border-radius:8px;padding:10px 14px"><div style="font-size:11px;font-weight:700;color:#8A90A0">TRADICIONAL</div><div style="font-size:20px;font-weight:800;color:#0F1117">'+Math.round(tradN/totCanal*100)+'%</div><div style="font-size:11px;color:#8A90A0">'+tradN+' rechazos</div></div>'+
+      '</div>'
+      :'<div style="font-size:11px;color:#8A90A0;margin-bottom:12px">Sube el "Canal de clientes (Trad./Moderno)" en Rutina diaria para ver este desglose</div>';
     const tabla=rows.map(n=>{const col=rutaColor[n.ruta]||'#4A5060';return '<tr><td>'+(n.fecha||'').slice(5)+'</td><td style="font-weight:700">'+(n.nombre_cliente||n.codigo_cliente)+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+n.ruta+'</span></td><td>'+n.motivo+'</td></tr>';}).join('');
     cont.innerHTML=
       '<div class="graf-card" style="margin-bottom:14px"><h4>Rechazos por día · '+_nomMes()+'</h4><div class="gq">'+rows.length+' rechazos en el mes</div>'+(Object.keys(porDia).length?_barrasMes(porDia):'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos este mes</div>')+'</div>'+
+      bloqueCanal+
       '<div class="dgrid eq" style="margin-bottom:14px">'+
         '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">🏆</span>Top clientes con más rechazos</h3><span class="dm">'+_nomMes()+'</span></div>'+
           (topCli.length?topCli.map(c=>_rankingBarraHTML(c.nombre,c.nombre+' · '+c.ruta,c.n,maxCli,rutaColor[c.ruta]||'#E30613')).join(''):'<div class="veh-cargando">Sin rechazos este mes</div>')+
@@ -6671,6 +6695,23 @@ async function verificarEstadoPanel(){
     }
   }catch(e){setEst('pc-est-maest','pc-det-maest',null,'?','Error al verificar');}
 
+  // ── Verificar canal de clientes (Tradicional/Moderno, jefatura OKV) — cadencia mensual
+  setEst('pc-est-canal','pc-det-canal',null,'...','Verificando...');
+  try{
+    let encontrado=false;
+    for(const mes of [_mesActualStr(),_mesAnteriorStr()]){
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/MAESTRO_CLIENTES/'+mes+'.json?t='+Date.now());
+      if(r.ok){
+        const d=await r.json();
+        const n=d.total||Object.keys(d.clientes||{}).length;
+        const esMesActual=mes===_mesActualStr();
+        setEst('pc-est-canal','pc-det-canal',esMesActual,'✓ '+n+(esMesActual?'':' ('+mes+')'),n+' clientes OKV indexados'+(esMesActual?'':' — del mes anterior, considera actualizar'));
+        encontrado=true;break;
+      }
+    }
+    if(!encontrado)setEst('pc-est-canal','pc-det-canal',false,'⚠ Sin canal','Sube el Maestro Consolidado para clasificar Tradicional/Moderno');
+  }catch(e){setEst('pc-est-canal','pc-det-canal',null,'?','Error al verificar');}
+
   // ── Verificar Libro de pedidos e Hoja de cargue (índice de hoy)
   const _chkIndice=async(idEst,idDet,archivo,etiqueta)=>{
     setEst(idEst,idDet,null,'...','Verificando...');
@@ -8957,6 +8998,100 @@ async function borrarMaestro(){
     hideLoad();toast('Maestro borrado ✓','ok');
     const b5=document.getElementById('pb5');if(b5){b5.textContent='↑ Subir';b5.classList.remove('done');}
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+
+/* ══ CANAL DE CLIENTES (Tradicional/Moderno) — desde el Maestro Consolidado nacional de KOF ══
+   El maestro trae 470k+ clientes de todo el país; aquí se filtra SOLO la jefatura OKV (Pasto/GMAZ)
+   y se sube un índice liviano {codigo:{nombre,canal,tipo,municipio,rutaEntrega,rutaVendedor}} a
+   Storage, para no cargar el archivo completo cada vez. KOF no expone una columna "Tradicional/
+   Moderno" directa — se deriva de "Descripción Canal": formatos de retail moderno por definición
+   (hipermercado/supermercado/club de membresía/superete/hard-soft discount) o cualquier categoría
+   con sufijo "KA" (Key Account) = Moderno; el resto = Tradicional. Regla acordada con el
+   coordinador (2026-08-06) a falta de un campo oficial "Unidad de negocio Sigla_2" en este export. */
+const CANALES_MODERNO=new Set(['HIPERMERCADO','SUPERMERCADO','CLUB DE MEMBRESIA','SUPERETE','HARD DISCOUNT','SOFT DISCOUNT']);
+function _tipoCanalCliente(canal){
+  const c=String(canal||'').trim().toUpperCase();
+  if(!c)return 'Tradicional';
+  if(/\bKA$/.test(c))return 'Moderno';
+  if(CANALES_MODERNO.has(c))return 'Moderno';
+  return 'Tradicional';
+}
+function _normHdr(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');}
+
+async function uploadMaestroConsolidado(ev){
+  const file=ev.target.files[0];if(!file)return;
+  openProg('Actualizando canal de clientes (jefatura OKV)',file.name);
+  logProg('Leyendo: '+file.name+' — archivo nacional, puede tardar varios minutos','info');updateProg(8,'Leyendo Excel...');
+  try{
+    await cargarXLSX();
+    const ab=await file.arrayBuffer();
+    const wb=XLSX.read(ab,{type:'array'});
+    updateProg(35,'Convirtiendo hoja...');
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rawArr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(rawArr.length<2){logProg('Sin datos','err');endProg(false,'Archivo vacío');ev.target.value='';return;}
+    const headers=rawArr[0].map(h=>_normHdr(h));
+    const idxOf=name=>headers.indexOf(name);
+    const iCod=idxOf('codigo'),iNom=idxOf('nombredelcliente'),iJef=idxOf('jefatura'),
+          iCanal=idxOf('descripcioncanal'),iMun=idxOf('municipio'),
+          iRutaEnt=idxOf('ruta'),iRutaVend=idxOf('rutadereparto');
+    if(iCod<0||iJef<0||iCanal<0){logProg('No se encontraron las columnas esperadas (Código/Jefatura/Descripción Canal) — ¿es el Maestro Consolidado correcto?','err');endProg(false,'Formato inesperado');ev.target.value='';return;}
+    logProg((rawArr.length-1)+' filas en el maestro nacional','info');updateProg(55,'Filtrando jefatura OKV...');
+    const idx={};let nOkv=0,nMod=0;
+    for(let i=1;i<rawArr.length;i++){
+      const row=rawArr[i];
+      if(String(row[iJef]||'').trim()!=='OKV')continue;
+      const cod=String(row[iCod]||'').trim();if(!cod)continue;
+      const canal=String(row[iCanal]||'').trim();
+      const tipo=_tipoCanalCliente(canal);
+      if(tipo==='Moderno')nMod++;
+      idx[cod]={nombre:String(row[iNom]||'').trim(),canal,tipo,
+        municipio:iMun>=0?String(row[iMun]||'').trim():'',
+        rutaEntrega:iRutaEnt>=0?String(row[iRutaEnt]||'').trim():'',
+        rutaVendedor:iRutaVend>=0?String(row[iRutaVend]||'').trim():''};
+      nOkv++;
+    }
+    if(!nOkv){logProg('0 clientes con Jefatura=OKV — revisa que sea el Maestro Consolidado correcto','err');endProg(false,'Sin clientes OKV');ev.target.value='';return;}
+    logProg(nOkv+' clientes de la jefatura OKV ('+nMod+' Moderno · '+(nOkv-nMod)+' Tradicional)','ok');
+    updateProg(85,'Subiendo índice...');
+    const mes=_mesActualStr();
+    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/MAESTRO_CLIENTES/'+mes+'.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+      body:JSON.stringify({mes,actualizado:new Date().toISOString(),total:nOkv,clientes:idx})
+    });
+    _canalClientesCache=null;
+    updateProg(100,'');endProg(true,'✓ '+nOkv+' clientes OKV indexados ('+nMod+' Moderno)');
+    const b=document.getElementById('pc-est-canal');if(b){b.textContent='✓ '+nOkv;b.className='pc-estado pc-estado-ok';}
+    const d=document.getElementById('pc-det-canal');if(d)d.textContent=nOkv+' clientes OKV · '+nMod+' Moderno · '+mes;
+  }catch(e){logProg('Error: '+e.message,'err');endProg(false,'Error al procesar el maestro');}
+  ev.target.value='';
+}
+
+async function borrarMaestroConsolidado(){
+  if(!confirm('¿Borrar el índice de canal de clientes de este mes ('+_mesActualStr()+')?'))return;
+  showLoad('Borrando...');
+  try{
+    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/MAESTRO_CLIENTES/'+_mesActualStr()+'.json',{
+      method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
+    });
+    _canalClientesCache=null;
+    hideLoad();toast('Índice de canal borrado ✓','ok');
+    const b=document.getElementById('pc-est-canal');if(b){b.textContent='⚠ Vacío';b.className='pc-estado pc-estado-warn';}
+    const d=document.getElementById('pc-det-canal');if(d)d.textContent='Sin canal cargado — sube el Maestro Consolidado';
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
+
+let _canalClientesCache=null;
+async function cargarMaestroClientesCanal(){
+  if(_canalClientesCache)return _canalClientesCache;
+  for(const mes of [_mesActualStr(),_mesAnteriorStr()]){
+    try{
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/MAESTRO_CLIENTES/'+mes+'.json?t='+Date.now());
+      if(r.ok){const d=await r.json();_canalClientesCache=d.clientes||{};return _canalClientesCache;}
+    }catch(e){}
+  }
+  _canalClientesCache={};
+  return _canalClientesCache;
 }
 
 /* ══ PWA: registrar Service Worker (app instalable) ══ */
