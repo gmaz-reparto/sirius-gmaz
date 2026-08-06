@@ -4088,6 +4088,13 @@ function _barrasMes(porDia){
   const max=Math.max(1,...Object.values(porDia));
   return '<div class="mesbars">'+dias.map(d=>'<div class="mb"><i style="height:'+Math.round(78*porDia[d]/max)+'px" title="'+d+': '+porDia[d]+'"></i><span>'+d.slice(8)+'</span></div>').join('')+'</div>';
 }
+function _rankingBarraHTML(label,titulo,n,max,col){
+  const pct=max?Math.round(n/max*100):0;
+  return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">'+
+    '<div style="flex:0 0 150px;font-size:12px;font-weight:700;color:#0F1117;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titulo+'">'+label+'</div>'+
+    '<div style="flex:1;background:#F1F2F6;border-radius:6px;height:16px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+col+'"></div></div>'+
+    '<div style="flex:0 0 28px;text-align:right;font-size:12px;font-weight:800;color:'+col+'">'+n+'</div></div>';
+}
 async function cargarRechazosMes(){
   const cont=document.getElementById('rech-mes');
   cont.innerHTML='<div class="veh-cargando">Cargando rechazos de '+_nomMes()+'…</div>';
@@ -4095,9 +4102,29 @@ async function cargarRechazosMes(){
     const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=fecha,codigo_cliente,nombre_cliente,ruta,motivo&fecha=gte.'+_mesInicio()+'&fecha=lte.'+_mesFin()+'&order=fecha.desc&limit=3000',{headers:_hdrSup()});
     const rows=r.ok?await r.json():[];
     const porDia={};rows.forEach(n=>{porDia[n.fecha]=(porDia[n.fecha]||0)+1;});
+    // Ranking de mayor rechazo del mes — por cliente y por ruta (conteo de novedades, no cajas:
+    // la tabla `novedades` no guarda cajas; el detalle en cajas vive aparte en Storage por día,
+    // ver mapaCajasRechazadas — sumarlo por mes requeriría otra pasada, queda pendiente).
+    const porCliRk={},porRutaRk={};
+    rows.forEach(n=>{
+      const cod=String(n.codigo_cliente||'');
+      if(cod){ if(!porCliRk[cod])porCliRk[cod]={n:0,nombre:n.nombre_cliente||cod,ruta:n.ruta||'—'}; porCliRk[cod].n++; }
+      const rt=n.ruta||'—'; porRutaRk[rt]=(porRutaRk[rt]||0)+1;
+    });
+    const topCli=Object.values(porCliRk).sort((a,b)=>b.n-a.n).slice(0,10);
+    const topRuta=Object.entries(porRutaRk).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const maxCli=topCli.length?topCli[0].n:0, maxRuta=topRuta.length?topRuta[0][1]:0;
     const tabla=rows.map(n=>{const col=rutaColor[n.ruta]||'#4A5060';return '<tr><td>'+(n.fecha||'').slice(5)+'</td><td style="font-weight:700">'+(n.nombre_cliente||n.codigo_cliente)+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+n.ruta+'</span></td><td>'+n.motivo+'</td></tr>';}).join('');
     cont.innerHTML=
       '<div class="graf-card" style="margin-bottom:14px"><h4>Rechazos por día · '+_nomMes()+'</h4><div class="gq">'+rows.length+' rechazos en el mes</div>'+(Object.keys(porDia).length?_barrasMes(porDia):'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos este mes</div>')+'</div>'+
+      '<div class="dgrid eq" style="margin-bottom:14px">'+
+        '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">🏆</span>Top clientes con más rechazos</h3><span class="dm">'+_nomMes()+'</span></div>'+
+          (topCli.length?topCli.map(c=>_rankingBarraHTML(c.nombre,c.nombre+' · '+c.ruta,c.n,maxCli,rutaColor[c.ruta]||'#E30613')).join(''):'<div class="veh-cargando">Sin rechazos este mes</div>')+
+        '</div>'+
+        '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">🛣️</span>Top rutas con más rechazos</h3><span class="dm">'+_nomMes()+'</span></div>'+
+          (topRuta.length?topRuta.map(([rt,n])=>_rankingBarraHTML(rt,rt,n,maxRuta,rutaColor[rt]||'#E30613')).join(''):'<div class="veh-cargando">Sin rechazos este mes</div>')+
+        '</div>'+
+      '</div>'+
       '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">⚠️</span>Rechazos del mes</h3><span class="dm">'+rows.length+' registros</span></div>'+
         '<div style="overflow:auto;max-height:440px"><table class="dtbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Ruta</th><th>Motivo</th></tr></thead><tbody>'+(tabla||'<tr><td colspan="4" style="text-align:center;color:#8A90A0;padding:16px">Sin rechazos este mes</td></tr>')+'</tbody></table></div></div>';
   }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar el mes: '+e.message+'</div>';}
