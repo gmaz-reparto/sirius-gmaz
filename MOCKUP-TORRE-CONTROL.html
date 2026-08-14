@@ -1,0 +1,614 @@
+<title>Torre de Control GMAZ</title>
+<style>
+:root{
+  --rojo:#E30613; --rojo-o:#B5000F; --rojo-s:#FFF0F1;
+  --tinta:#0F1117; --tinta-2:#4A5060; --tinta-3:#8A90A0;
+  --papel:#F5F6F8; --carta:#FFFFFF; --linea:#E4E7EE; --linea-2:#EEF0F4;
+  --ok:#059669; --ok-s:#ECFDF5; --alerta:#D97706; --alerta-s:#FFF8E6;
+  --dato:#1A56DB; --dato-s:#EFF6FF; --violeta:#7C3AED; --violeta-s:#F3E8FF;
+  --sombra:0 1px 2px rgba(15,17,23,.05); --sombra-alta:0 4px 14px -2px rgba(15,17,23,.10);
+  --panel-bg:#0F1117; --panel-fg:#F5F6F8; --panel-linea:rgba(255,255,255,.14);
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+    --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+    --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+    --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+    --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+    --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+    --panel-bg:#1A1E28; --panel-fg:#EDEFF3; --panel-linea:#2C3241;
+  }
+}
+:root[data-theme="dark"]{
+  --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+  --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+  --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+  --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+  --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+  --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+  --panel-bg:#1A1E28; --panel-fg:#EDEFF3; --panel-linea:#2C3241;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1260px;margin:0 auto;padding:20px 18px 70px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+
+.nota{background:var(--carta);border:1px solid var(--linea);border-left:3px solid var(--rojo);
+  border-radius:var(--r);padding:13px 15px;font-size:12.5px;color:var(--tinta-2)}
+.nota b{color:var(--tinta)}
+
+/* 1 · CONTEXTO */
+.ctx{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);
+  box-shadow:var(--sombra);padding:14px 16px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.ctx-id{display:flex;align-items:center;gap:11px;padding-right:15px;border-right:1px solid var(--linea)}
+.ctx-logo{width:34px;height:34px;border-radius:9px;background:var(--rojo);color:#fff;display:grid;
+  place-items:center;font-weight:900;font-size:12px;letter-spacing:.5px}
+.ctx-t{font-size:15px;font-weight:800;letter-spacing:-.2px}
+.ctx-s{font-size:11px;color:var(--tinta-3);font-weight:600}
+.ctx-fill{flex:1}
+.chip{height:30px;padding:0 11px;border-radius:8px;border:1px solid var(--linea);background:var(--papel);
+  color:var(--tinta-2);font:inherit;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;
+  gap:6px;cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--tinta-3);color:var(--tinta)}
+.chip.on{background:var(--tinta);border-color:var(--tinta);color:var(--carta)}
+.chip:focus-visible{outline:2px solid var(--dato);outline-offset:2px}
+.pulso{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-s)}
+.archivos{display:flex;gap:6px;flex-wrap:wrap}
+.arch{display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:8px;
+  font-size:11px;font-weight:700;border:1px solid transparent}
+.arch.si{background:var(--ok-s);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.arch.no{background:var(--rojo-s);color:var(--rojo);border-color:color-mix(in srgb,var(--rojo) 30%,transparent)}
+
+/* 2 · TITULAR + KPI */
+.titular{display:grid;grid-template-columns:1.05fr 2fr;gap:14px}
+@media (max-width:960px){.titular{grid-template-columns:1fr}}
+.lectura{background:var(--panel-bg);color:var(--panel-fg);border:1px solid var(--panel-linea);
+  border-radius:var(--r);padding:18px 19px;display:flex;flex-direction:column;gap:9px;box-shadow:var(--sombra-alta)}
+.lectura .et{font-size:10px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;opacity:.62}
+.lectura h2{font-size:19px;font-weight:800;letter-spacing:-.3px;line-height:1.3}
+.lectura p{margin:0;font-size:12.5px;line-height:1.6;opacity:.78}
+.lectura .via{margin-top:2px;font-size:11px;opacity:.62;border-top:1px solid var(--panel-linea);padding-top:9px}
+
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:660px){.kpis{grid-template-columns:1fr}}
+.k{background:var(--carta);border:1px solid var(--linea);border-top:3px solid var(--dato);border-radius:var(--r);
+  padding:14px 15px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:5px;cursor:pointer;
+  transition:box-shadow .15s,transform .15s}
+.k:hover{box-shadow:var(--sombra-alta);transform:translateY(-1px)}
+.k.v-ok{border-top-color:var(--ok)} .k.v-al{border-top-color:var(--alerta)} .k.v-ro{border-top-color:var(--rojo)}
+.k-top{display:flex;align-items:flex-start;gap:8px}
+.k-lbl{font-size:10px;font-weight:800;letter-spacing:.75px;text-transform:uppercase;color:var(--tinta-3);
+  display:flex;align-items:center;gap:5px;flex:1;line-height:1.3}
+.k-i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.k-i.g{background:var(--ok-s);color:var(--ok)} .k-i.b{background:var(--dato-s);color:var(--dato)}
+.k-i.r{background:var(--rojo-s);color:var(--rojo)} .k-i.a{background:var(--alerta-s);color:var(--alerta)}
+.k-v{font-size:29px;font-weight:800;letter-spacing:-1px;line-height:1.05}
+.k-v small{font-size:16px;font-weight:700;color:var(--tinta-3);letter-spacing:0}
+.k-d{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:4px}
+.k-d.up{color:var(--ok)} .k-d.dn{color:var(--rojo)} .k-d.flat{color:var(--tinta-3)}
+.k-d span{color:var(--tinta-3);font-weight:600}
+.k-foot{display:flex;align-items:baseline;gap:6px;font-size:11px;color:var(--tinta-3);font-weight:600;margin-top:2px}
+.k-foot .fill{flex:1;border-bottom:1px dotted var(--linea);transform:translateY(-3px)}
+.k-foot b{color:var(--tinta-2);font-weight:800}
+.info{width:13px;height:13px;border-radius:50%;border:1.2px solid var(--tinta-3);color:var(--tinta-3);
+  font-size:8.5px;font-weight:900;display:inline-grid;place-items:center;cursor:help;flex-shrink:0;position:relative}
+.info:hover::after{content:attr(data-def);position:absolute;bottom:135%;left:-8px;width:210px;background:var(--tinta);
+  color:var(--papel);font-size:10.5px;font-weight:600;line-height:1.45;padding:9px 11px;border-radius:8px;
+  text-transform:none;letter-spacing:0;z-index:20;box-shadow:var(--sombra-alta)}
+.barra{height:5px;border-radius:3px;background:var(--linea-2);overflow:hidden;margin-top:4px}
+.barra i{display:block;height:100%;border-radius:3px}
+
+/* Tarjetas genéricas */
+.card{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);overflow:hidden}
+.card-h{padding:13px 16px;border-bottom:1px solid var(--linea-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card-h h3{font-size:13.5px;font-weight:800;letter-spacing:-.1px}
+.card-h .sub{font-size:11.5px;color:var(--tinta-3);font-weight:600}
+.card-h .fill{flex:1}
+
+/* 3 · BANDEJA */
+.pend{display:grid;grid-template-columns:repeat(5,1fr)}
+@media (max-width:900px){.pend{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.pend{grid-template-columns:1fr}}
+.p-item{padding:14px 16px;border-right:1px solid var(--linea-2);display:flex;flex-direction:column;gap:7px}
+.p-item:last-child{border-right:none}
+.p-n{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1}
+.p-l{font-size:11.5px;font-weight:700;color:var(--tinta-2);line-height:1.35}
+.p-a{margin-top:2px;align-self:flex-start;height:28px;padding:0 11px;border-radius:7px;border:1px solid var(--linea);
+  background:var(--papel);color:var(--tinta);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.p-a:hover{background:var(--tinta);color:var(--carta);border-color:var(--tinta)}
+.p-item.urg .p-n{color:var(--rojo)} .p-item.med .p-n{color:var(--alerta)} .p-item.ok .p-n{color:var(--ok)}
+
+/* 4 · TABLA */
+.tabla-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:940px}
+thead th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--tinta-3);padding:10px 12px;border-bottom:1px solid var(--linea);white-space:nowrap;background:var(--carta)}
+thead th.r{text-align:right}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--linea-2);font-size:12.5px;vertical-align:middle}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+tbody tr.fila{cursor:pointer}
+tbody tr.fila:hover,tbody tr.fila.abierta{background:var(--papel)}
+.ruta-cel{display:flex;align-items:center;gap:9px}
+.ruta-cod{font-weight:800;font-size:13px;letter-spacing:-.2px}
+.caret{width:14px;color:var(--tinta-3);transition:transform .15s;display:inline-block}
+tr.abierta .caret{transform:rotate(90deg)}
+.persona{display:flex;align-items:center;gap:8px}
+.avat{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;font-weight:800;
+  color:#fff;flex-shrink:0}
+.persona .txt{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.persona b{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.persona small{font-size:10.5px;color:var(--tinta-3);font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:6px;
+  font-size:10.5px;font-weight:800;white-space:nowrap;letter-spacing:.2px}
+.pill.ok{background:var(--ok-s);color:var(--ok)} .pill.warn{background:var(--alerta-s);color:var(--alerta)}
+.pill.bad{background:var(--rojo-s);color:var(--rojo)} .pill.info{background:var(--dato-s);color:var(--dato)}
+.pill.mute{background:var(--linea-2);color:var(--tinta-3)}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.mini{display:flex;align-items:center;gap:8px}
+.mini .bt{flex:1;min-width:54px;height:6px;border-radius:3px;background:var(--linea-2);overflow:hidden}
+.mini .bt i{display:block;height:100%;border-radius:3px}
+.mini .pv{font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.detalle td{background:var(--papel);padding:0;border-bottom:1px solid var(--linea)}
+.det-in{padding:14px 16px 16px 38px;display:flex;flex-direction:column;gap:11px}
+.det-t{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--tinta-3)}
+.cli{display:grid;grid-template-columns:1.6fr 1fr .8fr .8fr auto;gap:10px;align-items:center;
+  background:var(--carta);border:1px solid var(--linea);border-radius:10px;padding:10px 12px}
+@media (max-width:800px){.cli{grid-template-columns:1fr 1fr}}
+.cli b{font-size:12.5px;font-weight:700}
+.cli small{display:block;font-size:10.5px;color:var(--tinta-3);font-weight:600}
+.cli .sku{font-size:11px;color:var(--tinta-2);font-weight:600}
+.cli .val{font-variant-numeric:tabular-nums;font-weight:800;font-size:12.5px;text-align:right}
+.acciones{display:flex;gap:6px}
+.btn-si,.btn-no{height:28px;padding:0 10px;border-radius:7px;border:none;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.btn-si{background:var(--rojo);color:#fff} .btn-si:hover{background:var(--rojo-o)}
+.btn-no{background:var(--linea-2);color:var(--tinta-2)} .btn-no:hover{background:var(--linea)}
+.pie-nota{font-size:11px;color:var(--tinta-3);font-weight:600;padding:11px 16px;border-top:1px solid var(--linea-2)}
+
+/* 5 · COMPUERTA DE CIERRE */
+.cierre{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:18px 20px}
+@media (max-width:820px){.cierre{grid-template-columns:1fr;text-align:center;justify-items:center}}
+.anillo{position:relative;width:104px;height:104px;flex-shrink:0}
+.anillo svg{transform:rotate(-90deg)}
+.anillo .centro{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.anillo .pct{font-size:23px;font-weight:800;letter-spacing:-.8px;line-height:1}
+.anillo .cap{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--tinta-3)}
+.checks{display:flex;gap:26px;flex-wrap:wrap}
+.chk{display:flex;flex-direction:column;gap:2px}
+.chk b{font-size:24px;font-weight:800;letter-spacing:-.7px;line-height:1}
+.chk small{font-size:11px;font-weight:700;color:var(--tinta-3);line-height:1.35}
+.chk.err b{color:var(--rojo)} .chk.adv b{color:var(--alerta)} .chk.ok b{color:var(--ok)}
+.btn-cerrar{height:42px;padding:0 20px;border-radius:10px;border:none;background:var(--tinta);color:var(--carta);
+  font:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+.btn-cerrar[disabled]{background:var(--linea-2);color:var(--tinta-3);cursor:not-allowed}
+.params{display:flex;gap:7px;flex-wrap:wrap;padding:0 20px 16px}
+.param{display:inline-flex;align-items:baseline;gap:6px;background:var(--papel);border:1px solid var(--linea);
+  border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--tinta-3)}
+.param b{color:var(--tinta);font-weight:800;font-variant-numeric:tabular-nums}
+.param-link{font-size:11px;font-weight:700;color:var(--dato);text-decoration:underline;cursor:pointer;align-self:center}
+
+/* 6 · EMBUDO + RANKING */
+.dos{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+@media (max-width:900px){.dos{grid-template-columns:1fr}}
+.embudo{padding:16px;display:flex;flex-direction:column;gap:13px}
+.paso{display:flex;flex-direction:column;gap:5px}
+.paso-h{display:flex;align-items:baseline;gap:8px;font-size:12px}
+.paso-h b{font-weight:800}
+.paso-h .v{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:800;font-size:13px}
+.paso-h .p{font-size:11px;color:var(--tinta-3);font-weight:700;min-width:44px;text-align:right}
+.paso .bt{height:11px;border-radius:4px;background:var(--linea-2);overflow:hidden}
+.paso .bt i{display:block;height:100%;border-radius:4px}
+.fuga{font-size:11px;color:var(--tinta-3);font-weight:600;padding-left:2px}
+.fuga b{color:var(--rojo)}
+.rank{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.r-row{display:grid;grid-template-columns:20px 1fr auto;gap:9px;align-items:center}
+.r-pos{font-size:11px;font-weight:800;color:var(--tinta-3);font-variant-numeric:tabular-nums}
+.r-bar{position:relative;height:24px;background:var(--linea-2);border-radius:6px;overflow:hidden}
+.r-bar i{position:absolute;inset:0 auto 0 0;border-radius:6px}
+.r-bar span{position:absolute;left:9px;top:0;line-height:24px;font-size:11px;font-weight:800;color:var(--tinta)}
+.r-val{font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+
+/* 7 · FLUJO DIDÁCTICO */
+.flujo{display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:4px 0}
+@media (max-width:900px){.flujo{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.flujo{grid-template-columns:1fr}}
+.f-paso{padding:15px 16px;border-right:1px solid var(--linea-2);display:flex;flex-direction:column;gap:7px;position:relative}
+.f-paso:last-child{border-right:none}
+.f-n{width:22px;height:22px;border-radius:6px;background:var(--tinta);color:var(--carta);display:grid;place-items:center;
+  font-size:11px;font-weight:800}
+.f-ic{color:var(--rojo)}
+.f-t{font-size:12.5px;font-weight:800;letter-spacing:-.1px}
+.f-d{font-size:11px;color:var(--tinta-3);font-weight:600;line-height:1.5}
+.f-q{font-size:10.5px;font-weight:800;color:var(--dato)}
+
+footer{font-size:11.5px;color:var(--tinta-3);text-align:center;padding-top:10px;line-height:1.75}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="nota">
+    <b>Mockup final — no es la app.</b> Datos de ejemplo con la operación real de Pasto. Todo sale de lo que la app YA calcula:
+    PPAS, Libro de pedidos, Hoja de cargue, rechazos, registro por celular, LiquiYa y obsequios.
+    Lo aplicado viene de revisar <b>27 demos de ERP y CRM</b> fotograma a fotograma. Haz clic en una ruta para abrirla y pasa el mouse por los <b>ⓘ</b>.
+  </div>
+
+  <!-- 1 · CONTEXTO -->
+  <div class="ctx">
+    <div class="ctx-id">
+      <div class="ctx-logo">GMAZ</div>
+      <div>
+        <div class="ctx-t">Torre de control · Pasto</div>
+        <div class="ctx-s">Viernes 14 de agosto · actualizado 11:40:12 a. m.</div>
+      </div>
+    </div>
+    <div class="archivos">
+      <div class="arch si">✓ PPAS</div>
+      <div class="arch si">✓ Libro</div>
+      <div class="arch si">✓ Hoja de cargue</div>
+      <div class="arch no">✕ LiquiYa</div>
+    </div>
+    <div class="ctx-fill"></div>
+    <button class="chip on" type="button">Hoy</button>
+    <button class="chip" type="button">Semana</button>
+    <button class="chip" type="button">Mes</button>
+    <button class="chip" type="button"><span class="pulso"></span> En vivo · 30 s</button>
+  </div>
+
+  <!-- 2 · TITULAR + KPI -->
+  <div class="titular">
+    <div class="lectura">
+      <div class="et">Lo que hay que mirar hoy</div>
+      <h2>Dos rutas explican el 71 % de la devolución del día.</h2>
+      <p>KA4V52 y KA4V50 acumulan 38 de las 53 cajas devueltas. En KA4V52 el motivo repetido es
+      <b>cliente cerrado</b> en la zona sur — cuatro clientes seguidos entre 7:40 y 8:30 a. m.</p>
+      <div class="via">Sugerido: aprobar u omitir las 7 devoluciones pendientes antes del cierre — de eso depende la efectividad que entra a la nómina.</div>
+    </div>
+
+    <div class="kpis">
+      <div class="k v-al">
+        <div class="k-top">
+          <div class="k-lbl">Efectividad de hoy
+            <span class="info" data-def="Promedio entre cajas entregadas/cargadas y clientes entregados/totales. Solo descuenta las devoluciones aprobadas como «afecta»."></span></div>
+          <div class="k-i a">§ico:target§</div>
+        </div>
+        <div class="k-v num">94,2<small>%</small></div>
+        <div class="k-d dn">▼ 1,8 pts <span>vs. promedio del mes</span></div>
+        <div class="barra"><i style="width:94.2%;background:var(--alerta)"></i></div>
+        <div class="k-foot"><span>Tramo de comisión</span><span class="fill"></span><b>bajo el 95 %</b></div>
+      </div>
+
+      <div class="k">
+        <div class="k-top">
+          <div class="k-lbl">Avance de entrega
+            <span class="info" data-def="Clientes confirmados como entregados sobre el total programado en el PPAS de hoy."></span></div>
+          <div class="k-i b">§ico:store§</div>
+        </div>
+        <div class="k-v num">612<small>/834</small></div>
+        <div class="k-d up">▲ 23 clientes <span>vs. esta hora ayer</span></div>
+        <div>§spark:linea§</div>
+        <div class="k-foot"><span>Última confirmación</span><span class="fill"></span><b>11:36 a. m.</b></div>
+      </div>
+
+      <div class="k v-ro">
+        <div class="k-top">
+          <div class="k-lbl">Venta devuelta
+            <span class="info" data-def="Valor en pesos de lo que volvió al camión, calculado con el precio del Libro de pedidos del día."></span></div>
+          <div class="k-i r">§ico:back§</div>
+        </div>
+        <div class="k-v num">$1,42<small> M</small></div>
+        <div class="k-d dn">▼ 3,1 % <span>del pedido del día</span></div>
+        <div>§spark:barras§</div>
+        <div class="k-foot"><span>Cajas devueltas</span><span class="fill"></span><b>53 cj · 18 und</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · BANDEJA -->
+  <div class="card">
+    <div class="card-h">
+      <h3>Esperando al coordinador</h3>
+      <span class="sub">lo que no avanza hasta que usted decida</span>
+      <div class="fill"></div>
+      <span class="pill bad">4 vencen hoy</span>
+    </div>
+    <div class="pend">
+      <div class="p-item urg"><div class="p-n num">7</div><div class="p-l">Devoluciones por aprobar</div>
+        <button class="p-a" type="button" onclick="abrirRuta('KA4V52')">Revisar</button></div>
+      <div class="p-item urg"><div class="p-n num">2</div><div class="p-l">Fotos que no parecen fachada</div>
+        <button class="p-a" type="button" onclick="abrirRuta('KA4V50')">Verificar</button></div>
+      <div class="p-item med"><div class="p-n num">1</div><div class="p-l">Ruta sin nadie registrado</div>
+        <button class="p-a" type="button" onclick="abrirRuta('KA4V13')">Ver ruta</button></div>
+      <div class="p-item med"><div class="p-n num">3</div><div class="p-l">Hallazgos de auditoría LiquiYa</div>
+        <button class="p-a" type="button">Auditar</button></div>
+      <div class="p-item ok"><div class="p-n num">46<span style="font-size:15px;color:var(--tinta-3)">/48</span></div>
+        <div class="p-l">Obsequios con foto</div><button class="p-a" type="button">Ver faltantes</button></div>
+    </div>
+  </div>
+
+  <!-- 4 · TABLA MAESTRA -->
+  <div class="card">
+    <div class="card-h">
+      <h3>Rutas de hoy</h3>
+      <span class="sub">cargue, avance, devolución y quién responde — en una sola línea</span>
+      <div class="fill"></div>
+      <button class="chip" type="button">§ico:filter§ Filtrar</button>
+      <button class="chip" type="button">§ico:export§ Exportar</button>
+    </div>
+    <div class="tabla-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Ruta</th><th>Responsable</th><th class="r">Cargue</th><th style="min-width:130px">Avance</th>
+            <th class="r">Devolución</th><th class="r">Valor devuelto</th><th style="min-width:118px">Efectividad</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+      </table>
+    </div>
+    <div class="pie-nota">La efectividad solo descuenta devoluciones <b>aprobadas como «afecta»</b>. Las pendientes se muestran aparte para que nadie pierda comisión por un trámite sin revisar.</div>
+  </div>
+
+  <!-- 5 · COMPUERTA DE CIERRE -->
+  <div class="card">
+    <div class="card-h">
+      <h3>Antes de cerrar el día</h3>
+      <span class="sub">lo que bloquea y lo que solo avisa</span>
+      <div class="fill"></div>
+      <span class="pill warn">No se puede cerrar todavía</span>
+    </div>
+    <div class="cierre">
+      <div class="anillo">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="82 por ciento del día en orden">
+          <circle cx="52" cy="52" r="44" fill="none" stroke="var(--linea-2)" stroke-width="11"/>
+          <circle cx="52" cy="52" r="44" fill="none" stroke="var(--alerta)" stroke-width="11" stroke-linecap="round"
+                  stroke-dasharray="276.5" stroke-dashoffset="49.8"/>
+        </svg>
+        <div class="centro"><div><div class="pct num">82%</div><div class="cap">en orden</div></div></div>
+      </div>
+      <div class="checks">
+        <div class="chk ok"><b class="num">5</b><small>rutas cuadradas<br>cargue = entregado + devuelto</small></div>
+        <div class="chk err"><b class="num">2</b><small>errores que bloquean<br>falta LiquiYa · 1 ruta sin responsable</small></div>
+        <div class="chk adv"><b class="num">7</b><small>advertencias<br>devoluciones sin aprobar</small></div>
+      </div>
+      <button class="btn-cerrar" disabled>Cerrar el día</button>
+    </div>
+    <div class="params">
+      <span class="param">Tramo 95 % <b>$100.000</b></span>
+      <span class="param">Tramo 96 % <b>$150.000</b></span>
+      <span class="param">Tramo 97 % <b>$250.000</b></span>
+      <span class="param">Adicional conductor <b>$175.500</b></span>
+      <span class="param">Días hábiles agosto <b>26</b></span>
+      <span class="param-link">Editar parámetros del periodo…</span>
+    </div>
+  </div>
+
+  <!-- 6 · EMBUDO + RANKING -->
+  <div class="dos">
+    <div class="card embudo">
+      <div class="card-h" style="padding:0 0 12px;border:none">
+        <h3>Dónde se pierde la caja</h3><span class="sub">del camión al liquidado</span>
+      </div>
+      <div class="paso">
+        <div class="paso-h"><b>Cargado en el camión</b><span class="v num">1.720 cj</span><span class="p">100 %</span></div>
+        <div class="bt"><i style="width:100%;background:var(--dato)"></i></div>
+      </div>
+      <div class="paso">
+        <div class="paso-h"><b>Entregado al cliente</b><span class="v num">1.667 cj</span><span class="p">96,9 %</span></div>
+        <div class="bt"><i style="width:96.9%;background:var(--ok)"></i></div>
+        <div class="fuga">Se quedaron <b>53 cajas</b> en el camión — 38 de KA4V52 y KA4V50</div>
+      </div>
+      <div class="paso">
+        <div class="paso-h"><b>Liquidado en LiquiYa</b><span class="v num">1.640 cj</span><span class="p">95,3 %</span></div>
+        <div class="bt"><i style="width:95.3%;background:var(--alerta)"></i></div>
+        <div class="fuga">Faltan <b>27 cajas</b> entre lo entregado y lo liquidado → revisar en auditoría</div>
+      </div>
+      <div class="paso">
+        <div class="paso-h"><b>Devolución física en planta</b><span class="v num">53 cj</span><span class="p">cuadra ✓</span></div>
+        <div class="bt"><i style="width:100%;background:var(--ok)"></i></div>
+      </div>
+    </div>
+
+    <div class="card rank">
+      <div class="card-h" style="padding:0 0 8px;border:none">
+        <h3>Quién devuelve más</h3><span class="sub">cajas del mes, por ruta</span>
+      </div>
+      <div id="ranking"></div>
+      <div style="font-size:11px;color:var(--tinta-2);font-weight:600;line-height:1.55;margin-top:2px">
+        KA4V52 devuelve <b>2,6 veces</b> lo de la mediana. No es un mal día: son 14 días seguidos arriba del promedio.
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 · FLUJO DIDÁCTICO -->
+  <div class="card">
+    <div class="card-h">
+      <h3>Cómo funciona el día</h3>
+      <span class="sub">para explicarlo a un entregador nuevo sin manual</span>
+    </div>
+    <div class="flujo">
+      <div class="f-paso">
+        <div class="f-n">1</div><div class="f-ic">§ico:doc§</div>
+        <div class="f-t">Llegan los archivos</div>
+        <div class="f-d">Cali envía hacia las 10 p. m.: PPAS, Libro de pedidos, Hoja de cargue y facturas.</div>
+        <div class="f-q">10:00 p. m.</div>
+      </div>
+      <div class="f-paso">
+        <div class="f-n">2</div><div class="f-ic">§ico:truck§</div>
+        <div class="f-t">Armado y cargue</div>
+        <div class="f-d">El coordinador sube los cuatro archivos y asigna vehículo a cada ruta.</div>
+        <div class="f-q">5:00 a. m.</div>
+      </div>
+      <div class="f-paso">
+        <div class="f-n">3</div><div class="f-ic">§ico:user§</div>
+        <div class="f-t">Cada uno se registra</div>
+        <div class="f-d">En su propio celular. Un equipo, una persona: así la novedad y la asistencia quedan con nombre.</div>
+        <div class="f-q">6:00 a. m.</div>
+      </div>
+      <div class="f-paso">
+        <div class="f-n">4</div><div class="f-ic">§ico:cam§</div>
+        <div class="f-t">Entrega y novedades</div>
+        <div class="f-d">Si no se entrega: foto, motivo y cantidades por SKU. Cliente cerrado exige foto de fachada.</div>
+        <div class="f-q">6 a. m. – 2 p. m.</div>
+      </div>
+      <div class="f-paso">
+        <div class="f-n">5</div><div class="f-ic">§ico:check§</div>
+        <div class="f-t">Aprobación y cierre</div>
+        <div class="f-d">El coordinador decide qué devolución afecta comisión; LiquiYa entra a las 3 p. m. y se cierra el día.</div>
+        <div class="f-q">3:00 p. m.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Mockup final del módulo del coordinador · GMAZ Rutas · agosto 2026<br>
+    Patrones tomados de 15 demos de ERP y 12 de CRM revisadas fotograma a fotograma, más SAP Fiori, Samsara y Onfleet en producto real.<br>
+    Los iconos y las tarjetas salen de la Biblioteca visual, guardada en las skills <b>design-system</b> y <b>erp-crm-master</b>.
+  </footer>
+</div>
+
+<script>
+/* ══ ICONOS — mismo set de la Biblioteca visual ══ */
+const ICO={
+ truck:'<rect x="1" y="6" width="13" height="11" rx="1.5"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="6" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/>',
+ store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9h18a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><rect x="9.5" y="13" width="5" height="7"/>',
+ user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+ back:'<polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+ doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+ cam:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+ check:'<circle cx="12" cy="12" r="9"/><polyline points="8 12.5 11 15.5 16 9.5"/>',
+ filter:'<polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/>',
+ export:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
+};
+const icoSvg=(n,s=15,w=2)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
+  'stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICO[n]||'')+'</svg>';
+const SPARK={
+ linea:'<svg viewBox="0 0 100 24" width="100%" height="24" preserveAspectRatio="none" aria-hidden="true">'+
+   '<polyline points="2,19 16,15 30,16 44,10 58,12 72,7 86,9 97,4" fill="none" stroke="var(--dato)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+   '<circle cx="97" cy="4" r="2.6" fill="var(--dato)"/></svg>',
+ barras:'<svg viewBox="0 0 100 24" width="100%" height="24" preserveAspectRatio="none" aria-hidden="true">'+
+   '<rect x="3" y="12" width="8" height="9" rx="1.5" fill="var(--rojo)" opacity=".45"/><rect x="16" y="6" width="8" height="15" rx="1.5" fill="var(--rojo)"/>'+
+   '<rect x="29" y="15" width="8" height="6" rx="1.5" fill="var(--ok)"/><rect x="42" y="3" width="8" height="18" rx="1.5" fill="var(--rojo)"/>'+
+   '<rect x="55" y="14" width="8" height="7" rx="1.5" fill="var(--ok)"/><rect x="68" y="9" width="8" height="12" rx="1.5" fill="var(--rojo)" opacity=".45"/>'+
+   '<rect x="81" y="17" width="8" height="4" rx="1.5" fill="var(--ok)"/></svg>'
+};
+const cont=document.querySelector('.wrap');
+cont.innerHTML=cont.innerHTML
+  .replace(/§ico:([a-z-]+)§/g,(m,n)=>icoSvg(n,15,2.1))
+  .replace(/§spark:([a-z]+)§/g,(m,n)=>SPARK[n]||'');
+
+/* ══ DATOS DE EJEMPLO — la forma es la que ya produce la app ══ */
+const RUTAS=[
+  {cod:'KA4V52',resp:'OVER ANGULO',rol:'Conductor',hora:'6:12 a. m.',cargue:234,avance:[68,92],dev:{cj:23,und:6},valor:612400,ef:91,estado:'bad',
+   alerta:'4 pendientes por aprobar',
+   clientes:[
+     {n:'GRANERO BUENDIA',c:'1200941464',mot:'CLIENTE CERRADO',sku:'056709 · QUATRO 1.5 LT',cant:'6 cj',val:270000,est:'pend',foto:'duda'},
+     {n:'TIENDA LA ESQUINA',c:'1201558220',mot:'CLIENTE CERRADO',sku:'056706 · QUATRO 400 ML',cant:'9 cj',val:179100,est:'pend',foto:'ok'},
+     {n:'DEPOSITO SAN LUIS',c:'1224812781',mot:'CLIENTE SIN DINERO',sku:'051023 · COCA-COLA 2.5 LT',cant:'5 cj + 6 und',val:118300,est:'pend',foto:'ok'},
+     {n:'MINIMERCADO EL PRADO',c:'1209930114',mot:'RECHAZO PARCIAL',sku:'056101 · SPRITE 1.5 LT',cant:'3 cj',val:45000,est:'afecta',foto:'ok'}
+   ]},
+  {cod:'KA4V50',resp:'JAIRO TIMANÁ',rol:'Conductor',hora:'6:05 a. m.',cargue:198,avance:[74,96],dev:{cj:15,und:0},valor:388500,ef:93,estado:'warn',
+   alerta:'1 foto por verificar',
+   clientes:[
+     {n:'GRANERO BUENDIA',c:'1200941464',mot:'CLIENTE CERRADO',sku:'056709 · QUATRO 1.5 LT',cant:'1 cj',val:45000,est:'pend',foto:'duda'},
+     {n:'SUPERMERCADO NORTE',c:'1213440902',mot:'PRODUCTO NO CARGADO',sku:'051188 · COCA-COLA 400 ML',cant:'14 cj',val:343500,est:'afecta',foto:'ok'}
+   ]},
+  {cod:'KA4V51',resp:'OSCAR BASTIDAS',rol:'Conductor',hora:'6:20 a. m.',cargue:221,avance:[81,104],dev:{cj:9,und:12},valor:214000,ef:96,estado:'ok',alerta:'',
+   clientes:[{n:'DISTRIBUIDORA SS',c:'1224812781',mot:'PEDIDO MAL ELABORADO',sku:'056706 · QUATRO 400 ML',cant:'9 cj + 12 und',val:214000,est:'omitida',foto:'ok'}]},
+  {cod:'KA4V11',resp:'CARLOS ROSERO',rol:'Conductor',hora:'6:02 a. m.',cargue:187,avance:[63,88],dev:{cj:4,und:0},valor:96000,ef:97,estado:'ok',alerta:'',
+   clientes:[{n:'TIENDA DOÑA ROSA',c:'1202117845',mot:'CLIENTE NO HIZO PEDIDO',sku:'051023 · COCA-COLA 2.5 LT',cant:'4 cj',val:96000,est:'afecta',foto:'ok'}]},
+  {cod:'KA4V12',resp:'YEISY TIMANÁ',rol:'Auxiliar',hora:'6:31 a. m.',cargue:203,avance:[97,112],dev:{cj:2,und:0},valor:41200,ef:98,estado:'ok',alerta:'',
+   clientes:[{n:'PANADERIA EL TRIGAL',c:'1207765431',mot:'RECHAZO PARCIAL',sku:'056101 · SPRITE 1.5 LT',cant:'2 cj',val:41200,est:'afecta',foto:'ok'}]},
+  {cod:'KA4V13',resp:null,rol:'',hora:'',cargue:176,avance:[0,94],dev:{cj:0,und:0},valor:0,ef:null,estado:'mute',
+   alerta:'Nadie se ha registrado hoy',clientes:[]}
+];
+
+const pesos=n=>'$'+n.toLocaleString('es-CO');
+const COLAV=['#E30613','#1A56DB','#059669','#7C3AED','#D97706','#0891B2'];
+const iniciales=n=>n.split(/\s+/).slice(0,2).map(p=>p[0]).join('');
+const estPill=e=>e==='pend'?'<span class="pill warn">Por aprobar</span>'
+  :e==='afecta'?'<span class="pill bad">Afecta comisión</span>':'<span class="pill mute">Omitida</span>';
+
+function filaRuta(r,i){
+  const pct=r.avance[1]?Math.round(r.avance[0]/r.avance[1]*100):0;
+  const colAv=pct>=90?'var(--ok)':pct>=60?'var(--dato)':pct>0?'var(--alerta)':'var(--linea)';
+  const colEf=r.ef===null?'var(--linea)':r.ef>=96?'var(--ok)':r.ef>=95?'var(--alerta)':'var(--rojo)';
+  const estado=r.estado==='mute'?'<span class="pill mute"><span class="dot"></span>Sin registrar</span>'
+    :r.estado==='bad'?'<span class="pill bad"><span class="dot"></span>'+r.alerta+'</span>'
+    :r.estado==='warn'?'<span class="pill warn"><span class="dot"></span>'+r.alerta+'</span>'
+    :'<span class="pill ok"><span class="dot"></span>En orden</span>';
+  const resp=r.resp
+    ?'<div class="persona"><div class="avat" style="background:'+COLAV[i%COLAV.length]+'">'+iniciales(r.resp)+'</div>'+
+      '<div class="txt"><b>'+r.resp+'</b><small>'+r.rol+' · registrado '+r.hora+'</small></div></div>'
+    :'<div class="persona"><div class="avat" style="background:var(--linea);color:var(--tinta-3)">—</div>'+
+      '<div class="txt"><b style="color:var(--tinta-3)">sin responsable</b><small>ningún celular registró</small></div></div>';
+  return '<tr class="fila" id="f-'+r.cod+'" onclick="toggle('+i+')">'+
+    '<td><div class="ruta-cel"><span class="caret">▸</span><span class="ruta-cod">'+r.cod+'</span></div></td>'+
+    '<td>'+resp+'</td>'+
+    '<td class="r num">'+r.cargue+' cj</td>'+
+    '<td><div class="mini"><div class="bt"><i style="width:'+pct+'%;background:'+colAv+'"></i></div>'+
+      '<span class="pv">'+r.avance[0]+'/'+r.avance[1]+'</span></div></td>'+
+    '<td class="r num">'+(r.dev.cj?r.dev.cj+' cj'+(r.dev.und?' + '+r.dev.und+' u':''):'—')+'</td>'+
+    '<td class="r num">'+(r.valor?pesos(r.valor):'—')+'</td>'+
+    '<td><div class="mini"><div class="bt"><i style="width:'+(r.ef||0)+'%;background:'+colEf+'"></i></div>'+
+      '<span class="pv">'+(r.ef!==null?r.ef+'%':'—')+'</span></div></td>'+
+    '<td>'+estado+'</td></tr>'+
+    '<tr class="detalle" id="d-'+i+'" style="display:none"><td colspan="8"><div class="det-in">'+detalle(r)+'</div></td></tr>';
+}
+
+function detalle(r){
+  if(!r.clientes.length){
+    return '<div class="det-t">Sin devoluciones</div>'+
+      '<div style="font-size:12.5px;color:var(--tinta-2)">Esta ruta no ha reportado novedades. '+
+      (r.resp?'':'<b>Nadie se registró en la app hoy</b>, así que ninguna novedad quedaría con responsable — avisar antes de que salga el camión.')+'</div>';
+  }
+  return '<div class="det-t">Devoluciones de la ruta · '+r.clientes.length+' clientes</div>'+
+    r.clientes.map(c=>
+      '<div class="cli">'+
+        '<div><b>'+c.n+'</b><small>'+c.c+' · '+c.mot+(c.foto==='duda'?' · <span style="color:var(--alerta);font-weight:800">foto por verificar</span>':'')+'</small></div>'+
+        '<div class="sku">'+c.sku+'</div><div class="sku">'+c.cant+'</div>'+
+        '<div class="val">'+pesos(c.val)+'</div>'+
+        '<div class="acciones">'+(c.est==='pend'
+          ?'<button class="btn-si" type="button" onclick="event.stopPropagation();decidir(this,1)">Sí afecta</button>'+
+           '<button class="btn-no" type="button" onclick="event.stopPropagation();decidir(this,0)">Omitir</button>'
+          :estPill(c.est))+'</div>'+
+      '</div>').join('');
+}
+
+function decidir(btn,afecta){
+  btn.parentElement.innerHTML=afecta?'<span class="pill bad">Afecta comisión</span>':'<span class="pill mute">Omitida</span>';
+}
+
+let abierta=null;
+function toggle(i){
+  const d=document.getElementById('d-'+i), f=document.getElementById('f-'+RUTAS[i].cod);
+  const ya=d.style.display!=='none';
+  if(abierta!==null&&abierta!==i){
+    document.getElementById('d-'+abierta).style.display='none';
+    document.getElementById('f-'+RUTAS[abierta].cod).classList.remove('abierta');
+  }
+  d.style.display=ya?'none':'table-row';
+  f.classList.toggle('abierta',!ya);
+  abierta=ya?null:i;
+}
+function abrirRuta(cod){
+  const i=RUTAS.findIndex(r=>r.cod===cod); if(i<0)return;
+  if(abierta!==i)toggle(i);
+  document.getElementById('f-'+cod).scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.getElementById('cuerpo').innerHTML=RUTAS.map(filaRuta).join('');
+
+/* Ranking del mes — valor dentro de la barra, el primero resaltado */
+const RANK=[{r:'KA4V52',v:412},{r:'KA4V50',v:307},{r:'KA4V11',v:186},{r:'KA4V51',v:158},{r:'KA4V12',v:96}];
+const max=Math.max(...RANK.map(x=>x.v));
+document.getElementById('ranking').innerHTML=RANK.map((x,i)=>
+  '<div class="r-row"><div class="r-pos">#'+(i+1)+'</div>'+
+  '<div class="r-bar"><i style="width:'+Math.round(x.v/max*100)+'%;background:'+(i===0?'var(--rojo)':'var(--linea)')+'"></i>'+
+  '<span>'+x.r+'</span></div>'+
+  '<div class="r-val">'+x.v+' cj</div></div>').join('');
+</script>

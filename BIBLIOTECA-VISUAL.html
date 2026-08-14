@@ -1,0 +1,436 @@
+<title>Biblioteca Visual GMAZ</title>
+<style>
+:root{
+  --rojo:#E30613; --rojo-o:#B5000F; --rojo-s:#FFF0F1;
+  --tinta:#0F1117; --tinta-2:#4A5060; --tinta-3:#8A90A0;
+  --papel:#F5F6F8; --carta:#FFFFFF; --linea:#E4E7EE; --linea-2:#EEF0F4;
+  --ok:#059669; --ok-s:#ECFDF5; --alerta:#D97706; --alerta-s:#FFF8E6;
+  --dato:#1A56DB; --dato-s:#EFF6FF; --violeta:#7C3AED; --violeta-s:#F3E8FF;
+  --sombra:0 1px 2px rgba(15,17,23,.05); --sombra-alta:0 4px 14px -2px rgba(15,17,23,.10);
+  --codigo-bg:#0F1117; --codigo-fg:#D8DEE9;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+    --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+    --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+    --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+    --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+    --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+    --codigo-bg:#080A0E; --codigo-fg:#C8D0DC;
+  }
+}
+:root[data-theme="dark"]{
+  --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+  --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+  --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+  --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+  --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+  --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+  --codigo-bg:#080A0E; --codigo-fg:#C8D0DC;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 70px;display:flex;flex-direction:column;gap:26px}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+code,kbd{font-family:ui-monospace,"Cascadia Code",Consolas,monospace}
+
+/* Encabezado */
+.hero{border-bottom:2px solid var(--tinta);padding-bottom:20px;display:flex;flex-direction:column;gap:9px}
+.hero .eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--rojo)}
+.hero h1{font-size:32px;font-weight:800;letter-spacing:-1px}
+.hero p{margin:0;font-size:13.5px;color:var(--tinta-2);max-width:65ch}
+
+/* Secciones */
+section{display:flex;flex-direction:column;gap:14px}
+.sec-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-left:3px solid var(--rojo);padding-left:12px}
+.sec-h h2{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.sec-h .q{font-size:12.5px;color:var(--tinta-3);font-weight:600}
+
+/* Iconos */
+.icos{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:10px}
+.ico{background:var(--carta);border:1px solid var(--linea);border-radius:10px;padding:14px 8px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--sombra);cursor:pointer;
+  transition:border-color .14s,transform .14s}
+.ico:hover{border-color:var(--rojo);transform:translateY(-2px)}
+.ico svg{color:var(--tinta)}
+.ico b{font-size:10.5px;font-weight:700;color:var(--tinta-2);letter-spacing:.2px}
+.ico small{font-size:9.5px;color:var(--tinta-3);font-family:ui-monospace,monospace}
+
+/* Tarjetas KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
+.k{background:var(--carta);border:1px solid var(--linea);border-top:3px solid var(--dato);border-radius:var(--r);
+  padding:14px 15px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:5px}
+.k.v-ok{border-top-color:var(--ok)} .k.v-al{border-top-color:var(--alerta)}
+.k.v-ro{border-top-color:var(--rojo)} .k.v-vi{border-top-color:var(--violeta)}
+.k-top{display:flex;align-items:flex-start;gap:8px}
+.k-lbl{font-size:10px;font-weight:800;letter-spacing:.75px;text-transform:uppercase;color:var(--tinta-3);
+  display:flex;align-items:center;gap:5px;flex:1;line-height:1.3}
+.k-i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.k-i.b{background:var(--dato-s);color:var(--dato)} .k-i.g{background:var(--ok-s);color:var(--ok)}
+.k-i.a{background:var(--alerta-s);color:var(--alerta)} .k-i.r{background:var(--rojo-s);color:var(--rojo)}
+.k-i.v{background:var(--violeta-s);color:var(--violeta)}
+.k-v{font-size:27px;font-weight:800;letter-spacing:-.9px;line-height:1.05}
+.k-v small{font-size:15px;font-weight:700;color:var(--tinta-3);letter-spacing:0}
+.k-d{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:4px}
+.k-d.up{color:var(--ok)} .k-d.dn{color:var(--rojo)} .k-d.flat{color:var(--tinta-3)}
+.k-d span{color:var(--tinta-3);font-weight:600}
+.k-foot{display:flex;align-items:baseline;gap:6px;font-size:11px;color:var(--tinta-3);font-weight:600;margin-top:2px}
+.k-foot .fill{flex:1;border-bottom:1px dotted var(--linea);transform:translateY(-3px)}
+.k-foot b{color:var(--tinta-2);font-weight:800}
+.info{width:13px;height:13px;border-radius:50%;border:1.2px solid var(--tinta-3);color:var(--tinta-3);
+  font-size:8.5px;font-weight:900;display:inline-grid;place-items:center;cursor:help;flex-shrink:0;
+  position:relative;font-family:ui-sans-serif}
+.info:hover::after{content:attr(data-def);position:absolute;bottom:130%;left:-6px;width:196px;background:var(--tinta);
+  color:var(--papel);font-size:10.5px;font-weight:600;line-height:1.45;padding:8px 10px;border-radius:8px;
+  text-transform:none;letter-spacing:0;z-index:9;box-shadow:var(--sombra-alta)}
+.spark{margin-top:4px}
+.barra{height:5px;border-radius:3px;background:var(--linea-2);overflow:hidden;margin-top:5px}
+.barra i{display:block;height:100%;border-radius:3px}
+
+/* Píldoras y estados */
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:7px;
+  font-size:11px;font-weight:800;letter-spacing:.2px}
+.pill.ok{background:var(--ok-s);color:var(--ok)} .pill.warn{background:var(--alerta-s);color:var(--alerta)}
+.pill.bad{background:var(--rojo-s);color:var(--rojo)} .pill.info{background:var(--dato-s);color:var(--dato)}
+.pill.mute{background:var(--linea-2);color:var(--tinta-3)} .pill.vio{background:var(--violeta-s);color:var(--violeta)}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* Tabla de reglas */
+.tabla-scroll{overflow-x:auto;background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra)}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--tinta-3);
+  padding:11px 13px;border-bottom:1px solid var(--linea)}
+td{padding:11px 13px;border-bottom:1px solid var(--linea-2);font-size:12.5px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+td b{font-weight:800}
+
+/* Bloques bueno/malo */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.duo{grid-template-columns:1fr}}
+.caso{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);overflow:hidden;box-shadow:var(--sombra)}
+.caso-h{padding:9px 13px;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:7px}
+.caso-h.si{background:var(--ok-s);color:var(--ok)} .caso-h.no{background:var(--rojo-s);color:var(--rojo)}
+.caso-b{padding:14px}
+.caso-n{padding:10px 13px 13px;font-size:11.5px;color:var(--tinta-2);border-top:1px solid var(--linea-2);font-weight:600}
+.mal{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.mal div{background:var(--linea-2);border-radius:8px;padding:9px;text-align:center}
+.mal b{display:block;font-size:17px;font-weight:800}
+.mal small{font-size:9px;color:var(--tinta-3);font-weight:700;text-transform:uppercase}
+
+.fuente{font-size:11.5px;color:var(--tinta-3);font-weight:600;line-height:1.7}
+footer{border-top:1px solid var(--linea);padding-top:16px;font-size:11.5px;color:var(--tinta-3);text-align:center;line-height:1.75}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);background:var(--tinta);
+  color:var(--papel);padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;opacity:0;
+  transition:transform .2s,opacity .2s;pointer-events:none;z-index:50;box-shadow:var(--sombra-alta)}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eye">Sistema de diseño · ERP y CRM</div>
+    <h1>Biblioteca visual</h1>
+    <p>Iconos, tarjetas de indicador y estados, sacados de revisar 27 demos de ERP y CRM fotograma a fotograma.
+    Esto es lo que se reutiliza en GMAZ Rutas, Efrén Solarte, Eléctricos Boyacá y lo que venga. Haz clic en un icono para copiar su código.</p>
+  </div>
+
+  <!-- ICONOS -->
+  <section>
+    <div class="sec-h">
+      <h2>Iconos</h2>
+      <span class="q">24 × 24, trazo 2, heredan el color del texto · un concepto = un icono, siempre</span>
+    </div>
+    <div class="icos" id="icos"></div>
+    <div class="fuente">
+      Dibujados a mano en la misma rejilla de Lucide, así que combinan si un proyecto migra a React.
+      En una app de un solo archivo (GMAZ) van embebidos: sin CDN, sin licencias que revisar, sin dependencias.
+      <b>Emoji no es icono</b>: el emoji cambia según el Android y no hereda color — sirve para WhatsApp, no para la pantalla.
+    </div>
+  </section>
+
+  <!-- ANATOMÍA -->
+  <section>
+    <div class="sec-h">
+      <h2>La tarjeta de indicador</h2>
+      <span class="q">la pieza más repetida y la que más se hace mal</span>
+    </div>
+    <div class="kpi-grid">
+
+      <div class="k v-ok">
+        <div class="k-top">
+          <div class="k-lbl">Efectividad de hoy
+            <span class="info" data-def="Promedio entre cajas entregadas/cargadas y clientes entregados/totales. Solo descuenta devoluciones aprobadas como «afecta»."></span>
+          </div>
+          <div class="k-i g">§ico:target§</div>
+        </div>
+        <div class="k-v num">96,4<small>%</small></div>
+        <div class="k-d up">▲ 1,2 pts <span>vs. promedio del mes</span></div>
+        <div class="barra"><i style="width:96.4%;background:var(--ok)"></i></div>
+        <div class="k-foot"><span>Tramo de comisión</span><span class="fill"></span><b>$150.000</b></div>
+      </div>
+
+      <div class="k v-ro">
+        <div class="k-top">
+          <div class="k-lbl">Venta devuelta
+            <span class="info" data-def="Valor en pesos de los productos que volvieron al camión, calculado con el precio del Libro de pedidos del día."></span>
+          </div>
+          <div class="k-i r">§ico:back§</div>
+        </div>
+        <div class="k-v num">$1,42<small> M</small></div>
+        <div class="k-d dn">▼ 3,1% <span>del pedido del día</span></div>
+        <div class="spark">§spark:barras§</div>
+        <div class="k-foot"><span>Cajas</span><span class="fill"></span><b>53 cj · 18 und</b></div>
+      </div>
+
+      <div class="k">
+        <div class="k-top">
+          <div class="k-lbl">Avance de entrega
+            <span class="info" data-def="Clientes confirmados como entregados sobre el total programado en el PPAS de hoy."></span>
+          </div>
+          <div class="k-i b">§ico:store§</div>
+        </div>
+        <div class="k-v num">612<small>/834</small></div>
+        <div class="k-d up">▲ 23 clientes <span>vs. esta hora ayer</span></div>
+        <div class="spark">§spark:linea§</div>
+        <div class="k-foot"><span>Última confirmación</span><span class="fill"></span><b>11:36 a. m.</b></div>
+      </div>
+
+      <div class="k v-al">
+        <div class="k-top">
+          <div class="k-lbl">Devoluciones por aprobar
+            <span class="info" data-def="Rechazos reportados por los entregadores que esperan que el coordinador decida si afectan comisión."></span>
+          </div>
+          <div class="k-i a">§ico:alert§</div>
+        </div>
+        <div class="k-v num">7</div>
+        <div class="k-d flat">4 vencen hoy <span>· 3 de KA4V52</span></div>
+        <div class="spark">§spark:meta§</div>
+        <div class="k-foot"><span>Más antigua</span><span class="fill"></span><b>hace 2 días</b></div>
+      </div>
+
+      <div class="k v-vi">
+        <div class="k-top">
+          <div class="k-lbl">Cumplimiento del cargue
+            <span class="info" data-def="Cajas entregadas sobre cajas cargadas en el camión, según la Hoja de cargue de KOF."></span>
+          </div>
+          <div class="k-i v">§ico:truck§</div>
+        </div>
+        <div class="k-v num">96,9<small>%</small></div>
+        <div class="k-d up">▲ 0,4 pts <span>vs. ayer</span></div>
+        <div class="spark">§spark:bala§</div>
+        <div class="k-foot"><span>Cargado</span><span class="fill"></span><b>1.720 cj</b></div>
+      </div>
+
+      <div class="k v-ok">
+        <div class="k-top">
+          <div class="k-lbl">Obsequios con foto
+            <span class="info" data-def="Bonificaciones ZG del Libro que ya tienen foto de entrega tomada por el entregador."></span>
+          </div>
+          <div class="k-i g">§ico:gift§</div>
+        </div>
+        <div class="k-v num">46<small>/48</small></div>
+        <div class="k-d up">▲ 12 <span>vs. la semana pasada</span></div>
+        <div class="barra"><i style="width:95.8%;background:var(--ok)"></i></div>
+        <div class="k-foot"><span>Sin foto</span><span class="fill"></span><b>2 clientes</b></div>
+      </div>
+
+    </div>
+
+    <div class="tabla-scroll">
+      <table>
+        <thead><tr><th style="width:150px">Parte</th><th>Regla</th></tr></thead>
+        <tbody>
+          <tr><td><b>Borde superior</b></td><td>3 px del color de la familia del dato. Separa grupos de un vistazo sin recargar la tarjeta.</td></tr>
+          <tr><td><b>Etiqueta</b></td><td>Mayúscula pequeña, gris, con espaciado. Nunca compite con el número.</td></tr>
+          <tr><td><b>ⓘ definición</b></td><td>Lo más didáctico de toda la investigación: el usuario aprende el negocio leyendo su propio tablero. Pásale el mouse a cualquiera de arriba.</td></tr>
+          <tr><td><b>Número</b></td><td>27–34 px, peso 800, <code>tabular-nums</code> para que no baile al refrescar. La unidad va más pequeña y en gris.</td></tr>
+          <tr><td><b>Delta</b></td><td>Flecha <b>y</b> color (nunca solo color) <b>y</b> contra qué se compara. Un «+12%» suelto no significa nada.</td></tr>
+          <tr><td><b>Micro-visual</b></td><td>Se elige por la pregunta, no por gusto — ver la tabla de abajo.</td></tr>
+          <tr><td><b>Línea de apoyo</b></td><td>El dato secundario que evita la siguiente pregunta, con línea punteada para guiar el ojo.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MICROVISUALES -->
+  <section>
+    <div class="sec-h">
+      <h2>Qué gráfico va dentro</h2>
+      <span class="q">el mismo número con otro gráfico responde otra pregunta</span>
+    </div>
+    <div class="tabla-scroll">
+      <table>
+        <thead><tr><th style="width:118px">Micro-visual</th><th style="width:150px">Se ve así</th><th>Responde</th></tr></thead>
+        <tbody>
+          <tr><td><b>Línea</b></td><td>§spark:linea§</td><td>¿Cómo viene evolucionando? Marca el último punto para anclar la lectura.</td></tr>
+          <tr><td><b>Barras bicolor</b></td><td>§spark:barras§</td><td>¿Qué días sumaron y cuáles restaron? El color separa signo, no magnitud.</td></tr>
+          <tr><td><b>Línea sobre meta</b></td><td>§spark:meta§</td><td>Real contra lo planeado, en el mismo espacio. Las barras grises son la meta.</td></tr>
+          <tr><td><b>Bala</b></td><td>§spark:bala§</td><td>Un valor contra su umbral. La marca vertical es la meta; la barra, el logro.</td></tr>
+          <tr><td><b>Barra de avance</b></td><td><div class="barra" style="margin:6px 0"><i style="width:73%;background:var(--dato)"></i></div></td><td>¿Cuánto falta para una meta cerrada? Solo si el 100 % existe de verdad.</td></tr>
+          <tr><td><b>Nada</b></td><td><span class="pill mute">sin gráfico</span></td><td>Cuando el número basta. No rellenar por rellenar: el vacío también comunica.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ESTADOS -->
+  <section>
+    <div class="sec-h">
+      <h2>Estados</h2>
+      <span class="q">color + palabra, nunca color solo</span>
+    </div>
+    <div class="pills">
+      <span class="pill ok"><span class="dot"></span>Entregado</span>
+      <span class="pill ok">En orden</span>
+      <span class="pill warn"><span class="dot"></span>Por aprobar</span>
+      <span class="pill warn">Foto por verificar</span>
+      <span class="pill bad"><span class="dot"></span>Afecta comisión</span>
+      <span class="pill bad">Sin registrar</span>
+      <span class="pill info">En ruta</span>
+      <span class="pill vio">Crédito formal</span>
+      <span class="pill mute">Omitida</span>
+      <span class="pill mute">Sin datos</span>
+      <span class="pill ok">⚡ 95</span>
+      <span class="pill bad">4 vencen hoy</span>
+    </div>
+    <div class="fuente">
+      El punto de color dentro de la píldora sirve para los estados del ciclo de vida (dónde va el registro).
+      Sin punto quedan los estados de decisión y las alertas. <b>Nunca un estado solo por color</b>: se rompe con daltonismo,
+      en blanco y negro y con el brillo del sol en el celular del entregador.
+    </div>
+  </section>
+
+  <!-- BUENO VS MALO -->
+  <section>
+    <div class="sec-h">
+      <h2>El error que ya cometimos</h2>
+      <span class="q">nueve indicadores iguales no son un tablero</span>
+    </div>
+    <div class="duo">
+      <div class="caso">
+        <div class="caso-h no">✕ Como estaba</div>
+        <div class="caso-b">
+          <div class="mal">
+            <div><b class="num">94%</b><small>Efectividad</small></div>
+            <div><b class="num">612</b><small>Avance</small></div>
+            <div><b class="num">53</b><small>Cajas rech.</small></div>
+            <div><b class="num">$1,4M</b><small>Devuelto</small></div>
+            <div><b class="num">6</b><small>Rutas</small></div>
+            <div><b class="num">7</b><small>Rechazos</small></div>
+            <div><b class="num">73%</b><small>Cumplim.</small></div>
+            <div><b class="num">46</b><small>Obsequios</small></div>
+            <div><b class="num">3</b><small>Alertas</small></div>
+          </div>
+        </div>
+        <div class="caso-n">Nueve números del mismo tamaño y color. Todos gritan igual, así que ninguno se oye. No hay por dónde entrar ni qué hacer después.</div>
+      </div>
+      <div class="caso">
+        <div class="caso-h si">✓ Como queda</div>
+        <div class="caso-b" style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:var(--tinta);color:var(--papel);border-radius:10px;padding:12px 13px">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:1.1px;opacity:.6;text-transform:uppercase">Lo que hay que mirar hoy</div>
+            <div style="font-size:14.5px;font-weight:800;line-height:1.35;margin-top:5px">Dos rutas explican el 71 % de la devolución.</div>
+          </div>
+          <div class="k v-ok" style="border:1px solid var(--linea);border-top:3px solid var(--ok);box-shadow:none">
+            <div class="k-top"><div class="k-lbl">Efectividad de hoy</div><div class="k-i g">§ico:target§</div></div>
+            <div class="k-v num">94,2<small>%</small></div>
+            <div class="k-d dn">▼ 1,8 pts <span>vs. promedio del mes</span></div>
+          </div>
+        </div>
+        <div class="caso-n">Una frase que dice qué pasa, tres números con jerarquía y el resto por profundización. El tablero responde «¿qué hago?» antes que «¿cómo vamos?».</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Biblioteca visual GMAZ · agosto 2026 · guardada en las skills <code>design-system</code> y <code>erp-crm-master</code><br>
+    Fuentes: 15 demos de ERP y 12 de CRM revisadas fotograma a fotograma, más SAP Fiori, Samsara y Onfleet en producto real.
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ SET DE ICONOS — 24×24, trazo 2, heredan currentColor ══ */
+const ICO={
+ truck:'<rect x="1" y="6" width="13" height="11" rx="1.5"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="6" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/>',
+ box:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/>',
+ store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9h18a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><rect x="9.5" y="13" width="5" height="7"/>',
+ user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+ alert:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+ check:'<circle cx="12" cy="12" r="9"/><polyline points="8 12.5 11 15.5 16 9.5"/>',
+ money:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/>',
+ doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+ cam:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>',
+ map:'<path d="M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+ back:'<polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+ 'trend-up':'<polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/>',
+ 'trend-down':'<polyline points="3 7 9 13 13 9 21 17"/><polyline points="15 17 21 17 21 11"/>',
+ filter:'<polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/>',
+ export:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+ cal:'<rect x="3" y="4.5" width="18" height="17" rx="2"/><line x1="16" y1="2.5" x2="16" y2="6.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="3" y1="10" x2="21" y2="10"/>',
+ gift:'<rect x="3" y="9" width="18" height="12" rx="1.5"/><line x1="12" y1="9" x2="12" y2="21"/><path d="M3 13h18"/><path d="M12 9C10 9 7 8.5 7 6.5S9.5 4 12 9zM12 9c2 0 5-.5 5-2.5S14.5 4 12 9z"/>',
+ fuel:'<line x1="3" y1="21" x2="13" y2="21"/><path d="M4 21V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v16"/><line x1="4.5" y1="9" x2="11.5" y2="9"/><path d="M16 8l2.5 2.5V18a1.8 1.8 0 0 0 3.5 0V9l-3-3"/>',
+ search:'<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/>',
+ pdf:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 17v-4h1.6a1.4 1.4 0 0 1 0 2.8H8"/><path d="M13 17v-4h1.2a2 2 0 0 1 0 4z"/>'
+};
+const NOM={truck:'Ruta / camión',box:'Producto / caja',store:'Cliente / tienda',user:'Persona',target:'Meta',
+ alert:'Alerta',check:'Aprobado',money:'Venta',doc:'Documento',cam:'Evidencia',clock:'Hora',map:'Ubicación',
+ back:'Devolución','trend-up':'Sube','trend-down':'Baja',filter:'Filtro',export:'Exportar',cal:'Fecha',
+ gift:'Obsequio',fuel:'Combustible',search:'Buscar',pdf:'Factura PDF'};
+
+function icoSvg(n,s=22,w=2){
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
+    'stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICO[n]||'')+'</svg>';
+}
+
+/* Micro-visuales — mismos datos, distinta pregunta */
+const SPARK={
+ linea:'<svg viewBox="0 0 100 26" width="100%" height="26" preserveAspectRatio="none" aria-hidden="true">'+
+   '<polyline points="2,20 16,14 30,17 44,8 58,12 72,6 86,10 97,4" fill="none" stroke="var(--dato)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+   '<circle cx="97" cy="4" r="2.6" fill="var(--dato)"/></svg>',
+ barras:'<svg viewBox="0 0 100 26" width="100%" height="26" preserveAspectRatio="none" aria-hidden="true">'+
+   '<g><rect x="3" y="13" width="8" height="10" rx="1.5" fill="var(--rojo)"/><rect x="16" y="7" width="8" height="16" rx="1.5" fill="var(--rojo)" opacity=".45"/>'+
+   '<rect x="29" y="16" width="8" height="7" rx="1.5" fill="var(--ok)"/><rect x="42" y="4" width="8" height="19" rx="1.5" fill="var(--rojo)"/>'+
+   '<rect x="55" y="15" width="8" height="8" rx="1.5" fill="var(--ok)"/><rect x="68" y="10" width="8" height="13" rx="1.5" fill="var(--rojo)" opacity=".45"/>'+
+   '<rect x="81" y="18" width="8" height="5" rx="1.5" fill="var(--ok)"/></g></svg>',
+ meta:'<svg viewBox="0 0 100 26" width="100%" height="26" preserveAspectRatio="none" aria-hidden="true">'+
+   '<g fill="var(--linea)"><rect x="3" y="8" width="10" height="15" rx="1.5"/><rect x="19" y="6" width="10" height="17" rx="1.5"/>'+
+   '<rect x="35" y="9" width="10" height="14" rx="1.5"/><rect x="51" y="5" width="10" height="18" rx="1.5"/>'+
+   '<rect x="67" y="7" width="10" height="16" rx="1.5"/><rect x="83" y="4" width="10" height="19" rx="1.5"/></g>'+
+   '<polyline points="8,16 24,12 40,17 56,9 72,14 88,7" fill="none" stroke="var(--alerta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ bala:'<svg viewBox="0 0 100 26" width="100%" height="26" preserveAspectRatio="none" aria-hidden="true">'+
+   '<rect x="2" y="9" width="96" height="8" rx="4" fill="var(--linea-2)"/>'+
+   '<rect x="2" y="9" width="74" height="8" rx="4" fill="var(--violeta)"/>'+
+   '<rect x="82" y="5" width="2.5" height="16" rx="1" fill="var(--tinta)"/></svg>'
+};
+
+/* Render: se sustituyen los marcadores del contenido (solo dentro de .wrap, no del script) */
+const cont=document.querySelector('.wrap');
+cont.innerHTML=cont.innerHTML
+  .replace(/§ico:([a-z-]+)§/g,(m,n)=>icoSvg(n,15,2.1))
+  .replace(/§spark:([a-z]+)§/g,(m,n)=>SPARK[n]||'');
+
+/* Rejilla de iconos */
+document.getElementById('icos').innerHTML=Object.keys(ICO).map(n=>
+  '<div class="ico" onclick="copiar(\''+n+'\')" title="Copiar el código de este icono">'+
+    icoSvg(n,24,2)+'<b>'+(NOM[n]||n)+'</b><small>'+n+'</small></div>').join('');
+
+function copiar(n){
+  const txt="icoSvg('"+n+"')  →  "+ICO[n];
+  navigator.clipboard&&navigator.clipboard.writeText(txt);
+  const t=document.getElementById('toast');
+  t.textContent='Copiado: '+n;
+  t.classList.add('on');
+  clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('on'),1600);
+}
+</script>
