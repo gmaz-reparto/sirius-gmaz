@@ -235,6 +235,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 .ns-radio{width:15px;height:15px;border-radius:50%;border:2px solid var(--gris3);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
 .ns-opt.sel .ns-radio{background:var(--rojo);border-color:var(--rojo)}
 .ns-opt.sel .ns-radio::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff}
+/* Aviso de foto de fachada (motivo "cliente cerrado") */
+.ns-fachada{margin-top:12px;border-radius:12px;padding:11px 12px;border:1.5px solid}
+.ns-fachada.pide{background:#FFF0F1;border-color:rgba(227,6,19,.3)}
+.ns-fachada.duda{background:#FFF8E6;border-color:#F5C24A}
+.ns-fachada.ok{background:#ECFDF5;border-color:#A7F3D0}
+.nsf-t{font-size:12.5px;font-weight:900;color:#0F1117;margin-bottom:3px}
+.nsf-s{font-size:11px;font-weight:600;color:#4A5060;line-height:1.5}
+.nsf-btn{margin-top:9px;width:100%;height:38px;border:none;border-radius:10px;background:#0F1117;color:#fff;
+  font-family:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.nsf-btn:active{transform:scale(.98)}
 .ns-txt{font-size:11px;font-weight:700;color:var(--negro)}
 .ns-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin:12px 16px 0}
 .ns-cancel{background:var(--gris1);border:none;border-radius:10px;padding:13px;font-size:12px;font-weight:700;color:var(--gris5);cursor:pointer;font-family:inherit}
@@ -649,6 +659,11 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .ep-chip-pick:hover{background:#F1F2F5}
 .ep-chip-pick.sel{background:#FFF0F1;border-color:#E30613}
 .ep-chip-pick.sel b{color:#B5000F}
+/* Celular ya amarrado a una persona: se muestra como identidad, no como lista editable. */
+.ep-chip-yo{width:100%;background:#ECFDF5;border-color:#A7F3D0;padding:11px 13px;flex-direction:column;align-items:flex-start;gap:2px}
+.ep-chip-yo b{font-size:14px}
+.ep-otro{margin-top:9px;font-size:11px;font-weight:700;color:#8A90A0;text-decoration:underline;cursor:pointer;line-height:1.45}
+.ep-otro:hover{color:#E30613}
 /* Toggle Conductor / Auxiliar */
 .ep-rol{display:flex;gap:8px;margin:11px 0 12px}
 .ep-rol-btn{flex:1;border:1.5px solid #E6E9EF;background:#fff;border-radius:11px;padding:10px 6px;
@@ -998,6 +1013,10 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .nov-est.omitida{background:#E2E8F0;color:#475569}
 .nov-est.pendiente{background:#FEF3C7;color:#92400E}
 .nov-foot{display:flex;flex-wrap:wrap;gap:11px;font-size:10.5px;color:var(--gris5);font-weight:600;margin-top:auto}
+.nov-quien{display:flex;align-items:center;gap:6px;margin-top:7px;padding:5px 9px;background:#F1F5FF;border:1px solid #DCE5FF;border-radius:8px;font-size:10.5px;font-weight:700;color:#1A56DB;width:fit-content;max-width:100%}
+.nov-quien b{font-weight:900}
+.nov-quien svg{flex-shrink:0}
+.nov-alerta{margin-top:6px;padding:5px 9px;background:#FFF8E6;border:1px solid #F5C24A;border-radius:8px;font-size:10.5px;font-weight:700;color:#92400E}
 .nov-foot b{color:#0F1117;font-weight:800}
 .nov-empty{grid-column:1/-1;text-align:center;color:#8A90A0;padding:26px;font-size:12.5px;font-weight:600}
 /* Histórico de novedades por mes (Panel Coordinador / Rutina, pestaña Histórico) */
@@ -1780,9 +1799,9 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
     <div class="ns-photo-badge">✓ Foto tomada</div>
   </div>
   <div class="ns-body">
-    <!-- Solo aparece si hoy van 2+ personas en la ruta: cada quien reporta lo suyo. -->
+    <!-- Quién reporta: el dueño de este celular (un equipo = una persona). -->
     <div id="ns-reportero" style="display:none">
-      <div class="ns-lbl">¿Quién reporta esta novedad?</div>
+      <div class="ns-lbl">Reporta esta novedad</div>
       <div id="ns-reportero-chips" class="ep-lista" style="margin-bottom:14px"></div>
     </div>
     <div class="ns-lbl">Motivo del rechazo</div>
@@ -1804,6 +1823,8 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
     <div class="ns-opt" onclick="haptic();pickReason('RECHAZO PARCIAL',this)">
       <div class="ns-opt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="ns-radio"></div><div class="ns-txt">Rechazo parcial</div>
     </div>
+    <!-- "Cliente cerrado" exige foto de la FACHADA (no de la factura) -->
+    <div id="ns-fachada" class="ns-fachada" style="display:none"></div>
   </div>
   <div id="ns-tabla" style="display:none"></div>
   <div class="ns-actions">
@@ -2015,19 +2036,18 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
   </div>
 </div>
 
-<!-- ¿QUIÉN VA HOY EN LA RUTA? — tripulación completa (conductor + auxiliares), una vez al día -->
+<!-- ¿QUIÉN ERES? — registro individual: un celular, una persona (control de asistencia y de novedades) -->
 <div id="ent-pick-ovl">
   <div id="ent-pick-card">
     <div class="ep-ic">🧑‍🔧</div>
-    <div class="ep-t">¿Quién va hoy en <span id="ep-ruta">la ruta</span>?</div>
-    <div class="ep-s">Agrega a todos los que van en el vehículo. Cada uno reporta sus propias novedades.</div>
+    <div class="ep-t">¿Quién sale hoy en <span id="ep-ruta">la ruta</span>?</div>
+    <div class="ep-s" id="ep-sub">Regístrate tú, con tu propio celular. Un equipo = una persona: así tus novedades y tu asistencia quedan a tu nombre.</div>
     <div id="ep-lista" class="ep-lista" style="margin-bottom:14px"></div>
-    <select id="ent-pick-sel"></select>
+    <div id="ep-sel-wrap"><select id="ent-pick-sel"></select></div>
     <div class="ep-rol">
       <button type="button" class="ep-rol-btn on" data-rol="conductor" onclick="haptic();_epPickRol(this)">Conductor</button>
       <button type="button" class="ep-rol-btn" data-rol="auxiliar" onclick="haptic();_epPickRol(this)">Auxiliar</button>
     </div>
-    <button class="ep-add" onclick="haptic();agregarTripulante()">+ Agregar a la lista</button>
     <button class="ep-ok" onclick="haptic();confirmarTripulacion()">Iniciar ruta</button>
   </div>
 </div>
@@ -2242,7 +2262,9 @@ let rechazoDetalle=null; // detalle del rechazo confirmado: [{cod,desc,cajas,und
 let sb,gmap,gpano,svSvc,truckMk;
 let clientes=[],markers=[],rutaActual='',clienteIdx=0,vendedorActual=null;
 let motivo=null,photoFile=null,photoPreviewUrl=null;
-let _novReportero=null; // {ced,nombre} — quién de la tripulación reporta ESTA novedad
+let _novReportero=null; // {ced,nombre} — quién reporta ESTA novedad (dueño del celular)
+let _fotoFachadaOK=false;     // en "cliente cerrado": ya tomó la foto de la fachada
+let _fotoFachadaDudosa=false; // esa foto parece un documento (factura) → queda marcada para revisión
 let logoTaps=0,logoTimer=null,coordUnlocked=false;
 let ultimaPosGPS=null; // Última posición GPS del watchPosition
 
@@ -3002,7 +3024,8 @@ async function mapaCajasRechazadas(novedades_,fechaDefault){
         const cod=file.name.replace(/\.json$/,'');
         if(!porFecha[f].has(cod))continue;
         try{const d=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+f+'/'+encodeURIComponent(file.name)+'?t='+Date.now())).json();
-          map[cod]={caj:d.total_cajas||0,und:d.total_und||0,detalle:d.detalle||[],motivo:d.motivo||'',estado:d.estado||'pendiente',hora:d.hora||''};}catch(e){}
+          map[cod]={caj:d.total_cajas||0,und:d.total_und||0,detalle:d.detalle||[],motivo:d.motivo||'',estado:d.estado||'pendiente',hora:d.hora||'',
+            reporta:d.reporta||null,foto_tipo:d.foto_tipo||'',foto_revisar:!!d.foto_revisar};}catch(e){}
       }
     }catch(e){}
   }
@@ -3572,6 +3595,14 @@ function motivoMeta(m){
   };
   return map[m]||{c:'#4A5060',bg:'#F1F2F5'};
 }
+/* Nombre del entregador para las tarjetas: dos nombres bastan y caben. Las novedades viejas (antes
+   del registro por persona) traen el texto fijo "Repartidor" o vienen vacías → se marcan como sin
+   identificar, para que se note la diferencia con las que sí tienen responsable. */
+function _nomCorto(nom){
+  const n=String(nom||'').trim();
+  if(!n||/^repartidor$/i.test(n))return 'Sin identificar';
+  return n.split(/\s+/).slice(0,2).join(' ');
+}
 const _estBadgeNov=est=>est==='afecta'?'<span class="nov-est afecta">Afecta comisión</span>':est==='omitida'?'<span class="nov-est omitida">Omitida</span>':'<span class="nov-est pendiente">Por revisar</span>';
 /* Tarjeta de una novedad/rechazo, con el detalle por SKU (producto/cantidad/valor) si existe.
    Compartida entre el panel en vivo (cargarDash) y la vista histórica por fecha (verRechazosFecha). */
@@ -3603,8 +3634,17 @@ function _novCardHTML(n,ctx){
         _estBadgeNov(rd.estado)+
       '</div>'+
       '<div class="nov-foot"><span>🕒 '+hora+'</span><span>📦 <b>'+Math.round(cajas)+'</b> cajas</span>'+
-        (vd&&vd!=='—'?'<span>👤 '+vd+'</span>':'')+
+        (vd&&vd!=='—'?'<span>🏷️ Vta '+vd+'</span>':'')+
       '</div>'+
+      /* Quién de la tripulación reportó la novedad — sale de novedades.conductor, que desde el
+         registro por persona guarda el nombre real (antes era el texto fijo "Repartidor"). */
+      '<div class="nov-quien">'+
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+
+        '<span>Reportó: <b>'+_nomCorto(n.conductor||(rd.reporta||{}).nombre)+'</b>'+
+          ((rd.reporta||{}).ced?' · C.C. '+rd.reporta.ced:'')+'</span>'+
+      '</div>'+
+      // La foto de "cliente cerrado" debe ser la fachada; si parecía un documento, se avisa aquí.
+      (rd.foto_revisar?'<div class="nov-alerta">⚠️ La foto no parece una fachada — verificar evidencia</div>':'')+
       detalleHTML+
     '</div></div>';
 }
@@ -3617,7 +3657,7 @@ async function verRechazosFecha(fecha){
   const cont=document.getElementById('dash-nov');if(cont)cont.innerHTML='<div style="padding:20px;text-align:center;color:#8A90A0">Cargando rechazos del '+fecha+'…</div>';
   const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
   try{
-    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url&fecha=eq.'+fecha,{headers:_h});
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url,conductor&fecha=eq.'+fecha,{headers:_h});
     const novs=r.ok?await r.json():[];
     const rechCod=await mapaCajasRechazadas(novs,fecha);
     let rutaVend={};try{const rv=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_VEND+'?select=codigo,ruta_vendedor',{headers:_h})).json();(rv||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');}catch(e){}
@@ -3641,7 +3681,7 @@ async function cargarRechazosFechaMovil(fecha){
   if(cardsCont)cardsCont.innerHTML='';
   const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
   try{
-    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url&fecha=eq.'+fecha,{headers:_h});
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url,conductor&fecha=eq.'+fecha,{headers:_h});
     const novs=r.ok?await r.json():[];
     const rechCod=await mapaCajasRechazadas(novs,fecha);
     let rutaVend={};try{const rv=await (await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_VEND+'?select=codigo,ruta_vendedor',{headers:_h})).json();(rv||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');}catch(e){}
@@ -3682,7 +3722,7 @@ async function cargarDash(){
     const fecha=getColDate();
     const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
       sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia'),
-      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url').eq('fecha',fecha),
+      sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url,conductor').eq('fecha',fecha),
       sb.from('estados_entrega').select('ruta,estado,codigo_cliente,created_at').eq('fecha',fecha),
       sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
     ]);
@@ -5515,17 +5555,61 @@ async function _guardarRegistroRuta(fecha,ruta,personas){
       body:JSON.stringify({...p,ruta})}).catch(()=>null);
   }));
 }
-/* Cache local — para no depender de red en cada rechazo, y para no volver a preguntar si el
-   dispositivo ya registró tripulación hoy para esta ruta. */
-function _tripulacionLocal(ruta){
-  try{const d=JSON.parse(localStorage.getItem('gmaz_tripulacion')||'null');
-    if(d&&d.fecha===getColDate()&&d.ruta===ruta)return d.personas||[];}catch(e){}
-  return[];
+/* ══ UN CELULAR = UNA PERSONA (2026-08-14) ══
+   Antes un mismo teléfono registraba a toda la tripulación (conductor + auxiliares) y después había
+   que elegir a mano quién reportaba cada novedad — con dos personas en el mismo equipo, la novedad
+   podía quedar a nombre del otro y la asistencia no probaba nada. Ahora cada quien se registra en SU
+   propio celular:
+     · el dispositivo queda amarrado a una sola cédula (`gmaz_persona`, sin fecha: es permanente);
+     · si otra persona intenta registrarse en ese mismo equipo, se bloquea — solo el coordinador,
+       con su clave, puede liberar el teléfono (cambio de equipo, daño, reasignación);
+     · antes de registrar se consulta el registro central del día: si esa cédula ya se registró hoy
+       desde OTRO celular, también se bloquea (nadie presta su usuario).
+   La ruta la sigue armando el coordinador con el registro central: cada celular aporta una persona y
+   el panel muestra la tripulación completa de cada ruta. */
+function _deviceId(){
+  let d=localStorage.getItem('gmaz_device_id');
+  if(!d){d='dev_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);localStorage.setItem('gmaz_device_id',d);}
+  return d;
 }
-function _guardarTripulacionLocal(ruta,personas){
-  localStorage.setItem('gmaz_tripulacion',JSON.stringify({fecha:getColDate(),ruta,personas}));
+/* Persona dueña de ESTE celular (amarre permanente, no por día). */
+function personaDelDispositivo(){
+  try{const p=JSON.parse(localStorage.getItem('gmaz_persona')||'null');
+    if(p&&p.ced)return p;}catch(e){}
+  return null;
+}
+function _guardarPersonaDispositivo(p){
+  localStorage.setItem('gmaz_persona',JSON.stringify({...p,device:_deviceId()}));
+}
+/* Marca local de "ya registré mi jornada hoy en esta ruta" — evita repetir la subida en cada entrada. */
+function _registroHoy(ruta){
+  try{const d=JSON.parse(localStorage.getItem('gmaz_registro_dia')||'null');
+    if(d&&d.fecha===getColDate()&&d.ruta===ruta)return d.persona||null;}catch(e){}
+  return null;
+}
+function _guardarRegistroHoy(ruta,persona){
+  localStorage.setItem('gmaz_registro_dia',JSON.stringify({fecha:getColDate(),ruta,persona}));
+}
+/* Compatibilidad: el resto de la app (novedades, entregas, mensajes) sigue pidiendo "la tripulación"
+   de la ruta. En este celular la tripulación es exactamente una persona: su dueño. */
+function _tripulacionLocal(ruta){
+  const reg=_registroHoy(ruta);
+  return reg?[reg]:[];
 }
 function tripulacionActual(ruta){return _tripulacionLocal(ruta||rutaActual||'');}
+/* ¿Esta cédula ya se registró hoy desde otro celular? Devuelve el registro que estorba, o null.
+   Si la red falla no se bloquea a nadie: el amarre local del dispositivo ya es la defensa principal. */
+async function _yaRegistradaHoyEnOtroEquipo(ced){
+  try{
+    const reg=await cargarRegistroDia(getColDate());
+    const yo=_deviceId();
+    for(const ruta in reg){
+      const hit=(reg[ruta]||[]).find(p=>String(p.ced)===String(ced)&&p.device&&p.device!==yo);
+      if(hit)return{...hit,ruta};
+    }
+  }catch(e){}
+  return null;
+}
 /* Responsable por defecto (confirmar entrega, etc.): el marcado Conductor, o si no hay, el primero. */
 function _tripulacionPrincipal(ruta){
   const t=tripulacionActual(ruta);
@@ -5536,69 +5620,93 @@ function _epPickRol(btn){
   document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');window._epRolSel=btn.dataset.rol;
 }
+/* Pantalla de registro: si el celular ya tiene dueño, solo confirma; si no, deja elegir UNA persona. */
 function _epRenderLista(){
   const c=document.getElementById('ep-lista');if(!c)return;
-  const arr=window._epTripulacion||[];
-  if(!arr.length){c.innerHTML='<div class="ep-vacio">Aún no has agregado a nadie.</div>';return;}
-  c.innerHTML=arr.map((p,i)=>'<div class="ep-chip"><b>'+p.nombre.split(' ').slice(0,2).join(' ')+'</b>'+
-    '<span>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+'</span>'+
-    '<i onclick="haptic();quitarTripulante('+i+')">✕</i></div>').join('');
+  const due=personaDelDispositivo();
+  const selWrap=document.getElementById('ep-sel-wrap');
+  const sub=document.getElementById('ep-sub');
+  if(due){
+    // Celular ya amarrado: no se puede cambiar de persona sin la clave del coordinador.
+    if(selWrap)selWrap.style.display='none';
+    if(sub)sub.textContent='Este celular está registrado a tu nombre. Confirma tu jornada para arrancar.';
+    c.innerHTML='<div class="ep-chip ep-chip-yo"><b>'+due.nombre+'</b><span>'+(due.cargo||'')+'</span></div>'+
+      '<div class="ep-otro" onclick="haptic();liberarDispositivo()">¿No eres tú? Cambiar de persona (requiere clave del coordinador)</div>';
+  }else{
+    if(selWrap)selWrap.style.display='';
+    if(sub)sub.textContent='Regístrate tú, con tu propio celular. Un equipo = una persona: así tus novedades y tu asistencia quedan a tu nombre.';
+    c.innerHTML='<div class="ep-vacio">Selecciona tu nombre en la lista.</div>';
+  }
 }
-function agregarTripulante(){
-  const sel=document.getElementById('ent-pick-sel');
-  const ced=sel.value;if(!ced){toast('Selecciona un nombre','err');return;}
-  const p=entregadoresDisponibles().find(x=>x.ced===ced);if(!p)return;
-  window._epTripulacion=window._epTripulacion||[];
-  if(window._epTripulacion.some(x=>x.ced===ced)){toast('Ya está en la lista','err');return;}
-  window._epTripulacion.push({ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol:window._epRolSel,hora:new Date().toISOString()});
-  sel.value='';_epRenderLista();
+/* Liberar el celular para otra persona — solo el coordinador, con su clave. */
+function liberarDispositivo(){
+  const p=prompt('Clave del coordinador para liberar este celular:');
+  if(p===null)return;
+  if(p!==CFG.COORD_PWD){toast('Clave incorrecta','err');return;}
+  localStorage.removeItem('gmaz_persona');
+  localStorage.removeItem('gmaz_registro_dia');
+  toast('Celular liberado. Ahora puede registrarse otra persona','ok');
+  _epRenderLista();
 }
-function quitarTripulante(i){
-  (window._epTripulacion||[]).splice(i,1);_epRenderLista();
-}
-/* Pide la tripulación de la ruta; si el dispositivo ya la registró hoy, no vuelve a preguntar. */
+/* Pide el registro de la persona de este celular; si ya se registró hoy en esta ruta, no pregunta. */
 function pedirTripulacion(ruta,cb){
-  const ya=_tripulacionLocal(ruta);
-  if(ya.length){cb(ya);return;}
-  window._epTripulacion=[];window._epRolSel='conductor';
+  const ya=_registroHoy(ruta);
+  if(ya){cb([ya]);return;}
+  window._epRolSel=(personaDelDispositivo()||{}).rol||'conductor';
   const rEl=document.getElementById('ep-ruta');if(rEl)rEl.textContent=ruta;
   const sel=document.getElementById('ent-pick-sel');
-  sel.innerHTML='<option value="">Selecciona un nombre…</option>'+
+  sel.innerHTML='<option value="">Selecciona tu nombre…</option>'+
     entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
-  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol==='conductor'));
+  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol===window._epRolSel));
   _epRenderLista();
   document.getElementById('ent-pick-ovl').style.display='flex';
   window._entPickCtx={ruta,cb};
 }
 async function confirmarTripulacion(){
-  const arr=window._epTripulacion||[];
-  if(!arr.length){toast('Agrega al menos una persona para continuar','err');return;}
   const ctx=window._entPickCtx||{};
+  const btn=document.querySelector('#ent-pick-card .ep-ok');
+  let persona=personaDelDispositivo();
+  if(!persona){
+    const ced=(document.getElementById('ent-pick-sel')||{}).value;
+    if(!ced){toast('Selecciona tu nombre para continuar','err');return;}
+    const p=entregadoresDisponibles().find(x=>x.ced===ced);
+    if(!p)return;
+    persona={ced:p.ced,nombre:p.nombre,cargo:p.cargo};
+  }
+  persona={...persona,rol:window._epRolSel||'conductor',hora:new Date().toISOString(),device:_deviceId()};
+  // Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular, se frena.
+  if(btn){btn.disabled=true;btn.textContent='Verificando…';}
+  const choque=await _yaRegistradaHoyEnOtroEquipo(persona.ced);
+  if(btn){btn.disabled=false;btn.textContent='Iniciar ruta';}
+  if(choque){
+    toast(persona.nombre.split(' ')[0]+' ya se registró hoy desde otro celular (ruta '+choque.ruta+'). Usa tu propio equipo o avisa al coordinador.','err');
+    return;
+  }
   document.getElementById('ent-pick-ovl').style.display='none';
-  _guardarTripulacionLocal(ctx.ruta,arr);
-  toast('Tripulación registrada: '+arr.length+' persona'+(arr.length>1?'s':''),'ok');
-  _guardarRegistroRuta(getColDate(),ctx.ruta,arr); // en segundo plano, no bloquea el inicio de ruta
-  const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent=arr.length;
-  if(ctx.cb)ctx.cb(arr);
+  _guardarPersonaDispositivo(persona);       // amarre permanente celular ↔ persona
+  _guardarRegistroHoy(ctx.ruta,persona);     // jornada de hoy en esta ruta
+  toast('Registrado: '+persona.nombre.split(' ').slice(0,2).join(' '),'ok');
+  _guardarRegistroRuta(getColDate(),ctx.ruta,[persona]); // en segundo plano, no bloquea el inicio de ruta
+  const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent='1';
+  if(ctx.cb)ctx.cb([persona]);
 }
-/* Agregar tripulantes más tarde (alguien se sube a mitad del día) sin bloquear ni perder lo ya
-   registrado — mismo diálogo, pero arranca con quienes ya están. */
+/* Botón 🧑‍🔧 de la barra: ver a nombre de quién está este celular (y liberarlo si hay que cambiarlo). */
 function agregarTripulanteTarde(){
   if(!rutaActual)return;
-  window._epTripulacion=_tripulacionLocal(rutaActual).slice();
-  window._epRolSel='conductor';
+  const due=personaDelDispositivo();
+  if(!due){pedirTripulacion(rutaActual,()=>{});return;}
+  const reg=_registroHoy(rutaActual);
+  toast('Este celular es de '+due.nombre.split(' ').slice(0,2).join(' ')+(reg?' · registrado hoy en '+rutaActual:' · sin registrar hoy'),'ok');
+  window._epRolSel=due.rol||'conductor';
   const rEl=document.getElementById('ep-ruta');if(rEl)rEl.textContent=rutaActual;
-  const sel=document.getElementById('ent-pick-sel');
-  sel.innerHTML='<option value="">Selecciona un nombre…</option>'+
-    entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
-  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol==='conductor'));
+  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol===window._epRolSel));
   _epRenderLista();
   document.getElementById('ent-pick-ovl').style.display='flex';
   window._entPickCtx={ruta:rutaActual,cb:()=>{}};
 }
 function startRoute(ruta,lista){
-  // Antes de arrancar hay que saber quién va hoy en la ruta; si el dispositivo ya la registró, no se vuelve a pedir.
-  if(!_tripulacionLocal(ruta).length){pedirTripulacion(ruta,()=>startRoute(ruta,lista));return;}
+  // Antes de arrancar, la persona de este celular debe quedar registrada en la ruta del día.
+  if(!_registroHoy(ruta)){pedirTripulacion(ruta,()=>startRoute(ruta,lista));return;}
   rutaActual=ruta;
   clientes=lista.map(c=>({...c,_st:'pendiente'}));
   calcularZonaRuta(); // zona de la ruta para el aviso "fuera de tu zona"
@@ -6291,20 +6399,21 @@ function startNovedad(){
     photoFile=blob;photoPreviewUrl=url;
     document.getElementById('ns-photo-img').src=url;
     motivo=null;rechazoDetalle=null;devSel={};_editNovCod=null;
+    _fotoFachadaOK=false;_fotoFachadaDudosa=false;
+    const _f=document.getElementById('ns-fachada');if(_f){_f.style.display='none';_f.innerHTML='';}
     document.getElementById('ns-title').textContent='Registrar novedad';
     document.getElementById('ns-photo-wrap').style.display='';
     document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
     const _t=document.getElementById('ns-tabla');if(_t){_t.style.display='none';_t.innerHTML='';} // la tabla aparece tras elegir motivo
-    // Si hoy van 2+ personas en la ruta, cada quien reporta lo suyo — se pregunta quién antes de habilitar Confirmar.
-    const trip=tripulacionActual(rutaActual);
+    // Con un celular por persona ya no hay que preguntar quién reporta: es el dueño del equipo.
+    // Se muestra su nombre para que quede claro a nombre de quién va a quedar la novedad.
+    _novReportero=personaDelDispositivo()||tripulacionActual(rutaActual)[0]||null;
     const wrapRep=document.getElementById('ns-reportero');
-    if(trip.length>1){
-      _novReportero=null;
+    if(_novReportero){
       wrapRep.style.display='';
-      document.getElementById('ns-reportero-chips').innerHTML=trip.map((p,i)=>
-        '<div class="ep-chip ep-chip-pick" onclick="haptic();pickReportero('+i+')"><b>'+p.nombre.split(' ').slice(0,2).join(' ')+'</b><span>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+'</span></div>').join('');
+      document.getElementById('ns-reportero-chips').innerHTML=
+        '<div class="ep-chip ep-chip-yo"><b>'+_novReportero.nombre+'</b><span>'+(_novReportero.rol==='conductor'?'Conductor':'Auxiliar')+' · esta novedad queda a tu nombre</span></div>';
     }else{
-      _novReportero=trip[0]||null;
       wrapRep.style.display='none';
     }
     document.getElementById('ns-ok').disabled=true;
@@ -6326,23 +6435,86 @@ function retakePhoto(){
   inp.click();
 }
 
-/* Elegir quién de la tripulación reporta esta novedad (solo visible con 2+ personas hoy). */
-function pickReportero(i){
-  const trip=tripulacionActual(rutaActual);
-  _novReportero=trip[i];if(!_novReportero)return;
-  document.querySelectorAll('#ns-reportero-chips .ep-chip-pick').forEach((c,j)=>c.classList.toggle('sel',j===i));
-  _nsActualizarOk();
-}
-/* El botón "Confirmar y avisar" necesita motivo elegido y, si hay 2+ tripulantes, también reportero. */
+/* El botón "Confirmar y avisar" necesita motivo elegido y, en CLIENTE CERRADO, la foto de fachada. */
 function _nsActualizarOk(){
-  const trip=tripulacionActual(rutaActual);
-  const falta=!motivo||(trip.length>1&&!_novReportero);
+  const falta=!motivo||(_motivoExigeFachada(motivo)&&!_fotoFachadaOK);
   document.getElementById('ns-ok').disabled=falta;
+}
+/* ══ FOTO DE FACHADA EN "CLIENTE CERRADO" (2026-08-14) ══
+   La foto de un cliente cerrado tiene que probar que el negocio estaba cerrado: es la FACHADA, no la
+   factura. Como la cámara se abre antes de elegir el motivo, al marcar "Cliente cerrado" se exige
+   tomar la foto otra vez con esa instrucción, y se revisa la imagen: una factura o un documento es
+   casi todo blanco y sin color, así que si la foto se ve así se avisa antes de dejar continuar.
+   El aviso no bloquea a la fuerza (una fachada blanca existe), pero queda anotado en el registro. */
+function _motivoExigeFachada(m){return /CERRAD/i.test(String(m||''));}
+/* ¿La imagen parece un documento? Proporción de píxeles casi blancos y sin color sobre una muestra. */
+function _pareceDocumento(url){
+  return new Promise(res=>{
+    try{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const W=64,H=Math.max(1,Math.round(64*img.height/img.width));
+          const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+          const cx=cv.getContext('2d');cx.drawImage(img,0,0,W,H);
+          const d=cx.getImageData(0,0,W,H).data;
+          let blancos=0,tot=W*H;
+          for(let i=0;i<d.length;i+=4){
+            const r=d[i],g=d[i+1],b=d[i+2];
+            const max=Math.max(r,g,b),min=Math.min(r,g,b);
+            if(min>185&&(max-min)<28)blancos++; // claro y sin color = papel
+          }
+          res(blancos/tot>0.55);
+        }catch(e){res(false);}
+      };
+      img.onerror=()=>res(false);
+      img.src=url;
+    }catch(e){res(false);}
+  });
+}
+/* Tomar (o retomar) la foto exigida de la fachada. */
+function fotoFachada(){
+  haptic();
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.capture='environment'; // cámara, no galería
+  inp.onchange=async e=>{
+    const f=e.target.files[0];if(!f)return;
+    const{blob,url}=await comprimirFoto(f);
+    photoFile=blob;photoPreviewUrl=url;
+    const im=document.getElementById('ns-photo-img');if(im)im.src=url;
+    _fotoFachadaOK=true;_fotoFachadaDudosa=await _pareceDocumento(url);
+    _nsPintarAvisoFachada();
+    _nsActualizarOk();
+  };
+  inp.click();
+}
+/* Aviso dentro del modal: qué foto falta, o por qué la que tomó no convence. */
+function _nsPintarAvisoFachada(){
+  const box=document.getElementById('ns-fachada');if(!box)return;
+  if(!_motivoExigeFachada(motivo)){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='';
+  if(!_fotoFachadaOK){
+    box.className='ns-fachada pide';
+    box.innerHTML='<div class="nsf-t">📸 Falta la foto de la fachada</div>'+
+      '<div class="nsf-s">Para "cliente cerrado" la evidencia es el negocio cerrado, no la factura. Toma la foto de la fachada con la puerta o reja cerrada.</div>'+
+      '<button type="button" class="nsf-btn" onclick="fotoFachada()">Tomar foto de la fachada</button>';
+  }else if(_fotoFachadaDudosa){
+    box.className='ns-fachada duda';
+    box.innerHTML='<div class="nsf-t">⚠️ Esa foto parece un documento</div>'+
+      '<div class="nsf-s">Se ve como una factura o un papel, no como una fachada. Si de verdad es el negocio, puedes continuar: quedará marcada para que el coordinador la revise.</div>'+
+      '<button type="button" class="nsf-btn" onclick="fotoFachada()">Volver a tomarla</button>';
+  }else{
+    box.className='ns-fachada ok';
+    box.innerHTML='<div class="nsf-t">✓ Foto de fachada registrada</div>'+
+      '<div class="nsf-s">Queda como evidencia de que el negocio estaba cerrado.</div>'+
+      '<button type="button" class="nsf-btn" onclick="fotoFachada()">Volver a tomarla</button>';
+  }
 }
 function pickReason(m,el){
   haptic();
   document.querySelectorAll('.ns-opt').forEach(o=>o.classList.remove('sel'));
   el.classList.add('sel');motivo=m;
+  _nsPintarAvisoFachada(); // "cliente cerrado" exige foto de fachada tomada DESPUÉS de elegir el motivo
   // La tabla de productos/devolución aparece DESPUÉS de elegir el motivo.
   const tabla=document.getElementById('ns-tabla');
   if(!tabla||tabla.style.display==='none'||!Object.keys(devSel).length)renderTablaDevolucion();
@@ -6357,8 +6529,11 @@ function bdClose(e){if(e.target===document.getElementById('modal-nov'))closeNovM
 async function submitNovedad(){
   if(_editNovCod)return guardarEdicionNovedad(); // modo edición: ajustar una entrega parcial existente
   if(!motivo||!photoFile)return;
-  const trip=tripulacionActual(rutaActual);
-  if(trip.length>1&&!_novReportero){toast('Elige quién reporta esta novedad','err');return;}
+  // "Cliente cerrado" no se puede cerrar con la foto de una factura: la evidencia es la fachada.
+  if(_motivoExigeFachada(motivo)&&!_fotoFachadaOK){
+    toast('Toma la foto de la fachada del negocio cerrado','err');
+    _nsPintarAvisoFachada();return;
+  }
   rechazoDetalle=_construirRechazoDetalle(); // devolución marcada en la tabla
   const cl=clientes[clienteIdx];
   const cod=getF(cl,CFG.COL_CODIGO),nom=getF(cl,CFG.COL_NOMBRE),dir=getF(cl,CFG.COL_DIR)||'—';
@@ -6381,9 +6556,14 @@ async function submitNovedad(){
     if(rechazoDetalle&&rechazoDetalle.length){
       try{
         const tot=rechazoDetalle.reduce((a,d)=>({c:a.c+d.cajas,u:a.u+d.und}),{c:0,u:0});
+        const rep=_novReportero||_tripulacionPrincipal(rutaActual)||{};
         const payload={codigo_cliente:cod,nombre_cliente:nom,ruta:rutaActual,motivo,
           fecha,hora:new Date().toISOString(),detalle:rechazoDetalle,total_cajas:tot.c,total_und:tot.u,
-          estado:'pendiente'}; // pendiente de aprobación del supervisor
+          estado:'pendiente', // pendiente de aprobación del supervisor
+          // quién lo reportó (cédula, no solo nombre) y qué tipo de foto quedó como evidencia
+          reporta:{ced:rep.ced||null,nombre:rep.nombre||null,rol:rep.rol||null,device:_deviceId()},
+          foto_tipo:_motivoExigeFachada(motivo)?'fachada':'evidencia',
+          foto_revisar:!!(_motivoExigeFachada(motivo)&&_fotoFachadaDudosa)};
         const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
         await sb.storage.from(CFG.BCK_PED).upload('RECHAZOS/'+fecha+'/'+cod+'.json',blob,{contentType:'application/json',upsert:true});
       }catch(e){/* si falla el detalle, la novedad ya quedó registrada */}
