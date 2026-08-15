@@ -806,6 +806,17 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .mod.on{display:block;animation:modIn .22s ease}
 @keyframes modIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .veh-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px}
+.ent-leyenda{margin:2px 17px 10px;background:#F7F8FA;border:1px solid #EEF0F4;border-radius:11px;padding:11px 13px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:5px 18px;font-size:11px;color:#4A5060;line-height:1.5}
+.ent-leyenda b{grid-column:1/-1;font-size:11px;font-weight:800;color:#0F1117;margin-bottom:2px}
+.ent-leyenda i{font-style:normal;font-weight:800;color:#0F1117;margin-right:5px}
+.vc-trip{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 2px}
+.vc-trip.vacia{font-size:10.5px;color:#B45309;background:#FFF8E6;border-radius:8px;padding:6px 9px;font-weight:700}
+.vc-per{display:inline-flex;align-items:center;gap:5px;background:#F7F8FA;border:1px solid #EEF0F4;border-radius:8px;
+  padding:4px 8px;font-size:10.5px;font-weight:800;color:#0F1117;max-width:100%}
+.vc-per i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.vc-per i.cond{background:#E30613} .vc-per i.aux{background:#1A56DB}
+.vc-per em{font-style:normal;font-size:9px;font-weight:700;color:#8A90A0;text-transform:uppercase;letter-spacing:.3px}
 .vc{background:#fff;border:1px solid var(--gris2);border-radius:var(--radio-lg);padding:15px;box-shadow:var(--sh-card);cursor:pointer;transition:box-shadow .15s,transform .15s}
 .vc:hover{box-shadow:var(--sh-card-hov);transform:translateY(-2px)}
 .vc-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
@@ -1736,6 +1747,13 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
           <button class="vp-btn pri" style="flex:0 0 auto;padding:10px 16px" onclick="haptic();buscarRecorridoVehiculo()">Ver recorrido ▶</button>
         </div>
       </div>
+      <div class="dcard" style="margin-bottom:12px">
+        <div class="dcard-h"><h3><span class="h3ic">🧑‍🔧</span>Quién salió en cada vehículo</h3>
+          <span class="dm">del registro que hace cada entregador en su propio celular</span>
+          <input type="date" id="veh-trip-fecha" onchange="haptic();renderVehiculoCards(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+        </div>
+        <div style="padding:8px 17px 12px;font-size:11px;color:var(--gris4)" id="veh-trip-nota">SecuritaGPS no tiene conductores cargados: la tripulación sale del registro de la app.</div>
+      </div>
       <div id="veh-cards" class="veh-cards"><div class="veh-cargando">Abre este módulo para ver las tarjetas por vehículo…</div></div>
       <div class="dcard" style="margin-top:14px">
         <div class="dcard-h"><h3><span class="h3ic">🔑</span>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
@@ -1748,9 +1766,26 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
       <div id="ent-kpis" class="dkpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
       <div class="dcard" style="margin-top:14px">
         <div class="dcard-h"><h3><span class="h3ic">🧑‍🔧</span>Desempeño por entregador</h3>
-          <input type="month" id="ent-mes" onchange="haptic();cargarEntregadores(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+          <div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+            <div class="segtog-bar" style="margin:0">
+              <button class="segtog-b on" id="ent-modo-mes" onclick="haptic();setModoEntregadores('mes')">Mes</button>
+              <button class="segtog-b" id="ent-modo-dia" onclick="haptic();setModoEntregadores('dia')">Un día</button>
+            </div>
+            <input type="month" id="ent-mes" onchange="haptic();cargarEntregadores()" style="height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+            <input type="date" id="ent-dia" onchange="haptic();cargarEntregadores()" style="display:none;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+          </div>
         </div>
         <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">El semáforo compara contra el promedio de la propia operación, no contra una meta fija — una ruta con más clientes difíciles no debe leerse como mal desempeño.</div>
+        <div class="ent-leyenda">
+          <b>Qué significa cada columna</b>
+          <span><i>Días</i> días distintos en que esa persona registró actividad.</span>
+          <span><i>Entregas</i> veces que pulsó «Confirmar entrega» en el celular.</span>
+          <span><i>Rechazos</i> novedades que reportó (cliente cerrado, sin dinero, rechazo parcial…).</span>
+          <span><i>Cumpl.</i> entregas ÷ (entregas + rechazos). Cuántas de sus visitas terminaron entregadas.</span>
+          <span><i>Entregas/h</i> ritmo: entregas por hora efectiva, midiendo de su primera a su última entrega de cada día.</span>
+          <span><i>Min/entrega</i> lo mismo al revés: cuántos minutos tarda en promedio entre una entrega y la siguiente. Menos es más rápido.</span>
+          <span><i>Semáforo</i> compara su cumplimiento con el promedio del equipo: <b>Referente</b> +3 pts o más · <b>En meta</b> ±3 · <b>Seguimiento</b> −3 a −8 · <b>Atención</b> peor que −8.</span>
+        </div>
         <div style="overflow:auto;padding:10px 17px 16px" id="ent-body"><div class="veh-cargando">Elige un mes…</div></div>
       </div>
     </section>
@@ -2054,7 +2089,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
           <button onclick="haptic();chequearCuadreCargue()" style="margin-left:auto;height:30px;border:1px solid #E6E9EF;background:#fff;border-radius:8px;padding:0 11px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117;cursor:pointer">Revisar</button>
         </div>
         <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">Compara lo pedido en el Libro contra lo cargado en la Hoja, <b>antes</b> de que salgan los vehículos — no al día siguiente en la auditoría.</div>
-        <div style="padding:10px 17px 16px" id="cuadre-body"><div class="veh-cargando">Sube el Libro y la Hoja de cargue del día para revisar el cuadre.</div></div>
+        <div style="padding:10px 17px 16px" id="cuadre-body"><div class="veh-cargando">Revisando el cuadre del día…</div></div>
       </div>
       <div class="dcard" style="margin-top:16px">
         <div class="dcard-h"><h3><span class="h3ic">🗂️</span>Historial de archivos</h3>
@@ -3642,7 +3677,10 @@ function entrarComoRol(rol){
 function cerrarSesion(){try{localStorage.removeItem('gmaz_rol');}catch(e){}location.reload();}
 
 /* ══════════════ MÓDULO DE ASISTENCIA (lista de Luisa, in-app + exportable) ══════════════ */
-const EMPLEADOS_ASIS=[['ESCOBAR SANTACRUZ JAIRO ALEXANDER','5207588','CONDUCTOR DE ENTREGA'],['NARVAEZ MASMUTA HERMES ROBERTO','12745788','CONDUCTOR DE ENTREGA'],['RIVADENEIRA ROMERO JOHN ALVARO','12748337','SUPERNUMERARIO'],['CAICEDO BENAVIDES RICARDO ANDRES','12754970','MERCADERISTA'],['GUERRERO LOPEZ HAROLD','12968672','GERENTE'],['MORENO MARTINEZ JAVIER EMILIO','12978073','TESORERO'],['MAIGUAL LAZO JOSE ISAIAS','12989902','OPERADOR LOGISTICO'],['CUASPUD CARLOS ANDRES','12998961','AUXILIAR DE ENTREGA'],['PRADO TERAN ALEXANDER EDUARDO','12999576','OPERADOR MONTACARGA'],['GUALGUAN MAFLA ANDRES EMILIO','13068471','AUXILIAR DE ENTREGA'],['JEREZ ROMERO JOHN FREDY','13069010','SUPERNUMERARIO'],['BARRERA GOMEZ HERMES ALEXANDER','13071144','CONDUCTOR DE ENTREGA'],['DIAZ BUESAQUILLO ALEXANDER FERNANDO','13072312','OPERADOR MONTACARGA'],['GARCIA QUIÑONES MAURICIO ANDRES','13072518','CONDUCTOR DE ENTREGA'],['QUENORAN BERNAL TEREZA','27088260','SERVICIOS GENERALES'],['LEON DELGADO PAULA ANDREA','27088651','PREVENDEDOR'],['MAZUERA DEL HIERRO PATRICIA','30717117','SUBGERENTE'],['BETANCOURTH CHAVES ELIZABETH','36954044','COORDINADOR SST'],['FIGUEROA LEON ALEJANDRA MAGALY','36954222','DIRECTORA ADMINISRATIVA Y CONTABLE'],['GARCIA ENRIQUEZ CLAUDIA XIMENA','59313326','PREVENDEDOR'],['GUERRERO ZAMBRANO ROSA LUCIA','59813282','ASISTENTE ADMINISTRATIVA'],['MELO DELGADO LAURA POLONIA','59855849','SERVICIOS GENERALES'],['JIMENEZ BENAVIDES JOHN ALEXANDER','87066993','CONDUCTOR DE ENTREGA'],['ABAHONZA PAZ JUAN PABLO','87069418','VERIFICADOR'],['ERASO ARTEAGA JUAN HUMBERTO','98138193','CONDUCTOR DE ENTREGA'],['ROJAS PORTILLA JOSE JAVIER','98382389','OPERADOR MONTACARGA'],['LASSO PORTILLA RICARDO JAVIER','98386290','MECANICO'],['GOMEZ BARRERA ROBERT EDILFONSO','98391225','CONDUCTOR AUTOVENTA'],['CADENA ERASO HECTOR ANDRES','98393106','PREVENDEDOR'],['TIMANA SOTELO JOSE ALEXANDER','98394471','PREVENDEDOR'],['ACOSTA PABON JAIME FRANCISCO','98396682','PREVENDEDOR'],['MEJIA OLIVA JHOAN CEVASTIAN','1004190697','CONDUCTOR DE NEVERAS'],['PAI PAI JUAN DAVID','1004509202','OPERADOR LOGISTICO'],['ORTIZ DIAZ AURA MARIA','1007312327','APRENDIZ SENA ETAPA LECTIVA'],['ROJAS DIAZ JHONY ALEXANDER','1010114384','AUXILIAR AUTOVENTA'],['GUERRERO MAZUERA SANTIAGO','1010223240','DIRECTOR COMERCIAL'],['SUAREZ PAREDES JONATHA DAVID','1014657971','AUXILIAR DE ENTREGA'],['ROSERO RIASCOS JHONATAN ESTEBAN','1080690154','CONDUCTOR DE ENTREGA'],['COLIMBA NAVARRO CRISTHIAN DAVID','1081054300','APRENDIZ SENA ETAPA LECTIVA'],['DIAZ ERAZO JESUS ANTONIO','1082747908','CONDUCTOR DE ENTREGA'],['NOPAN GUERRERO CHARLY ESTEBAN','1083814341','CONDUCTOR DE ENTREGA'],['GUERRERO ACOSTA EDGAR ALBERTO','1085245559','SUPERNUMERARIO'],['NARVAEZ GOMEZ JOHN JAIRO','1085254187','CONDUCTOR DE ENTREGA'],['INSANDARA PEREZ JESUS ARMANDO','1085257161','AUXILIAR DE ENTREGA'],['DE LA CRUZ PISCAL CRISTIAN ANTONIO','1085259359','CONDUCTOR DE ENTREGA'],['TIMANA ENRIQUEZ YEISY ANABELL','1085266859','SUPERVISOR JUNIOR'],['CUCAZ MEJIA ANGELA PILAR','1085270602','LIQUIDADOR'],['BARRERA GOMEZ FREDDY ROLANDO','1085273712','CONDUCTOR DE ENTREGA'],['GUERRA VILLOTA KAREN YURANI','1085271311','SUPERNUMERARIO'],['DELGADO BURBANO CHRISTIAN CAMILO','1085273911','SUPERVISOR JUNIOR'],['ESPINOZA GOMEZ CARLOS ANDRES','1085275308','PREVENDEDOR'],['OÑATE BENAVIDES GEOVANNI SEBASTIAN','1085276182','CONDUCTOR ENTREGA'],['TORRES NARANJO CHRISTIAN CAMILO','1085276334','SUPERVISOR DE VENTAS'],['MONTANCHEZ MONTILLA CARLOS ANDRES','1085287829','LOGISITICA'],['ROSALES CORAL ESTEBAN ALEXANDER','1085289071','CONDUCTOR DE ENTREGA'],['GUZMAN ACHICANOY MARIO ALVARO','1085304127','AUXILIAR DE ENTREGA'],['TABLA MELO DEIVY STEVEN','1085314672','OPERADOR LOGISTICO'],['RIVERA CASSERES RUBEN DARIO','1085319863','SUPERNUMERARIO'],['MOJOMBOY RUIZ JONATHAN JAIR','1085325042','OPERADOR LOGISTICO'],['PASCUAZA MALLAMA MARIA FERNANDA','1085330401','SUPERNUMERARIO'],['CAÑIZARES TEPUD DANIEL ALEJANDRO','1085331540','CONDUCTOR DE ENTREGA'],['MONTILLA CHINGUA EDWIN ALEXANDER','1085332913','AUXILIAR DE ENTREGA'],['INSUASTY VELASQUEZ DANIEL ARMANDO','1085336369','CONDUCTOR DE ENTREGA'],['BUCHELI PAI JOHANA ELIZABETH','1085342806','SOPORTE VENTAS'],['JOJOA JOSA JORGE ARMANDO','1085343383','MERCADERISTA'],['SEGURA JAIMES JEINER MAURICIO','1095936812','CONDUCTOR DE ENTREGA'],['DELGADO CADENA JULIO ALEJANDRO','1130623794','AUXILIAR DE ENTREGA'],['DELGADO ROSERO LUISA FERNANDA','1131085675','AUXILIAR CONTABLE'],['ANGULO CUERO OVER ARNEY','1193035391','AUXILIAR DE REFRIGERACION'],['ACOSTA ACOSTA JHONATAN SEBASTIAN','1193201248','SUPERNUMERARIO'],['LARA ESTACIO BAYRON ARBEY','1193536975','APRENDIZ SENA ETAPA PRODUCTIVA'],['MORALES MORA LEIDER ORLANDO','1233190921','CONDUCTOR DE ENTREGA'],['CARREÑO CAMPIÑO HEBER HENRY','1233191462','SUPERNUMERARIO'],['ROSERO MELO DAYRA CAMILA','1233194145','ANALISTA DE REFRIGERACION'],['BURBANO RODRIGUEZ CHRISTIAN CAMILO','1233194172','SUPERNUMERARIO'],['JAMA PANTOJA PABLO ALBEIRO','1233195085','CONDUCTOR DE ENTREGA']];
+/* Personal de GMAZ — LISTA DE JULIO 2026 (80 personas, reemplaza la de junio que tenía 76).
+   Cambios: entran 6 (prevendedores, operador logístico, mercaderista), salen 2 (Claudia García,
+   Jhonatan Acosta) y OVER ARNEY ANGULO CUERO pasó de Auxiliar de refrigeración a CONDUCTOR DE ENTREGA. */
+const EMPLEADOS_ASIS=[['ESCOBAR SANTACRUZ JAIRO ALEXANDER','5207588','CONDUCTOR DE ENTREGA'],['NARVAEZ MASMUTA HERMES ROBERTO','12745788','CONDUCTOR DE ENTREGA'],['RIVADENEIRA ROMERO JOHN ALVARO','12748337','SUPERNUMERARIO'],['CAICEDO BENAVIDES RICARDO ANDRES','12754970','MERCADERISTA'],['GUERRERO LOPEZ HAROLD','12968672','GERENTE'],['MORENO MARTINEZ JAVIER EMILIO','12978073','TESORERO'],['MAIGUAL LAZO JOSE ISAIAS','12989902','OPERADOR LOGISTICO'],['CUASPUD CARLOS ANDRES','12998961','AUXILIAR DE ENTREGA'],['PRADO TERAN ALEXANDER EDUARDO','12999576','OPERADOR MONTACARGA'],['GUALGUAN MAFLA ANDRES EMILIO','13068471','AUXILIAR DE ENTREGA'],['JEREZ ROMERO JOHN FREDY','13069010','SUPERNUMERARIO'],['ACHICANOY GUERRERO WILSON ALFREDO','13070834','PREVENDEDOR'],['BARRERA GOMEZ HERMES ALEXANDER','13071144','CONDUCTOR DE ENTREGA'],['DIAZ BUESAQUILLO ALEXANDER FERNANDO','13072312','OPERADOR MONTACARGA'],['GARCIA QUIÑONES MAURICIO ANDRES','13072518','CONDUCTOR DE ENTREGA'],['BOTINA BENAVIDES JAIRO ANTONIO','13072995','PREVENDEDOR'],['QUENORAN BERNAL TEREZA','27088260','SERVICIOS GENERALES'],['LEON DELGADO PAULA ANDREA','27088651','PREVENDEDOR'],['MAZUERA DEL HIERRO PATRICIA','30717117','SUBGERENTE'],['BETANCOURTH CHAVES ELIZABETH','36954044','COORDINADOR SST'],['FIGUEROA LEON ALEJANDRA MAGALY','36954222','DIRECTORA ADMINISRATIVA Y CONTABLE'],['GUERRERO ZAMBRANO ROSA LUCIA','59813282','ASISTENTE ADMINISTRATIVA'],['MELO DELGADO LAURA POLONIA','59855849','SERVICIOS GENERALES'],['QUIROZ ROSERO CARLOS ANDRES','87065672','PREVENDEDOR'],['JIMENEZ BENAVIDES JOHN ALEXANDER','87066993','CONDUCTOR DE ENTREGA'],['ABAHONZA PAZ JUAN PABLO','87069418','VERIFICADOR'],['ERASO ARTEAGA JUAN HUMBERTO','98138193','CONDUCTOR DE ENTREGA'],['ROJAS PORTILLA JOSE JAVIER','98382389','OPERADOR MONTACARGA'],['LASSO PORTILLA RICARDO JAVIER','98386290','MECANICO'],['GOMEZ BARRERA ROBERT EDILFONSO','98391225','CONDUCTOR AUTOVENTA'],['CADENA ERASO HECTOR ANDRES','98393106','PREVENDEDOR'],['TIMANA SOTELO JOSE ALEXANDER','98394471','PREVENDEDOR'],['ACOSTA PABON JAIME FRANCISCO','98396682','PREVENDEDOR'],['MEJIA OLIVA JHOAN CEVASTIAN','1004190697','CONDUCTOR DE NEVERAS'],['PAI PAI JUAN DAVID','1004509202','OPERADOR LOGISTICO'],['ORTIZ DIAZ AURA MARIA','1007312327','APRENDIZ SENA ETAPA LECTIVA'],['ROJAS DIAZ JHONY ALEXANDER','1010114384','AUXILIAR AUTOVENTA'],['GUERRERO MAZUERA SANTIAGO','1010223240','DIRECTOR COMERCIAL'],['SUAREZ PAREDES JONATHA DAVID','1014657971','AUXILIAR DE ENTREGA'],['ROSERO RIASCOS JHONATAN ESTEBAN','1080690154','CONDUCTOR DE ENTREGA'],['COLIMBA NAVARRO CRISTHIAN DAVID','1081054300','APRENDIZ SENA ETAPA LECTIVA'],['DIAZ ERAZO JESUS ANTONIO','1082747908','CONDUCTOR DE ENTREGA'],['SINZA MIRAMAG EDISSON DUVAN','1083752115','OPERADOR LOGISTICO'],['NOPAN GUERRERO CHARLY ESTEBAN','1083814341','CONDUCTOR DE ENTREGA'],['GUERRERO ACOSTA EDGAR ALBERTO','1085245559','SUPERNUMERARIO'],['NARVAEZ GOMEZ JOHN JAIRO','1085254187','CONDUCTOR DE ENTREGA'],['INSANDARA PEREZ JESUS ARMANDO','1085257161','AUXILIAR DE ENTREGA'],['DE LA CRUZ PISCAL CRISTIAN ANTONIO','1085259359','CONDUCTOR DE ENTREGA'],['TIMANA ENRIQUEZ YEISY ANABELL','1085266859','SUPERVISOR JUNIOR'],['CUCAZ MEJIA ANGELA PILAR','1085270602','LIQUIDADOR'],['GUERRA VILLOTA KAREN YURANI','1085271311','SUPERNUMERARIO'],['BARRERA GOMEZ FREDDY ROLANDO','1085273712','CONDUCTOR DE ENTREGA'],['DELGADO BURBANO CHRISTIAN CAMILO','1085273911','SUPERVISOR JUNIOR'],['ESPINOZA GOMEZ CARLOS ANDRES','1085275308','PREVENDEDOR'],['OÑATE BENAVIDES GEOVANNI SEBASTIAN','1085276182','CONDUCTOR ENTREGA'],['TORRES NARANJO CHRISTIAN CAMILO','1085276334','SUPERVISOR DE VENTAS'],['MONTANCHEZ MONTILLA CARLOS ANDRES','1085287829','LOGISITICA'],['ROSALES CORAL ESTEBAN ALEXANDER','1085289071','CONDUCTOR DE ENTREGA'],['GUZMAN ACHICANOY MARIO ALVARO','1085304127','AUXILIAR DE ENTREGA'],['CALLE MELO HENRY ALBERTO KENEDY','1085306947','MERCADERISTA'],['TABLA MELO DEIVY STEVEN','1085314672','OPERADOR LOGISTICO'],['RIVERA CASSERES RUBEN DARIO','1085319863','SUPERNUMERARIO'],['MOJOMBOY RUIZ JONATHAN JAIR','1085325042','OPERADOR LOGISTICO'],['PASCUAZA MALLAMA MARIA FERNANDA','1085330401','SUPERNUMERARIO'],['CAÑIZARES TEPUD DANIEL ALEJANDRO','1085331540','CONDUCTOR DE ENTREGA'],['MONTILLA CHINGUA EDWIN ALEXANDER','1085332913','AUXILIAR DE ENTREGA'],['INSUASTY VELASQUEZ DANIEL ARMANDO','1085336369','CONDUCTOR DE ENTREGA'],['BUCHELI PAI JOHANA ELIZABETH','1085342806','SOPORTE VENTAS'],['JOJOA JOSA JORGE ARMANDO','1085343383','MERCADERISTA'],['LARREA DELGADO KELLY VANESSA','1085347727','PREVENDEDOR'],['SEGURA JAIMES JEINER MAURICIO','1095936812','CONDUCTOR DE ENTREGA'],['DELGADO CADENA JULIO ALEJANDRO','1130623794','AUXILIAR DE ENTREGA'],['DELGADO ROSERO LUISA FERNANDA','1131085675','AUXILIAR CONTABLE'],['ANGULO CUERO OVER ARNEY','1193035391','CONDUCTOR DE ENTREGA'],['LARA ESTACIO BAYRON ARBEY','1193536975','APRENDIZ SENA ETAPA PRODUCTIVA'],['MORALES MORA LEIDER ORLANDO','1233190921','CONDUCTOR DE ENTREGA'],['CARREÑO CAMPIÑO HEBER HENRY','1233191462','SUPERNUMERARIO'],['ROSERO MELO DAYRA CAMILA','1233194145','ANALISTA DE REFRIGERACION'],['BURBANO RODRIGUEZ CHRISTIAN CAMILO','1233194172','SUPERNUMERARIO'],['JAMA PANTOJA PABLO ALBEIRO','1233195085','CONDUCTOR DE ENTREGA']];
 const ASIS_CODES=[{k:'',lbl:'Trabajó',col:'',cuenta:true},{k:'PER',lbl:'Permiso',col:'#92D050',cuenta:true},{k:'INC',lbl:'Incapacidad',col:'#FFE066',cuenta:false},{k:'VAC',lbl:'Vacaciones',col:'#F0A6E0',cuenta:false},{k:'NEG',lbl:'No asistió',col:'#F58989',cuenta:false},{k:'SUS',lbl:'Suspensión',col:'#9AA0FF',cuenta:false},{k:'RET',lbl:'Retiro',col:'#C4C4C4',cuenta:false}];
 const _asisCod={};ASIS_CODES.forEach(c=>_asisCod[c.k]=c);
 let asisMes=null, asisData={}; // {cedula:{dia:code}}  (solo marcas ≠ normal)
@@ -4369,9 +4407,66 @@ function buscarRecorridoVehiculo(){
   activarModulo('operacion');
   toggleRecorrido(unitId,ruta,fecha);
 }
-function renderVehiculoCards(){
+/* ══ TRIPULACIÓN Y KM POR VEHÍCULO ══
+   SecuritaGPS devuelve conductor vacío en los 14 vehículos y driverGetAll trae 0 conductores:
+   nunca se cargaron ahí, por eso la tarjeta decía siempre "Sin conductor". La fuente real es el
+   registro que hace cada entregador en su propio celular (REGISTRO/{fecha}/{ruta}__{cedula}.json),
+   que además sirve de historial: cambiando la fecha se ve quién salió en ese vehículo cualquier día. */
+let _tripPorFecha={}; // {fecha:{ruta:[personas]}}
+async function _tripulacionDeFecha(fecha){
+  if(_tripPorFecha[fecha])return _tripPorFecha[fecha];
+  _tripPorFecha[fecha]=await cargarRegistroDia(fecha)||{};
+  return _tripPorFecha[fecha];
+}
+/* Km del día por vehículo, del mismo historial GPS que usa "Ver recorrido". */
+let _kmPorFecha={}; // {fecha:{unitId:km}}
+function _distKm(la1,lo1,la2,lo2){
+  const R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
+  const a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+async function _kmDelDia(unitId,fecha){
+  const cache=_kmPorFecha[fecha]=_kmPorFecha[fecha]||{};
+  if(cache[unitId]!==undefined)return cache[unitId];
+  cache[unitId]=null;
+  try{
+    const v=(_vehCache||[]).find(x=>x.nombre===unitId);
+    if(!v)return null;
+    const pts=await obtenerHistorialVehiculo(v,fecha);
+    if(!pts||pts.length<2){cache[unitId]=0;return 0;}
+    let km=0,prev=null;
+    pts.forEach(pt=>{
+      const la=parseFloat(pt.Latitude!=null?pt.Latitude:pt.lat),lo=parseFloat(pt.Longitude!=null?pt.Longitude:pt.lng);
+      if(isNaN(la)||isNaN(lo))return;
+      if(prev){const d=_distKm(prev.la,prev.lo,la,lo);if(d<5)km+=d;} // salto >5 km = error de GPS
+      prev={la,lo};
+    });
+    cache[unitId]=Math.round(km*10)/10;
+  }catch(e){cache[unitId]=null;}
+  return cache[unitId];
+}
+/* Fila de tripulación: quién más va en ese vehículo además del conductor. */
+function _vcTripulacion(personas){
+  if(!personas||!personas.length)
+    return '<div class="vc-trip vacia">Nadie registró este vehículo ese día</div>';
+  return '<div class="vc-trip">'+personas.map(p=>
+    '<span class="vc-per" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
+      '<i class="'+(p.rol==='conductor'?'cond':'aux')+'"></i>'+_nomCorto(p.nombre)+
+      '<em>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+'</em></span>').join('')+'</div>';
+}
+async function renderVehiculoCards(fechaSel){
   const cont=document.getElementById('veh-cards');if(!cont)return;
   poblarBuscarVehiculo();
+  const hoy=getColDate();
+  const fInp=document.getElementById('veh-trip-fecha');
+  const fecha=fechaSel||(fInp&&fInp.value)||hoy;
+  if(fInp){fInp.max=hoy;if(!fInp.value)fInp.value=fecha;}
+  const esHoy=fecha===hoy;
+  const nota=document.getElementById('veh-trip-nota');
+  if(nota)nota.innerHTML=esHoy
+    ? 'SecuritaGPS no tiene conductores cargados (por eso decía «Sin conductor»): la tripulación sale del registro que hace cada entregador en su celular.'
+    : 'Viendo el <b>'+fecha+'</b>. Visitados y pendientes son siempre de hoy; la tripulación y los km sí son de la fecha elegida.';
+  const trip=await _tripulacionDeFecha(fecha);
   const fc=_flotaCache,dd=_dashData;
   if(!fc||!dd){cont.innerHTML='<div class="veh-cargando">Cargando datos de la flota…</div>';return;}
   const units=Object.keys(fc.rutaPorUnit);
@@ -4381,8 +4476,9 @@ function renderVehiculoCards(){
     const col=rutaColor[ruta]||'#E30613';
     const[est,ec,eb]=_estadoVehiculo(unitId,u);
     const veh=(_vehCache||[]).find(v=>v.nombre===unitId);
-    const cond=(veh&&_driverCache)?_driverCache.find(d=>String(d.idvehiculo)===String(veh.id)):null;
-    const nombreCond=cond?(cond.nombre+' '+(cond.apellido||'')).trim():'Sin conductor';
+    const personas=(trip[ruta]||[]).slice().sort((a,b)=>(a.rol==='conductor'?0:1)-(b.rol==='conductor'?0:1));
+    const cond=personas.find(p=>p.rol==='conductor')||personas[0]||null;
+    const nombreCond=cond?_nomCorto(cond.nombre):'Sin registrar';
     const pr=dd.porRuta[ruta]||{tot:0,ent:0,nov:0};
     const pend=pr.tot-pr.ent;
     const vel=u?(u.GpsSpeed||0):'—';
@@ -4391,17 +4487,29 @@ function renderVehiculoCards(){
     const icoVc=dashTruckIcon(ruta,encVc,veh&&veh.tipo_vehiculo).url;
     return '<div class="vc" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')">'+
       '<div class="vc-h"><img src="'+icoVc+'" width="30" height="21" alt=""><span class="vc-plate">'+unitId+'</span><span class="vc-badge" style="background:'+eb+';color:'+ec+'">'+est+'</span></div>'+
-      '<div class="vc-sub"><b style="color:'+col+'">'+ruta+'</b> · '+nombreCond+'</div>'+
+      // La ruta y cuánta gente va; los nombres no se repiten aquí porque van en los chips de abajo.
+      '<div class="vc-sub"><b style="color:'+col+'">'+ruta+'</b> · '+
+        (personas.length?personas.length+(personas.length>1?' personas a bordo':' persona a bordo')
+                        :'<span style="color:#B45309">Sin registrar</span>')+'</div>'+
+      _vcTripulacion(personas)+
       '<div class="vc-grid">'+
         '<div class="vc-cell"><div class="v" style="color:#059669">'+pr.ent+'</div><div class="l">Visitados</div></div>'+
         '<div class="vc-cell"><div class="v">'+pend+'</div><div class="l">Pendientes</div></div>'+
         '<div class="vc-cell"><div class="v" style="color:'+(pr.nov>0?'#E30613':'#0F1117')+'">'+pr.nov+'</div><div class="l">Rechazos</div></div>'+
       '</div>'+
-      '<div class="vc-sub" style="margin:11px 0 0;display:flex;gap:12px">'+
+      '<div class="vc-sub" style="margin:11px 0 0;display:flex;gap:12px;flex-wrap:wrap">'+
         '<span>▶ <b style="color:'+(vel>0?'#0E9F6E':'#6B7385')+'">'+vel+'</b> km/h</span>'+
         '<span>🕒 '+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+'</span>'+
+        '<span id="km-'+unitId+'">📏 <span style="color:#8A90A0">calculando…</span></span>'+
       '</div></div>';
   }).join('');
+  // Un historial por vehículo: se pinta cada km apenas llega, sin bloquear la cuadrícula.
+  units.forEach(async unitId=>{
+    const km=await _kmDelDia(unitId,fecha);
+    const el=document.getElementById('km-'+unitId);
+    if(el)el.innerHTML='📏 <b>'+(km==null?'—':km.toLocaleString('es-CO'))+'</b> km'+
+      (km!=null?' <span style="color:#8A90A0;font-size:10px">'+(esHoy?'hoy':'ese día')+'</span>':'');
+  });
 }
 /* ══ MÓDULO CLIENTES: KPIs de atención + ranking ══ */
 function renderClientesModulo(){
@@ -5558,6 +5666,44 @@ function verParadaEnMapa(i){
 }
 
 /* ══ ALARMAS DEL DÍA (SecuritaGPS getAlerts) — solo de los vehículos asignados hoy ══ */
+/* ══ LECTURA DE ALARMAS DE SECURITAGPS ══
+   La respuesta de getAlerts no tiene un esquema fijo: según la cuenta y el tipo de alerta los
+   campos llegan como Hora/Fecha/FechaHora, TipoAlerta/Alerta/Descripcion, StatusAlerta/Domicilio/
+   Direccion. Y cuando no hay nada devuelve {status:40100,message:"No alerts found."}.
+   Estas tres funciones leen lo que haya, en vez de asumir un nombre. */
+function _alarmaValida(a){
+  if(!a||typeof a!=='object')return false;
+  if(a.status||a.message)return false;              // respuesta de "sin alarmas", no una alarma
+  return !!(_alarmaHoraRaw(a)||a.TipoAlerta||a.Alerta||a.tipo_alerta||a.Descripcion);
+}
+function _alarmaHoraRaw(a){
+  return a.Hora||a.hora||a.FechaHora||a.fechahora||a.Fecha||a.fecha||a.DateTime||a.datetime||
+         a.ReportDate||a.fecha_hora||'';
+}
+function _alarmaHora(a){
+  const v=String(_alarmaHoraRaw(a)||'').trim();
+  if(!v)return '<span style="color:#B5BAC6">—</span>';
+  // Puede venir "2026-08-14 17:33:10", "17:33:10" o ISO; se muestra solo la hora.
+  const m=v.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if(!m)return v;
+  const d=v.includes('-')||v.includes('/')?v.split(/[ T]/)[0]:'';
+  const hoy=getColDate();
+  const hh=m[1].padStart(2,'0')+':'+m[2];
+  return (d&&d!==hoy?'<span style="color:#8A90A0;font-size:10px">'+d+'</span> ':'')+hh;
+}
+function _alarmaTipo(a){
+  return String(a.TipoAlerta||a.Alerta||a.tipo_alerta||a.tipo||a.Evento||a.Descripcion||'Alerta').trim();
+}
+function _alarmaDetalle(a){
+  const partes=[];
+  const vel=a.Velocidad!=null?a.Velocidad:(a.GpsSpeed!=null?a.GpsSpeed:null);
+  if(vel!=null&&vel!=='')partes.push(Math.round(parseFloat(vel))+' km/h');
+  const lugar=a.StatusAlerta||a.Domicilio||a.Direccion||a.direccion||a.Ubicacion||a.Descripcion||'';
+  if(lugar&&String(lugar).trim())partes.push(String(lugar).trim());
+  const cond=a.Conductor||a.conductor||'';
+  if(cond&&String(cond).trim())partes.push('👤 '+cond);
+  return partes.length?partes.join(' · '):'<span style="color:#B5BAC6">sin detalle</span>';
+}
 async function cargarAlarmasSecurita(){
   const tbody=document.getElementById('dash-alarmas');
   if(!tbody)return;
@@ -5576,18 +5722,25 @@ async function cargarAlarmasSecurita(){
     const listas=await Promise.all(asignaciones.map(async a=>{
       const v=_vehCache.find(x=>x.nombre===a.unit_id);
       if(!v)return[];
-      try{ const al=await secAlertas(v.idgps,fecha)||[]; return(Array.isArray(al)?al:[al]).map(x=>({...x,_unit:a.unit_id,_ruta:a.ruta})); }catch(e){return[];}
+      try{
+        const al=await secAlertas(v.idgps,fecha);
+        // Cuando no hay alarmas, SecuritaGPS NO devuelve una lista vacía: devuelve el objeto
+        // {status:40100, message:"No alerts found."}. Envolverlo en un array pintaba una fila
+        // fantasma con hora "—" y tipo "Alerta" — que es justo lo que se veía en el módulo.
+        const lista=Array.isArray(al)?al:(al&&typeof al==='object'&&!al.status&&!al.message?[al]:[]);
+        return lista.filter(_alarmaValida).map(x=>({...x,_unit:a.unit_id,_ruta:a.ruta}));
+      }catch(e){return[];}
     }));
     const eventos=listas.flat().sort((a,b)=>(b.Hora||'').localeCompare(a.Hora||''));
     const meta=document.getElementById('dash-alarmas-meta');if(meta)meta.textContent=eventos.length+' alarmas hoy';
     if(!eventos.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">Sin alarmas registradas hoy ✓</td></tr>';return;}
     tbody.innerHTML=eventos.map(e=>{
       const col=rutaColor[e._ruta]||'#4A5060';
-      const esCritica=/PANICO|EXCESO|REMOLCADO|VELOCIDAD MAXIMA|IMPACTO|FRENADA|ACELERACION|ALARMA ACTIVADA/i.test(e.TipoAlerta||e.Descripcion||'');
-      return '<tr><td>'+(e.Hora||'—')+'</td><td style="font-weight:800">'+e._unit+'</td>'+
+      const esCritica=/PANICO|EXCESO|REMOLCADO|VELOCIDAD MAXIMA|IMPACTO|FRENADA|ACELERACION|ALARMA ACTIVADA/i.test(_alarmaTipo(e));
+      return '<tr><td>'+_alarmaHora(e)+'</td><td style="font-weight:800">'+e._unit+'</td>'+
         '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e._ruta+'</span></td>'+
-        '<td><span class="dtag" style="background:'+(esCritica?'#FFF1F2':'#FFF8E6')+';color:'+(esCritica?'#E30613':'#D97706')+'">'+(e.TipoAlerta||'Alerta')+'</span></td>'+
-        '<td style="font-size:11px;color:#6B7385">'+(e.StatusAlerta||e.Domicilio||'—')+'</td></tr>';
+        '<td><span class="dtag" style="background:'+(esCritica?'#FFF1F2':'#FFF8E6')+';color:'+(esCritica?'#E30613':'#D97706')+'">'+_alarmaTipo(e)+'</span></td>'+
+        '<td style="font-size:11px;color:#6B7385">'+_alarmaDetalle(e)+'</td></tr>';
     }).join('');
   }catch(e){console.log('alarmas:',e.message);tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">No se pudo cargar alarmas de Securita</td></tr>';}
 }
@@ -5755,7 +5908,8 @@ function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel,ignicion){
     estado.salidaEn=Date.now();
     estado.puntoSalida={lat,lng};
     estado.maxVelFuera=vel||0;estado.movioFuera=(vel||0)>3;estado.encFuera=!!ignicion; // reiniciar acumuladores de la excursión
-    registrarEventoGeocerca(unitId,rutaLbl,'salio',lat,lng,vel,distM,null,null);
+    const estadoAlSalir=(ignicion?'Encendido':'Apagado')+((vel||0)>0?' · '+Math.round(vel)+' km/h al salir':' · detenido al salir');
+    registrarEventoGeocerca(unitId,rutaLbl,'salio',lat,lng,vel,distM,null,estadoAlSalir);
     toast('🚨 '+unitId+' ('+rutaLbl+') salió de su geocerca','err');
   }else{
     const tiempoFuera=estado.salidaEn?Math.round((Date.now()-estado.salidaEn)/1000):null;
@@ -5795,6 +5949,14 @@ async function registrarEventoGeocerca(unitId,ruta,tipo,lat,lng,vel,distanciaM,t
     if(!r.ok)await post(base); // la columna estado_fuera aún no existe: guardar el evento sin ese detalle
   }catch(e){console.log('geocerca_eventos:',e.message);}
 }
+/* Segundos → texto corto legible (los desvíos largos en minutos no se leen bien). */
+function _minTxt(seg){
+  if(seg==null)return '—';
+  const m=Math.round(seg/60);
+  if(m<60)return m+' min';
+  const h=Math.floor(m/60),r=m%60;
+  return h+' h'+(r?' '+r+' min':'');
+}
 async function cargarEventosGeocerca(){
   const tbody=document.getElementById('dash-geo');
   if(!tbody)return;
@@ -5820,9 +5982,20 @@ async function cargarEventosGeocerca(){
       const hora=e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
       const esSalida=e.tipo==='salio';
       const ef=e.estado_fuera||'';
-      const efHtml=ef?'<span style="font-size:11px;color:'+(/Se movió|Encendido/.test(ef)?'#D97706':'#6B7385')+'">'+ef+'</span>':'<span style="color:#B5BAC6">—</span>';
+      const efHtml=ef
+        ?'<span style="font-size:11px;color:'+(/Se movió|Encendido/.test(ef)?'#D97706':'#6B7385')+'">'+ef+'</span>'
+        :(esSalida?'<span style="font-size:11px;color:#B45309">excursión abierta</span>'
+                  :'<span style="color:#B5BAC6">—</span>');
       let tf=e.tiempo_fuera_seg;if(tf==null&&esSalida)tf=tiempoSal[e.hora+'|'+e.unit_id];
-      const tfHtml=tf!=null?(Math.round(tf/60)+' min'+(esSalida?' <span style="color:#B5BAC6;font-size:9px">al volver</span>':'')):'<span style="color:#B5BAC6">—</span>';
+      // Una salida sin reingreso NO tiene tiempo_fuera_seg: ese dato solo se conoce al volver.
+      // Antes quedaba en "—" para siempre; ahora se muestra lo que lleva fuera hasta ahora.
+      let tfHtml;
+      if(tf!=null){
+        tfHtml=_minTxt(tf)+(esSalida?' <span style="color:#B5BAC6;font-size:9px">al volver</span>':'');
+      }else if(esSalida){
+        const abierta=Math.round((Date.now()-new Date(e.hora).getTime())/1000);
+        tfHtml='<b style="color:#E30613">'+_minTxt(abierta)+'</b> <span style="color:#B5BAC6;font-size:9px">y sigue fuera</span>';
+      }else tfHtml='<span style="color:#B5BAC6">—</span>';
       const clic=(e.lat!=null&&e.lng!=null);
       return '<tr onclick="verEventoGeocerca('+idx+')" style="'+(clic?'cursor:pointer':'')+'" title="'+(clic?'Ver en el mapa':'')+'"><td>'+hora+'</td><td style="font-weight:800">'+e.unit_id+(clic?' <span style="color:#1A56DB;font-size:9px">📍</span>':'')+'</td>'+
         '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td>'+
@@ -5984,9 +6157,22 @@ async function guardarAsignacionRuta(sel){
    Los cargos permitidos los definió el coordinador explícitamente (2026-08-03): solo estos seis,
    ni Supernumerario ni "Conductor Entrega" (sin "de") cuentan, aunque existan en el maestro. */
 const _ROLES_ENTREGA=['AUXILIAR DE REFRIGERACION','AUXILIAR DE ENTREGA','CONDUCTOR AUTOVENTA','AUXILIAR AUTOVENTA','CONDUCTOR DE ENTREGA','CONDUCTOR DE NEVERAS'];
+/* Los supernumerarios cubren rutas cuando alguien falta, y en el maestro hay un cargo escrito
+   "CONDUCTOR ENTREGA" (sin el "DE") que es el mismo oficio. Con la lista de julio, filtrar solo
+   por los 6 cargos exactos dejaba fuera a 9 personas que sí salen a repartir — por eso "faltaban"
+   conductores y auxiliares en el registro de ruta y en el módulo de Entregadores. */
+const _ROLES_ENTREGA_EXTRA=['SUPERNUMERARIO'];
+function _normCargo(c){
+  const x=String(c||'').trim().toUpperCase().replace(/\s+/g,' ');
+  return x==='CONDUCTOR ENTREGA'?'CONDUCTOR DE ENTREGA':x;
+}
+function esCargoDeEntrega(c){
+  const x=_normCargo(c);
+  return _ROLES_ENTREGA.includes(x)||_ROLES_ENTREGA_EXTRA.includes(x);
+}
 function entregadoresDisponibles(){
-  return EMPLEADOS_ASIS.filter(e=>_ROLES_ENTREGA.includes(String(e[2]).trim().toUpperCase()))
-    .map(e=>({nombre:e[0],ced:e[1],cargo:e[2]}))
+  return EMPLEADOS_ASIS.filter(e=>esCargoDeEntrega(e[2]))
+    .map(e=>({nombre:e[0],ced:e[1],cargo:_normCargo(e[2])}))
     .sort((a,b)=>a.nombre.localeCompare(b.nombre));
 }
 /* Registro central del día: un archivo POR PERSONA (REGISTRO/{fecha}/{ruta}__{ced}.json), no un
@@ -8098,15 +8284,51 @@ async function drillAvance(fecha){
    Cruza rechazos (novedades.conductor) con entregas confirmadas (estados_entrega) y asistencia.
    El vínculo persona↔ruta solo existe desde que la app pregunta "¿quién está entregando hoy?";
    los meses anteriores traen el texto fijo "Repartidor" y por eso se avisa en pantalla. */
+/* Mes completo o un solo día: el coordinador necesita las dos lecturas (el mes para nómina,
+   el día para saber qué pasó ayer). */
+let _entModo='mes';
+function setModoEntregadores(m){
+  _entModo=m;
+  const bm=document.getElementById('ent-modo-mes'),bd=document.getElementById('ent-modo-dia');
+  const im=document.getElementById('ent-mes'),id=document.getElementById('ent-dia');
+  if(bm)bm.classList.toggle('on',m==='mes'); if(bd)bd.classList.toggle('on',m==='dia');
+  if(im)im.style.display=m==='mes'?'':'none';
+  if(id){id.style.display=m==='dia'?'':'none'; id.max=getColDate(); if(!id.value)id.value=getColDate();}
+  cargarEntregadores();
+}
+/* Todas las personas que registraron jornada entre dos fechas (REGISTRO/{fecha}/…).
+   Se listan las carpetas día por día: son archivos diminutos y solo se piden los días del rango. */
+async function _registrosDelRango(ini,fin){
+  const salida=[];
+  const d0=new Date(ini+'T12:00:00'),d1=new Date(fin+'T12:00:00');
+  const dias=[];
+  for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1))dias.push(d.toISOString().split('T')[0]);
+  if(dias.length>31)dias.length=31; // tope de seguridad: nunca más de un mes
+  await Promise.all(dias.map(async f=>{
+    try{
+      const reg=await cargarRegistroDia(f);
+      Object.keys(reg||{}).forEach(ruta=>(reg[ruta]||[]).forEach(p=>{
+        salida.push({fecha:f,ruta,nombre:p.nombre,ced:p.ced,cargo:p.cargo,rol:p.rol});
+      }));
+    }catch(e){}
+  }));
+  return salida;
+}
 async function cargarEntregadores(mesSel){
-  const mes=mesSel||document.getElementById('ent-mes')?.value||_mesActualStr();
+  const mes=(typeof mesSel==='string'&&mesSel)||document.getElementById('ent-mes')?.value||_mesActualStr();
   const inp=document.getElementById('ent-mes');if(inp)inp.value=mes;
   const cont=document.getElementById('ent-body');if(!cont)return;
-  cont.innerHTML='<div class="veh-cargando">Cruzando entregas, rechazos y asistencia de '+mes+'…</div>';
   const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
-  // _mesFin() usa el período global de Indicadores, aquí hace falta el del mes elegido
+  // Rango: el mes elegido, o un solo día si está en modo "Un día"
   const [aa,mm]=mes.split('-').map(Number);
-  const ini=mes+'-01',fin=mes+'-'+String(new Date(aa,mm,0).getDate()).padStart(2,'0');
+  let ini=mes+'-01',fin=mes+'-'+String(new Date(aa,mm,0).getDate()).padStart(2,'0');
+  let etiqueta=mes;
+  if(_entModo==='dia'){
+    const d=document.getElementById('ent-dia');
+    ini=fin=(d&&d.value)||getColDate();
+    etiqueta='el '+ini;
+  }
+  cont.innerHTML='<div class="veh-cargando">Cruzando entregas, rechazos y registro de '+etiqueta+'…</div>';
   try{
     const [rN,rE]=await Promise.all([
       fetch(CFG.SUPABASE_URL+'/rest/v1/novedades?select=conductor,ruta,fecha,codigo_cliente&fecha=gte.'+ini+'&fecha=lte.'+fin+'&limit=5000',{headers:_h}),
@@ -8116,7 +8338,7 @@ async function cargarEntregadores(mesSel){
     const ests=rE.ok?await rE.json()||[]:[];
     const entregas=ests.filter(x=>x.estado==='entregado');
     const P={}; // nombre → acumulado
-    const get=n=>P[n]||(P[n]={nombre:n,ent:0,rech:0,dias:new Set(),rutas:new Set(),horas:[]});
+    const get=n=>P[n]||(P[n]={nombre:n,ent:0,rech:0,dias:new Set(),rutas:new Set(),horas:[],ced:'',cargo:'',registrado:false});
     entregas.forEach(e=>{const n=(e.motivo||'').trim();if(!n)return;
       if(!pasaFiltroRuta(e.ruta))return; // respeta el filtro global de ruta
       const p=get(n);p.ent++;p.dias.add(e.fecha);if(e.ruta)p.rutas.add(e.ruta);
@@ -8125,6 +8347,15 @@ async function cargarEntregadores(mesSel){
       if(!pasaFiltroRuta(x.ruta))return;
       const p=get(n);p.rech++;p.dias.add(x.fecha);if(x.ruta)p.rutas.add(x.ruta);});
     const genericos=novs.filter(x=>(x.conductor||'').trim()==='Repartidor').length;
+    // Quien se registró en su celular ya trabajó ese día, aunque no haya confirmado ninguna entrega
+    // ni reportado novedades. Antes solo aparecían los que dejaban rastro, y por eso "faltaba gente".
+    const regs=await _registrosDelRango(ini,fin);
+    regs.forEach(r=>{
+      const n=(r.nombre||'').trim(); if(!n)return;
+      if(!pasaFiltroRuta(r.ruta))return;
+      const pp=get(n); pp.dias.add(r.fecha); if(r.ruta)pp.rutas.add(r.ruta);
+      if(r.ced)pp.ced=r.ced; if(r.cargo)pp.cargo=r.cargo; pp.registrado=true;
+    });
     const filas=Object.values(P).map(p=>{
       const tot=p.ent+p.rech;
       // Productividad: entregas por hora efectiva, midiendo cada día de la primera a la última entrega
@@ -8182,6 +8413,7 @@ async function cargarEntregadores(mesSel){
       placeholder:'Buscar entregador o ruta…', orden:{k:'tot',dir:'desc'},
       cols:[
         {k:'nombre',t:'Entregador',b:true},
+        {k:'cargo',t:'Cargo',fmt:v=>v?'<span style="font-size:10.5px;color:#6B7385">'+v+'</span>':'<span style="color:#B5BAC6">—</span>'},
         {k:'rutas',t:'Rutas',fmt:v=>v||'—'},
         {k:'dias',t:'Días',num:true},
         {k:'ent',t:'Entregas',num:true,tot:'sum'},
@@ -9002,6 +9234,10 @@ function activarModuloRutina(){
   verificarEstadoPanel();
   initRutDropzones();
   switchPcTab(1);
+  // El cuadre se calculaba SOLO al pulsar "Revisar", así que al abrir la Rutina se quedaba el texto
+  // fijo "Sube el Libro y la Hoja…" aunque ya estuvieran subidos esa mañana — parecía que los pedía
+  // otra vez. Ahora se calcula al abrir el módulo.
+  setTimeout(()=>{try{chequearCuadreCargue();}catch(e){}},250);
 }
 /* Empotra una "herramienta" (pantalla que antes era overlay de pantalla completa) dentro de su
    sección .mod del dashboard — así no se abre una pantalla aparte, queda en el mismo lugar que
