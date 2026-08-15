@@ -662,6 +662,27 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 /* Celular ya amarrado a una persona: se muestra como identidad, no como lista editable. */
 .ep-chip-yo{width:100%;background:#ECFDF5;border-color:#A7F3D0;padding:11px 13px;flex-direction:column;align-items:flex-start;gap:2px}
 .ep-chip-yo b{font-size:14px}
+#ent-pick-buscar{width:100%;height:46px;border:1.5px solid #E6E9EF;border-radius:12px;padding:0 14px;
+  font-family:inherit;font-size:14px;font-weight:700;color:#0F1117;background:#fff;outline:none}
+#ent-pick-buscar:focus{border-color:#E30613}
+.ep-res{max-height:186px;overflow:auto;margin-top:7px;display:flex;flex-direction:column;gap:5px}
+.ep-r{display:flex;flex-direction:column;gap:1px;padding:9px 11px;border:1px solid #EEF0F4;border-radius:10px;
+  background:#F7F8FA;cursor:pointer;text-align:left}
+.ep-r:hover,.ep-r:active{background:#FFF0F1;border-color:#E30613}
+.ep-r.sel{background:#ECFDF5;border-color:#059669}
+.ep-r b{font-size:13px;font-weight:800;color:#0F1117}
+.ep-r span{font-size:10.5px;font-weight:700;color:#8A90A0;text-transform:uppercase;letter-spacing:.3px}
+.ep-r em{font-style:normal;background:#FFE9B0;border-radius:3px}
+.ep-vacio2{font-size:11.5px;color:#8A90A0;padding:9px 2px;font-weight:600}
+.ep-abordo{margin:11px 0 2px;display:flex;flex-direction:column;gap:5px}
+.ep-ab-t{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A90A0}
+.ep-ab-l{display:flex;flex-wrap:wrap;gap:5px}
+.ep-ab{display:inline-flex;align-items:center;gap:5px;background:#F7F8FA;border:1px solid #EEF0F4;border-radius:8px;
+  padding:4px 9px;font-size:10.5px;font-weight:800;color:#0F1117}
+.ep-ab i{width:7px;height:7px;border-radius:50%}
+.ep-ab i.cond{background:#E30613} .ep-ab i.aux{background:#1A56DB}
+.ep-aviso{background:#FFF8E6;border:1px solid #F5C24A;border-radius:9px;padding:8px 10px;font-size:11px;
+  font-weight:700;color:#92400E;line-height:1.45;margin-top:9px}
 .ep-otro{margin-top:9px;font-size:11px;font-weight:700;color:#8A90A0;text-decoration:underline;cursor:pointer;line-height:1.45}
 .ep-otro:hover{color:#E30613}
 /* Toggle Conductor / Auxiliar */
@@ -1075,8 +1096,9 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
   color:#F5F6F8;font-size:10.5px;font-weight:600;line-height:1.45;padding:9px 11px;border-radius:8px;
   text-transform:none;letter-spacing:0;z-index:60;box-shadow:var(--sh-float)}
 /* Bandeja */
-.tc-pend{display:grid;grid-template-columns:repeat(5,1fr)}
-@media (max-width:1000px){.tc-pend{grid-template-columns:repeat(2,1fr)}}
+.tc-pend{display:grid;grid-template-columns:repeat(6,1fr)}
+@media (max-width:1200px){.tc-pend{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:820px){.tc-pend{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.tc-pend{grid-template-columns:1fr}}
 .tc-p{padding:13px 15px;border-right:1px solid var(--gris2);display:flex;flex-direction:column;gap:6px}
 .tc-p:last-child{border-right:none}
@@ -1102,6 +1124,19 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
 .tc-per .txt{display:flex;flex-direction:column;line-height:1.3;min-width:0}
 .tc-per b{font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
 .tc-per small{font-size:10px;color:var(--gris4);font-weight:600}
+.tc-crew{display:flex;flex-direction:column;gap:4px}
+.tc-cm{display:inline-flex;align-items:center;gap:6px}
+.tc-av.mini{width:21px;height:21px;font-size:8.5px}
+.tc-cn{display:flex;align-items:baseline;gap:5px;min-width:0}
+.tc-cn b{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:132px}
+.tc-cn em{font-style:normal;font-size:9px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.3px}
+.tc-warn{margin-top:4px;font-size:9.5px;font-weight:800;color:#B45309}
+.tc-vb{margin-top:6px;height:23px;padding:0 9px;border-radius:6px;border:1px solid var(--gris3);background:#fff;
+  font-family:inherit;font-size:9.5px;font-weight:800;color:var(--gris5);cursor:pointer;letter-spacing:.2px}
+.tc-vb:hover{background:var(--negro);color:#fff;border-color:var(--negro)}
+.tc-vb.ok{background:#ECFDF5;border-color:#A7F3D0;color:#059669}
+.tc-vb.ok:hover{background:#059669;color:#fff;border-color:#059669}
+.tc-vb.cambio{background:#FFF8E6;border-color:#F5C24A;color:#B45309}
 .tc-pill{display:inline-flex;align-items:center;gap:5px;height:21px;padding:0 9px;border-radius:6px;font-size:10px;
   font-weight:800;white-space:nowrap;letter-spacing:.2px}
 .tc-pill.ok{background:#ECFDF5;color:#059669} .tc-pill.warn{background:#FFF8E6;color:#B45309}
@@ -2228,7 +2263,13 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <div class="ep-t">¿Quién sale hoy en <span id="ep-ruta">la ruta</span>?</div>
     <div class="ep-s" id="ep-sub">Regístrate tú, con tu propio celular. Un equipo = una persona: así tus novedades y tu asistencia quedan a tu nombre.</div>
     <div id="ep-lista" class="ep-lista" style="margin-bottom:14px"></div>
-    <div id="ep-sel-wrap"><select id="ent-pick-sel"></select></div>
+    <div id="ep-sel-wrap">
+      <input type="search" id="ent-pick-buscar" autocomplete="off" autocapitalize="characters"
+             placeholder="Escribe tu nombre o tu cédula…" oninput="_epBuscar(this.value)" onfocus="_epBuscar(this.value)">
+      <div id="ent-pick-res" class="ep-res"></div>
+      <input type="hidden" id="ent-pick-sel">
+    </div>
+    <div id="ep-abordo" class="ep-abordo"></div>
     <div class="ep-rol">
       <button type="button" class="ep-rol-btn on" data-rol="conductor" onclick="haptic();_epPickRol(this)">Conductor</button>
       <button type="button" class="ep-rol-btn" data-rol="auxiliar" onclick="haptic();_epPickRol(this)">Auxiliar</button>
@@ -4067,18 +4108,73 @@ async function cargarTorreControl(forzar,fechaSel){
   if(forzar||_tcCache.fecha!==fecha||!_tcCache.hojas){
     try{
       await cargarIndiceHojas();
-      const [rech,reg,obsFoto,hist]=await Promise.all([
+      const [rech,reg,obsFoto,hist,val]=await Promise.all([
         cargarRechazosDelDia(fecha),
         cargarRegistroDia(fecha),
         _tcListarObsFoto(fecha),
-        fecha===getColDate()?Promise.resolve(null):_tcHistoricoDia(fecha)
+        fecha===getColDate()?Promise.resolve(null):_tcHistoricoDia(fecha),
+        cargarValidaciones(fecha)
       ]);
-      _tcCache={fecha,hojas:hojasIndex||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist};
-    }catch(e){ _tcCache={fecha,hojas:hojasIndex||{},rech:{},reg:{},obsFoto:new Set(),hist:null}; }
+      _tcCache={fecha,hojas:hojasIndex||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist,val:val||{}};
+    }catch(e){ _tcCache={fecha,hojas:hojasIndex||{},rech:{},reg:{},obsFoto:new Set(),hist:null,val:{}}; }
   }
   try{ pintarTorreControl(); }catch(e){ console.log('torre:',e.message); }
 }
 
+/* ══ VALIDACIÓN DE TRIPULACIÓN POR EL COORDINADOR ══
+   El entregador se registra solo, así que el coordinador tiene que dar el visto bueno de que la
+   ruta salió como él la armó (y de que cada uno se registró bien). Se guarda la lista EXACTA de
+   cédulas que había al validar: si después alguien más se registra o cambia de rol, la ruta vuelve
+   a marcarse como "cambió después de validar" en vez de quedar validada por error. */
+async function cargarValidaciones(fecha){
+  const val={};
+  try{
+    const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:'VALIDACION/'+fecha+'/',limit:200})});
+    if(lr.ok){
+      const files=(await lr.json()||[]).filter(f=>f.name&&f.name.endsWith('.json'));
+      const datos=await Promise.all(files.map(f=>
+        fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/VALIDACION/'+fecha+'/'+encodeURIComponent(f.name)+'?t='+Date.now())
+          .then(r=>r.ok?r.json():null).catch(()=>null)));
+      datos.forEach(d=>{if(d&&d.ruta)val[d.ruta]=d;});
+    }
+  }catch(e){}
+  return val;
+}
+/* Firma del estado de una tripulación: cédula+rol de cada persona, ordenado.
+   Si cambia, la validación anterior deja de valer. */
+function _firmaTripulacion(personas){
+  return (personas||[]).map(p=>String(p.ced)+':'+(p.rol||'')).sort().join('|');
+}
+async function validarTripulacion(ruta){
+  const fecha=_tcCache.fecha||getColDate();
+  const personas=((_tcCache.reg||{})[ruta])||[];
+  if(!personas.length){toast('Esa ruta todavía no tiene a nadie registrado','err');return;}
+  const cond=personas.filter(p=>p.rol==='conductor').length;
+  if(cond!==1&&!confirm('La ruta '+ruta+' tiene '+cond+' conductor(es) registrado(s). Lo normal es uno.\n\n¿Validar de todas formas?'))return;
+  showLoad('Validando la tripulación de '+ruta+'…');
+  try{
+    const payload={ruta,fecha,ok:true,hora:new Date().toISOString(),
+      personas:personas.map(p=>({ced:p.ced,nombre:p.nombre,rol:p.rol})),
+      firma:_firmaTripulacion(personas)};
+    const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
+    await sb.storage.from(CFG.BCK_PED).upload('VALIDACION/'+fecha+'/'+ruta+'.json',blob,{contentType:'application/json',upsert:true});
+    hideLoad();
+    toast('✓ '+ruta+' validada: '+personas.length+' persona(s)','ok');
+    cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo validar: '+e.message,'err');}
+}
+async function quitarValidacion(ruta){
+  const fecha=_tcCache.fecha||getColDate();
+  if(!confirm('¿Quitar el visto bueno de '+ruta+'?'))return;
+  showLoad('Quitando validación…');
+  try{
+    const blob=new Blob([JSON.stringify({ruta,fecha,ok:false,hora:new Date().toISOString()})],{type:'application/json'});
+    await sb.storage.from(CFG.BCK_PED).upload('VALIDACION/'+fecha+'/'+ruta+'.json',blob,{contentType:'application/json',upsert:true});
+    hideLoad();toast('Validación retirada de '+ruta,'ok');cargarTorreControl(true);
+  }catch(e){hideLoad();toast('Error: '+e.message,'err');}
+}
 /* Foto de un día pasado: clientes por ruta del PPAS de esa fecha y entregas que se confirmaron.
    `clientes_rutas` se limpia y recarga cada mañana, así que para el histórico la única fuente del
    total por ruta es el snapshot PPAS_INDEX.json que quedó guardado ese día. */
@@ -4155,7 +4251,14 @@ function _tcDatosRutas(){
     const totalCli=porRuta[r]?porRuta[r].tot:0;
     const conf=esHoy?(entregadosPorRuta[r]||new Set()).size:(porRuta[r]?porRuta[r].ent:0);
     const ef=cargue>0?Math.round((cargue-afeC)/cargue*100):null;
-    return {ruta:r,placa:h?h.placa:'',cargue,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef};
+    // Visto bueno del coordinador: vale solo si la tripulación no cambió después de validarla
+    const v=((C.val||{})[r])||null;
+    const firmaHoy=_firmaTripulacion(personas);
+    const validada=!!(v&&v.ok&&v.firma===firmaHoy);
+    const cambioTrasValidar=!!(v&&v.ok&&v.firma&&v.firma!==firmaHoy);
+    const conductores=personas.filter(pp=>pp.rol==='conductor').length;
+    return {ruta:r,placa:h?h.placa:'',cargue,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef,
+            validada,cambioTrasValidar,valHora:v&&v.hora?v.hora:null,conductores};
   });
 }
 
@@ -4245,6 +4348,7 @@ function pintarTorreControl(){
   const devPend=R.reduce((s,x)=>s+x.pend,0);
   const fotosDuda=R.reduce((s,x)=>s+x.fotosDuda,0);
   const sinReg=R.filter(x=>!x.personas.length&&x.totalCli>0);
+  const porValidar=R.filter(x=>x.personas.length&&!x.validada);
   const obsTot=Object.keys(obsequiosClientes||{}).length;
   const obsFoto=[...(_tcCache.obsFoto||new Set())].filter(c=>!obsTot||obsequiosClientes[c]).length;
   const item=(cls,n,l,accion)=>'<div class="tc-p '+cls+'"><div class="tc-p-n">'+n+'</div><div class="tc-p-l">'+l+'</div>'+
@@ -4254,10 +4358,11 @@ function pintarTorreControl(){
     item(devPend?'urg':'ok',devPend,'Devoluciones por aprobar',devPend?"tcIrPrimeraPendiente()":'')+
     item(fotosDuda?'urg':'ok',fotosDuda,'Fotos que no parecen fachada',fotosDuda?"tcIrPrimeraFoto()":'')+
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
+    item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
     item(hayLiq?'med':'mute',hayLiq?'✓':'—','Auditoría LiquiYa'+(hayLiq?' lista':' · falta cargar'),"abrirAuditoria()")+
     item(obsTot&&obsFoto>=obsTot?'ok':'med',obsFoto+'<span style="font-size:14px;color:var(--gris4)">/'+obsTot+'</span>','Obsequios con foto',"abrirObsequiosSup()");
   const pm=document.getElementById('tc-pend-meta');
-  const porResolver=devPend+fotosDuda+sinReg.length;
+  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length;
   if(pm)pm.textContent=porResolver===0?'todo al día ✓':porResolver===1?'1 cosa por resolver':porResolver+' cosas por resolver';
 
   /* ── 4. Tabla maestra de rutas ── */
@@ -4315,13 +4420,24 @@ function _tcFila(x,i){
   const pct=x.totalCli?Math.round(x.conf/x.totalCli*100):0;
   const colAv=pct>=90?'var(--verde)':pct>=60?'var(--azul)':pct>0?'var(--amarillo)':'var(--gris3)';
   const colEf=x.ef===null?'var(--gris3)':x.ef>=96?'var(--verde)':x.ef>=95?'var(--amarillo)':'var(--rojo)';
-  const p=x.personas[0];
-  const resp=p
-    ? '<div class="tc-per"><div class="tc-av" style="background:'+_tcAvatarCol[i%_tcAvatarCol.length]+'">'+_tcIniciales(p.nombre)+'</div>'+
-      '<div class="txt"><b>'+_nomCorto(p.nombre)+'</b><small>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+
-      (x.personas.length>1?' +'+(x.personas.length-1):'')+(p.hora?' · '+new Date(p.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'</small></div></div>'
+  // Todos los que se registraron, no solo el primero: una ruta puede llevar hasta 5 personas.
+  const orden=x.personas.slice().sort((a,b)=>(a.rol==='conductor'?0:1)-(b.rol==='conductor'?0:1));
+  const resp=orden.length
+    ? '<div class="tc-crew">'+orden.map((pp,j)=>
+        '<span class="tc-cm" title="'+pp.nombre+(pp.ced?' · C.C. '+pp.ced:'')+(pp.hora?' · registrado '+new Date(pp.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'">'+
+          '<span class="tc-av mini" style="background:'+_tcAvatarCol[(i+j)%_tcAvatarCol.length]+'">'+_tcIniciales(pp.nombre)+'</span>'+
+          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em>'+(pp.rol==='conductor'?'Conductor':'Auxiliar')+'</em></span>'+
+        '</span>').join('')+
+      '</div>'
     : '<div class="tc-per"><div class="tc-av" style="background:var(--gris3);color:var(--gris5)">—</div>'+
       '<div class="txt"><b style="color:var(--gris4)">sin responsable</b><small>ningún celular registró</small></div></div>';
+  // Visto bueno del coordinador
+  const vb=!orden.length?''
+    : x.validada
+      ? '<button class="tc-vb ok" onclick="event.stopPropagation();quitarValidacion(\''+x.ruta+'\')" title="Validada'+(x.valHora?' a las '+new Date(x.valHora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'. Clic para quitar el visto bueno.">✓ Validada</button>'
+      : x.cambioTrasValidar
+        ? '<button class="tc-vb cambio" onclick="event.stopPropagation();validarTripulacion(\''+x.ruta+'\')" title="La tripulación cambió después de validarla">⟳ Cambió · revalidar</button>'
+        : '<button class="tc-vb" onclick="event.stopPropagation();validarTripulacion(\''+x.ruta+'\')" title="Confirmar que la ruta salió así">Dar visto bueno</button>';
   const estado=!x.personas.length&&x.totalCli
     ? '<span class="tc-pill mute"><span class="dot"></span>Sin registrar</span>'
     : x.pend ? '<span class="tc-pill bad"><span class="dot"></span>'+x.pend+' por aprobar</span>'
@@ -4331,7 +4447,7 @@ function _tcFila(x,i){
     '<td><div style="display:flex;align-items:center;gap:8px"><span class="tc-caret">▸</span>'+
       '<span style="font-weight:800;font-size:12.5px">'+x.ruta+'</span>'+
       (x.placa?'<span style="font-size:10px;color:var(--gris4);font-weight:700">'+x.placa+'</span>':'')+'</div></td>'+
-    '<td>'+resp+'</td>'+
+    '<td>'+resp+(x.conductores>1?'<div class="tc-warn">⚠ '+x.conductores+' conductores registrados</div>':'')+vb+'</td>'+
     '<td class="r">'+(x.cargue?Math.round(x.cargue)+' cj':'—')+'</td>'+
     '<td><div class="tc-mini"><div class="bt"><i style="width:'+pct+'%;background:'+colAv+'"></i></div>'+
       '<span class="pv">'+x.conf+'/'+x.totalCli+'</span></div></td>'+
@@ -6342,6 +6458,88 @@ function _epPickRol(btn){
   document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');window._epRolSel=btn.dataset.rol;
 }
+/* ══ REGLAS DE TRIPULACIÓN (2026-08-15) ══
+   · Hasta 5 personas por ruta. Cada una se registra en SU propio celular.
+   · Solo UNA puede ser conductor: si ya hay conductor registrado, el que llegue después entra
+     como auxiliar automáticamente y se le avisa (antes quedaban dos y tres "conductores").
+   · El coordinador valida al final que la ruta salió como él la armó. */
+const TRIP_MAX=5;
+let _epRutaActual=[];   // quiénes ya están registrados hoy en esta ruta (del registro central)
+
+async function _epCargarRuta(ruta){
+  try{
+    const reg=await cargarRegistroDia(getColDate());
+    _epRutaActual=(reg&&reg[ruta])||[];
+  }catch(e){ _epRutaActual=[]; }
+  _epPintarABordo(ruta);
+  return _epRutaActual;
+}
+function _epConductorDeRuta(){ return _epRutaActual.find(p=>p.rol==='conductor')||null; }
+function _epPintarABordo(ruta){
+  const box=document.getElementById('ep-abordo'); if(!box)return;
+  const yo=personaDelDispositivo();
+  const otros=_epRutaActual.filter(p=>!yo||String(p.ced)!==String(yo.ced));
+  let html='';
+  if(_epRutaActual.length){
+    html+='<div class="ep-ab-t">Ya registrados en '+ruta+' ('+_epRutaActual.length+' de '+TRIP_MAX+')</div>'+
+      '<div class="ep-ab-l">'+_epRutaActual.map(p=>
+        '<span class="ep-ab"><i class="'+(p.rol==='conductor'?'cond':'aux')+'"></i>'+_nomCorto(p.nombre)+'</span>').join('')+'</div>';
+  }
+  const cond=_epConductorDeRuta();
+  if(cond&&(!yo||String(cond.ced)!==String(yo.ced)))
+    html+='<div class="ep-aviso">'+ruta+' ya tiene conductor: <b>'+_nomCorto(cond.nombre)+'</b>. Vas a quedar como <b>auxiliar</b>.</div>';
+  if(_epRutaActual.length>=TRIP_MAX)
+    html+='<div class="ep-aviso">Esta ruta ya tiene '+TRIP_MAX+' personas registradas. Avisa al coordinador antes de subirte.</div>';
+  box.innerHTML=html;
+  // Si ya hay conductor, el botón de conductor queda deshabilitado visualmente
+  const bc=document.querySelector('.ep-rol-btn[data-rol="conductor"]');
+  if(bc){
+    const bloqueado=!!(cond&&(!yo||String(cond.ced)!==String(yo.ced)));
+    bc.disabled=bloqueado;
+    bc.style.opacity=bloqueado?'.45':'';
+    bc.style.cursor=bloqueado?'not-allowed':'';
+    if(bloqueado&&window._epRolSel==='conductor'){
+      window._epRolSel='auxiliar';
+      document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol==='auxiliar'));
+    }
+  }
+}
+
+/* Buscador: se escribe el nombre o la cédula y aparecen las coincidencias. Con 38 personas en la
+   lista, un desplegable obligaba a bajar buscando el propio nombre; escribir tres letras es más
+   rápido y evita que alguien registre a otro por equivocación. */
+function _epBuscar(q){
+  const cont=document.getElementById('ent-pick-res'); if(!cont)return;
+  const txt=String(q||'').trim().toUpperCase();
+  const hid=document.getElementById('ent-pick-sel');
+  if(hid&&hid.value&&txt!==(hid.dataset.nombre||''))hid.value=''; // cambió el texto: se deselecciona
+  if(txt.length<2){
+    cont.innerHTML='<div class="ep-vacio2">Escribe al menos 2 letras de tu nombre o los primeros números de tu cédula.</div>';
+    return;
+  }
+  const res=entregadoresDisponibles().filter(p=>
+    p.nombre.toUpperCase().includes(txt)||String(p.ced).includes(txt)).slice(0,8);
+  if(!res.length){
+    cont.innerHTML='<div class="ep-vacio2">Nadie coincide con «'+q+'». Revisa cómo se escribe o avisa al coordinador.</div>';
+    return;
+  }
+  const marcar=n=>{
+    const i=n.toUpperCase().indexOf(txt);
+    return i<0?n:n.slice(0,i)+'<em>'+n.slice(i,i+txt.length)+'</em>'+n.slice(i+txt.length);
+  };
+  cont.innerHTML=res.map(p=>
+    '<button type="button" class="ep-r" onclick="haptic();_epElegir(\''+p.ced+'\')">'+
+      '<b>'+marcar(p.nombre)+'</b><span>'+p.cargo+' · C.C. '+p.ced+'</span></button>').join('');
+}
+function _epElegir(ced){
+  const p=entregadoresDisponibles().find(x=>String(x.ced)===String(ced)); if(!p)return;
+  const hid=document.getElementById('ent-pick-sel');
+  if(hid){hid.value=p.ced;hid.dataset.nombre=p.nombre.toUpperCase();}
+  const inp=document.getElementById('ent-pick-buscar'); if(inp)inp.value=p.nombre;
+  document.getElementById('ent-pick-res').innerHTML=
+    '<div class="ep-r sel"><b>✓ '+p.nombre+'</b><span>'+p.cargo+' · C.C. '+p.ced+'</span></div>';
+}
+
 /* Pantalla de registro: si el celular ya tiene dueño, solo confirma; si no, deja elegir UNA persona. */
 function _epRenderLista(){
   const c=document.getElementById('ep-lista');if(!c)return;
@@ -6376,13 +6574,14 @@ function pedirTripulacion(ruta,cb){
   if(ya){cb([ya]);return;}
   window._epRolSel=(personaDelDispositivo()||{}).rol||'conductor';
   const rEl=document.getElementById('ep-ruta');if(rEl)rEl.textContent=ruta;
-  const sel=document.getElementById('ent-pick-sel');
-  sel.innerHTML='<option value="">Selecciona tu nombre…</option>'+
-    entregadoresDisponibles().map(p=>'<option value="'+p.ced+'">'+p.nombre+' · '+p.cargo+'</option>').join('');
+  const hid=document.getElementById('ent-pick-sel');if(hid){hid.value='';hid.dataset.nombre='';}
+  const inp=document.getElementById('ent-pick-buscar');if(inp)inp.value='';
+  _epBuscar('');
   document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol===window._epRolSel));
   _epRenderLista();
   document.getElementById('ent-pick-ovl').style.display='flex';
   window._entPickCtx={ruta,cb};
+  _epCargarRuta(ruta); // quiénes ya se registraron hoy en esta ruta (avisa si ya hay conductor)
 }
 async function confirmarTripulacion(){
   const ctx=window._entPickCtx||{};
@@ -6399,15 +6598,29 @@ async function confirmarTripulacion(){
   // Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular, se frena.
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
   const choque=await _yaRegistradaHoyEnOtroEquipo(persona.ced);
+  await _epCargarRuta(ctx.ruta); // estado fresco de la ruta antes de decidir
   if(btn){btn.disabled=false;btn.textContent='Iniciar ruta';}
   if(choque){
     toast(persona.nombre.split(' ')[0]+' ya se registró hoy desde otro celular (ruta '+choque.ruta+'). Usa tu propio equipo o avisa al coordinador.','err');
     return;
   }
+  // Tope de personas por vehículo
+  const yaEsta=_epRutaActual.some(p=>String(p.ced)===String(persona.ced));
+  if(!yaEsta&&_epRutaActual.length>=TRIP_MAX){
+    toast('La ruta '+ctx.ruta+' ya tiene '+TRIP_MAX+' personas registradas. Avisa al coordinador.','err');
+    return;
+  }
+  // Un solo conductor por ruta: el segundo pasa a auxiliar automáticamente
+  const cond=_epConductorDeRuta();
+  if(persona.rol==='conductor'&&cond&&String(cond.ced)!==String(persona.ced)){
+    persona.rol='auxiliar';
+    persona.rol_auto=true; // quedó como auxiliar por regla, no por elección
+    toast(ctx.ruta+' ya tiene conductor ('+_nomCorto(cond.nombre)+'). Quedas registrado como auxiliar.','err');
+  }
   document.getElementById('ent-pick-ovl').style.display='none';
   _guardarPersonaDispositivo(persona);       // amarre permanente celular ↔ persona
   _guardarRegistroHoy(ctx.ruta,persona);     // jornada de hoy en esta ruta
-  toast('Registrado: '+persona.nombre.split(' ').slice(0,2).join(' '),'ok');
+  toast('Registrado: '+persona.nombre.split(' ').slice(0,2).join(' ')+' · '+(persona.rol==='conductor'?'Conductor':'Auxiliar'),'ok');
   _guardarRegistroRuta(getColDate(),ctx.ruta,[persona]); // en segundo plano, no bloquea el inicio de ruta
   const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent='1';
   if(ctx.cb)ctx.cb([persona]);
