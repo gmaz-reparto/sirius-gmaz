@@ -1130,6 +1130,10 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
 .tc-cn{display:flex;align-items:baseline;gap:5px;min-width:0}
 .tc-cn b{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:132px}
 .tc-cn em{font-style:normal;font-size:9px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.3px}
+.tc-rol{margin-left:2px;height:18px;padding:0 6px;border-radius:5px;border:1px solid var(--gris2);background:#fff;
+  font-family:inherit;font-size:9px;font-weight:800;color:var(--gris4);cursor:pointer;opacity:0;transition:opacity .12s}
+.tc-cm:hover .tc-rol{opacity:1}
+.tc-rol:hover{background:var(--negro);color:#fff;border-color:var(--negro)}
 .tc-warn{margin-top:4px;font-size:9.5px;font-weight:800;color:#B45309}
 .tc-vb{margin-top:6px;height:23px;padding:0 9px;border-radius:6px;border:1px solid var(--gris3);background:#fff;
   font-family:inherit;font-size:9.5px;font-weight:800;color:var(--gris5);cursor:pointer;letter-spacing:.2px}
@@ -1729,6 +1733,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
                    title="Ver y aprobar las devoluciones de otro día"
                    style="height:30px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117">
             <button class="dchip" id="tc-btn-hoy" onclick="haptic();cargarTorreControl(true,getColDate())" style="display:none">Volver a hoy</button>
+            <button class="dchip" onclick="haptic();borrarRegistroDelDia()" title="Borra la tripulación registrada: todos vuelven a identificarse al abrir la app">🧹 Reiniciar registro</button>
             <button class="dchip" onclick="haptic();cargarTorreControl(true)">↻ Actualizar</button>
           </div>
         </div>
@@ -3160,8 +3165,8 @@ async function guardarEdicionNovedad(){
     const tot=rechazoDetalle.reduce((a,d)=>({c:a.c+d.cajas,u:a.u+d.und}),{c:0,u:0});
     const payload={codigo_cliente:cod,nombre_cliente:nom,ruta:rutaActual,motivo:motivo||_editNovMotivo||'ENTREGA PARCIAL',
       fecha,hora:new Date().toISOString(),detalle:rechazoDetalle,total_cajas:tot.c,total_und:tot.u,estado:'pendiente',editado:true};
-    const res=await fetch(putBase,{method:'POST',headers:{...hdr,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(payload)});
-    if(!res.ok)throw new Error(await res.text());
+    // Reescribir el JSON existente: borrar y crear, porque sobrescribir da 403 por RLS.
+    await _storageGuardar('RECHAZOS/'+fecha+'/'+encodeURIComponent(cod)+'.json',payload);
     _editNovCod=null;closeNovModal();hideLoad();
     toast('Entrega parcial actualizada ✓','ok');haptic([50,30,50]);
     // WhatsApp al vendedor con lo que quedó pendiente
@@ -3316,8 +3321,8 @@ async function aprobarDevolucion(cod,decision,fechaSel){
   try{
     const d=await (await fetch(pub+'?t='+Date.now())).json();
     d.estado=decision; d.aprobado_hora=new Date().toISOString();
-    const res=await fetch(put,{method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(d)});
-    if(!res.ok)throw new Error(await res.text());
+    // Sobrescribir está bloqueado por RLS: hay que borrar y volver a crear (ver _storageGuardar).
+    await _storageGuardar('RECHAZOS/'+hoy+'/'+cod+'.json',d);
     hideLoad();
     toast(decision==='afecta'?'✓ Marcada: SÍ afecta comisión':decision==='omitida'?'✓ Omitida (no afecta comisión)':'↺ Vuelta a pendiente','ok');
     cargarResumenCargue();
@@ -3788,10 +3793,10 @@ function asisCiclar(ced,d,cell){
 async function guardarAsistencia(){
   showLoad('Guardando asistencia...');
   try{
-    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/ASISTENCIA/'+asisMes+'.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
-      body:JSON.stringify({mes:asisMes,marcas:asisData,actualizado:new Date().toISOString()})});
-    hideLoad();toast(r.ok?'✓ Asistencia guardada':'Error al guardar',r.ok?'ok':'err');
+    // Sobrescribir está bloqueado por RLS (403): se borra y se vuelve a crear. Antes, el segundo
+    // guardado del mes fallaba y la asistencia se quedaba congelada en la primera versión.
+    await _storageGuardar('ASISTENCIA/'+asisMes+'.json',{mes:asisMes,marcas:asisData,actualizado:new Date().toISOString()});
+    hideLoad();toast('✓ Asistencia guardada','ok');
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
 async function exportarAsistencia(){
@@ -4121,6 +4126,37 @@ async function cargarTorreControl(forzar,fechaSel){
   try{ pintarTorreControl(); }catch(e){ console.log('torre:',e.message); }
 }
 
+/* ══ GUARDAR EN STORAGE SOBRESCRIBIENDO ══
+   Verificado contra Supabase (15-ago-2026): con la llave anónima, CREAR un objeto nuevo y BORRARLO
+   dan 200, pero sobrescribir uno existente —con `x-upsert:true` o con PUT— devuelve 403 por RLS.
+   Es la razón por la que "Sí afecta / Omitir" nunca guardaba nada: los 92 rechazos de los últimos
+   tres días seguían en "pendiente". Aquí se borra primero y se crea después. */
+async function _storageGuardar(ruta,obj,bucket){
+  const base=CFG.SUPABASE_URL+'/storage/v1/object/'+(bucket||CFG.BCK_PED)+'/'+ruta;
+  const H={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  try{ await fetch(base,{method:'DELETE',headers:H}); }catch(e){} // si no existía, no importa
+  const r=await fetch(base,{method:'POST',headers:{...H,'Content-Type':'application/json'},
+    body:JSON.stringify(obj)});
+  if(!r.ok)throw new Error(await r.text());
+  return true;
+}
+async function _storageBorrarCarpeta(prefijo){
+  const H={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  let n=0;
+  try{
+    const lr=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',
+      headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({prefix:prefijo,limit:500})});
+    if(!lr.ok)return 0;
+    const files=(await lr.json()||[]).filter(f=>f.name&&f.name.endsWith('.json'));
+    for(const f of files){
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+prefijo+encodeURIComponent(f.name),
+        {method:'DELETE',headers:H});
+      if(r.ok)n++;
+    }
+  }catch(e){}
+  return n;
+}
+
 /* ══ VALIDACIÓN DE TRIPULACIÓN POR EL COORDINADOR ══
    El entregador se registra solo, así que el coordinador tiene que dar el visto bueno de que la
    ruta salió como él la armó (y de que cada uno se registró bien). Se guarda la lista EXACTA de
@@ -4151,27 +4187,72 @@ async function validarTripulacion(ruta){
   const fecha=_tcCache.fecha||getColDate();
   const personas=((_tcCache.reg||{})[ruta])||[];
   if(!personas.length){toast('Esa ruta todavía no tiene a nadie registrado','err');return;}
-  const cond=personas.filter(p=>p.rol==='conductor').length;
-  if(cond!==1&&!confirm('La ruta '+ruta+' tiene '+cond+' conductor(es) registrado(s). Lo normal es uno.\n\n¿Validar de todas formas?'))return;
   showLoad('Validando la tripulación de '+ruta+'…');
   try{
     const payload={ruta,fecha,ok:true,hora:new Date().toISOString(),
       personas:personas.map(p=>({ced:p.ced,nombre:p.nombre,rol:p.rol})),
       firma:_firmaTripulacion(personas)};
-    const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
-    await sb.storage.from(CFG.BCK_PED).upload('VALIDACION/'+fecha+'/'+ruta+'.json',blob,{contentType:'application/json',upsert:true});
+    await _storageGuardar('VALIDACION/'+fecha+'/'+ruta+'.json',payload);
     hideLoad();
     toast('✓ '+ruta+' validada: '+personas.length+' persona(s)','ok');
     cargarTorreControl(true);
   }catch(e){hideLoad();toast('No se pudo validar: '+e.message,'err');}
 }
+/* ══ CAMBIO DE ROL POR EL COORDINADOR ══
+   El entregador no puede cambiarse el rol solo (si se equivocó, la app le dice que hable con el
+   coordinador). Aquí el coordinador sí puede: al poner a alguien de conductor, el conductor que
+   había pasa automáticamente a auxiliar, porque la regla es un conductor por ruta.
+   Cambiar el rol invalida el visto bueno de esa ruta: la firma deja de coincidir. */
+async function cambiarRolTripulante(ruta,ced,nuevoRol){
+  const fecha=_tcCache.fecha||getColDate();
+  const personas=((_tcCache.reg||{})[ruta])||[];
+  const yo=personas.find(p=>String(p.ced)===String(ced));
+  if(!yo){toast('No se encontró a esa persona en el registro','err');return;}
+  if((yo.rol||'')===nuevoRol)return;
+  const condActual=personas.find(p=>p.rol==='conductor'&&String(p.ced)!==String(ced));
+  const mensaje=nuevoRol==='conductor'
+    ? '¿Poner a '+_nomCorto(yo.nombre)+' como CONDUCTOR de '+ruta+'?'+
+      (condActual?'\n\n'+_nomCorto(condActual.nombre)+' pasará a auxiliar: solo puede haber un conductor por ruta.':'')
+    : '¿Pasar a '+_nomCorto(yo.nombre)+' a AUXILIAR en '+ruta+'?';
+  if(!confirm(mensaje))return;
+  showLoad('Cambiando el rol…');
+  try{
+    await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+ced+'.json',
+      {...yo,rol:nuevoRol,rol_cambiado_por:'coordinador',rol_cambiado_hora:new Date().toISOString(),ruta});
+    if(nuevoRol==='conductor'&&condActual){
+      await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+condActual.ced+'.json',
+        {...condActual,rol:'auxiliar',rol_cambiado_por:'coordinador',rol_cambiado_hora:new Date().toISOString(),ruta});
+    }
+    hideLoad();
+    toast('✓ '+_nomCorto(yo.nombre)+' ahora es '+(nuevoRol==='conductor'?'conductor':'auxiliar')+' en '+ruta,'ok');
+    cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo cambiar: '+e.message,'err');}
+}
+
+/* Borra el registro del día para que todos vuelvan a identificarse al entrar a la app.
+   Deja una marca de reinicio: cada celular la compara con la suya y, si es más nueva, vuelve a
+   preguntar aunque ya se hubiera registrado esa mañana. */
+async function borrarRegistroDelDia(){
+  const fecha=_tcCache.fecha||getColDate();
+  if(!confirm('¿Borrar el registro de tripulación del '+fecha+'?\n\nTodos los entregadores tendrán que volver a identificarse al abrir la app.'))return;
+  showLoad('Borrando el registro del día…');
+  try{
+    const n=await _storageBorrarCarpeta('REGISTRO/'+fecha+'/');
+    await _storageGuardar('REGISTRO/'+fecha+'/_RESET.json',{fecha,ts:Date.now(),hora:new Date().toISOString()});
+    await _storageBorrarCarpeta('VALIDACION/'+fecha+'/'); // los vistos buenos ya no aplican
+    _tripPorFecha={}; // limpia la caché del módulo Vehículos
+    hideLoad();
+    toast('✓ Registro borrado ('+n+' personas). Volverán a identificarse al entrar.','ok');
+    cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo borrar: '+e.message,'err');}
+}
+
 async function quitarValidacion(ruta){
   const fecha=_tcCache.fecha||getColDate();
   if(!confirm('¿Quitar el visto bueno de '+ruta+'?'))return;
   showLoad('Quitando validación…');
   try{
-    const blob=new Blob([JSON.stringify({ruta,fecha,ok:false,hora:new Date().toISOString()})],{type:'application/json'});
-    await sb.storage.from(CFG.BCK_PED).upload('VALIDACION/'+fecha+'/'+ruta+'.json',blob,{contentType:'application/json',upsert:true});
+    await _storageGuardar('VALIDACION/'+fecha+'/'+ruta+'.json',{ruta,fecha,ok:false,hora:new Date().toISOString()});
     hideLoad();toast('Validación retirada de '+ruta,'ok');cargarTorreControl(true);
   }catch(e){hideLoad();toast('Error: '+e.message,'err');}
 }
@@ -4423,11 +4504,16 @@ function _tcFila(x,i){
   // Todos los que se registraron, no solo el primero: una ruta puede llevar hasta 5 personas.
   const orden=x.personas.slice().sort((a,b)=>(a.rol==='conductor'?0:1)-(b.rol==='conductor'?0:1));
   const resp=orden.length
-    ? '<div class="tc-crew">'+orden.map((pp,j)=>
-        '<span class="tc-cm" title="'+pp.nombre+(pp.ced?' · C.C. '+pp.ced:'')+(pp.hora?' · registrado '+new Date(pp.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'">'+
+    ? '<div class="tc-crew">'+orden.map((pp,j)=>{
+        const esCond=pp.rol==='conductor';
+        const otro=esCond?'auxiliar':'conductor';
+        return '<span class="tc-cm" title="'+pp.nombre+(pp.ced?' · C.C. '+pp.ced:'')+(pp.hora?' · registrado '+new Date(pp.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'">'+
           '<span class="tc-av mini" style="background:'+_tcAvatarCol[(i+j)%_tcAvatarCol.length]+'">'+_tcIniciales(pp.nombre)+'</span>'+
-          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em>'+(pp.rol==='conductor'?'Conductor':'Auxiliar')+'</em></span>'+
-        '</span>').join('')+
+          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em>'+(esCond?'Conductor':'Auxiliar')+'</em></span>'+
+          '<button class="tc-rol" onclick="event.stopPropagation();cambiarRolTripulante(\''+x.ruta+'\',\''+pp.ced+'\',\''+otro+'\')" '+
+            'title="Pasar a '+(esCond?'auxiliar':'conductor')+'">'+(esCond?'→ aux':'→ cond')+'</button>'+
+        '</span>';
+      }).join('')+
       '</div>'
     : '<div class="tc-per"><div class="tc-av" style="background:var(--gris3);color:var(--gris5)">—</div>'+
       '<div class="txt"><b style="color:var(--gris4)">sin responsable</b><small>ningún celular registró</small></div></div>';
@@ -6384,14 +6470,10 @@ async function cargarRegistroDia(fecha){
   return reg;
 }
 async function _guardarRegistroRuta(fecha,ruta,personas){
-  // Cada persona es un archivo propio: si ya existía (re-registro del mismo día) la escritura
-  // fallará por el bloqueo de sobrescritura, pero eso es inofensivo — su dato ya estaba guardado bien.
-  await Promise.all(personas.map(p=>{
-    const nombreArchivo=ruta+'__'+p.ced+'.json';
-    return fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+fecha+'/'+encodeURIComponent(nombreArchivo),{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
-      body:JSON.stringify({...p,ruta})}).catch(()=>null);
-  }));
+  // Un archivo por persona. Sobrescribir está bloqueado por RLS, así que se borra y se vuelve a
+  // crear (ver _storageGuardar): de lo contrario un re-registro del mismo día no cambiaría nada.
+  await Promise.all(personas.map(p=>
+    _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+p.ced+'.json',{...p,ruta}).catch(()=>null)));
 }
 /* ══ UN CELULAR = UNA PERSONA (2026-08-14) ══
    Antes un mismo teléfono registraba a toda la tripulación (conductor + auxiliares) y después había
@@ -6419,14 +6501,29 @@ function personaDelDispositivo(){
 function _guardarPersonaDispositivo(p){
   localStorage.setItem('gmaz_persona',JSON.stringify({...p,device:_deviceId()}));
 }
-/* Marca local de "ya registré mi jornada hoy en esta ruta" — evita repetir la subida en cada entrada. */
+/* Marca local de "ya registré mi jornada hoy en esta ruta" — evita repetir la subida en cada entrada.
+   Lleva además el sello del último reinicio del coordinador: si él borra el registro del día,
+   deja REGISTRO/{fecha}/_RESET.json con un ts más nuevo y todos vuelven a identificarse. */
 function _registroHoy(ruta){
   try{const d=JSON.parse(localStorage.getItem('gmaz_registro_dia')||'null');
-    if(d&&d.fecha===getColDate()&&d.ruta===ruta)return d.persona||null;}catch(e){}
+    if(d&&d.fecha===getColDate()&&d.ruta===ruta){
+      if(_resetTs&&(!d.resetTs||d.resetTs<_resetTs))return null; // el coordinador reinició: hay que registrarse otra vez
+      return d.persona||null;
+    }}catch(e){}
   return null;
 }
 function _guardarRegistroHoy(ruta,persona){
-  localStorage.setItem('gmaz_registro_dia',JSON.stringify({fecha:getColDate(),ruta,persona}));
+  localStorage.setItem('gmaz_registro_dia',JSON.stringify({fecha:getColDate(),ruta,persona,resetTs:_resetTs||0}));
+}
+/* Sello del último reinicio, leído del servidor al arrancar la ruta. */
+let _resetTs=0;
+async function _leerResetRegistro(fecha){
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/REGISTRO/'+fecha+'/_RESET.json?t='+Date.now());
+    if(r.ok){const d=await r.json();_resetTs=d&&d.ts?d.ts:0;}
+    else _resetTs=0;
+  }catch(e){_resetTs=0;}
+  return _resetTs;
 }
 /* Compatibilidad: el resto de la app (novedades, entregas, mensajes) sigue pidiendo "la tripulación"
    de la ruta. En este celular la tripulación es exactamente una persona: su dueño. */
@@ -6455,6 +6552,13 @@ function _tripulacionPrincipal(ruta){
 }
 window._epRolSel='conductor';
 function _epPickRol(btn){
+  // Si la ruta ya tiene conductor, el botón está deshabilitado: se avisa por qué en vez de
+  // dejar que el entregador crea que puede elegirlo.
+  if(btn.disabled){
+    const c=_epConductorDeRuta();
+    toast('Esta ruta ya tiene conductor'+(c?' ('+_nomCorto(c.nombre)+')':'')+'. Si debes ir tú de conductor, habla con el coordinador para que lo cambie.','err');
+    return;
+  }
   document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');window._epRolSel=btn.dataset.rol;
 }
@@ -6625,22 +6729,28 @@ async function confirmarTripulacion(){
   const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent='1';
   if(ctx.cb)ctx.cb([persona]);
 }
-/* Botón 🧑‍🔧 de la barra: ver a nombre de quién está este celular (y liberarlo si hay que cambiarlo). */
+/* Botón 🧑‍🔧 de la barra: ver a nombre de quién está este celular y con qué rol quedó.
+   El rol NO se cambia desde aquí: si alguien se equivocó al registrarse, lo corrige el coordinador
+   desde su panel. Así el registro no se puede "arreglar" a conveniencia a mitad de la jornada. */
 function agregarTripulanteTarde(){
   if(!rutaActual)return;
   const due=personaDelDispositivo();
   if(!due){pedirTripulacion(rutaActual,()=>{});return;}
   const reg=_registroHoy(rutaActual);
-  toast('Este celular es de '+due.nombre.split(' ').slice(0,2).join(' ')+(reg?' · registrado hoy en '+rutaActual:' · sin registrar hoy'),'ok');
-  window._epRolSel=due.rol||'conductor';
-  const rEl=document.getElementById('ep-ruta');if(rEl)rEl.textContent=rutaActual;
-  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol===window._epRolSel));
-  _epRenderLista();
-  document.getElementById('ent-pick-ovl').style.display='flex';
-  window._entPickCtx={ruta:rutaActual,cb:()=>{}};
+  if(!reg){pedirTripulacion(rutaActual,()=>{});return;}
+  const rolTxt=(reg.rol==='conductor'?'Conductor':'Auxiliar');
+  alert('Registrado hoy en '+rutaActual+'\n\n'+
+        reg.nombre+'\nC.C. '+(reg.ced||'—')+'\nRol: '+rolTxt+'\n\n'+
+        'Si el rol quedó mal, NO se cambia desde el celular: comunícate con el coordinador para que lo corrija en su panel.');
 }
 function startRoute(ruta,lista){
   // Antes de arrancar, la persona de este celular debe quedar registrada en la ruta del día.
+  // Primero se mira si el coordinador reinició el registro (entonces hay que identificarse de nuevo).
+  if(!window._resetLeido){
+    window._resetLeido=true;
+    _leerResetRegistro(getColDate()).then(()=>startRoute(ruta,lista));
+    return;
+  }
   if(!_registroHoy(ruta)){pedirTripulacion(ruta,()=>startRoute(ruta,lista));return;}
   rutaActual=ruta;
   clientes=lista.map(c=>({...c,_st:'pendiente'}));
@@ -7499,8 +7609,7 @@ async function submitNovedad(){
           reporta:{ced:rep.ced||null,nombre:rep.nombre||null,rol:rep.rol||null,device:_deviceId()},
           foto_tipo:_motivoExigeFachada(motivo)?'fachada':'evidencia',
           foto_revisar:!!(_motivoExigeFachada(motivo)&&_fotoFachadaDudosa)};
-        const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
-        await sb.storage.from(CFG.BCK_PED).upload('RECHAZOS/'+fecha+'/'+cod+'.json',blob,{contentType:'application/json',upsert:true});
+        await _storageGuardar('RECHAZOS/'+fecha+'/'+cod+'.json',payload);
       }catch(e){/* si falla el detalle, la novedad ya quedó registrada */}
     }
     setClientSt(clienteIdx,'novedad');
@@ -9351,10 +9460,8 @@ async function _chequearDuplicados(files,tipo,fecha){
 async function _registrarHashes(idx,nuevos){
   try{
     Object.assign(idx,nuevos);
-    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/HASHES_INDEX.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
-      body:JSON.stringify(idx)});
-  }catch(e){}
+    await _storageGuardar('HASHES_INDEX.json',idx);
+  }catch(e){console.log('hashes:',e.message);}
 }
 async function uploadLiquidacion(ev){
   const files=Array.from(ev.target.files).filter(f=>/\.xls[xm]?$/i.test(f.name));

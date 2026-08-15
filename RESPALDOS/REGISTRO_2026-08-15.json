@@ -1,0 +1,194 @@
+[
+ {
+  "archivo": "KA4V12__1080690154.json",
+  "datos": {
+   "ced": "1080690154",
+   "nombre": "ROSERO RIASCOS JHONATAN ESTEBAN",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T13:27:44.561Z",
+   "device": "dev_7t9jx1r6mst6bjat",
+   "ruta": "KA4V12"
+  }
+ },
+ {
+  "archivo": "KA4V12__1085259359.json",
+  "datos": {
+   "ced": "1085259359",
+   "nombre": "DE LA CRUZ PISCAL CRISTIAN ANTONIO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T13:15:59.448Z",
+   "device": "dev_757ukkggmsuefy3c",
+   "ruta": "KA4V12"
+  }
+ },
+ {
+  "archivo": "KA4V13__1130623794.json",
+  "datos": {
+   "ced": "1130623794",
+   "nombre": "DELGADO CADENA JULIO ALEJANDRO",
+   "cargo": "AUXILIAR DE ENTREGA",
+   "rol": "auxiliar",
+   "hora": "2026-08-15T13:25:21.622Z",
+   "device": "dev_ooo10tukmst1raon",
+   "ruta": "KA4V13"
+  }
+ },
+ {
+  "archivo": "KA4V13__1233195085.json",
+  "datos": {
+   "ced": "1233195085",
+   "nombre": "JAMA PANTOJA PABLO ALBEIRO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T12:38:52.340Z",
+   "device": "dev_1rctf8nhmst4glt9",
+   "ruta": "KA4V13"
+  }
+ },
+ {
+  "archivo": "KA4V50__12745788.json",
+  "datos": {
+   "ced": "12745788",
+   "nombre": "NARVAEZ MASMUTA HERMES ROBERTO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T15:53:24.176Z",
+   "device": "dev_3n636fj6msuk2dox",
+   "ruta": "KA4V50"
+  }
+ },
+ {
+  "archivo": "KA4V50__12998961.json",
+  "datos": {
+   "ced": "12998961",
+   "nombre": "CUASPUD CARLOS ANDRES",
+   "cargo": "AUXILIAR DE ENTREGA",
+   "rol": "auxiliar",
+   "hora": "2026-08-15T13:02:02.610Z",
+   "device": "dev_nii913tdmst2ugak",
+   "ruta": "KA4V50"
+  }
+ },
+ {
+  "archivo": "KA4V50__13068471.json",
+  "datos": {
+   "ced": "13068471",
+   "nombre": "GUALGUAN MAFLA ANDRES EMILIO",
+   "cargo": "AUXILIAR DE ENTREGA",
+   "rol": "auxiliar",
+   "hora": "2026-08-15T13:32:13.445Z",
+   "device": "dev_0c0brpzpmstfarhs",
+   "ruta": "KA4V50"
+  }
+ },
+ {
+  "archivo": "KA4V51__1082747908.json",
+  "datos": {
+   "ced": "1082747908",
+   "nombre": "DIAZ ERAZO JESUS ANTONIO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T12:59:03.439Z",
+   "device": "dev_hpvqc7xemst4xu7a",
+   "ruta": "KA4V51"
+  }
+ },
+ {
+  "archivo": "KA4V51__1085254187.json",
+  "datos": {
+   "ced": "1085254187",
+   "nombre": "NARVAEZ GOMEZ JOHN JAIRO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T13:39:14.219Z",
+   "device": "dev_7q0aby29mst3hyib",
+   "ruta": "KA4V51"
+  }
+ },
+ {
+  "archivo": "KA4V53__1085254187.json",
+  "datos": {
+   "ced": "1085254187",
+   "nombre": "NARVAEZ GOMEZ JOHN JAIRO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T13:39:35.280Z",
+   "device": "dev_7q0aby29mst3hyib",
+   "ruta": "KA4V53"
+  }
+ },
+ {
+  "archivo": "KA4V54__1085332913.json",
+  "datos": {
+   "ced": "1085332913",
+   "nombre": "MONTILLA CHINGUA EDWIN ALEXANDER",
+   "cargo": "AUXILIAR DE ENTREGA",
+   "rol": "auxiliar",
+   "hora": "2026-08-15T14:17:54.493Z",
+   "device": "dev_j313m8stmsugnkn3",
+   "ruta": "KA4V54"
+  }
+ },
+ {
+  "archivo": "KA4V54__98138193.json",
+  "datos": {
+   "ced": "98138193",
+   "nombre": "ERASO ARTEAGA JUAN HUMBERTO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T14:18:39.340Z",
+   "device": "dev_orbm80nqmsta9qb7",
+   "ruta": "KA4V54"
+  }
+ },
+ {
+  "archivo": "KA4V55__1085336369.json",
+  "datos": {
+   "ced": "1085336369",
+   "nombre": "INSUASTY VELASQUEZ DANIEL ARMANDO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T15:37:34.586Z",
+   "device": "dev_6k1k6ki2msuji0zf",
+   "ruta": "KA4V55"
+  }
+ },
+ {
+  "archivo": "KA4V55__5207588.json",
+  "datos": {
+   "ced": "5207588",
+   "nombre": "ESCOBAR SANTACRUZ JAIRO ALEXANDER",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T14:07:11.556Z",
+   "device": "dev_ilrlbwhbmsug9sjp",
+   "ruta": "KA4V55"
+  }
+ },
+ {
+  "archivo": "KA4V56__1085273712.json",
+  "datos": {
+   "ced": "1085273712",
+   "nombre": "BARRERA GOMEZ FREDDY ROLANDO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T15:55:47.816Z",
+   "device": "dev_efiu6fkjmst1mdau",
+   "ruta": "KA4V56"
+  }
+ },
+ {
+  "archivo": "KA4V56__1095936812.json",
+  "datos": {
+   "ced": "1095936812",
+   "nombre": "SEGURA JAIMES JEINER MAURICIO",
+   "cargo": "CONDUCTOR DE ENTREGA",
+   "rol": "conductor",
+   "hora": "2026-08-15T12:59:36.394Z",
+   "device": "dev_gl1fiaelmst3fect",
+   "ruta": "KA4V56"
+  }
+ }
+]
