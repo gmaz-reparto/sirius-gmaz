@@ -827,6 +827,22 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .mod.on{display:block;animation:modIn .22s ease}
 @keyframes modIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .veh-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px}
+.pa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:6px}
+.pa-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--gris2);border-radius:9px;
+  background:var(--gris1);cursor:pointer;font-size:11.5px}
+.pa-item.on{background:#ECFDF5;border-color:#A7F3D0}
+.pa-item input{width:15px;height:15px;accent-color:#059669;cursor:pointer;flex-shrink:0}
+.pa-n{font-weight:700;color:var(--negro);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pa-c{font-size:9px;font-weight:800;color:var(--gris4);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.mc-tabla{width:100%;border-collapse:collapse}
+.mc-tabla th{text-align:left;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--gris4);padding:8px 10px;border-bottom:1px solid var(--gris2)}
+.mc-tabla td{padding:8px 10px;border-bottom:1px solid var(--gris2);font-size:12px;vertical-align:middle}
+.mc-tabla tr:last-child td{border-bottom:none}
+.mc-sub{font-size:10px;color:var(--gris4);font-weight:600;margin-top:2px}
+.mc-fijo,.mc-dia{width:100%;max-width:230px;height:32px;border:1px solid var(--gris3);border-radius:8px;padding:0 8px;
+  font-family:inherit;font-size:11.5px;font-weight:700;color:var(--negro);background:#fff}
+.mc-dia{border-style:dashed}
 .ent-leyenda{margin:2px 17px 10px;background:#F7F8FA;border:1px solid #EEF0F4;border-radius:11px;padding:11px 13px;
   display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:5px 18px;font-size:11px;color:#4A5060;line-height:1.5}
 .ent-leyenda b{grid-column:1/-1;font-size:11px;font-weight:800;color:#0F1117;margin-bottom:2px}
@@ -1805,11 +1821,37 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
         <div class="dcard-h"><h3><span class="h3ic">🔑</span>Asignar vehículos a rutas</h3><span class="dm">GPS real · SecuritaGPS</span></div>
         <div class="dveh-list" id="dash-veh-list"><div class="veh-cargando">Cargando…</div></div>
       </div>
+      <div class="dcard" style="margin-top:14px">
+        <div class="dcard-h"><h3><span class="h3ic">🧑‍✈️</span>Conductor fijo por vehículo</h3>
+          <span class="dm">al asignar el vehículo a una ruta, su conductor queda puesto solo</span>
+          <button class="dchip" style="margin-left:auto" onclick="haptic();cargarMaestroConductores(true)">↻ Actualizar</button>
+        </div>
+        <div style="padding:8px 17px 4px;font-size:11px;color:var(--gris4)">
+          Cada vehículo tiene un conductor asignado de forma permanente. Si un día no está —incapacidad, vacaciones,
+          descanso— se cambia solo <b>para ese día</b> en la columna «Hoy maneja»: el fijo no se pierde y el cambio queda en el histórico.
+        </div>
+        <div id="maestro-cond" style="padding:8px 17px 16px"><div class="veh-cargando">Cargando la flota…</div></div>
+      </div>
     </section>
 
     <!-- ══ MÓDULO ENTREGADORES ══ -->
     <section class="mod" id="mod-entregadores">
       <div id="ent-kpis" class="dkpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+      <div class="dcard" style="margin-bottom:14px">
+        <div class="dcard-h"><h3><span class="h3ic">✅</span>Quién debe registrarse en la app</h3>
+          <span class="dm">de aquí sale la alerta de «personal sin registrarse»</span>
+          <span class="dm" id="pa-meta" style="margin-left:auto"></span>
+          <button class="dchip" onclick="haptic();guardarPersonalApp()">💾 Guardar</button>
+        </div>
+        <div style="padding:8px 17px 4px;font-size:11px;color:var(--gris4)">
+          Están los 80 del listado de julio. Vienen marcados los cargos de entrega; desmarca a quien no deba
+          registrarse en la app y marca a quien sí, aunque su cargo sea otro. Los que estén de vacaciones,
+          incapacidad o no asistieron —según el módulo Asistencia— no cuentan ese día aunque estén marcados.
+        </div>
+        <div style="padding:8px 17px 16px;max-height:340px;overflow:auto" id="personal-app">
+          <div class="veh-cargando">Cargando personal…</div>
+        </div>
+      </div>
       <div class="dcard" style="margin-top:14px">
         <div class="dcard-h"><h3><span class="h3ic">🧑‍🔧</span>Desempeño por entregador</h3>
           <div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap">
@@ -4123,7 +4165,142 @@ async function cargarTorreControl(forzar,fechaSel){
       _tcCache={fecha,hojas:hojasIndex||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist,val:val||{}};
     }catch(e){ _tcCache={fecha,hojas:hojasIndex||{},rech:{},reg:{},obsFoto:new Set(),hist:null,val:{}}; }
   }
+  try{ await cargarPersonalApp(); }catch(e){}
   try{ pintarTorreControl(); }catch(e){ console.log('torre:',e.message); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONDUCTOR FIJO POR VEHÍCULO (regla del 15-ago-2026)
+   Cada vehículo tiene un conductor designado. Cuando el coordinador asigna el vehículo a una ruta
+   en la rutina de la mañana, ese conductor queda registrado automáticamente: no tiene que hacer
+   nada desde su celular. Los auxiliares sí se registran ellos mismos.
+   El conductor igual se registra en su celular cuando puede, y eso sirve de contraste: si el que
+   se registra no es el designado, o el designado nunca confirma, el panel del coordinador lo avisa.
+     · MAESTRO_CONDUCTORES.json      {unitId:{ced,nombre,actualizado}}  — el fijo, permanente
+     · CONDUCTOR_DIA/{fecha}.json    {unitId:{ced,nombre,motivo,hora}}  — el reemplazo de ese día
+   ══════════════════════════════════════════════════════════════════════════ */
+let maestroConductores={};   // fijo
+let conductorDia={};         // reemplazos de la fecha en curso
+let _condDiaFecha=null;
+
+async function cargarMaestroConductores(forzar,fechaSel){
+  const fecha=fechaSel||getColDate();
+  if(forzar||!Object.keys(maestroConductores).length||_condDiaFecha!==fecha){
+    try{
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/MAESTRO_CONDUCTORES.json?t='+Date.now());
+      maestroConductores=r.ok?(await r.json()||{}):{};
+    }catch(e){maestroConductores={};}
+    try{
+      const r2=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/CONDUCTOR_DIA/'+fecha+'.json?t='+Date.now());
+      conductorDia=r2.ok?(await r2.json()||{}):{};
+    }catch(e){conductorDia={};}
+    _condDiaFecha=fecha;
+  }
+  renderMaestroConductores();
+  return maestroConductores;
+}
+/* Quién maneja HOY ese vehículo: el reemplazo del día manda sobre el fijo. */
+function conductorDelVehiculo(unitId,fecha){
+  const d=(conductorDia||{})[unitId];
+  if(d&&d.ced)return {...d,esReemplazo:true};
+  const m=(maestroConductores||{})[unitId];
+  return m&&m.ced?{...m,esReemplazo:false}:null;
+}
+function _condElegibles(){
+  // Solo cargos que manejan; los auxiliares no pueden quedar como conductor fijo.
+  return entregadoresDisponibles().filter(p=>/CONDUCTOR|SUPERNUMERARIO/.test(p.cargo));
+}
+function renderMaestroConductores(){
+  const cont=document.getElementById('maestro-cond');if(!cont)return;
+  const flota=(_vehCache||[]).slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  if(!flota.length){cont.innerHTML='<div class="veh-cargando">Abre el módulo Vehículos para cargar la flota…</div>';return;}
+  const opts=_condElegibles();
+  const sel=(id,val,cls)=>'<select class="'+cls+'" data-unit="'+id+'" onchange="haptic();'+
+    (cls==='mc-fijo'?'guardarConductorFijo':'guardarConductorDia')+'(this)">'+
+    '<option value="">— sin asignar —</option>'+
+    opts.map(o=>'<option value="'+o.ced+'"'+(String(val)===String(o.ced)?' selected':'')+'>'+o.nombre+'</option>').join('')+'</select>';
+  cont.innerHTML='<table class="mc-tabla"><thead><tr><th>Vehículo</th><th>Conductor fijo</th><th>Hoy maneja</th><th>Estado</th></tr></thead><tbody>'+
+    flota.map(v=>{
+      const u=v.nombre;
+      const fijo=(maestroConductores[u]||{}).ced||'';
+      const dia=(conductorDia[u]||{}).ced||'';
+      const efectivo=conductorDelVehiculo(u);
+      const estado=!fijo?'<span class="tc-pill mute">Sin conductor fijo</span>'
+        :dia&&dia!==fijo?'<span class="tc-pill warn">Reemplazo hoy</span>'
+        :'<span class="tc-pill ok">Al día</span>';
+      return '<tr><td><b>'+u+'</b><div class="mc-sub">'+(v.tipo_vehiculo||'')+'</div></td>'+
+        '<td>'+sel(u,fijo,'mc-fijo')+'</td>'+
+        '<td>'+sel(u,dia,'mc-dia')+'<div class="mc-sub">'+(efectivo?(efectivo.esReemplazo?'hoy: '+_nomCorto(efectivo.nombre):'el fijo'):'—')+'</div></td>'+
+        '<td>'+estado+'</td></tr>';
+    }).join('')+'</tbody></table>';
+}
+async function guardarConductorFijo(sel){
+  const unit=sel.dataset.unit,ced=sel.value;
+  const p=_condElegibles().find(x=>String(x.ced)===String(ced));
+  showLoad('Guardando el conductor fijo…');
+  try{
+    if(p)maestroConductores[unit]={ced:p.ced,nombre:p.nombre,actualizado:new Date().toISOString()};
+    else delete maestroConductores[unit];
+    await _storageGuardar('MAESTRO_CONDUCTORES.json',maestroConductores);
+    hideLoad();
+    toast(p?unit+' → '+_nomCorto(p.nombre):unit+' sin conductor fijo','ok');
+    renderMaestroConductores();
+    await _sincronizarConductoresDelDia(); // si ese vehículo ya está en una ruta, se actualiza el registro
+  }catch(e){hideLoad();toast('No se pudo guardar: '+e.message,'err');}
+}
+async function guardarConductorDia(sel){
+  const unit=sel.dataset.unit,ced=sel.value,fecha=getColDate();
+  const p=_condElegibles().find(x=>String(x.ced)===String(ced));
+  const motivo=p?(prompt('¿Por qué maneja otro hoy? (incapacidad, vacaciones, descanso, permiso…)','descanso del titular')||''):'';
+  showLoad('Guardando el reemplazo del día…');
+  try{
+    if(p)conductorDia[unit]={ced:p.ced,nombre:p.nombre,motivo,hora:new Date().toISOString()};
+    else delete conductorDia[unit];
+    await _storageGuardar('CONDUCTOR_DIA/'+fecha+'.json',conductorDia);
+    hideLoad();
+    toast(p?'Hoy '+unit+' lo maneja '+_nomCorto(p.nombre):'Hoy '+unit+' vuelve a su conductor fijo','ok');
+    renderMaestroConductores();
+    await _sincronizarConductoresDelDia();
+  }catch(e){hideLoad();toast('No se pudo guardar: '+e.message,'err');}
+}
+/* Deja el registro del día alineado con los vehículos asignados: por cada ruta con vehículo,
+   escribe (o corrige) el registro automático de su conductor. */
+async function _sincronizarConductoresDelDia(){
+  const fecha=getColDate();
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha,
+      {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+    if(!r.ok)return;
+    const asig=await r.json()||[];
+    for(const a of asig)await registrarConductorAutomatico(a.ruta,a.unit_id,fecha);
+    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+  }catch(e){}
+}
+/* Registro automático del conductor de una ruta. No pisa el registro que haya hecho la propia
+   persona desde su celular (origen 'persona'): eso es justamente lo que sirve de contraste. */
+async function registrarConductorAutomatico(ruta,unitId,fecha){
+  fecha=fecha||getColDate();
+  const c=conductorDelVehiculo(unitId,fecha);
+  if(!c)return null;
+  try{
+    const reg=await cargarRegistroDia(fecha);
+    const enRuta=(reg&&reg[ruta])||[];
+    const yaEl=enRuta.find(x=>String(x.ced)===String(c.ced));
+    if(yaEl&&yaEl.origen==='persona')return yaEl;      // ya se registró él mismo: se respeta
+    // Si había otro conductor puesto por el sistema para esta ruta, se retira
+    for(const x of enRuta){
+      if(x.rol==='conductor'&&x.origen==='sistema'&&String(x.ced)!==String(c.ced)){
+        await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+fecha+'/'+ruta+'__'+x.ced+'.json',
+          {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+      }
+    }
+    const emp=entregadoresDisponibles().find(x=>String(x.ced)===String(c.ced))||{};
+    const persona={ced:c.ced,nombre:c.nombre,cargo:emp.cargo||'CONDUCTOR DE ENTREGA',rol:'conductor',
+      hora:new Date().toISOString(),origen:'sistema',vehiculo:unitId,
+      reemplazo:!!c.esReemplazo,motivo_reemplazo:c.motivo||null,ruta};
+    await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+c.ced+'.json',persona);
+    return persona;
+  }catch(e){return null;}
 }
 
 /* ══ GUARDAR EN STORAGE SOBRESCRIBIENDO ══
@@ -4338,8 +4515,19 @@ function _tcDatosRutas(){
     const validada=!!(v&&v.ok&&v.firma===firmaHoy);
     const cambioTrasValidar=!!(v&&v.ok&&v.firma&&v.firma!==firmaHoy);
     const conductores=personas.filter(pp=>pp.rol==='conductor').length;
+    // Contraste entre lo que el sistema designó y lo que reportaron los colaboradores
+    const condSis=personas.find(pp=>pp.rol==='conductor'&&pp.origen==='sistema')||null;
+    const condPer=personas.find(pp=>pp.rol==='conductor'&&pp.origen==='persona')||null;
+    const reclaman=personas.filter(pp=>pp.reclama_conductor);
+    const anomalias=[];
+    if(condSis&&!condPer)
+      anomalias.push({t:'sin-confirmar',txt:_nomCorto(condSis.nombre)+' está asignado como conductor pero no se ha registrado desde su celular'});
+    reclaman.forEach(pp=>anomalias.push({t:'otro-conductor',
+      txt:_nomCorto(pp.nombre)+' dice que hoy maneja él; el sistema tiene a '+_nomCorto(pp.conductor_sistema||'—')}));
+    if(!personas.length&&h)
+      anomalias.push({t:'sin-nadie',txt:'La ruta tiene vehículo asignado pero nadie registrado'});
     return {ruta:r,placa:h?h.placa:'',cargue,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef,
-            validada,cambioTrasValidar,valHora:v&&v.hora?v.hora:null,conductores};
+            validada,cambioTrasValidar,valHora:v&&v.hora?v.hora:null,conductores,anomalias,condSis,condPer};
   });
 }
 
@@ -4430,6 +4618,21 @@ function pintarTorreControl(){
   const fotosDuda=R.reduce((s,x)=>s+x.fotosDuda,0);
   const sinReg=R.filter(x=>!x.personas.length&&x.totalCli>0);
   const porValidar=R.filter(x=>x.personas.length&&!x.validada);
+  const conAnomalia=R.filter(x=>x.anomalias&&x.anomalias.length);
+  // Personal que debería estar registrado hoy y no aparece en ninguna ruta.
+  // Base: todos los cargos de entrega; se descuenta a quien la asistencia marca ausente.
+  const registradosHoy=new Set();
+  R.forEach(x=>x.personas.forEach(pp=>registradosHoy.add(String(pp.ced))));
+  const deben=personalApp||new Set(entregadoresDisponibles().map(p=>String(p.ced)));
+  const sinRegistrarse=EMPLEADOS_ASIS
+    .map(e=>({nombre:e[0],ced:String(e[1]),cargo:_normCargo(e[2])}))
+    .filter(p=>{
+      if(!deben.has(p.ced))return false;                 // el coordinador dijo que este no se registra
+      if(registradosHoy.has(p.ced))return false;         // ya se registró
+      const cod=_asisCodigoDe(p.ced,fecha);
+      return !(cod&&_asisCod[cod]&&_asisCod[cod].cuenta===false); // vacaciones/incapacidad/no asistió no cuentan
+    });
+  window._tcSinRegistrarse=sinRegistrarse;
   const obsTot=Object.keys(obsequiosClientes||{}).length;
   const obsFoto=[...(_tcCache.obsFoto||new Set())].filter(c=>!obsTot||obsequiosClientes[c]).length;
   const item=(cls,n,l,accion)=>'<div class="tc-p '+cls+'"><div class="tc-p-n">'+n+'</div><div class="tc-p-l">'+l+'</div>'+
@@ -4440,10 +4643,12 @@ function pintarTorreControl(){
     item(fotosDuda?'urg':'ok',fotosDuda,'Fotos que no parecen fachada',fotosDuda?"tcIrPrimeraFoto()":'')+
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
     item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
+    item(conAnomalia.length?'urg':'ok',conAnomalia.length,'Rutas que no cuadran con lo designado',conAnomalia.length?"tcAbrirRuta('"+(conAnomalia[0]||{}).ruta+"')":'')+
+    item(sinRegistrarse.length?'med':'ok',sinRegistrarse.length,'Personal sin registrarse hoy',sinRegistrarse.length?"verSinRegistrarse()":'')+
     item(hayLiq?'med':'mute',hayLiq?'✓':'—','Auditoría LiquiYa'+(hayLiq?' lista':' · falta cargar'),"abrirAuditoria()")+
     item(obsTot&&obsFoto>=obsTot?'ok':'med',obsFoto+'<span style="font-size:14px;color:var(--gris4)">/'+obsTot+'</span>','Obsequios con foto',"abrirObsequiosSup()");
   const pm=document.getElementById('tc-pend-meta');
-  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length;
+  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length+conAnomalia.length;
   if(pm)pm.textContent=porResolver===0?'todo al día ✓':porResolver===1?'1 cosa por resolver':porResolver+' cosas por resolver';
 
   /* ── 4. Tabla maestra de rutas ── */
@@ -4509,7 +4714,9 @@ function _tcFila(x,i){
         const otro=esCond?'auxiliar':'conductor';
         return '<span class="tc-cm" title="'+pp.nombre+(pp.ced?' · C.C. '+pp.ced:'')+(pp.hora?' · registrado '+new Date(pp.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'">'+
           '<span class="tc-av mini" style="background:'+_tcAvatarCol[(i+j)%_tcAvatarCol.length]+'">'+_tcIniciales(pp.nombre)+'</span>'+
-          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em>'+(esCond?'Conductor':'Auxiliar')+'</em></span>'+
+          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em>'+(esCond?'Conductor':'Auxiliar')+
+            (pp.origen==='sistema'?' · <span style="color:#1A56DB">del vehículo</span>':'')+
+            (pp.reemplazo?' · <span style="color:#B45309">reemplazo</span>':'')+'</em></span>'+
           '<button class="tc-rol" onclick="event.stopPropagation();cambiarRolTripulante(\''+x.ruta+'\',\''+pp.ced+'\',\''+otro+'\')" '+
             'title="Pasar a '+(esCond?'auxiliar':'conductor')+'">'+(esCond?'→ aux':'→ cond')+'</button>'+
         '</span>';
@@ -4533,7 +4740,9 @@ function _tcFila(x,i){
     '<td><div style="display:flex;align-items:center;gap:8px"><span class="tc-caret">▸</span>'+
       '<span style="font-weight:800;font-size:12.5px">'+x.ruta+'</span>'+
       (x.placa?'<span style="font-size:10px;color:var(--gris4);font-weight:700">'+x.placa+'</span>':'')+'</div></td>'+
-    '<td>'+resp+(x.conductores>1?'<div class="tc-warn">⚠ '+x.conductores+' conductores registrados</div>':'')+vb+'</td>'+
+    '<td>'+resp+
+      (x.anomalias&&x.anomalias.length?x.anomalias.map(a=>'<div class="tc-warn">⚠ '+a.txt+'</div>').join(''):'')+
+      (x.conductores>1?'<div class="tc-warn">⚠ '+x.conductores+' conductores registrados</div>':'')+vb+'</td>'+
     '<td class="r">'+(x.cargue?Math.round(x.cargue)+' cj':'—')+'</td>'+
     '<td><div class="tc-mini"><div class="bt"><i style="width:'+pct+'%;background:'+colAv+'"></i></div>'+
       '<span class="pv">'+x.conf+'/'+x.totalCli+'</span></div></td>'+
@@ -4571,6 +4780,74 @@ function _tcDetalle(x){
   return '<div class="tc-det-t">Devoluciones de la ruta · '+x.clientes.length+' cliente(s)'+(x.pend?' · '+x.pend+' por aprobar':'')+'</div>'+filas;
 }
 
+/* ══ QUIÉN DEBE REGISTRARSE EN LA APP ══
+   La alerta de "personal sin registrarse" necesita saber contra quién comparar. Por defecto son los
+   cargos de entrega, pero el coordinador depura la lista: hay supernumerarios que ese mes no salen a
+   ruta y gente de otro cargo que sí. Se guarda en PERSONAL_APP.json {ceds:[...]}. */
+let personalApp=null; // Set de cédulas que deben registrarse; null = aún no cargado
+async function cargarPersonalApp(forzar){
+  if(personalApp&&!forzar)return personalApp;
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/PERSONAL_APP.json?t='+Date.now());
+    if(r.ok){const d=await r.json();if(d&&Array.isArray(d.ceds)){personalApp=new Set(d.ceds.map(String));renderPersonalApp();return personalApp;}}
+  }catch(e){}
+  // Sin lista guardada: por defecto, los cargos de entrega
+  personalApp=new Set(entregadoresDisponibles().map(p=>String(p.ced)));
+  renderPersonalApp();
+  return personalApp;
+}
+function renderPersonalApp(){
+  const cont=document.getElementById('personal-app');if(!cont)return;
+  if(!personalApp){cont.innerHTML='<div class="veh-cargando">Cargando personal…</div>';return;}
+  const todos=EMPLEADOS_ASIS.map(e=>({nombre:e[0],ced:String(e[1]),cargo:_normCargo(e[2])}))
+    .sort((a,b)=>(esCargoDeEntrega(b.cargo)?1:0)-(esCargoDeEntrega(a.cargo)?1:0)||a.nombre.localeCompare(b.nombre));
+  cont.innerHTML='<div class="pa-grid">'+todos.map(p=>
+    '<label class="pa-item'+(personalApp.has(p.ced)?' on':'')+'">'+
+      '<input type="checkbox" '+(personalApp.has(p.ced)?'checked':'')+' onchange="togglePersonalApp(\''+p.ced+'\',this)">'+
+      '<span class="pa-n">'+p.nombre+'</span><span class="pa-c">'+p.cargo+'</span></label>').join('')+'</div>';
+  const meta=document.getElementById('pa-meta');
+  if(meta)meta.textContent=personalApp.size+' de '+todos.length+' deben registrarse';
+}
+function togglePersonalApp(ced,chk){
+  if(!personalApp)return;
+  if(chk.checked)personalApp.add(String(ced));else personalApp.delete(String(ced));
+  chk.closest('.pa-item').classList.toggle('on',chk.checked);
+  const meta=document.getElementById('pa-meta');
+  if(meta)meta.textContent=personalApp.size+' de '+EMPLEADOS_ASIS.length+' deben registrarse · sin guardar';
+}
+async function guardarPersonalApp(){
+  if(!personalApp)return;
+  showLoad('Guardando la lista…');
+  try{
+    await _storageGuardar('PERSONAL_APP.json',{ceds:[...personalApp],actualizado:new Date().toISOString()});
+    hideLoad();toast('✓ Lista guardada: '+personalApp.size+' personas deben registrarse','ok');
+    renderPersonalApp();
+    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo guardar: '+e.message,'err');}
+}
+
+/* Código de asistencia de una persona en una fecha (para no exigirle registro a quien está de
+   vacaciones, incapacidad o no asistió). Si el mes no está cargado en memoria, no se asume nada. */
+function _asisCodigoDe(ced,fecha){
+  try{
+    const mes=String(fecha).slice(0,7);
+    if(asisMes!==mes)return null;
+    const dia=parseInt(String(fecha).slice(8,10),10);
+    return ((asisData||{})[String(ced)]||{})[dia]||null;
+  }catch(e){return null;}
+}
+/* Quiénes deberían haberse registrado hoy y no lo han hecho. El coordinador ya dio la instrucción
+   en la mañana: esta lista es para saber a qué se dedica cada uno de los que faltan. */
+function verSinRegistrarse(){
+  const lista=window._tcSinRegistrarse||[];
+  if(!lista.length){toast('Todo el personal de entrega está registrado hoy ✓','ok');return;}
+  const porCargo={};
+  lista.forEach(p=>{(porCargo[p.cargo]=porCargo[p.cargo]||[]).push(p.nombre);});
+  const txt=Object.keys(porCargo).sort().map(c=>
+    c+' ('+porCargo[c].length+'):\n  · '+porCargo[c].join('\n  · ')).join('\n\n');
+  alert('PERSONAL SIN REGISTRARSE HOY — '+lista.length+' persona(s)\n\n'+txt+
+    '\n\nSi alguno está de vacaciones, incapacidad o descanso, márcalo en el módulo Asistencia y deja de aparecer aquí.');
+}
 let _tcAbierta=null;
 function tcToggle(i){
   const d=document.getElementById('tcd-'+i);if(!d)return;
@@ -4622,8 +4899,8 @@ function _alertasActivas(){
   return fuera;
 }
 function refrescarModulo(m){
-  if(m==='vehiculos')renderVehiculoCards();
-  else if(m==='entregadores')cargarEntregadores();
+  if(m==='vehiculos'){renderVehiculoCards();cargarMaestroConductores();}
+  else if(m==='entregadores'){cargarEntregadores();cargarPersonalApp();}
   else if(m==='clientes')renderClientesModulo();
   else if(m==='rechazos')renderRechazosGraf();
   else if(m==='indicadores')renderIndicadores();
@@ -6341,13 +6618,8 @@ async function loadRoutes(){
 /* ══ ASIGNAR VEHÍCULOS A RUTAS — solo el coordinador (panel escritorio) ══ */
 let _vehCache=null,_vehListCargada=false;
 let _driverCache=null;
-async function conductorDeVehiculo(vehId){
-  if(_driverCache===null){
-    try{ _driverCache=await secConductores()||[]; }catch(e){ _driverCache=[]; }
-  }
-  const d=_driverCache.find(x=>String(x.idvehiculo)===String(vehId));
-  return d?(d.nombre+' '+(d.apellido||'')).trim():'';
-}
+/* La consulta de conductores a SecuritaGPS se retiró: driverGetAll devuelve 0 registros (nunca se
+   cargaron ahí) y el nombre chocaba con conductorDelVehiculo, que es el maestro propio de GMAZ. */
 async function renderAsignacionVehiculos(rutas){
   const cont=document.getElementById('dash-veh-list');
   if(!cont)return;
@@ -6391,8 +6663,18 @@ async function guardarAsignacionRuta(sel){
       });
       if(!r.ok){toast('No se pudo guardar: falta la tabla en Supabase','err');return;}
       fila.querySelector('.dveh-ok').textContent='';
+      // Se retira también el conductor que el sistema había puesto por ese vehículo
+      try{
+        const reg=await cargarRegistroDia(getColDate());
+        for(const x of ((reg&&reg[ruta])||[])){
+          if(x.rol==='conductor'&&x.origen==='sistema')
+            await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+getColDate()+'/'+ruta+'__'+x.ced+'.json',
+              {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+        }
+      }catch(e){}
       toast(ruta+' sin vehículo asignado','ok');
       pintarFlotaEnVivo();
+      if(document.getElementById('tc-rutas'))cargarTorreControl(true);
     }catch(e){toast('Error quitando asignación','err');}
     return;
   }
@@ -6408,8 +6690,13 @@ async function guardarAsignacionRuta(sel){
     });
     if(!r.ok){toast('No se pudo guardar: falta la tabla en Supabase','err');return;}
     fila.querySelector('.dveh-ok').textContent='✅';
-    toast(ruta+' → '+unitId+' asignado','ok');
+    // El conductor del vehículo queda registrado solo: es la regla desde el 15-ago-2026.
+    await cargarMaestroConductores();
+    const cond=await registrarConductorAutomatico(ruta,unitId);
+    toast(ruta+' → '+unitId+' asignado'+(cond?' · conductor: '+_nomCorto(cond.nombre):' · sin conductor fijo'),'ok');
+    if(!cond)toast('Asigna el conductor fijo de '+unitId+' abajo, en «Conductor fijo por vehículo»','err');
     pintarFlotaEnVivo();
+    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){toast('Error asignando vehículo','err');}
 }
 
@@ -6698,7 +6985,9 @@ async function confirmarTripulacion(){
     if(!p)return;
     persona={ced:p.ced,nombre:p.nombre,cargo:p.cargo};
   }
-  persona={...persona,rol:window._epRolSel||'conductor',hora:new Date().toISOString(),device:_deviceId()};
+  // origen 'persona' = lo registró el propio colaborador desde su celular. El sistema también
+  // registra conductores solo (origen 'sistema'); comparar los dos es lo que destapa las anomalías.
+  persona={...persona,rol:window._epRolSel||'conductor',hora:new Date().toISOString(),device:_deviceId(),origen:'persona'};
   // Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular, se frena.
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
   const choque=await _yaRegistradaHoyEnOtroEquipo(persona.ced);
@@ -6714,12 +7003,16 @@ async function confirmarTripulacion(){
     toast('La ruta '+ctx.ruta+' ya tiene '+TRIP_MAX+' personas registradas. Avisa al coordinador.','err');
     return;
   }
-  // Un solo conductor por ruta: el segundo pasa a auxiliar automáticamente
+  // Un solo conductor por ruta: el segundo pasa a auxiliar automáticamente.
+  // Si el conductor que ya estaba lo puso el SISTEMA (por el vehículo) y quien llega dice que hoy
+  // maneja él, se deja constancia: el coordinador verá la discrepancia y decidirá.
   const cond=_epConductorDeRuta();
   if(persona.rol==='conductor'&&cond&&String(cond.ced)!==String(persona.ced)){
     persona.rol='auxiliar';
-    persona.rol_auto=true; // quedó como auxiliar por regla, no por elección
-    toast(ctx.ruta+' ya tiene conductor ('+_nomCorto(cond.nombre)+'). Quedas registrado como auxiliar.','err');
+    persona.rol_auto=true;                 // quedó como auxiliar por regla, no por elección
+    persona.reclama_conductor=true;        // dijo que el conductor es él
+    persona.conductor_sistema=cond.nombre; // contra quién choca
+    toast(ctx.ruta+' tiene asignado como conductor a '+_nomCorto(cond.nombre)+'. Quedas como auxiliar y el coordinador revisará el caso.','err');
   }
   document.getElementById('ent-pick-ovl').style.display='none';
   _guardarPersonaDispositivo(persona);       // amarre permanente celular ↔ persona
