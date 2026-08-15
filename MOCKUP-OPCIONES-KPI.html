@@ -1,0 +1,396 @@
+<title>Nueve Formas de Verlo</title>
+<style>
+:root{
+  --rojo:#E30613; --rojo-o:#B5000F; --rojo-s:#FFF0F1;
+  --tinta:#0F1117; --tinta-2:#4A5060; --tinta-3:#8A90A0;
+  --papel:#F5F6F8; --carta:#FFFFFF; --linea:#E4E7EE; --linea-2:#EEF0F4;
+  --ok:#059669; --ok-s:#ECFDF5; --alerta:#D97706; --alerta-s:#FFF8E6;
+  --dato:#1A56DB; --dato-s:#EFF6FF; --violeta:#7C3AED; --violeta-s:#F3E8FF;
+  --sombra:0 1px 2px rgba(15,17,23,.05); --sombra-alta:0 4px 14px -2px rgba(15,17,23,.10);
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+    --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+    --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+    --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+    --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+    --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+  --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+  --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+  --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+  --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+  --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 18px 70px;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+
+.hero{border-bottom:2px solid var(--tinta);padding-bottom:18px;display:flex;flex-direction:column;gap:8px}
+.hero .eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--rojo)}
+.hero h1{font-size:30px;font-weight:800;letter-spacing:-1px}
+.hero p{margin:0;font-size:13px;color:var(--tinta-2);max-width:70ch}
+
+.mod{display:flex;flex-direction:column;gap:14px}
+.mod-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-left:3px solid var(--rojo);padding-left:12px}
+.mod-h h2{font-size:19px;font-weight:800;letter-spacing:-.4px}
+.mod-h .q{font-size:12.5px;color:var(--tinta-3);font-weight:600}
+.hoy{background:var(--carta);border:1px solid var(--linea);border-left:3px solid var(--tinta-3);border-radius:10px;
+  padding:11px 14px;font-size:12px;color:var(--tinta-2)}
+.hoy b{color:var(--tinta)}
+
+.ops{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:1000px){.ops{grid-template-columns:1fr}}
+.op{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);
+  display:flex;flex-direction:column;overflow:hidden}
+.op-h{padding:11px 14px;border-bottom:1px solid var(--linea-2);display:flex;align-items:center;gap:9px}
+.op-n{width:22px;height:22px;border-radius:7px;background:var(--tinta);color:var(--carta);display:grid;place-items:center;
+  font-size:11px;font-weight:800;flex-shrink:0}
+.op-t{font-size:13px;font-weight:800;letter-spacing:-.1px}
+.op-b{padding:14px;flex:1}
+.op-p{padding:11px 14px;border-top:1px solid var(--linea-2);font-size:11px;color:var(--tinta-3);font-weight:600;line-height:1.55}
+.op-p b{color:var(--tinta-2)}
+.reco{background:var(--ok-s);color:var(--ok);font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;
+  letter-spacing:.4px;text-transform:uppercase;margin-left:auto}
+
+/* ── piezas reutilizadas ── */
+.fila{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:7px 0}
+.fila+.fila{border-top:1px solid var(--linea-2)}
+.cod{font-size:12px;font-weight:800;letter-spacing:-.2px}
+.bar{height:9px;border-radius:5px;background:var(--linea-2);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:5px}
+.bar .meta{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--tinta);border-radius:1px}
+.val{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
+.sub{font-size:10px;color:var(--tinta-3);font-weight:600}
+
+/* Opción: barra apilada entregado/rechazado */
+.stack{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--linea-2)}
+.stack i{display:block;height:100%}
+.stack i.e{background:var(--ok)} .stack i.p{background:var(--linea)} .stack i.r{background:var(--rojo)}
+.leg{display:flex;gap:13px;flex-wrap:wrap;font-size:10.5px;font-weight:700;color:var(--tinta-3);margin-top:9px}
+.leg span{display:flex;align-items:center;gap:5px}
+.leg i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* Opción: matriz semáforo */
+.matriz{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:7px}
+.celda{border-radius:10px;padding:9px 8px;display:flex;flex-direction:column;gap:2px;color:#fff;cursor:pointer;
+  transition:transform .13s}
+.celda:hover{transform:translateY(-2px)}
+.celda b{font-size:11.5px;font-weight:800;letter-spacing:-.2px}
+.celda .p{font-size:17px;font-weight:800;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.celda .s{font-size:9px;font-weight:700;opacity:.85}
+
+/* Opción: dispersión / cuadrante */
+svg.plot{width:100%;height:190px;overflow:visible}
+.tip{font-size:10px;font-weight:700;fill:var(--tinta-3)}
+
+/* Opción: tarjeta grande de rechazo */
+.big{display:flex;flex-direction:column;gap:3px}
+.big .n{font-size:38px;font-weight:800;letter-spacing:-1.6px;line-height:1;color:var(--rojo);font-variant-numeric:tabular-nums}
+.big .l{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--tinta-3)}
+.motivos{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.mot{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:11.5px;font-weight:700}
+.mot .b{height:7px;border-radius:4px;background:var(--linea-2);overflow:hidden;margin-top:4px}
+.mot .b i{display:block;height:100%;border-radius:4px}
+
+/* Opción: reloj de rechazos por hora */
+.horas{display:flex;align-items:flex-end;gap:3px;height:92px}
+.hcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px}
+.hcol i{width:100%;border-radius:3px 3px 0 0;background:var(--rojo);display:block;min-height:2px}
+.hcol span{font-size:8px;font-weight:700;color:var(--tinta-3)}
+
+/* Opción: tabla de calor */
+.heat{width:100%;border-collapse:collapse;font-size:10.5px}
+.heat th{font-size:9px;font-weight:800;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.4px;padding:4px 3px;text-align:center}
+.heat th:first-child{text-align:left}
+.heat td{padding:3px;text-align:center}
+.heat td:first-child{text-align:left;font-weight:800;font-size:10.5px;padding-left:0}
+.hc{border-radius:5px;padding:5px 2px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+
+/* Opción: velocímetro */
+.gauge{display:flex;align-items:center;gap:14px}
+.gauge svg{flex-shrink:0}
+.gauge .lado{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;color:var(--tinta-2)}
+.gauge .lado b{font-size:19px;font-weight:800;letter-spacing:-.5px;color:var(--tinta)}
+
+/* Opción: waterfall */
+.wf{display:flex;flex-direction:column;gap:8px}
+.wf-row{display:grid;grid-template-columns:98px 1fr 62px;gap:9px;align-items:center;font-size:11px;font-weight:700}
+.wf-bar{height:20px;position:relative;background:var(--linea-2);border-radius:5px}
+.wf-bar i{position:absolute;top:0;bottom:0;border-radius:5px}
+.wf-v{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+
+.cierre{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sombra)}
+.cierre h3{font-size:14px;font-weight:800;margin-bottom:8px}
+.cierre ol{margin:0;padding-left:19px;font-size:12.5px;color:var(--tinta-2);line-height:1.75}
+.cierre b{color:var(--tinta)}
+footer{font-size:11.5px;color:var(--tinta-3);text-align:center;line-height:1.7;padding-top:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eye">GMAZ Rutas · Panel del coordinador</div>
+    <h1>Nueve formas de verlo</h1>
+    <p>Tres alternativas para cada uno de los tres tableros que hoy se ven planos: <b>Clientes</b>, <b>Rechazos</b> e <b>Indicadores</b>.
+    Todas usan datos reales del 14 de agosto y todas se pueden construir con lo que la app ya calcula.
+    Elige una por módulo y la implemento.</p>
+  </div>
+
+  <!-- ══════════ CLIENTES ══════════ -->
+  <section class="mod">
+    <div class="mod-h"><h2>1 · Cumplimiento por ruta</h2><span class="q">módulo Clientes</span></div>
+    <div class="hoy"><b>Hoy:</b> un anillo con el % y el texto «62/66 clientes · 197 cajas». Diez filas iguales — hay que leerlas una por una para encontrar la que está mal, y el anillo ocupa mucho para decir un solo número.</div>
+
+    <div class="ops">
+      <!-- A -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">A</div><div class="op-t">Barra apilada</div><span class="reco">Recomendada</span></div>
+        <div class="op-b" id="cli-a"></div>
+        <div class="op-p"><b>Qué gana.</b> Cada barra es la ruta completa: verde entregado, gris pendiente, rojo rechazado. Se ve de un vistazo cuánto falta y cuánto se perdió, y las barras se comparan entre sí sin leer números.</div>
+      </div>
+      <!-- B -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">B</div><div class="op-t">Matriz semáforo</div></div>
+        <div class="op-b"><div class="matriz" id="cli-b"></div>
+          <div class="leg"><span><i style="background:var(--ok)"></i>≥95 %</span><span><i style="background:var(--alerta)"></i>85-94 %</span><span><i style="background:var(--rojo)"></i>&lt;85 %</span></div>
+        </div>
+        <div class="op-p"><b>Qué gana.</b> Las diez rutas caben en un golpe de vista y el color hace el trabajo. Ideal para el celular y para dejarlo en pantalla toda la mañana. Cada celda abre el detalle.</div>
+      </div>
+      <!-- C -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">C</div><div class="op-t">Avance vs. hora</div></div>
+        <div class="op-b" id="cli-c"></div>
+        <div class="op-p"><b>Qué gana.</b> Compara cada ruta contra dónde <i>debería</i> ir a esta hora (la marca negra). Responde la pregunta que el % solo no responde: ¿va atrasada o es que arrancó tarde?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ RECHAZOS ══════════ -->
+  <section class="mod">
+    <div class="mod-h"><h2>2 · Rechazos</h2><span class="q">módulo Rechazos</span></div>
+    <div class="hoy"><b>Hoy:</b> un donut de motivos y un número grande de cajas. Dicen <i>cuántos</i> y <i>por qué</i>, pero no <b>dónde</b> ni <b>cuándo</b> — que es lo que permite actuar el mismo día.</div>
+
+    <div class="ops">
+      <!-- A -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">A</div><div class="op-t">Impacto en plata</div></div>
+        <div class="op-b">
+          <div class="big"><div class="n num">$1,42 M</div><div class="l">No facturado hoy · 53 cajas</div></div>
+          <div class="motivos" id="rec-a"></div>
+        </div>
+        <div class="op-p"><b>Qué gana.</b> Ordena los motivos por <b>plata</b>, no por conteo. «Cliente cerrado» puede ser el más frecuente y a la vez el que menos cuesta — eso hoy no se ve.</div>
+      </div>
+      <!-- B -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">B</div><div class="op-t">A qué hora pasa</div><span class="reco">Recomendada</span></div>
+        <div class="op-b">
+          <div class="horas" id="rec-b"></div>
+          <div style="font-size:11.5px;color:var(--tinta-2);font-weight:600;line-height:1.55;margin-top:11px">
+            El <b>62 %</b> de los rechazos ocurre entre 7 y 9 a. m. — antes de que abran los negocios.
+          </div>
+        </div>
+        <div class="op-p"><b>Qué gana.</b> Convierte el rechazo en algo accionable: si se concentra temprano, el problema es el <b>orden de la ruta</b>, no el cliente. Se corrige mañana mismo.</div>
+      </div>
+      <!-- C -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">C</div><div class="op-t">Mapa de calor ruta × motivo</div></div>
+        <div class="op-b"><table class="heat" id="rec-c"></table></div>
+        <div class="op-p"><b>Qué gana.</b> Cruza las dos preguntas: qué ruta y por qué. Una columna oscura entera es un problema del motivo; una fila oscura es un problema de esa ruta o de esa persona.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ INDICADORES ══════════ -->
+  <section class="mod">
+    <div class="mod-h"><h2>3 · Indicadores</h2><span class="q">módulo Indicadores</span></div>
+    <div class="hoy"><b>Hoy:</b> ranking de barras + donut de cumplimiento global + línea de tendencia. Correcto, pero sin referencia: un 93 % no dice si es bueno, ni cuánto vale, ni de dónde se cayó el 7 % restante.</div>
+
+    <div class="ops">
+      <!-- A -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">A</div><div class="op-t">Contra el tramo de comisión</div><span class="reco">Recomendada</span></div>
+        <div class="op-b">
+          <div class="gauge">
+            <svg width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Efectividad 93,4 por ciento, bajo el tramo del 95">
+              <circle cx="64" cy="64" r="52" fill="none" stroke="var(--linea-2)" stroke-width="13"/>
+              <circle cx="64" cy="64" r="52" fill="none" stroke="var(--alerta)" stroke-width="13" stroke-linecap="round"
+                      stroke-dasharray="326.7" stroke-dashoffset="21.6" transform="rotate(-90 64 64)"/>
+              <circle cx="64" cy="12" r="3.6" fill="var(--ok)"/>
+              <text x="64" y="60" text-anchor="middle" font-size="27" font-weight="800" fill="var(--tinta)" class="num">93,4%</text>
+              <text x="64" y="76" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--tinta-3)">EFECTIVIDAD</text>
+            </svg>
+            <div class="lado">
+              <div>Le falta <b>1,6 pts</b> para el tramo de <b>$100.000</b></div>
+              <div style="font-size:10.5px;color:var(--tinta-3);font-weight:600;line-height:1.5">
+                Son <b style="color:var(--tinta-2)">27 cajas</b> — o resolver 3 devoluciones pendientes.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="op-p"><b>Qué gana.</b> Traduce el porcentaje a lo que le importa a la gente: plata y cuántas cajas faltan. El punto verde del anillo es el umbral del 95 %.</div>
+      </div>
+      <!-- B -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">B</div><div class="op-t">De dónde se cayó</div></div>
+        <div class="op-b"><div class="wf" id="ind-b"></div></div>
+        <div class="op-p"><b>Qué gana.</b> El 100 % se descompone en sus pérdidas: cuánto costó cada motivo. En vez de «vamos en 93 %», dice «perdimos 4 pts por cliente cerrado».</div>
+      </div>
+      <!-- C -->
+      <div class="op">
+        <div class="op-h"><div class="op-n">C</div><div class="op-t">Volumen vs. cumplimiento</div></div>
+        <div class="op-b"><svg class="plot" id="ind-c" viewBox="0 0 320 190" role="img" aria-label="Dispersión de rutas: cajas cargadas contra cumplimiento"></svg></div>
+        <div class="op-p"><b>Qué gana.</b> Separa al que cumple poco porque carga mucho del que cumple poco sin excusa. Abajo a la derecha (mucha carga, poco cumplimiento) es donde hay que mirar primero.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cierre">
+    <h3>Cómo seguimos</h3>
+    <ol>
+      <li>Dime una opción por módulo — por ejemplo <b>1A, 2B, 3A</b> — y las implemento en el panel real.</li>
+      <li>Se pueden combinar: la matriz semáforo (1B) sirve para el celular y la barra apilada (1A) para el escritorio.</li>
+      <li>Ninguna necesita datos nuevos: todo sale del PPAS, el Libro, la Hoja de cargue y los rechazos que ya se cargan cada mañana.</li>
+    </ol>
+  </div>
+
+  <footer>
+    Mockup de opciones · GMAZ Rutas · agosto 2026 · datos reales del viernes 14<br>
+    Patrones tomados de las 27 demos de ERP y CRM revisadas fotograma a fotograma.
+  </footer>
+</div>
+
+<script>
+/* Datos reales del 14 de agosto (los del pantallazo del coordinador) */
+const RUTAS=[
+  {r:'KA4V11',ent:3,tot:3,cajas:161,rech:0},
+  {r:'KA4V12',ent:69,tot:70,cajas:324,rech:1},
+  {r:'KA4V13',ent:33,tot:38,cajas:237,rech:5},
+  {r:'KA4V50',ent:62,tot:66,cajas:197,rech:4},
+  {r:'KA4V51',ent:49,tot:57,cajas:176,rech:8},
+  {r:'KA4V52',ent:1,tot:1,cajas:1320,rech:0},
+  {r:'KA4V53',ent:69,tot:73,cajas:242,rech:4},
+  {r:'KA4V54',ent:41,tot:42,cajas:354,rech:1},
+  {r:'KA4V55',ent:73,tot:76,cajas:280,rech:3},
+  {r:'KA4V56',ent:40,tot:49,cajas:305,rech:9}
+];
+const pct=x=>x.tot?Math.round(x.ent/x.tot*100):0;
+const col=p=>p>=95?'var(--ok)':p>=85?'var(--alerta)':'var(--rojo)';
+
+/* 1A · barra apilada entregado / pendiente / rechazado */
+document.getElementById('cli-a').innerHTML=RUTAS.slice(0,7).map(x=>{
+  const p=pct(x),e=x.ent/x.tot*100,rj=x.rech/x.tot*100,pe=Math.max(0,100-e-rj);
+  return '<div class="fila"><div><div class="cod">'+x.r+'</div><div class="sub">'+x.ent+'/'+x.tot+'</div></div>'+
+    '<div><div class="stack"><i class="e" style="width:'+e+'%"></i><i class="p" style="width:'+pe+'%"></i><i class="r" style="width:'+rj+'%"></i></div></div>'+
+    '<div class="val" style="color:'+col(p)+'">'+p+'%</div></div>';
+}).join('')+
+'<div class="leg"><span><i style="background:var(--ok)"></i>Entregado</span><span><i style="background:var(--linea)"></i>Pendiente</span><span><i style="background:var(--rojo)"></i>Rechazado</span></div>';
+
+/* 1B · matriz semáforo */
+document.getElementById('cli-b').innerHTML=RUTAS.map(x=>{
+  const p=pct(x);
+  return '<div class="celda" style="background:'+col(p)+'" title="'+x.ent+' de '+x.tot+' clientes">'+
+    '<b>'+x.r.replace('KA4V','')+'</b><div class="p num">'+p+'%</div><div class="s">'+x.ent+'/'+x.tot+'</div></div>';
+}).join('');
+
+/* 1C · avance contra lo esperado a esta hora (11:40 → 73 % de la jornada) */
+const ESPERADO=73;
+document.getElementById('cli-c').innerHTML=RUTAS.slice(0,7).map(x=>{
+  const p=pct(x),dif=p-ESPERADO;
+  return '<div class="fila"><div><div class="cod">'+x.r+'</div>'+
+      '<div class="sub" style="color:'+(dif>=0?'var(--ok)':'var(--rojo)')+'">'+(dif>=0?'+':'')+dif+' pts</div></div>'+
+    '<div><div class="bar"><i style="width:'+p+'%;background:'+(dif>=0?'var(--ok)':'var(--alerta)')+'"></i>'+
+      '<div class="meta" style="left:'+ESPERADO+'%"></div></div></div>'+
+    '<div class="val">'+p+'%</div></div>';
+}).join('')+'<div class="leg"><span><i style="background:var(--tinta)"></i>Dónde debería ir a las 11:40</span></div>';
+
+/* 2A · motivos ordenados por plata */
+const MOTIVOS=[
+  {m:'Producto no cargado',n:14,v:343500},
+  {m:'Cliente cerrado',n:16,v:315000},
+  {m:'Cliente sin dinero',n:9,v:298400},
+  {m:'Rechazo parcial',n:8,v:264700},
+  {m:'Pedido mal elaborado',n:6,v:198400}
+];
+const maxV=Math.max(...MOTIVOS.map(x=>x.v));
+document.getElementById('rec-a').innerHTML=MOTIVOS.map((x,i)=>
+  '<div><div class="mot"><span>'+x.m+' <span class="sub">· '+x.n+' casos</span></span>'+
+    '<b class="num">$'+(x.v/1000).toFixed(0)+'K</b></div>'+
+  '<div class="b"><i style="width:'+(x.v/maxV*100)+'%;background:'+(i===0?'var(--rojo)':'var(--linea)')+'"></i></div></div>').join('');
+
+/* 2B · rechazos por hora */
+const HORAS=[{h:'6',n:2},{h:'7',n:11},{h:'8',n:12},{h:'9',n:6},{h:'10',n:4},{h:'11',n:3},{h:'12',n:2},{h:'1p',n:2},{h:'2p',n:1}];
+const maxH=Math.max(...HORAS.map(x=>x.n));
+document.getElementById('rec-b').innerHTML=HORAS.map(x=>
+  '<div class="hcol" title="'+x.n+' rechazos"><i style="height:'+(x.n/maxH*72)+'px;opacity:'+(x.n/maxH*0.65+0.35)+'"></i><span>'+x.h+'</span></div>').join('');
+
+/* 2C · mapa de calor ruta × motivo */
+const MOTC=['Cerrado','Sin dinero','No cargado','Parcial'];
+const CAL=[['KA4V56',4,2,2,1],['KA4V51',3,2,1,2],['KA4V13',2,1,1,1],['KA4V50',2,1,1,0],['KA4V53',1,1,1,1],['KA4V55',1,0,1,1]];
+const maxC=Math.max(...CAL.flatMap(f=>f.slice(1)));
+document.getElementById('rec-c').innerHTML=
+  '<thead><tr><th>Ruta</th>'+MOTC.map(m=>'<th>'+m+'</th>').join('')+'</tr></thead><tbody>'+
+  CAL.map(f=>'<tr><td>'+f[0]+'</td>'+f.slice(1).map(v=>{
+    const t=v/maxC;
+    const bg=v===0?'var(--linea-2)':'color-mix(in srgb, var(--rojo) '+Math.round(18+t*82)+'%, transparent)';
+    return '<td><div class="hc" style="background:'+bg+';color:'+(t>0.5?'#fff':'var(--tinta-2)')+'">'+(v||'·')+'</div></td>';
+  }).join('')+'</tr>').join('')+'</tbody>';
+
+/* 3B · de dónde se cayó el cumplimiento (waterfall) */
+const WF=[
+  {l:'Cargado',v:100,tipo:'base'},
+  {l:'Cliente cerrado',v:-2.4,tipo:'baja'},
+  {l:'Sin dinero',v:-1.7,tipo:'baja'},
+  {l:'No cargado',v:-1.3,tipo:'baja'},
+  {l:'Rechazo parcial',v:-1.2,tipo:'baja'},
+  {l:'Entregado',v:93.4,tipo:'final'}
+];
+let acum=100;
+document.getElementById('ind-b').innerHTML=WF.map(x=>{
+  if(x.tipo==='base'||x.tipo==='final'){
+    const w=x.v;
+    return '<div class="wf-row"><span>'+x.l+'</span><div class="wf-bar"><i style="left:0;width:'+w+'%;background:'+
+      (x.tipo==='base'?'var(--dato)':'var(--ok)')+'"></i></div><span class="wf-v">'+String(x.v).replace('.',',')+'%</span></div>';
+  }
+  const ini=acum+x.v, w=Math.abs(x.v)*4; // ×4 para que la caída se vea
+  const left=Math.max(0,ini);
+  acum=ini;
+  return '<div class="wf-row"><span style="color:var(--tinta-3)">'+x.l+'</span>'+
+    '<div class="wf-bar"><i style="left:'+left+'%;width:'+w+'%;background:var(--rojo)"></i></div>'+
+    '<span class="wf-v" style="color:var(--rojo)">'+String(x.v).replace('.',',')+'</span></div>';
+}).join('');
+
+/* 3C · dispersión cajas vs cumplimiento */
+const plot=document.getElementById('ind-c');
+const W=320,H=190,mx=38,my=24;
+const maxCaj=400;
+const px=v=>mx+(v/maxCaj)*(W-mx-10);
+const py=p=>H-my-((p-75)/25)*(H-my-14);
+let svg='';
+// cuadrantes
+svg+='<rect x="'+px(200)+'" y="'+py(100)+'" width="'+(W-10-px(200))+'" height="'+(py(90)-py(100))+'" fill="var(--ok)" opacity=".07"/>';
+svg+='<rect x="'+px(200)+'" y="'+py(90)+'" width="'+(W-10-px(200))+'" height="'+(py(75)-py(90))+'" fill="var(--rojo)" opacity=".07"/>';
+[75,85,95,100].forEach(p=>{
+  svg+='<line x1="'+mx+'" y1="'+py(p)+'" x2="'+(W-10)+'" y2="'+py(p)+'" stroke="var(--linea)" stroke-width="1" stroke-dasharray="3 3"/>';
+  svg+='<text x="'+(mx-6)+'" y="'+(py(p)+3)+'" text-anchor="end" class="tip">'+p+'%</text>';
+});
+svg+='<text x="'+(W-12)+'" y="'+(H-6)+'" text-anchor="end" class="tip">cajas cargadas →</text>';
+RUTAS.filter(x=>x.tot>5).forEach(x=>{
+  const p=pct(x),cx=px(Math.min(x.cajas,maxCaj)),cy=py(Math.max(75,p));
+  const c=col(p);
+  svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(6+x.rech*0.7)+'" fill="'+c+'" opacity=".82"><title>'+x.r+' · '+p+'% · '+x.cajas+' cajas · '+x.rech+' rechazos</title></circle>';
+  svg+='<text x="'+cx+'" y="'+(cy-11)+'" text-anchor="middle" class="tip" style="font-size:8.5px">'+x.r.replace('KA4V','')+'</text>';
+});
+svg+='<text x="'+(W-14)+'" y="'+(py(78))+'" text-anchor="end" class="tip" style="fill:var(--rojo);font-size:9px">mucha carga · poco cumplimiento</text>';
+plot.innerHTML=svg;
+</script>
