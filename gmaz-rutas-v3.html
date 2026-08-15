@@ -736,7 +736,25 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 
 /* ══ ASIGNAR VEHÍCULOS A RUTAS (panel coordinador) ══ */
 .veh-cargando{padding:14px;font-size:12px;color:var(--gris4);font-weight:600}
-.dveh-list{padding:6px 8px 10px;max-height:340px;overflow:auto}
+.dveh-list{padding:6px 8px 10px;max-height:460px;overflow:auto}
+.dveh-bloque{border-bottom:1px solid var(--gris2);padding-bottom:6px;margin-bottom:4px}
+.dveh-bloque:last-child{border-bottom:none}
+.dveh-trip{padding:2px 9px 8px 9px;display:flex;flex-direction:column;gap:5px}
+.dt-fila{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dt-lbl{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--gris4);min-width:74px}
+.dt-nom{font-size:12px;font-weight:800;color:var(--negro)}
+.dt-ok{font-size:8.5px;font-weight:800;color:#059669;background:#ECFDF5;border-radius:5px;padding:2px 6px}
+.dt-sis{font-size:8.5px;font-weight:800;color:#1A56DB;background:#EFF6FF;border-radius:5px;padding:2px 6px}
+.dt-coord{font-size:8.5px;font-weight:800;color:#B45309;background:#FFF8E6;border-radius:5px;padding:2px 6px}
+.dt-aviso{font-size:10px;font-weight:700;color:#B45309}
+.dt-sel{height:29px;min-width:190px;max-width:260px;border:1px dashed var(--gris3);border-radius:8px;padding:0 8px;
+  font-family:inherit;font-size:11.5px;font-weight:700;color:var(--negro);background:#fff}
+.dt-x{width:22px;height:22px;border-radius:6px;border:1px solid var(--gris2);background:#fff;color:var(--gris4);
+  font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;line-height:1}
+.dt-x:hover{background:#FFF0F1;border-color:#E30613;color:#E30613}
+.dt-mini{height:24px;padding:0 9px;border-radius:7px;border:none;background:var(--negro);color:#fff;
+  font-family:inherit;font-size:10px;font-weight:800;cursor:pointer}
+
 .dveh-row{display:flex;align-items:center;gap:11px;padding:9px 9px;border-radius:11px}
 .dveh-row:hover{background:var(--gris1)}
 .dveh-code{width:66px;flex-shrink:0;font-size:13px;font-weight:800}
@@ -6623,6 +6641,8 @@ let _driverCache=null;
 async function renderAsignacionVehiculos(rutas){
   const cont=document.getElementById('dash-veh-list');
   if(!cont)return;
+  window._rutasAsig=rutas||window._rutasAsig||[];
+  rutas=window._rutasAsig;
   if(!_vehListCargada)cont.innerHTML='<div class="veh-cargando">Cargando vehículos…</div>';
   try{
     const fecha=getColDate();
@@ -6641,7 +6661,8 @@ async function renderAsignacionVehiculos(rutas){
       const actual=asigPorRuta[ruta]||'';
       const compartido=actual&&usoUnit[actual]>1;
       const opciones=_vehCache.map(v=>'<option value="'+v.nombre+'"'+(v.nombre===actual?' selected':'')+'>'+v.nombre+' · '+(v.marca||'')+' '+(v.modelo||'')+'</option>').join('');
-      return '<div class="dveh-row">'+
+      return '<div class="dveh-bloque" id="dvb-'+ruta+'">'+
+        '<div class="dveh-row">'+
         '<div class="dveh-code" style="color:'+(rutaColor[ruta]||'#0F1117')+'">'+ruta+'</div>'+
         '<select class="dveh-select" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
         '<option value="">— sin asignar —</option>'+opciones+
@@ -6649,7 +6670,106 @@ async function renderAsignacionVehiculos(rutas){
         '<div class="dveh-ok">'+(actual?(compartido?'<span style="font-size:8px;font-weight:800;color:#B45309;background:#FEF3C7;border-radius:5px;padding:2px 6px">compartido</span>':'✅'):'')+'</div></div>';
     }).join('');
     _vehListCargada=true;
+    // Debajo de cada ruta, quién va: el conductor sale del vehículo y los auxiliares los pone
+    // el coordinador aquí mismo, sin esperar a que se registren desde el celular.
+    await cargarMaestroConductores();
+    pintarTripulacionAsignada(rutas,asigPorRuta);
   }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
+}
+
+/* ══ TRIPULACIÓN DESDE EL PANEL (15-ago-2026) ══
+   El coordinador arma la ruta en la mañana y no siempre puede esperar a que cada uno se registre
+   en su celular. Aquí asigna directamente: el conductor viene del vehículo (editable solo por el
+   día) y hasta 4 auxiliares. Lo que él pone queda con origen 'coordinador'; cuando la persona se
+   registra desde su celular pasa a 'persona' y sirve de confirmación. */
+const AUX_MAX=4;
+let _tripAsignada={}; // {ruta:[personas]}
+async function pintarTripulacionAsignada(rutas,asigPorRuta){
+  const fecha=getColDate();
+  let reg={};
+  try{ reg=await cargarRegistroDia(fecha)||{}; }catch(e){}
+  _tripAsignada=reg;
+  const opts=entregadoresDisponibles();
+  rutas.forEach(ruta=>{
+    const cont=document.getElementById('dvb-'+ruta);if(!cont)return;
+    const unit=asigPorRuta[ruta]||'';
+    const personas=(reg[ruta]||[]).slice();
+    const cond=personas.find(x=>x.rol==='conductor')||null;
+    const auxs=personas.filter(x=>x.rol!=='conductor');
+    const delVeh=unit?conductorDelVehiculo(unit):null;
+    // Conductor: informativo, sale del vehículo. Si no hay vehículo o no tiene fijo, se puede poner a mano.
+    let condHtml;
+    if(cond){
+      const et=cond.origen==='persona'?'<span class="dt-ok">confirmó</span>'
+              :cond.origen==='sistema'?'<span class="dt-sis">del vehículo</span>'
+              :'<span class="dt-coord">puesto por ti</span>';
+      condHtml='<span class="dt-nom">'+_nomCorto(cond.nombre)+'</span>'+et+
+        '<button class="dt-x" title="Quitar" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+cond.ced+'\')">✕</button>';
+    }else if(unit&&delVeh){
+      condHtml='<span class="dt-nom">'+_nomCorto(delVeh.nombre)+'</span><span class="dt-sis">del vehículo</span>'+
+        '<button class="dt-mini" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderAsignacionVehiculos(window._rutasAsig||[]))">Poner</button>';
+    }else{
+      condHtml=_dtSelect(ruta,'conductor','',opts,unit?'El vehículo '+unit+' no tiene conductor fijo':'Asigna primero el vehículo');
+    }
+    let html='<div class="dveh-trip">'+
+      '<div class="dt-fila"><span class="dt-lbl">Conductor</span>'+condHtml+'</div>';
+    auxs.forEach((a,i)=>{
+      const et=a.origen==='persona'?'<span class="dt-ok">confirmó</span>':'<span class="dt-coord">puesto por ti</span>';
+      html+='<div class="dt-fila"><span class="dt-lbl">Auxiliar '+(i+1)+'</span>'+
+        '<span class="dt-nom">'+_nomCorto(a.nombre)+'</span>'+et+
+        '<button class="dt-x" title="Quitar" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+a.ced+'\')">✕</button></div>';
+    });
+    if(auxs.length<AUX_MAX)
+      html+='<div class="dt-fila"><span class="dt-lbl">Auxiliar '+(auxs.length+1)+'</span>'+
+        _dtSelect(ruta,'auxiliar','',opts,'')+'</div>';
+    html+='</div>';
+    const previo=cont.querySelector('.dveh-trip');
+    if(previo)previo.outerHTML=html; else cont.insertAdjacentHTML('beforeend',html);
+  });
+}
+function _dtSelect(ruta,rol,val,opts,aviso){
+  // Quien ya está en cualquier ruta hoy no vuelve a aparecer: nadie puede ir en dos vehículos.
+  const ocupados=new Set();
+  Object.values(_tripAsignada||{}).forEach(arr=>(arr||[]).forEach(x=>ocupados.add(String(x.ced))));
+  const lista=opts.filter(o=>!ocupados.has(String(o.ced)));
+  const soloCond=rol==='conductor';
+  const finales=soloCond?lista.filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo)):lista;
+  return '<select class="dt-sel" data-ruta="'+ruta+'" data-rol="'+rol+'" onchange="haptic();asignarTripulante(this)">'+
+    '<option value="">— agregar —</option>'+
+    finales.map(o=>'<option value="'+o.ced+'">'+o.nombre+'</option>').join('')+'</select>'+
+    (aviso?'<span class="dt-aviso">'+aviso+'</span>':'');
+}
+async function asignarTripulante(sel){
+  const ruta=sel.dataset.ruta,rol=sel.dataset.rol,ced=sel.value;
+  if(!ced)return;
+  const p=entregadoresDisponibles().find(x=>String(x.ced)===String(ced));
+  if(!p)return;
+  const fecha=getColDate();
+  showLoad('Asignando a '+_nomCorto(p.nombre)+'…');
+  try{
+    await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+p.ced+'.json',
+      {ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol,hora:new Date().toISOString(),origen:'coordinador',ruta});
+    hideLoad();
+    toast(_nomCorto(p.nombre)+' → '+ruta+' como '+(rol==='conductor'?'conductor':'auxiliar'),'ok');
+    _tripPorFecha={}; // invalida el caché de las tarjetas de vehículo
+    renderAsignacionVehiculos(window._rutasAsig||[]);
+    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo asignar: '+e.message,'err');}
+}
+async function quitarTripulante(ruta,ced){
+  const fecha=getColDate();
+  const personas=(_tripAsignada[ruta]||[]);
+  const p=personas.find(x=>String(x.ced)===String(ced));
+  if(p&&p.origen==='persona'&&!confirm(_nomCorto(p.nombre)+' se registró desde su propio celular.\n\n¿Seguro que lo quitas de '+ruta+'?'))return;
+  showLoad('Quitando…');
+  try{
+    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+fecha+'/'+ruta+'__'+ced+'.json',
+      {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+    hideLoad();toast('Quitado de '+ruta,'ok');
+    _tripPorFecha={};
+    renderAsignacionVehiculos(window._rutasAsig||[]);
+    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo quitar: '+e.message,'err');}
 }
 async function guardarAsignacionRuta(sel){
   const ruta=sel.dataset.ruta,unitId=sel.value;
@@ -6696,6 +6816,8 @@ async function guardarAsignacionRuta(sel){
     toast(ruta+' → '+unitId+' asignado'+(cond?' · conductor: '+_nomCorto(cond.nombre):' · sin conductor fijo'),'ok');
     if(!cond)toast('Asigna el conductor fijo de '+unitId+' abajo, en «Conductor fijo por vehículo»','err');
     pintarFlotaEnVivo();
+    _tripPorFecha={};
+    renderAsignacionVehiculos(window._rutasAsig||[]);
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){toast('Error asignando vehículo','err');}
 }
