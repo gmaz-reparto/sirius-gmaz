@@ -761,7 +761,13 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .ar-sel.aux:focus{color:var(--negro)}
 .ar-nada{font-size:10.5px;font-weight:700;color:var(--gris4)}
 .ar-chip-per{display:inline-flex;align-items:center;gap:6px;background:var(--gris1);border:1px solid var(--gris2);
-  border-radius:9px;padding:4px 6px 4px 5px;max-width:172px}
+  border-radius:9px;padding:4px 6px 4px 5px;max-width:190px}
+.ar-chip-per.es-cond{background:#FFF6F6;border-color:rgba(227,6,19,.22)}
+.ar-chip-per.sugerido{background:#fff;border-style:dashed}
+.ar-av.gris{background:var(--gris3);color:var(--gris5)}
+.ar-mas{width:20px;height:20px;border-radius:6px;border:none;background:var(--azul);color:#fff;
+  font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0;flex-shrink:0}
+.ar-mas:hover{background:#1443B0}
 .ar-chip-per+.ar-chip-per{margin-top:4px}
 .ar-av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
 .ar-av.cond{background:var(--rojo)} .ar-av.aux{background:var(--azul)}
@@ -4290,17 +4296,21 @@ function renderMaestroConductores(){
     }).join('')+'</tbody></table>';
 }
 async function guardarConductorFijo(sel){
-  const unit=sel.dataset.unit,ced=sel.value;
+  const unit=sel.dataset.unit,ced=sel.value,ruta=sel.dataset.ruta||'';
   const p=_condElegibles().find(x=>String(x.ced)===String(ced));
   showLoad('Guardando el conductor fijo…');
   try{
     if(p)maestroConductores[unit]={ced:p.ced,nombre:p.nombre,actualizado:new Date().toISOString()};
     else delete maestroConductores[unit];
     await _storageGuardar('MAESTRO_CONDUCTORES.json',maestroConductores);
+    // Si se eligió desde la tabla de armado, además queda puesto en esa ruta de una vez:
+    // el coordinador espera verlo ahí mismo, no tener que darle un segundo botón.
+    if(p&&ruta)await registrarConductorAutomatico(ruta,unit);
     hideLoad();
     toast(p?unit+' → '+_nomCorto(p.nombre):unit+' sin conductor fijo','ok');
     renderMaestroConductores();
-    await _sincronizarConductoresDelDia(); // si ese vehículo ya está en una ruta, se actualiza el registro
+    await _sincronizarConductoresDelDia(); // otras rutas con esa misma placa
+    if(document.getElementById('dash-veh-list'))await renderArmadoRutas();
   }catch(e){hideLoad();toast('No se pudo guardar: '+e.message,'err');}
 }
 async function guardarConductorDia(sel){
@@ -6743,28 +6753,28 @@ function _arFila(ruta,usoUnit){
     :!fijo?['sin-cond','Sin conductor fijo']
     :!auxs.length?['sin-aux','Sin auxiliar']
     :['ok','Lista'];
-  // Conductor: se elige el FIJO del vehículo; debajo se ve si él mismo confirmó desde su celular
+  // Conductor: una vez elegido se ve como ficha con iniciales, igual que los auxiliares.
+  // Elegirlo en el selector hace dos cosas: lo deja como conductor FIJO de esa placa (permanente)
+  // y lo pone de una vez en la ruta de hoy.
   let celCond;
   if(!unit){
     celCond='<span class="ar-nada">asigna la placa</span>';
+  }else if(cond){
+    celCond=_arChip(cond,ruta,'conductor');
+    if(hoyManeja&&hoyManeja.esReemplazo&&String(hoyManeja.ced)===String(cond.ced))
+      celCond+='<span class="ar-org coord" title="'+(hoyManeja.motivo||'')+'">reemplaza al fijo</span>';
+  }else if(fijo){
+    // Es el fijo de la placa pero todavía no está puesto en la ruta de hoy
+    celCond=_arChipSugerido(fijo,ruta,unit);
   }else{
-    const conductores=entregadoresDisponibles().filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
-    celCond='<select class="ar-sel cond" data-unit="'+unit+'" onchange="haptic();guardarConductorFijo(this)">'+
-      '<option value="">— sin asignar —</option>'+
-      conductores.map(o=>'<option value="'+o.ced+'"'+(fijo&&String(fijo.ced)===String(o.ced)?' selected':'')+'>'+o.nombre+'</option>').join('')+
-      '</select>';
-    if(hoyManeja&&hoyManeja.esReemplazo)
-      celCond+='<span class="ar-org coord" title="'+(hoyManeja.motivo||'')+'">hoy: '+_nomCorto(hoyManeja.nombre)+'</span>';
-    else if(cond&&cond.origen==='persona')celCond+='<span class="ar-org ok">confirmó</span>';
-    else if(cond&&cond.origen==='sistema')celCond+='<span class="ar-org sis">puesto</span>';
-    else if(fijo)celCond+='<button class="ar-poner" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderArmadoRutas())">Poner en la ruta</button>';
+    celCond=_arSelCond(ruta,unit,null);
   }
   // Tres columnas de auxiliar; si llegara un cuarto, se muestra apilado en la última
   let celAux='';
   for(let i=0;i<3;i++){
     const a=auxs[i];
     if(a){
-      celAux+='<td>'+_arChip(a,ruta)+((i===2&&auxs.length>3)?auxs.slice(3).map(x=>_arChip(x,ruta)).join(''):'')+'</td>';
+      celAux+='<td>'+_arChip(a,ruta,'auxiliar')+((i===2&&auxs.length>3)?auxs.slice(3).map(x=>_arChip(x,ruta,'auxiliar')).join(''):'')+'</td>';
     }else{
       celAux+='<td>'+_arSelAux(ruta)+'</td>';
     }
@@ -6781,12 +6791,30 @@ function _arFila(ruta,usoUnit){
     '<td><span class="ar-est '+est[0]+'">'+est[1]+'</span></td>'+
   '</tr>';
 }
-function _arChip(p,ruta){
+function _arChip(p,ruta,rol){
+  const esCond=rol==='conductor'||p.rol==='conductor';
   const et=p.origen==='persona'?['ok','confirmó']:p.origen==='sistema'?['sis','puesto']:['coord','asignado'];
-  return '<span class="ar-chip-per" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
-    '<span class="ar-av aux">'+_tcIniciales(p.nombre)+'</span>'+
+  return '<span class="ar-chip-per'+(esCond?' es-cond':'')+'" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
+    '<span class="ar-av '+(esCond?'cond':'aux')+'">'+_tcIniciales(p.nombre)+'</span>'+
     '<span class="ar-cn"><b>'+_nomCorto(p.nombre)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
-    '<button class="ar-x" title="Quitar de la ruta" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button></span>';
+    '<button class="ar-x" title="'+(esCond?'Quitar de la ruta (el conductor fijo de la placa no se borra)':'Quitar de la ruta')+
+      '" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button></span>';
+}
+/* El conductor fijo de la placa que todavía no está puesto en la ruta de hoy: misma ficha, en gris,
+   con un toque para ponerlo. */
+function _arChipSugerido(f,ruta,unit){
+  return '<span class="ar-chip-per sugerido" title="Conductor fijo de '+unit+'">'+
+    '<span class="ar-av gris">'+_tcIniciales(f.nombre)+'</span>'+
+    '<span class="ar-cn"><b>'+_nomCorto(f.nombre)+'</b><em class="sis">fijo de la placa</em></span>'+
+    '<button class="ar-mas" title="Ponerlo en la ruta de hoy" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderArmadoRutas())">+</button></span>';
+}
+/* Selector de conductor: al elegirlo queda como fijo de la placa y entra en la ruta de hoy. */
+function _arSelCond(ruta,unit,fijo){
+  const conductores=entregadoresDisponibles().filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
+  return '<select class="ar-sel cond" data-unit="'+unit+'" data-ruta="'+ruta+'" onchange="haptic();guardarConductorFijo(this)">'+
+    '<option value="">— sin asignar —</option>'+
+    conductores.map(o=>'<option value="'+o.ced+'"'+(fijo&&String(fijo.ced)===String(o.ced)?' selected':'')+'>'+o.nombre+'</option>').join('')+
+    '</select>';
 }
 function _arSelAux(ruta){
   // Nadie puede ir en dos rutas el mismo día: quien ya está asignado no vuelve a aparecer.
