@@ -737,7 +737,9 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 /* ══ ASIGNAR VEHÍCULOS A RUTAS (panel coordinador) ══ */
 .veh-cargando{padding:14px;font-size:12px;color:var(--gris4);font-weight:600}
 .ar-tabla-wrap{padding:8px 13px 4px;overflow-x:auto}
-.ar-tabla{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:1080px}
+.ar-tabla{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:1240px}
+.ar-tabla th:nth-child(n+5),.ar-fila>td:nth-child(n+5){min-width:196px}
+.ar-tabla th:last-child,.ar-fila>td:last-child{min-width:0}
 .ar-tabla thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
   color:var(--gris4);padding:0 9px 4px;white-space:nowrap}
 .ar-tabla thead th.r{text-align:right}
@@ -760,8 +762,8 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .ar-sel.aux{min-width:158px;border-style:dashed;color:var(--gris4);font-weight:700}
 .ar-sel.aux:focus{color:var(--negro)}
 .ar-nada{font-size:10.5px;font-weight:700;color:var(--gris4)}
-.ar-chip-per{display:inline-flex;align-items:center;gap:6px;background:var(--gris1);border:1px solid var(--gris2);
-  border-radius:9px;padding:4px 6px 4px 5px;max-width:190px}
+.ar-chip-per{display:inline-flex;align-items:center;gap:7px;background:var(--gris1);border:1px solid var(--gris2);
+  border-radius:9px;padding:5px 6px 5px 5px;width:100%;max-width:250px}
 .ar-chip-per.es-cond{background:#FFF6F6;border-color:rgba(227,6,19,.22)}
 .ar-chip-per.sugerido{background:#fff;border-style:dashed}
 .ar-av.gris{background:var(--gris3);color:var(--gris5)}
@@ -771,9 +773,11 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .ar-chip-per+.ar-chip-per{margin-top:4px}
 .ar-av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
 .ar-av.cond{background:var(--rojo)} .ar-av.aux{background:var(--azul)}
-.ar-cn{display:flex;flex-direction:column;min-width:0;line-height:1.25}
-.ar-cn b{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ar-cn em{font-style:normal;font-size:8.5px;font-weight:800}
+.ar-cn{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.22}
+/* El nombre puede ocupar dos renglones: con apellidos compuestos una sola línea no alcanza. */
+.ar-cn b{font-size:11px;font-weight:800;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;word-break:break-word}
+.ar-cn em{font-style:normal;font-size:8.5px;font-weight:800;margin-top:1px}
 .ar-cn em.ok{color:#059669} .ar-cn em.sis{color:#1A56DB} .ar-cn em.coord{color:#B45309}
 .ar-x{width:18px;height:18px;border-radius:5px;border:none;background:transparent;color:var(--gris3);
   font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;line-height:1;padding:0;flex-shrink:0}
@@ -3942,13 +3946,25 @@ function motivoMeta(m){
   };
   return map[m]||{c:'#4A5060',bg:'#F1F2F5'};
 }
-/* Nombre del entregador para las tarjetas: dos nombres bastan y caben. Las novedades viejas (antes
-   del registro por persona) traen el texto fijo "Repartidor" o vienen vacías → se marcan como sin
-   identificar, para que se note la diferencia con las que sí tienen responsable. */
-function _nomCorto(nom){
+/* Nombre corto para fichas y tarjetas. Los apellidos compuestos son comunes acá ("DE LA CRUZ
+   PISCAL", "DEL CASTILLO"), y cortar por las dos primeras palabras dejaba cosas como "DE LA", que
+   no identifica a nadie: las partículas se pegan a la palabra que siguen antes de contar.
+   Las novedades viejas traen el texto fijo "Repartidor" o vienen vacías → sin identificar. */
+const _PARTICULAS=['DE','DEL','LA','LAS','LOS','DA','DI','VAN','MC','SAN','SANTA'];
+function _nomCorto(nom,palabras){
   const n=String(nom||'').trim();
   if(!n||/^repartidor$/i.test(n))return 'Sin identificar';
-  return n.split(/\s+/).slice(0,2).join(' ');
+  const tk=n.split(/\s+/);
+  const partes=[];
+  for(let i=0;i<tk.length;i++){
+    let bloque=tk[i];
+    // "DE LA CRUZ" cuenta como una sola parte, no como tres
+    while(_PARTICULAS.includes(bloque.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ]/gi,''))&&i+1<tk.length){
+      i++;bloque+=' '+tk[i];
+    }
+    partes.push(bloque);
+  }
+  return partes.slice(0,palabras||2).join(' ');
 }
 const _estBadgeNov=est=>est==='afecta'?'<span class="nov-est afecta">Afecta comisión</span>':est==='omitida'?'<span class="nov-est omitida">Omitida</span>':'<span class="nov-est pendiente">Por revisar</span>';
 /* Tarjeta de una novedad/rechazo, con el detalle por SKU (producto/cantidad/valor) si existe.
@@ -6796,7 +6812,7 @@ function _arChip(p,ruta,rol){
   const et=p.origen==='persona'?['ok','confirmó']:p.origen==='sistema'?['sis','puesto']:['coord','asignado'];
   return '<span class="ar-chip-per'+(esCond?' es-cond':'')+'" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
     '<span class="ar-av '+(esCond?'cond':'aux')+'">'+_tcIniciales(p.nombre)+'</span>'+
-    '<span class="ar-cn"><b>'+_nomCorto(p.nombre)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
+    '<span class="ar-cn"><b>'+_nomCorto(p.nombre,3)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
     '<button class="ar-x" title="'+(esCond?'Quitar de la ruta (el conductor fijo de la placa no se borra)':'Quitar de la ruta')+
       '" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button></span>';
 }
@@ -6805,7 +6821,7 @@ function _arChip(p,ruta,rol){
 function _arChipSugerido(f,ruta,unit){
   return '<span class="ar-chip-per sugerido" title="Conductor fijo de '+unit+'">'+
     '<span class="ar-av gris">'+_tcIniciales(f.nombre)+'</span>'+
-    '<span class="ar-cn"><b>'+_nomCorto(f.nombre)+'</b><em class="sis">fijo de la placa</em></span>'+
+    '<span class="ar-cn"><b>'+_nomCorto(f.nombre,3)+'</b><em class="sis">fijo de la placa</em></span>'+
     '<button class="ar-mas" title="Ponerlo en la ruta de hoy" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderArmadoRutas())">+</button></span>';
 }
 /* Selector de conductor: al elegirlo queda como fijo de la placa y entra en la ruta de hoy. */
