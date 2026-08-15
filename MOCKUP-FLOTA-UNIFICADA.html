@@ -1,0 +1,466 @@
+<title>Tres Consolas de Flota</title>
+<style>
+:root{
+  --rojo:#E30613; --rojo-o:#B5000F; --rojo-s:#FFF0F1;
+  --tinta:#0F1117; --tinta-2:#4A5060; --tinta-3:#8A90A0;
+  --papel:#F5F6F8; --carta:#FFFFFF; --linea:#E4E7EE; --linea-2:#EEF0F4;
+  --ok:#059669; --ok-s:#ECFDF5; --alerta:#D97706; --alerta-s:#FFF8E6;
+  --dato:#1A56DB; --dato-s:#EFF6FF; --violeta:#7C3AED; --violeta-s:#F3E8FF;
+  --sombra:0 1px 2px rgba(15,17,23,.05); --sombra-alta:0 4px 14px -2px rgba(15,17,23,.10);
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+    --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+    --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+    --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+    --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+    --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --rojo:#FF4D5A; --rojo-o:#FF7079; --rojo-s:#2A1418;
+  --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90;
+  --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+  --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+  --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF; --violeta-s:#211936;
+  --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 6px 18px -4px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 18px 70px;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+
+.hero{border-bottom:2px solid var(--tinta);padding-bottom:18px;display:flex;flex-direction:column;gap:8px}
+.hero .eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--rojo)}
+.hero h1{font-size:29px;font-weight:800;letter-spacing:-1px}
+.hero p{margin:0;font-size:13px;color:var(--tinta-2);max-width:74ch}
+
+.problema{background:var(--carta);border:1px solid var(--linea);border-left:3px solid var(--alerta);border-radius:10px;
+  padding:12px 15px;font-size:12.5px;color:var(--tinta-2);line-height:1.65}
+.problema b{color:var(--tinta)}
+
+.op{display:flex;flex-direction:column;gap:12px}
+.op-h{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;border-left:3px solid var(--rojo);padding-left:12px}
+.op-n{width:24px;height:24px;border-radius:7px;background:var(--tinta);color:var(--carta);display:grid;place-items:center;
+  font-size:12px;font-weight:800;flex-shrink:0;align-self:center}
+.op-h h2{font-size:19px;font-weight:800;letter-spacing:-.4px}
+.op-h .q{font-size:12.5px;color:var(--tinta-3);font-weight:600}
+.reco{background:var(--ok-s);color:var(--ok);font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:5px;
+  letter-spacing:.4px;text-transform:uppercase}
+.demo{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);overflow:hidden}
+.notas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.notas{grid-template-columns:1fr}}
+.nota{border:1px solid var(--linea);border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.6;background:var(--carta)}
+.nota b{display:block;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+.nota.gana{border-left:3px solid var(--ok)} .nota.gana b{color:var(--ok)}
+.nota.cuesta{border-left:3px solid var(--alerta)} .nota.cuesta b{color:var(--alerta)}
+.nota span{color:var(--tinta-2)}
+
+/* ── barra de control común ── */
+.barra{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 15px;background:var(--papel);
+  border-bottom:1px solid var(--linea)}
+.barra .t{font-size:13px;font-weight:800}
+.barra .fecha{height:32px;border:1px solid var(--linea);border-radius:9px;padding:0 10px;background:var(--carta);
+  font:inherit;font-size:11.5px;font-weight:800;color:var(--tinta);display:inline-flex;align-items:center;gap:7px}
+.barra .fill{flex:1}
+.chip{height:29px;padding:0 11px;border-radius:8px;border:1px solid var(--linea);background:var(--carta);
+  color:var(--tinta-2);font:inherit;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chip.on{background:var(--tinta);border-color:var(--tinta);color:var(--carta)}
+.chip:hover{border-color:var(--tinta-3)}
+.vivo{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-s)}
+
+/* ── piezas compartidas ── */
+.per{display:inline-flex;align-items:center;gap:6px;background:var(--papel);border:1px solid var(--linea);
+  border-radius:8px;padding:4px 7px 4px 4px;max-width:100%}
+.per.cond{background:var(--rojo-s);border-color:color-mix(in srgb,var(--rojo) 22%,transparent)}
+.av{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;font-size:8.5px;font-weight:800;color:#fff;flex-shrink:0}
+.av.c{background:var(--rojo)} .av.a{background:var(--dato)} .av.g{background:var(--linea)}
+.per .nn{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.per .nn b{font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.per .nn em{font-style:normal;font-size:8px;font-weight:800;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.3px}
+.pill{display:inline-flex;align-items:center;gap:5px;height:21px;padding:0 8px;border-radius:6px;font-size:9.5px;font-weight:800}
+.pill.ok{background:var(--ok-s);color:var(--ok)} .pill.warn{background:var(--alerta-s);color:var(--alerta)}
+.pill.bad{background:var(--rojo-s);color:var(--rojo)} .pill.mute{background:var(--linea-2);color:var(--tinta-3)}
+.pill.info{background:var(--dato-s);color:var(--dato)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.ruta-b{display:inline-block;color:#fff;font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:7px}
+
+/* ══ OPCIÓN A · tabla maestra ══ */
+.tabla-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:separate;border-spacing:0;min-width:1150px}
+table.t thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--tinta-3);
+  padding:9px 10px;border-bottom:1px solid var(--linea);white-space:nowrap;background:var(--carta)}
+table.t thead th.r{text-align:right}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--linea-2);font-size:11.5px;vertical-align:middle}
+table.t td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+tr.fila{cursor:pointer}
+tr.fila:hover td{background:var(--papel)}
+tr.fila.abierta td{background:var(--papel)}
+.caret{color:var(--tinta-3);display:inline-block;transition:transform .15s;font-size:10px}
+tr.abierta .caret{transform:rotate(90deg)}
+.gps{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800}
+.gps i{width:7px;height:7px;border-radius:50%}
+.det td{background:var(--papel);padding:0;border-bottom:1px solid var(--linea)}
+.det-in{padding:13px 16px 15px 34px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+@media (max-width:900px){.det-in{grid-template-columns:1fr}}
+.det-t{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--tinta-3);margin-bottom:7px}
+.recorrido{background:var(--carta);border:1px solid var(--linea);border-radius:10px;padding:11px 12px}
+.rec-svg{width:100%;height:88px;display:block}
+.rec-m{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:10.5px;font-weight:700;color:var(--tinta-3)}
+.rec-m b{color:var(--tinta);font-variant-numeric:tabular-nums}
+.hitos{background:var(--carta);border:1px solid var(--linea);border-radius:10px;padding:11px 12px}
+.hito{display:grid;grid-template-columns:52px 12px 1fr;gap:8px;align-items:start;font-size:11px}
+.hito+.hito{margin-top:2px}
+.hito .h{font-variant-numeric:tabular-nums;font-weight:800;color:var(--tinta-2);font-size:10.5px;padding-top:1px}
+.hito .l{position:relative;display:flex;justify-content:center}
+.hito .l i{width:7px;height:7px;border-radius:50%;margin-top:4px;z-index:1}
+.hito .l::before{content:'';position:absolute;top:8px;bottom:-8px;width:1.5px;background:var(--linea)}
+.hito:last-child .l::before{display:none}
+.hito .x{color:var(--tinta-2);font-weight:600;padding-bottom:8px}
+.hito .x b{color:var(--tinta);font-weight:800}
+
+/* ══ OPCIÓN B · consola maestro-detalle ══ */
+.consola{display:grid;grid-template-columns:262px 1fr;min-height:430px}
+@media (max-width:860px){.consola{grid-template-columns:1fr}}
+.lista{border-right:1px solid var(--linea);overflow:auto;max-height:470px}
+.li{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:10px 12px;
+  border-bottom:1px solid var(--linea-2);cursor:pointer}
+.li:hover{background:var(--papel)}
+.li.on{background:var(--dato-s);box-shadow:inset 3px 0 0 var(--dato)}
+.li .id b{display:block;font-size:11.5px;font-weight:800}
+.li .id small{font-size:9.5px;color:var(--tinta-3);font-weight:700}
+.li .est{font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px}
+.panel{padding:15px 17px;display:flex;flex-direction:column;gap:13px}
+.p-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.p-head h3{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.p-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:9px}
+.pk{background:var(--papel);border:1px solid var(--linea);border-radius:10px;padding:9px 10px}
+.pk .l{font-size:8.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--tinta-3)}
+.pk .v{font-size:18px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.15}
+.p-sec{border:1px solid var(--linea);border-radius:11px;padding:11px 12px}
+.crew{display:flex;flex-wrap:wrap;gap:7px}
+
+/* ══ OPCIÓN C · fichas de despacho ══ */
+.fichas{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;padding:13px}
+.ficha{border:1px solid var(--linea);border-radius:13px;overflow:hidden;background:var(--carta);
+  box-shadow:var(--sombra);transition:box-shadow .15s,transform .15s}
+.ficha:hover{box-shadow:var(--sombra-alta);transform:translateY(-1px)}
+.f-head{display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid var(--linea-2)}
+.f-placa{font-size:13.5px;font-weight:800;letter-spacing:-.3px}
+.f-veh{font-size:9.5px;color:var(--tinta-3);font-weight:700}
+.f-body{padding:11px 12px;display:flex;flex-direction:column;gap:9px}
+.f-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.f-mini div{background:var(--papel);border-radius:8px;padding:6px 3px}
+.f-mini b{display:block;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.f-mini small{font-size:8px;font-weight:800;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.3px}
+.f-crew{display:flex;flex-direction:column;gap:5px}
+.f-spark{background:var(--papel);border-radius:9px;padding:7px 9px}
+.f-spark svg{width:100%;height:34px;display:block}
+.f-foot{display:flex;align-items:center;gap:7px;padding:9px 12px;border-top:1px solid var(--linea-2);background:var(--papel)}
+.btn{height:28px;padding:0 11px;border-radius:8px;border:1px solid var(--linea);background:var(--carta);
+  font:inherit;font-size:10.5px;font-weight:800;color:var(--tinta);cursor:pointer}
+.btn:hover{background:var(--tinta);color:var(--carta);border-color:var(--tinta)}
+.btn.p{background:var(--tinta);color:var(--carta);border-color:var(--tinta)}
+.btn.p:hover{background:var(--rojo);border-color:var(--rojo)}
+
+.cierre{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sombra)}
+.cierre h3{font-size:14px;font-weight:800;margin-bottom:9px}
+.cierre table{width:100%;border-collapse:collapse;font-size:12px}
+.cierre th{text-align:left;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--tinta-3);padding:5px 8px;border-bottom:1px solid var(--linea)}
+.cierre td{padding:7px 8px;border-bottom:1px solid var(--linea-2);color:var(--tinta-2)}
+.cierre td b{color:var(--tinta)}
+footer{font-size:11.5px;color:var(--tinta-3);text-align:center;line-height:1.7}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eye">GMAZ Rutas · módulo Vehículos</div>
+    <h1>Tres consolas de flota</h1>
+    <p>Tres maneras de fundir en una sola las tarjetas de <b>Buscar vehículo</b>, <b>Quién salió en cada vehículo</b>
+    y <b>Armado de rutas</b>. Datos reales del sábado 15 de agosto. Elige una y la implemento.</p>
+  </div>
+
+  <div class="problema">
+    <b>Por qué hay que unirlas.</b> Hoy son tres tarjetas con <b>tres selectores de fecha distintos</b>: se puede
+    estar viendo el recorrido del 13, la tripulación del 14 y el armado de hoy — al mismo tiempo y sin darse cuenta.
+    Además la placa aparece en las tres y la tripulación en dos, así que un cambio obliga a mirar en varios lados.
+    Las tres propuestas parten de lo mismo: <b>una sola fecha manda sobre todo</b> y cada vehículo aparece una vez.
+  </div>
+
+  <!-- ══════════ OPCIÓN A ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">A</div><h2>Tabla maestra con fila expandible</h2>
+      <span class="q">todo en una línea; el histórico se abre debajo</span><span class="reco">Recomendada</span></div>
+    <div class="demo">
+      <div class="barra">
+        <span class="t">Flota y despacho</span>
+        <span class="fecha">📅 15/08/2026</span>
+        <span class="chip on">Hoy</span><span class="chip">Ayer</span><span class="chip">Otro día…</span>
+        <div class="fill"></div>
+        <span class="chip"><span class="vivo"></span>En vivo</span>
+        <span class="chip">↓ Exportar</span>
+      </div>
+      <div class="tabla-wrap">
+        <table class="t">
+          <thead><tr>
+            <th style="width:26px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>
+            <th class="r">Clientes</th><th class="r">Cajas</th><th class="r">Km</th>
+            <th>Conductor</th><th>Auxiliares</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="tA"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="notas">
+      <div class="nota gana"><b>Qué gana</b><span>Ocho rutas caben en una pantalla sin desplazarse. Comparar es
+      inmediato: se lee la columna, no la tarjeta. El recorrido histórico deja de ser otra tarjeta — se abre
+      en la fila del vehículo que ya estás mirando, con sus hitos del día.</span></div>
+      <div class="nota cuesta"><b>Qué cuesta</b><span>La fila es densa: en celular hay que desplazar de lado o
+      esconder columnas. Los nombres van cortos y el completo queda en el tooltip.</span></div>
+    </div>
+  </section>
+
+  <!-- ══════════ OPCIÓN B ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">B</div><h2>Consola: lista y panel de detalle</h2>
+      <span class="q">a la izquierda la flota, a la derecha todo del elegido</span></div>
+    <div class="demo">
+      <div class="barra">
+        <span class="t">Consola de flota</span>
+        <span class="fecha">📅 15/08/2026</span>
+        <span class="chip on">Con ruta (8)</span><span class="chip">Sin ruta (7)</span><span class="chip">Toda (15)</span>
+        <div class="fill"></div><span class="chip"><span class="vivo"></span>En vivo</span>
+      </div>
+      <div class="consola">
+        <div class="lista" id="lB"></div>
+        <div class="panel" id="pB"></div>
+      </div>
+    </div>
+    <div class="notas">
+      <div class="nota gana"><b>Qué gana</b><span>Es la vista de un técnico de flota: la lista da el estado de
+      todos de un vistazo y el panel muestra <b>todo</b> del vehículo elegido sin límite de espacio — tripulación,
+      recorrido, geocercas, novedades. Los 7 vehículos sin ruta dejan de estar escondidos en otra sección.</span></div>
+      <div class="nota cuesta"><b>Qué cuesta</b><span>Para armar las 8 rutas en la mañana hay que ir uno por uno;
+      no se ve el armado completo de un golpe como en la tabla.</span></div>
+    </div>
+  </section>
+
+  <!-- ══════════ OPCIÓN C ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">C</div><h2>Fichas de despacho</h2>
+      <span class="q">una tarjeta por vehículo, como una hoja de ruta</span></div>
+    <div class="demo">
+      <div class="barra">
+        <span class="t">Despacho del día</span>
+        <span class="fecha">📅 15/08/2026</span>
+        <span class="chip on">Todas</span><span class="chip">Sin conductor (7)</span><span class="chip">Sin auxiliar (6)</span>
+        <div class="fill"></div><span class="chip">▦ Compactar</span>
+      </div>
+      <div class="fichas" id="fC"></div>
+    </div>
+    <div class="notas">
+      <div class="nota gana"><b>Qué gana</b><span>Cada ficha se lee como la hoja de despacho en papel: placa,
+      quién va, cuánto lleva y cómo va el día. Es la más cómoda en celular y en tablet, y la más fácil de
+      entender para alguien que entra nuevo.</span></div>
+      <div class="nota cuesta"><b>Qué cuesta</b><span>Ocupa más alto: con 15 vehículos hay que desplazarse.
+      Comparar dos rutas exige mirar dos tarjetas separadas en vez de dos líneas seguidas.</span></div>
+    </div>
+  </section>
+
+  <div class="cierre">
+    <h3>Cómo se comparan</h3>
+    <table>
+      <thead><tr><th>Para…</th><th>A · Tabla</th><th>B · Consola</th><th>C · Fichas</th></tr></thead>
+      <tbody>
+        <tr><td><b>Armar las rutas en la mañana</b></td><td><b>Lo mejor</b> — todo a la vista</td><td>Uno por uno</td><td>Bien, pero con desplazamiento</td></tr>
+        <tr><td><b>Revisar un vehículo a fondo</b></td><td>Se abre la fila</td><td><b>Lo mejor</b> — panel completo</td><td>Cabe lo esencial</td></tr>
+        <tr><td><b>Ver el histórico de otro día</b></td><td>Misma fila, mismo sitio</td><td>Panel con línea de tiempo</td><td>Botón por ficha</td></tr>
+        <tr><td><b>Desde el celular</b></td><td>Requiere desplazar de lado</td><td>Se parte en dos pantallas</td><td><b>Lo mejor</b></td></tr>
+        <tr><td><b>Los 7 vehículos sin ruta</b></td><td>Filas al final, en gris</td><td>Filtro propio en la lista</td><td>Fichas grises al final</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    Mockup de unificación · módulo Vehículos · GMAZ Rutas · agosto 2026<br>
+    Datos reales del 15 de agosto: 8 rutas con placa, 15 vehículos en SecuritaGPS, 7 sin ruta asignada.
+  </footer>
+</div>
+
+<script>
+/* Datos reales del sábado 15 de agosto */
+const FLOTA=[
+ {ruta:'KA4V12',placa:'LFX110',veh:'JMC JX1044TC4',cli:80,cj:187,km:42.6,gps:'enc',
+  cond:'DE LA CRUZ PISCAL CRISTIAN',aux:['ROSERO RIASCOS JHONATAN'],vis:80,pen:0,rech:0,
+  hitos:[['06:12','Registro de tripulación','ok'],['06:48','Salió de planta','info'],['07:20','Primera entrega','ok'],['13:04','Última entrega','ok']]},
+ {ruta:'KA4V13',placa:'GIM332',veh:'JAC HFC1035KN',cli:70,cj:159,km:38.1,gps:'enc',
+  cond:'',aux:['DELGADO CADENA JULIO'],vis:66,pen:4,rech:4,
+  hitos:[['06:25','Registro de tripulación','ok'],['07:02','Salió de planta','info'],['09:41','Rechazo · cliente cerrado','bad'],['12:50','Última entrega','ok']]},
+ {ruta:'KA4V50',placa:'WLW165',veh:'Chevrolet NQR',cli:76,cj:288,km:51.3,gps:'enc',
+  cond:'',aux:['CUASPUD CARLOS ANDRES','GUALGUAN MAFLA ANDRES'],vis:73,pen:3,rech:3,
+  hitos:[['05:58','Registro de tripulación','ok'],['06:40','Salió de planta','info'],['11:12','Salió de geocerca · 1.5 km','warn'],['13:22','Última entrega','ok']]},
+ {ruta:'KA4V51',placa:'VBP909',veh:'International 4700',cli:2,cj:220,km:22.4,gps:'enc',comp:true,
+  cond:'DIAZ ERAZO JESUS ANTONIO',aux:['NARVAEZ GOMEZ JOHN JAIRO'],vis:2,pen:0,rech:0,
+  hitos:[['07:59','Registro de tripulación','ok'],['08:30','Salió de planta','info'],['10:15','Última entrega','ok']]},
+ {ruta:'KA4V53',placa:'VBP909',veh:'International 4700',cli:6,cj:140,km:22.4,gps:'enc',comp:true,
+  cond:'NARVAEZ GOMEZ JOHN JAIRO',aux:[],vis:6,pen:0,rech:0,
+  hitos:[['08:39','Registro de tripulación','ok'],['09:10','Salió de planta','info']]},
+ {ruta:'KA4V54',placa:'GIM671',veh:'JMC JX1044TC4',cli:85,cj:252,km:47.9,gps:'ruta',
+  cond:'ERASO ARTEAGA JUAN HUMBERTO',aux:['MONTILLA CHINGUA EDWIN'],vis:84,pen:1,rech:1,
+  hitos:[['09:17','Registro de tripulación','ok'],['09:50','Salió de planta','info'],['14:05','Última entrega','ok']]},
+ {ruta:'KA4V55',placa:'GIM333',veh:'JAC HFC1035KN',cli:85,cj:276,km:44.2,gps:'det',
+  cond:'INSUASTY VELASQUEZ DANIEL',aux:['ESCOBAR SANTACRUZ JAIRO'],vis:83,pen:2,rech:2,
+  hitos:[['10:37','Registro de tripulación','ok'],['11:02','Salió de planta','info'],['15:29','Salió de geocerca','warn']]},
+ {ruta:'KA4V56',placa:'GIM331',veh:'JAC HFC1035KN',cli:53,cj:185,km:36.7,gps:'det',
+  cond:'SEGURA JAIMES JEINER MAURICIO',aux:[],vis:53,pen:0,rech:0,
+  hitos:[['10:55','Registro de tripulación','ok'],['11:20','Salió de planta','info'],['17:33','Salió de geocerca','warn']]}
+];
+const SIN_RUTA=[
+ {placa:'GIM380',veh:'Camión'},{placa:'GIM382',veh:'Camión'},{placa:'GIM383',veh:'Camión'},
+ {placa:'GIM384',veh:'Camión'},{placa:'GIM386',veh:'Camión'},{placa:'VBP895',veh:'Camión'},
+ {placa:'GIM848',veh:'Camioneta'}
+];
+const COLR={KA4V12:'#E30613',KA4V13:'#1A56DB',KA4V50:'#059669',KA4V51:'#D97706',KA4V53:'#7C3AED',
+            KA4V54:'#0891B2',KA4V55:'#DB2777',KA4V56:'#65A30D'};
+const GPS={enc:['#059669','Encendido'],ruta:['#1A56DB','En ruta'],det:['#D97706','Detenido'],sin:['#8A90A0','Sin señal']};
+const ini=n=>n?n.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join(''):'—';
+const corto=(n,k)=>{ // respeta apellidos compuestos, igual que la app
+  if(!n)return '';
+  const P=['DE','DEL','LA','LAS','LOS','DA','VAN'],tk=n.split(/\s+/),out=[];
+  for(let i=0;i<tk.length;i++){let b=tk[i];while(P.includes(b.toUpperCase())&&i+1<tk.length){i++;b+=' '+tk[i];}out.push(b);}
+  return out.slice(0,k||3).join(' ');
+};
+const chipPer=(n,rol)=>n?'<span class="per'+(rol==='c'?' cond':'')+'" title="'+n+'"><span class="av '+rol+'">'+ini(n)+
+  '</span><span class="nn"><b>'+corto(n,rol==='c'?3:2)+'</b><em>'+(rol==='c'?'Conductor':'Auxiliar')+'</em></span></span>'
+  :'<span class="pill mute">sin asignar</span>';
+const estadoDe=v=>!v.cond?['warn','Sin conductor']:!v.aux.length?['info','Sin auxiliar']:['ok','Lista'];
+
+/* ── A · tabla ── */
+document.getElementById('tA').innerHTML=FLOTA.map((v,i)=>{
+  const g=GPS[v.gps],e=estadoDe(v);
+  return '<tr class="fila" onclick="abrirA('+i+')" id="fa-'+i+'">'+
+   '<td><span class="caret">▸</span></td>'+
+   '<td><span class="ruta-b" style="background:'+COLR[v.ruta]+'">'+v.ruta+'</span></td>'+
+   '<td><b>'+v.placa+'</b><div style="font-size:9.5px;color:var(--tinta-3);font-weight:700">'+v.veh+
+     (v.comp?' · <span style="color:#B45309">compartido</span>':'')+'</div></td>'+
+   '<td><span class="gps" style="color:'+g[0]+'"><i style="background:'+g[0]+'"></i>'+g[1]+'</span></td>'+
+   '<td class="r num">'+v.cli+'</td><td class="r num">'+v.cj+'</td><td class="r num">'+v.km.toFixed(1)+'</td>'+
+   '<td>'+chipPer(v.cond,'c')+'</td>'+
+   '<td>'+(v.aux.length?v.aux.map(a=>chipPer(a,'a')).join(' '):'<span class="pill mute">—</span>')+'</td>'+
+   '<td><span class="pill '+e[0]+'"><span class="dot"></span>'+e[1]+'</span></td></tr>'+
+   '<tr class="det" id="da-'+i+'" style="display:none"><td colspan="10"><div class="det-in">'+
+     '<div class="recorrido"><div class="det-t">Recorrido del día · '+v.km.toFixed(1)+' km</div>'+
+       sparkline(i,v.km)+
+       '<div class="rec-m"><span>Salida <b>'+v.hitos[1][0]+'</b></span><span>Paradas <b>'+v.vis+'</b></span>'+
+       '<span>Velocidad máx <b>'+(38+i*3)+' km/h</b></span><span>Tiempo en ruta <b>'+(5+i%4)+' h '+(10+i*5)+' min</b></span></div></div>'+
+     '<div class="hitos"><div class="det-t">Hitos</div>'+
+       v.hitos.map(h=>'<div class="hito"><span class="h">'+h[0]+'</span>'+
+         '<span class="l"><i style="background:'+(h[2]==='bad'?'var(--rojo)':h[2]==='warn'?'var(--alerta)':h[2]==='info'?'var(--dato)':'var(--ok)')+'"></i></span>'+
+         '<span class="x">'+h[1]+'</span></div>').join('')+
+     '</div></div></td></tr>';
+}).join('')+
+SIN_RUTA.map(v=>'<tr class="fila" style="opacity:.62"><td></td><td><span class="pill mute">sin ruta</span></td>'+
+  '<td><b>'+v.placa+'</b><div style="font-size:9.5px;color:var(--tinta-3);font-weight:700">'+v.veh+'</div></td>'+
+  '<td><span class="gps" style="color:#8A90A0"><i style="background:#8A90A0"></i>Sin señal</span></td>'+
+  '<td class="r">—</td><td class="r">—</td><td class="r">—</td>'+
+  '<td><span class="pill mute">sin conductor fijo</span></td><td><span class="pill mute">—</span></td>'+
+  '<td><span class="pill mute">No sale hoy</span></td></tr>').join('');
+
+let abA=null;
+function abrirA(i){
+  const d=document.getElementById('da-'+i),f=document.getElementById('fa-'+i);
+  const ya=d.style.display!=='none';
+  if(abA!==null&&abA!==i){document.getElementById('da-'+abA).style.display='none';
+    document.getElementById('fa-'+abA).classList.remove('abierta');}
+  d.style.display=ya?'none':'table-row';f.classList.toggle('abierta',!ya);abA=ya?null:i;
+}
+function sparkline(seed,km){
+  let r=seed*7919+13,rnd=()=>((r=(r*9301+49297)%233280)/233280);
+  const pts=[];for(let i=0;i<=44;i++){const x=i/44*300;
+    const y=44-Math.sin(i*0.42+seed)*13-rnd()*9-(i>34?8:0);pts.push(x.toFixed(1)+','+y.toFixed(1));}
+  return '<svg class="rec-svg" viewBox="0 0 300 88" preserveAspectRatio="none" role="img" aria-label="Velocidad a lo largo del día">'+
+    '<line x1="0" y1="66" x2="300" y2="66" stroke="var(--linea)" stroke-width="1"/>'+
+    '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--dato)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<circle cx="300" cy="'+pts[pts.length-1].split(',')[1]+'" r="3.5" fill="var(--dato)"/>'+
+    '<text x="2" y="80" font-size="8.5" font-weight="700" fill="var(--tinta-3)">06:00</text>'+
+    '<text x="270" y="80" font-size="8.5" font-weight="700" fill="var(--tinta-3)">18:00</text></svg>';
+}
+
+/* ── B · consola ── */
+const TODOS=FLOTA.concat(SIN_RUTA.map(v=>({...v,ruta:'',cli:0,cj:0,km:0,gps:'sin',cond:'',aux:[],vis:0,pen:0,rech:0,hitos:[]})));
+document.getElementById('lB').innerHTML=TODOS.map((v,i)=>{
+  const g=GPS[v.gps],e=v.ruta?estadoDe(v):['mute','No sale'];
+  return '<div class="li'+(i===0?' on':'')+'" onclick="selB('+i+')" id="li-'+i+'">'+
+    '<span class="av g" style="background:'+(v.ruta?COLR[v.ruta]:'var(--linea)')+';color:#fff">'+(v.ruta?v.ruta.slice(-2):'—')+'</span>'+
+    '<span class="id"><b>'+v.placa+'</b><small>'+(v.ruta||'sin ruta')+' · '+v.veh+'</small></span>'+
+    '<span class="est" style="background:var(--papel);color:'+g[0]+'">'+g[1]+'</span></div>';
+}).join('');
+function selB(i){
+  document.querySelectorAll('#lB .li').forEach((e,j)=>e.classList.toggle('on',j===i));
+  const v=TODOS[i],g=GPS[v.gps],e=v.ruta?estadoDe(v):['mute','No sale hoy'];
+  document.getElementById('pB').innerHTML=
+    '<div class="p-head">'+(v.ruta?'<span class="ruta-b" style="background:'+COLR[v.ruta]+'">'+v.ruta+'</span>':'')+
+      '<h3>'+v.placa+'</h3><span class="pill mute">'+v.veh+'</span>'+
+      '<span class="pill" style="background:var(--papel);color:'+g[0]+'"><span class="dot"></span>'+g[1]+'</span>'+
+      '<span class="pill '+e[0]+'">'+e[1]+'</span></div>'+
+    (v.ruta?
+    '<div class="p-kpis">'+
+      '<div class="pk"><div class="l">Clientes</div><div class="v num">'+v.cli+'</div></div>'+
+      '<div class="pk"><div class="l">Cajas</div><div class="v num">'+v.cj+'</div></div>'+
+      '<div class="pk"><div class="l">Km del día</div><div class="v num">'+v.km.toFixed(1)+'</div></div>'+
+      '<div class="pk"><div class="l">Visitados</div><div class="v num" style="color:var(--ok)">'+v.vis+'</div></div>'+
+      '<div class="pk"><div class="l">Rechazos</div><div class="v num" style="color:'+(v.rech?'var(--rojo)':'var(--tinta)')+'">'+v.rech+'</div></div>'+
+    '</div>'+
+    '<div class="p-sec"><div class="det-t">Tripulación del día</div><div class="crew">'+
+      chipPer(v.cond,'c')+' '+(v.aux.length?v.aux.map(a=>chipPer(a,'a')).join(' '):'<span class="pill mute">sin auxiliar</span>')+
+      ' <button class="btn">+ agregar</button></div></div>'+
+    '<div class="p-sec"><div class="det-t">Recorrido · '+v.km.toFixed(1)+' km</div>'+sparkline(i,v.km)+'</div>'+
+    '<div class="p-sec"><div class="det-t">Hitos del día</div>'+
+      v.hitos.map(h=>'<div class="hito"><span class="h">'+h[0]+'</span><span class="l"><i style="background:'+
+        (h[2]==='bad'?'var(--rojo)':h[2]==='warn'?'var(--alerta)':h[2]==='info'?'var(--dato)':'var(--ok)')+'"></i></span>'+
+        '<span class="x">'+h[1]+'</span></div>').join('')+'</div>'
+    :'<div class="p-sec"><div class="det-t">Este vehículo hoy no sale</div>'+
+      '<div style="font-size:12px;color:var(--tinta-2);line-height:1.6">No tiene ruta asignada. Puedes dejarle listo su '+
+      '<b>conductor fijo</b> para cuando salga, o asignarle una ruta ahora.</div>'+
+      '<div style="display:flex;gap:7px;margin-top:10px"><button class="btn p">Asignar ruta</button>'+
+      '<button class="btn">Conductor fijo</button></div></div>');
+}
+selB(0);
+
+/* ── C · fichas ── */
+document.getElementById('fC').innerHTML=FLOTA.map((v,i)=>{
+  const g=GPS[v.gps],e=estadoDe(v);
+  return '<div class="ficha">'+
+    '<div class="f-head"><span class="ruta-b" style="background:'+COLR[v.ruta]+'">'+v.ruta+'</span>'+
+      '<span><span class="f-placa">'+v.placa+'</span><div class="f-veh">'+v.veh+'</div></span>'+
+      '<span style="margin-left:auto" class="pill" style2="" ><span class="dot" style="background:'+g[0]+'"></span></span>'+
+      '<span class="pill '+e[0]+'">'+e[1]+'</span></div>'+
+    '<div class="f-body">'+
+      '<div class="f-mini"><div><b>'+v.cli+'</b><small>Clientes</small></div>'+
+        '<div><b>'+v.cj+'</b><small>Cajas</small></div>'+
+        '<div><b>'+v.km.toFixed(0)+'</b><small>Km</small></div>'+
+        '<div><b style="color:'+(v.rech?'var(--rojo)':'var(--ok)')+'">'+v.rech+'</b><small>Rechazos</small></div></div>'+
+      '<div class="f-crew">'+chipPer(v.cond,'c')+
+        (v.aux.length?v.aux.map(a=>chipPer(a,'a')).join(''):'<span class="pill mute">sin auxiliar</span>')+'</div>'+
+      '<div class="f-spark">'+sparkline(i+3,v.km).replace('class="rec-svg"','').replace('viewBox="0 0 300 88"','viewBox="0 0 300 50"')+'</div>'+
+    '</div>'+
+    '<div class="f-foot"><button class="btn">Recorrido</button><button class="btn">Novedades</button>'+
+      '<button class="btn p" style="margin-left:auto">Editar tripulación</button></div>'+
+  '</div>';
+}).join('')+
+SIN_RUTA.map(v=>'<div class="ficha" style="opacity:.66">'+
+  '<div class="f-head"><span class="pill mute">sin ruta</span><span><span class="f-placa">'+v.placa+'</span>'+
+    '<div class="f-veh">'+v.veh+'</div></span><span class="pill mute" style="margin-left:auto">No sale hoy</span></div>'+
+  '<div class="f-body"><div style="font-size:11.5px;color:var(--tinta-3);font-weight:600;line-height:1.55">'+
+    'Sin ruta asignada. Déjale listo su conductor fijo o asígnale una ruta.</div></div>'+
+  '<div class="f-foot"><button class="btn">Conductor fijo</button>'+
+    '<button class="btn p" style="margin-left:auto">Asignar ruta</button></div></div>').join('');
+</script>
