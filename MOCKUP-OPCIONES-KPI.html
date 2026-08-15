@@ -72,6 +72,36 @@ h1,h2,h3,h4{margin:0;text-wrap:balance}
 .val{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
 .sub{font-size:10px;color:var(--tinta-3);font-weight:600}
 
+/* ── Sismógrafo: la escala de Richter aplicada a las rutas ── */
+.op-ancha{grid-column:1/-1}
+.sismo-top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:13px}
+.sismo-mag{display:flex;flex-direction:column;gap:1px}
+.sm-n{font-size:31px;font-weight:800;letter-spacing:-1.2px;line-height:1;color:var(--rojo)}
+.sm-l{font-size:10.5px;font-weight:700;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.5px}
+.sismo-escala{display:flex;gap:3px;flex:1;min-width:220px}
+.se-b{flex:1;height:8px;border-radius:2px;background:var(--linea-2);position:relative}
+.se-b.on{background:currentColor}
+.se-b span{position:absolute;top:11px;left:0;font-size:8.5px;font-weight:800;color:var(--tinta-3)}
+.sis{display:grid;grid-template-columns:74px 1fr 96px;gap:11px;align-items:center;padding:8px 0}
+.sis+.sis{border-top:1px solid var(--linea-2)}
+.sis-id b{display:block;font-size:12px;font-weight:800;letter-spacing:-.2px}
+.sis-id span{font-size:9.5px;color:var(--tinta-3);font-weight:600}
+.traza{position:relative;height:42px;background:linear-gradient(var(--linea-2),var(--linea-2)) center/100% 1px no-repeat;
+  border-radius:6px;overflow:hidden}
+.traza svg{position:absolute;top:0;left:0;height:100%;width:200%}
+.traza.mueve svg{animation:sismo-run linear infinite}
+@keyframes sismo-run{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.traza .aguja{position:absolute;top:0;bottom:0;right:22%;width:1.5px;background:var(--tinta);opacity:.35}
+.traza .punta{position:absolute;right:22%;width:7px;height:7px;border-radius:50%;transform:translate(50%,-50%);
+  box-shadow:0 0 0 3px color-mix(in srgb,currentColor 22%,transparent)}
+.sis-m{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.sis-m b{font-size:15px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums;line-height:1}
+.sis-m span{font-size:9.5px;font-weight:700;color:var(--tinta-3)}
+.sis-m .et{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:4px}
+.sismo-pie{margin-top:12px;background:var(--papel);border-radius:9px;padding:10px 12px;font-size:11px;
+  color:var(--tinta-2);line-height:1.6}
+.sismo-pie b{color:var(--tinta)}
+@media (prefers-reduced-motion:reduce){.traza.mueve svg{animation:none}}
 /* Opción: barra apilada entregado/rechazado */
 .stack{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--linea-2)}
 .stack i{display:block;height:100%}
@@ -150,14 +180,28 @@ footer{font-size:11.5px;color:var(--tinta-3);text-align:center;line-height:1.7;p
   <!-- ══════════ CLIENTES ══════════ -->
   <section class="mod">
     <div class="mod-h"><h2>1 · Cumplimiento por ruta</h2><span class="q">módulo Clientes</span></div>
-    <div class="hoy"><b>Hoy:</b> un anillo con el % y el texto «62/66 clientes · 197 cajas». Diez filas iguales — hay que leerlas una por una para encontrar la que está mal, y el anillo ocupa mucho para decir un solo número.</div>
+    <div class="hoy"><b>Hoy:</b> un anillo con el % y el texto «62/66 clientes · 197 cajas». Diez filas iguales — hay que leerlas una por una para encontrar la que está mal, y el anillo ocupa mucho para decir un solo número. <b>Nada se mueve</b>, así que nada llama la atención.</div>
 
     <div class="ops">
       <!-- A -->
-      <div class="op">
-        <div class="op-h"><div class="op-n">A</div><div class="op-t">Barra apilada</div><span class="reco">Recomendada</span></div>
-        <div class="op-b" id="cli-a"></div>
-        <div class="op-p"><b>Qué gana.</b> Cada barra es la ruta completa: verde entregado, gris pendiente, rojo rechazado. Se ve de un vistazo cuánto falta y cuánto se perdió, y las barras se comparan entre sí sin leer números.</div>
+      <div class="op op-ancha">
+        <div class="op-h"><div class="op-n">A</div><div class="op-t">Sismógrafo de rutas</div><span class="reco">Recomendada</span></div>
+        <div class="op-b">
+          <div class="sismo-top">
+            <div class="sismo-mag">
+              <div class="sm-n num" id="sismo-max">M 5,2</div>
+              <div class="sm-l">Magnitud del día · <span id="sismo-ruta">KA4V56</span></div>
+            </div>
+            <div class="sismo-escala" id="sismo-escala"></div>
+          </div>
+          <div id="cli-a"></div>
+          <div class="sismo-pie">
+            <b>Magnitud = 3,3 × log₁₀(1 + cajas devueltas).</b> Igual que la escala real de Richter, cada punto entero
+            es <b>diez veces</b> más energía: M2 son 3 cajas, M4 son 15, M6 son 65. Así una ruta con 60 cajas devueltas
+            no aplasta visualmente a las demás, pero se sigue viendo que está en otra liga.
+          </div>
+        </div>
+        <div class="op-p"><b>Qué gana.</b> La aguja se mueve en vivo: mientras la ruta va bien la línea es casi recta, y cada devolución la sacude. El ojo detecta movimiento antes que un número — una ruta temblando se ve desde el otro lado de la oficina.</div>
       </div>
       <!-- B -->
       <div class="op">
@@ -287,14 +331,68 @@ const RUTAS=[
 const pct=x=>x.tot?Math.round(x.ent/x.tot*100):0;
 const col=p=>p>=95?'var(--ok)':p>=85?'var(--alerta)':'var(--rojo)';
 
-/* 1A · barra apilada entregado / pendiente / rechazado */
-document.getElementById('cli-a').innerHTML=RUTAS.slice(0,7).map(x=>{
-  const p=pct(x),e=x.ent/x.tot*100,rj=x.rech/x.tot*100,pe=Math.max(0,100-e-rj);
-  return '<div class="fila"><div><div class="cod">'+x.r+'</div><div class="sub">'+x.ent+'/'+x.tot+'</div></div>'+
-    '<div><div class="stack"><i class="e" style="width:'+e+'%"></i><i class="p" style="width:'+pe+'%"></i><i class="r" style="width:'+rj+'%"></i></div></div>'+
-    '<div class="val" style="color:'+col(p)+'">'+p+'%</div></div>';
-}).join('')+
-'<div class="leg"><span><i style="background:var(--ok)"></i>Entregado</span><span><i style="background:var(--linea)"></i>Pendiente</span><span><i style="background:var(--rojo)"></i>Rechazado</span></div>';
+/* 1A · SISMÓGRAFO — la escala de Richter aplicada a las rutas.
+   Magnitud = 3,3 × log10(1 + cajas devueltas): igual que en la escala real, cada punto entero es
+   diez veces más energía. Así una ruta con 60 cajas no aplasta a las demás pero se nota que está
+   en otra liga, y el ojo detecta el movimiento de la traza antes que cualquier número. */
+const CAJAS_DEV={KA4V11:0,KA4V12:2,KA4V13:27,KA4V50:15,KA4V51:47,KA4V52:0,KA4V53:14,KA4V54:3,KA4V55:9,KA4V56:61};
+const magnitud=cj=>+(3.3*Math.log10(1+cj)).toFixed(1);
+const nivelSismo=m=>m>=5?{t:'Fuerte',c:'#E30613'}:m>=4?{t:'Moderado',c:'#D97706'}:
+                    m>=2.5?{t:'Ligero',c:'#CA8A04'}:m>0?{t:'Leve',c:'#1A56DB'}:{t:'En calma',c:'#059669'};
+
+/* Traza sísmica reproducible: ruido suave + picos donde hubo devoluciones.
+   Se dibuja el doble de ancho y se desplaza la mitad, así el bucle es continuo. */
+function trazaPath(m,semilla,W,H){
+  const mid=H/2, amp=Math.min(H/2-3, 1.6+m*3.4);
+  let r=semilla*9301+49297, rnd=()=>((r=(r*9301+49297)%233280)/233280);
+  const pts=[]; const N=160;
+  for(let i=0;i<=N;i++){
+    const x=(i/N)*W;
+    const base=Math.sin(i*0.55+semilla)*amp*0.14+ (rnd()-0.5)*amp*0.18;
+    // picos: cuanto mayor la magnitud, más frecuentes y más altos
+    const hayPico=m>0&&(i%Math.max(6,Math.round(26-m*3.2))===Math.round(semilla)%5);
+    const pico=hayPico?(rnd()>0.5?1:-1)*amp*(0.55+rnd()*0.45):0;
+    pts.push([x, mid+base+pico]);
+  }
+  // se repite el mismo tramo para que al desplazar no se note el corte
+  const mitad=pts.map(pt=>pt[0].toFixed(1)+','+pt[1].toFixed(1)).join(' ');
+  const seg2=pts.map(pt=>(pt[0]+W).toFixed(1)+','+pt[1].toFixed(1)).join(' ');
+  return mitad+' '+seg2;
+}
+
+const CON_MAG=RUTAS.map(x=>({...x,cj:CAJAS_DEV[x.r]||0,m:magnitud(CAJAS_DEV[x.r]||0)}))
+                   .sort((a,b)=>b.m-a.m);
+const peor=CON_MAG[0];
+document.getElementById('sismo-max').textContent='M '+String(peor.m).replace('.',',');
+document.getElementById('sismo-ruta').textContent=peor.r+' · '+peor.cj+' cajas';
+document.getElementById('sismo-max').style.color=nivelSismo(peor.m).c;
+
+/* Escala 0-6 de referencia arriba */
+document.getElementById('sismo-escala').innerHTML=[0,1,2,3,4,5,6].map(n=>{
+  const on=n<=Math.floor(peor.m);
+  const c=nivelSismo(n||0.1).c;
+  return '<div class="se-b'+(on?' on':'')+'" style="color:'+c+'"><span>'+(n%2===0?'M'+n:'')+'</span></div>';
+}).join('');
+
+document.getElementById('cli-a').innerHTML=CON_MAG.map((x,i)=>{
+  const n=nivelSismo(x.m), W=300,H=42;
+  const dur=(x.m>0?Math.max(3.5,11-x.m*1.3):16).toFixed(1);
+  const puntoY=H/2;
+  return '<div class="sis" title="'+x.r+': '+x.cj+' cajas devueltas · '+x.ent+'/'+x.tot+' clientes">'+
+    '<div class="sis-id"><b>'+x.r+'</b><span>'+x.ent+'/'+x.tot+' clientes</span></div>'+
+    '<div class="traza'+(x.m>0?' mueve':'')+'" style="color:'+n.c+'">'+
+      '<svg viewBox="0 0 '+(W*2)+' '+H+'" preserveAspectRatio="none" style="animation-duration:'+dur+'s">'+
+        '<polyline points="'+trazaPath(x.m,i+1,W,H)+'" fill="none" stroke="'+n.c+'" stroke-width="1.8" '+
+        'stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+      '</svg>'+
+      '<div class="aguja"></div>'+
+      '<div class="punta" style="background:'+n.c+';color:'+n.c+';top:'+puntoY+'px"></div>'+
+    '</div>'+
+    '<div class="sis-m"><b style="color:'+n.c+'">M '+String(x.m).replace('.',',')+'</b>'+
+      '<span class="et" style="background:color-mix(in srgb,'+n.c+' 12%,transparent);color:'+n.c+'">'+n.t+'</span>'+
+      '<span>'+x.cj+' cajas</span></div>'+
+  '</div>';
+}).join('');
 
 /* 1B · matriz semáforo */
 document.getElementById('cli-b').innerHTML=RUTAS.map(x=>{

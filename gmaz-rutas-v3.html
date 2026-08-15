@@ -1687,9 +1687,15 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
       </div>
 
       <div class="dcard" style="margin-bottom:13px">
-        <div class="dcard-h"><h3><span class="h3ic">🚚</span>Rutas de hoy</h3>
+        <div class="dcard-h"><h3><span class="h3ic">🚚</span><span id="tc-rutas-titulo">Rutas de hoy</span></h3>
           <span class="dm">cargue, avance, devolución y quién responde — en una sola línea</span>
-          <button class="dchip" style="margin-left:auto" onclick="haptic();cargarTorreControl(true)">↻ Actualizar</button>
+          <div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+            <input type="date" id="tc-fecha" onchange="haptic();cargarTorreControl(true,this.value)"
+                   title="Ver y aprobar las devoluciones de otro día"
+                   style="height:30px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:11.5px;font-weight:700;color:#0F1117">
+            <button class="dchip" id="tc-btn-hoy" onclick="haptic();cargarTorreControl(true,getColDate())" style="display:none">Volver a hoy</button>
+            <button class="dchip" onclick="haptic();cargarTorreControl(true)">↻ Actualizar</button>
+          </div>
         </div>
         <div style="overflow:auto"><table class="tc-tabla">
           <thead><tr>
@@ -3258,9 +3264,11 @@ async function cargarResumenCargue(){
   el.innerHTML='<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#6B7385;margin:4px 2px 8px">CARGUE Y DEVOLUCIÓN DEL DÍA · <span style="color:#0F1117">'+totCaj+' cj cargadas · '+totAfe+' cj afectan comisión · '+efeGlobal+'%</span>'+(totPend?'<span style="color:#92400E"> · '+totPend+' por aprobar</span>':'')+'</div>'+cards;
 }
 /* El supervisor aprueba (afecta comisión) u omite (no afecta) cada devolución. */
-async function aprobarDevolucion(cod,decision){
+/* `fechaSel` permite aprobar u omitir devoluciones de días anteriores: el coordinador no siempre
+   alcanza a revisarlas el mismo día y la comisión se cierra a fin de mes. Sin fecha, es hoy. */
+async function aprobarDevolucion(cod,decision,fechaSel){
   const offset=CFG.UTC_OFFSET||-5;
-  const hoy=new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
+  const hoy=fechaSel||new Date(Date.now()+offset*3600000).toISOString().split('T')[0];
   const pub=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+hoy+'/'+cod+'.json';
   const put=CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECHAZOS/'+hoy+'/'+cod+'.json';
   showLoad('Actualizando devolución...');
@@ -4039,27 +4047,68 @@ let _dashData=null;
    el panel móvil (hojas de cargue, rechazos, registro de tripulación, obsequios). ══════ */
 let _tcCache={fecha:null,hojas:null,rech:null,reg:null,obsFoto:null};
 
-async function cargarTorreControl(forzar){
+/* Fecha que se está viendo en la Torre. null = hoy (modo en vivo).
+   Las devoluciones de días pasados también se pueden aprobar: el coordinador no siempre alcanza a
+   revisarlas el mismo día, y la comisión se cierra a fin de mes. */
+let _tcFechaVista=null;
+async function cargarTorreControl(forzar,fechaSel){
   if(!_dashData)return;
   // En el panel móvil esta cabecera no existe: no gastar llamadas de storage donde no se va a pintar.
   if(!document.getElementById('tc-rutas'))return;
-  const fecha=_dashData.fecha||getColDate();
+  const hoy=getColDate();
+  if(fechaSel)_tcFechaVista=(fechaSel===hoy?null:fechaSel);
+  const fecha=_tcFechaVista||hoy;
+  const fInp=document.getElementById('tc-fecha');
+  if(fInp){fInp.max=hoy;fInp.value=fecha;}
+  const bHoy=document.getElementById('tc-btn-hoy');
+  if(bHoy)bHoy.style.display=_tcFechaVista?'':'none';
   // Los índices de storage cambian pocas veces al día: se releen al cambiar de fecha,
   // al pulsar Actualizar o si aún no se han leído. El refresco de 30 s solo repinta.
   if(forzar||_tcCache.fecha!==fecha||!_tcCache.hojas){
     try{
       await cargarIndiceHojas();
-      const [rech,reg,obsFoto]=await Promise.all([
+      const [rech,reg,obsFoto,hist]=await Promise.all([
         cargarRechazosDelDia(fecha),
         cargarRegistroDia(fecha),
-        _tcListarObsFoto(fecha)
+        _tcListarObsFoto(fecha),
+        fecha===getColDate()?Promise.resolve(null):_tcHistoricoDia(fecha)
       ]);
-      _tcCache={fecha,hojas:hojasIndex||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set()};
-    }catch(e){ _tcCache={fecha,hojas:hojasIndex||{},rech:{},reg:{},obsFoto:new Set()}; }
+      _tcCache={fecha,hojas:hojasIndex||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist};
+    }catch(e){ _tcCache={fecha,hojas:hojasIndex||{},rech:{},reg:{},obsFoto:new Set(),hist:null}; }
   }
   try{ pintarTorreControl(); }catch(e){ console.log('torre:',e.message); }
 }
 
+/* Foto de un día pasado: clientes por ruta del PPAS de esa fecha y entregas que se confirmaron.
+   `clientes_rutas` se limpia y recarga cada mañana, así que para el histórico la única fuente del
+   total por ruta es el snapshot PPAS_INDEX.json que quedó guardado ese día. */
+async function _tcHistoricoDia(fecha){
+  const out={porRuta:{},confirmados:0,ultimaEnt:null,totCli:0};
+  try{
+    const ppas=await cargarPPASHistorico(fecha);
+    if(ppas)Object.values(ppas).forEach(c=>{
+      const r=c.ruta||c.r||'—';
+      out.porRuta[r]=out.porRuta[r]||{tot:0,ent:0,nov:0};
+      out.porRuta[r].tot++; out.totCli++;
+    });
+  }catch(e){}
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=codigo_cliente,ruta,created_at&fecha=eq.'+fecha+'&estado=eq.entregado',
+      {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+    if(r.ok){
+      const ce=await r.json()||[];
+      const vistos=new Set();
+      ce.forEach(x=>{
+        const k=String(x.codigo_cliente); if(vistos.has(k))return; vistos.add(k);
+        const ru=x.ruta||'—'; if(out.porRuta[ru])out.porRuta[ru].ent++;
+      });
+      out.confirmados=vistos.size;
+      const ts=ce.filter(x=>x.created_at).map(x=>new Date(x.created_at).getTime());
+      if(ts.length)out.ultimaEnt=new Date(Math.max(...ts)).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+    }
+  }catch(e){}
+  return out;
+}
 /* Códigos de cliente con foto de obsequio ya tomada (una sola llamada de listado). */
 async function _tcListarObsFoto(fecha){
   const s=new Set();
@@ -4078,11 +4127,16 @@ const _tcIniciales=n=>String(n||'').trim().split(/\s+/).slice(0,2).map(p=>p[0]||
 /* Arma la foto del día por ruta cruzando lo que ya hay: PPAS, estados, hoja de cargue,
    rechazos y registro de tripulación. Es la misma aritmética del panel móvil. */
 function _tcDatosRutas(){
-  const D=_dashData,C=_tcCache;
+  const C=_tcCache;
+  const esHoy=!C.hist; // el histórico solo se arma para fechas pasadas
+  const D=_dashData;
+  const porRuta=esHoy?(D.porRuta||{}):(C.hist.porRuta||{});
   const entregadosPorRuta={};
-  (D.estados_||[]).forEach(e=>{ if(e.estado==='entregado'){ const r=e.ruta||'—';
-    (entregadosPorRuta[r]=entregadosPorRuta[r]||new Set()).add(String(e.codigo_cliente)); }});
-  const rutas=[...new Set([...Object.keys(D.porRuta||{}),...Object.keys(C.hojas||{}),...Object.keys(C.rech||{})])].sort();
+  if(esHoy){
+    (D.estados_||[]).forEach(e=>{ if(e.estado==='entregado'){ const r=e.ruta||'—';
+      (entregadosPorRuta[r]=entregadosPorRuta[r]||new Set()).add(String(e.codigo_cliente)); }});
+  }
+  const rutas=[...new Set([...Object.keys(porRuta),...Object.keys(C.hojas||{}),...Object.keys(C.rech||{})])].sort();
   return rutas.map(r=>{
     const h=(C.hojas||{})[r]||null;
     const rj=(C.rech||{})[r]||{clientes:[]};
@@ -4098,8 +4152,8 @@ function _tcDatosRutas(){
       (c.detalle||[]).forEach(d=>{valor+=d.valor||0;});
     });
     const cargue=h?(h.cargueCaj||0):0;
-    const totalCli=(D.porRuta&&D.porRuta[r])?D.porRuta[r].tot:0;
-    const conf=(entregadosPorRuta[r]||new Set()).size;
+    const totalCli=porRuta[r]?porRuta[r].tot:0;
+    const conf=esHoy?(entregadosPorRuta[r]||new Set()).size:(porRuta[r]?porRuta[r].ent:0);
     const ef=cargue>0?Math.round((cargue-afeC)/cargue*100):null;
     return {ruta:r,placa:h?h.placa:'',cargue,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef};
   });
@@ -4108,7 +4162,12 @@ function _tcDatosRutas(){
 function pintarTorreControl(){
   const D=_dashData; if(!D)return;
   const R=_tcDatosRutas();
-  const fecha=D.fecha||getColDate();
+  const hoy=getColDate();
+  const fecha=_tcCache.fecha||D.fecha||hoy;
+  const esHoy=fecha===hoy;
+  const H=_tcCache.hist; // datos del día pasado (null si es hoy)
+  const tt=document.getElementById('tc-rutas-titulo');
+  if(tt)tt.textContent=esHoy?'Rutas de hoy':'Rutas del '+_tcFechaLarga(fecha);
 
   /* ── 1. Contexto: qué archivos del día están cargados ── */
   const hayPPAS=(D.clientes_||[]).length>0;
@@ -4120,11 +4179,13 @@ function pintarTorreControl(){
   if(ctx)ctx.innerHTML=
     '<div style="padding-right:14px;border-right:1px solid var(--gris2)">'+
       '<div class="tc-ctx-t">Torre de control · Pasto</div>'+
-      '<div class="tc-ctx-s">'+_tcFechaLarga(fecha)+' · actualizado '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+'</div>'+
+      '<div class="tc-ctx-s">'+_tcFechaLarga(fecha)+' · '+(esHoy
+        ?'actualizado '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})
+        :'<b style="color:#B45309">viendo un día pasado</b>')+'</div>'+
     '</div>'+
     '<div class="tc-arch">'+arch(hayPPAS,'PPAS')+arch(hayLibro,'Libro')+arch(hayHoja,'Hoja de cargue')+arch(hayLiq,'LiquiYa')+'</div>'+
     '<div style="flex:1"></div>'+
-    '<span class="dm" style="font-size:10.5px">'+(D.totCli||0)+' clientes · '+R.length+' rutas</span>';
+    '<span class="dm" style="font-size:10.5px">'+((esHoy?D.totCli:H.totCli)||0)+' clientes · '+R.length+' rutas</span>';
 
   /* ── 2. Los tres indicadores que mandan + la frase de lectura ── */
   const cargTot=R.reduce((s,x)=>s+x.cargue,0);
@@ -4136,8 +4197,13 @@ function pintarTorreControl(){
   const colEf=efecHoy>=97?'var(--verde)':efecHoy>=95?'var(--azul)':efecHoy>=90?'var(--amarillo)':'var(--rojo)';
   const claseEf=efecHoy>=96?'v-ok':efecHoy>=95?'':efecHoy>=90?'v-al':'v-ro';
   const tramo=efecHoy>=97?'$250.000':efecHoy>=96?'$150.000':efecHoy>=95?'$100.000':'bajo el 95 %';
-  const pctAv=D.totCli?Math.round((D.confirmados||0)/D.totCli*100):0;
-  const pctVentaDev=D.ventaPed?(D.ventaRech/D.ventaPed*100):0;
+  const totCliDia=(esHoy?D.totCli:H.totCli)||0;
+  const confDia=(esHoy?D.confirmados:H.confirmados)||0;
+  const ultimaDia=(esHoy?D.ultimaEnt:H.ultimaEnt)||null;
+  const pctAv=totCliDia?Math.round(confDia/totCliDia*100):0;
+  // La venta pedida del Libro solo está cargada para el día en curso; en histórico se compara
+  // contra el valor devuelto, sin porcentaje inventado.
+  const pctVentaDev=(esHoy&&D.ventaPed)?(D.ventaRech/D.ventaPed*100):null;
 
   const kpi=(o)=>'<div class="tc-k '+(o.cls||'')+'" onclick="haptic();'+(o.drill||'')+'">'+
     '<div class="tc-k-top"><div class="tc-k-l">'+o.l+
@@ -4158,21 +4224,22 @@ function pintarTorreControl(){
       f1:'Tramo de comisión',f2:tramo, drill:"activarModulo('rechazos')"})+
     kpi({l:'Avance de entrega',i:'store',ibg:'rgba(26,86,219,.1)',ic:'#1A56DB',
       def:'Clientes que el entregador confirmó como entregados, sobre el total programado en el PPAS de hoy.',
-      v:(D.confirmados||0)+'<small>/'+(D.totCli||0)+'</small>',
-      d:pctAv+'% confirmado <span>en lo que va del día</span>',dcls:'flat',
+      v:confDia+'<small>/'+totCliDia+'</small>',
+      d:pctAv+'% confirmado <span>'+(esHoy?'en lo que va del día':'ese día')+'</span>',dcls:'flat',
       pct:pctAv,pcol:'var(--azul)',
-      f1:'Última confirmación',f2:(D.ultimaEnt||'—'), drill:"activarModulo('clientes')"})+
+      f1:'Última confirmación',f2:(ultimaDia||'—'), drill:"activarModulo('clientes')"})+
     kpi({l:'Venta devuelta',cls:valTot?'v-ro':'v-ok',i:'back',ibg:'rgba(227,6,19,.1)',ic:'#E30613',
       def:'Valor en pesos de lo que volvió al camión, con el precio del Libro de pedidos del día.',
       v:_pesosCorto(valTot),
-      d:(valTot?'▼ ':'✓ ')+pctVentaDev.toFixed(1).replace('.',',')+'% <span>del pedido del día</span>',
+      d:pctVentaDev!=null?((valTot?'▼ ':'✓ ')+pctVentaDev.toFixed(1).replace('.',',')+'% <span>del pedido del día</span>')
+        :'<span>valor devuelto ese día</span>',
       dcls:valTot?'dn':'up',
       f1:'Cajas devueltas',f2:Math.round(devTot)+' cj'+(devUTot?' · '+Math.round(devUTot)+' und':''),
       drill:"activarModulo('rechazos')"});
 
   /* ── La frase: qué está pasando hoy, en palabras ── */
   const lec=document.getElementById('tc-lectura');
-  if(lec)lec.innerHTML=_tcLectura(R,{efecHoy,devTot,valTot,cargTot,fecha});
+  if(lec)lec.innerHTML=_tcLectura(R,{efecHoy,devTot,valTot,cargTot,fecha,esHoy});
 
   /* ── 3. Bandeja de pendientes ── */
   const devPend=R.reduce((s,x)=>s+x.pend,0);
@@ -4208,9 +4275,9 @@ function _tcFechaLarga(f){
    Si no hay nada que contar, lo dice — un tablero también tiene que saber decir "todo bien". */
 function _tcLectura(R,g){
   const conDev=R.filter(x=>x.devC>0).sort((a,b)=>b.devC-a.devC);
-  const et='<div class="et">Lo que hay que mirar hoy</div>';
+  const et='<div class="et">'+(g.esHoy===false?'Lo que pasó el '+g.fecha:'Lo que hay que mirar hoy')+'</div>';
   if(!conDev.length){
-    return et+'<h4>Sin devoluciones registradas hasta ahora.</h4>'+
+    return et+'<h4>'+(g.esHoy===false?'Ese día no quedó ninguna devolución registrada.':'Sin devoluciones registradas hasta ahora.')+'</h4>'+
       '<p>'+(g.cargTot?Math.round(g.cargTot).toLocaleString('es-CO')+' cajas cargadas y ninguna de vuelta al camión.':'Aún no se ha subido la hoja de cargue del día.')+'</p>'+
       '<div class="via">Si a esta hora no hay novedades, vale la pena confirmar que los entregadores estén reportando desde la app.</div>';
   }
@@ -4224,20 +4291,23 @@ function _tcLectura(R,g){
   const nombres=top.map(x=>x.ruta).join(' y ');
   // El titular cambia según la concentración: si todo el rechazo cabe en las rutas de arriba,
   // decir "el 100 %" suena a error de cálculo — se dice cuántas rutas están devolviendo.
+  const cuando=g.esHoy===false?'ese día':'hoy';
   const titular = (conDev.length<=top.length)
-    ? (conDev.length===1 ? nombres+' es la única ruta con devolución hoy.'
-                         : 'Solo '+conDev.length+' rutas están devolviendo hoy.')
+    ? (conDev.length===1 ? nombres+' fue la única ruta con devolución '+cuando+'.'
+                         : 'Solo '+conDev.length+' rutas devolvieron '+cuando+'.')
     : (top.length>1 ? 'Dos rutas explican el '+share+' % de la devolución del día.'
                     : nombres+' concentra el '+share+' % de la devolución del día.');
   return et+
     '<h4>'+titular+'</h4>'+
-    '<p>'+nombres+' '+(top.length>1?'acumulan':'acumula')+' '+Math.round(sumTop)+' de las '+Math.round(g.devTot)+' cajas devueltas'+
+    '<p>'+nombres+' '+(top.length>1?(g.esHoy===false?'acumularon':'acumulan'):(g.esHoy===false?'acumuló':'acumula'))+' '+Math.round(sumTop)+' de las '+Math.round(g.devTot)+' cajas devueltas'+
       (motTop?', y el motivo que más se repite es <b>'+motTop.toLowerCase()+'</b>':'')+'. '+
       'Son '+_pesosCorto(g.valTot)+' que no se facturaron.</p>'+
     '<div class="via">'+(pendTot
-      ? (pendTot===1
-          ? 'Sugerido: resolver la devolución pendiente antes del cierre — de eso depende la efectividad que entra a la nómina.'
-          : 'Sugerido: resolver las '+pendTot+' devoluciones pendientes antes del cierre — de eso depende la efectividad que entra a la nómina.')
+      ? (g.esHoy===false
+          ? 'Quedaron '+pendTot+' devolución(es) sin aprobar de ese día. Se pueden resolver aquí mismo: la comisión se cierra a fin de mes.'
+          : (pendTot===1
+             ? 'Sugerido: resolver la devolución pendiente antes del cierre — de eso depende la efectividad que entra a la nómina.'
+             : 'Sugerido: resolver las '+pendTot+' devoluciones pendientes antes del cierre — de eso depende la efectividad que entra a la nómina.'))
       : 'Todas las devoluciones del día ya están revisadas. La efectividad de arriba es la definitiva.')+'</div>';
 }
 
@@ -4286,8 +4356,8 @@ function _tcDetalle(x){
     const sku=(c.detalle||[]).map(d=>d.desc).slice(0,2).join(' · ')||'—';
     const cant=(c.total_cajas?c.total_cajas+' cj':'')+(c.total_cajas&&c.total_und?' + ':'')+(c.total_und?c.total_und+' und':'');
     const acc=est==='pendiente'
-      ? '<button class="tc-si" onclick="event.stopPropagation();aprobarDevolucion(\''+cod+'\',\'afecta\')">Sí afecta</button>'+
-        '<button class="tc-no" onclick="event.stopPropagation();aprobarDevolucion(\''+cod+'\',\'omitida\')">Omitir</button>'
+      ? '<button class="tc-si" onclick="event.stopPropagation();aprobarDevolucion(\''+cod+'\',\'afecta\',\''+_tcCache.fecha+'\')">Sí afecta</button>'+
+        '<button class="tc-no" onclick="event.stopPropagation();aprobarDevolucion(\''+cod+'\',\'omitida\',\''+_tcCache.fecha+'\')">Omitir</button>'
       : est==='afecta' ? '<span class="tc-pill bad">Afecta comisión</span>' : '<span class="tc-pill mute">Omitida</span>';
     const quien=(c.reporta&&c.reporta.nombre)?' · reportó '+_nomCorto(c.reporta.nombre):'';
     return '<div class="tc-cli"><div><b>'+(c.nombre_cliente||cod)+'</b><small>'+cod+' · '+(c.motivo||'')+quien+
