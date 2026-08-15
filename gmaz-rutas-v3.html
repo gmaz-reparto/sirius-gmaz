@@ -736,55 +736,54 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 
 /* ══ ASIGNAR VEHÍCULOS A RUTAS (panel coordinador) ══ */
 .veh-cargando{padding:14px;font-size:12px;color:var(--gris4);font-weight:600}
-.ar-lista{padding:10px 13px 4px;display:flex;flex-direction:column;gap:10px;max-height:620px;overflow-y:auto;overflow-x:hidden}
-.ar-card{border:1px solid var(--gris2);border-radius:14px;background:#fff;overflow:hidden;
-  box-shadow:var(--sh-card);transition:box-shadow .15s,border-color .15s}
-.ar-card:hover{box-shadow:var(--sh-card-hov)}
-.ar-card.sin-veh{border-left:3px solid var(--rojo)}
-.ar-card.sin-cond{border-left:3px solid var(--amarillo)}
-.ar-card.sin-aux{border-left:3px solid var(--azul)}
-.ar-card.ok{border-left:3px solid var(--verde)}
-.ar-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;background:var(--gris1);
-  border-bottom:1px solid var(--gris2)}
-.ar-ruta{color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.3px;padding:5px 10px;border-radius:8px;flex-shrink:0}
-.ar-veh{flex:1;min-width:190px;max-width:330px;height:34px;border:1px solid var(--gris3);border-radius:9px;padding:0 9px;
-  font-family:inherit;font-size:12px;font-weight:700;color:var(--negro);background:#fff}
-.ar-veh:focus{outline:none;border-color:var(--rojo)}
-.ar-meta{font-size:10.5px;font-weight:700;color:var(--gris4)}
-.ar-chip{font-size:9px;font-weight:800;padding:3px 7px;border-radius:6px}
-.ar-chip.warn{background:#FEF3C7;color:#B45309}
-.ar-est{margin-left:auto;font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.3px}
+.ar-tabla-wrap{padding:8px 13px 4px;overflow-x:auto}
+.ar-tabla{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:1080px}
+.ar-tabla thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--gris4);padding:0 9px 4px;white-space:nowrap}
+.ar-tabla thead th.r{text-align:right}
+.ar-fila>td{background:#fff;border-top:1px solid var(--gris2);border-bottom:1px solid var(--gris2);
+  padding:8px 9px;vertical-align:middle;font-size:12px}
+.ar-fila>td:first-child{border-left:1px solid var(--gris2);border-radius:11px 0 0 11px;border-left-width:3px}
+.ar-fila>td:last-child{border-right:1px solid var(--gris2);border-radius:0 11px 11px 0}
+.ar-fila.sin-veh>td:first-child{border-left-color:var(--rojo)}
+.ar-fila.sin-cond>td:first-child{border-left-color:var(--amarillo)}
+.ar-fila.sin-aux>td:first-child{border-left-color:var(--azul)}
+.ar-fila.ok>td:first-child{border-left-color:var(--verde)}
+.ar-fila:hover>td{background:var(--gris1)}
+.ar-fila>td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+.ar-ruta{display:inline-block;color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px;padding:5px 9px;border-radius:8px;white-space:nowrap}
+.ar-sel{height:32px;border:1px solid var(--gris3);border-radius:8px;padding:0 7px;background:#fff;
+  font-family:inherit;font-size:11.5px;font-weight:700;color:var(--negro);max-width:100%}
+.ar-sel:focus{outline:none;border-color:var(--rojo)}
+.ar-sel.placa{min-width:184px}
+.ar-sel.cond{min-width:172px}
+.ar-sel.aux{min-width:158px;border-style:dashed;color:var(--gris4);font-weight:700}
+.ar-sel.aux:focus{color:var(--negro)}
+.ar-nada{font-size:10.5px;font-weight:700;color:var(--gris4)}
+.ar-chip-per{display:inline-flex;align-items:center;gap:6px;background:var(--gris1);border:1px solid var(--gris2);
+  border-radius:9px;padding:4px 6px 4px 5px;max-width:172px}
+.ar-chip-per+.ar-chip-per{margin-top:4px}
+.ar-av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
+.ar-av.cond{background:var(--rojo)} .ar-av.aux{background:var(--azul)}
+.ar-cn{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.ar-cn b{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ar-cn em{font-style:normal;font-size:8.5px;font-weight:800}
+.ar-cn em.ok{color:#059669} .ar-cn em.sis{color:#1A56DB} .ar-cn em.coord{color:#B45309}
+.ar-x{width:18px;height:18px;border-radius:5px;border:none;background:transparent;color:var(--gris3);
+  font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;line-height:1;padding:0;flex-shrink:0}
+.ar-chip-per:hover .ar-x{color:var(--gris4)}
+.ar-x:hover{background:#FFF0F1;color:var(--rojo)}
+.ar-org{display:inline-block;font-size:8.5px;font-weight:800;padding:2px 6px;border-radius:5px;margin-top:4px}
+.ar-org.ok{background:#ECFDF5;color:#059669}
+.ar-org.sis{background:#EFF6FF;color:#1A56DB}
+.ar-org.coord{background:#FFF8E6;color:#B45309}
+.ar-est{font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:7px;white-space:nowrap}
 .ar-est.ok{background:#ECFDF5;color:#059669}
 .ar-est.sin-veh{background:#FFF0F1;color:#E30613}
 .ar-est.sin-cond{background:#FFF8E6;color:#B45309}
 .ar-est.sin-aux{background:#EFF6FF;color:#1A56DB}
-.ar-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:8px;padding:11px 13px 13px}
-.ar-slot{border:1px solid var(--gris2);border-radius:11px;padding:9px 10px;background:#fff;
-  display:flex;flex-direction:column;gap:6px;min-height:78px;position:relative}
-.ar-slot.cond{background:linear-gradient(180deg,#FFF6F6,#fff)}
-.ar-slot.vacio{border-style:dashed;background:var(--gris1);justify-content:center}
-.ar-slot.sugerido{border-style:dashed;border-color:var(--azul);background:#F7FAFF}
-.ar-rol{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gris4);
-  display:flex;align-items:center;gap:6px}
-.ar-x{margin-left:auto;width:18px;height:18px;border-radius:5px;border:none;background:transparent;color:var(--gris3);
-  font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;line-height:1;padding:0}
-.ar-slot:hover .ar-x{color:var(--gris4)}
-.ar-x:hover{background:#FFF0F1;color:var(--rojo)}
-.ar-per{display:flex;align-items:center;gap:7px;min-width:0}
-.ar-av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:800;
-  color:#fff;flex-shrink:0}
-.ar-av.cond{background:var(--rojo)} .ar-av.aux{background:var(--azul)}
-.ar-nom{font-size:11.5px;font-weight:800;color:var(--negro);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ar-org{font-size:8.5px;font-weight:800;padding:2px 6px;border-radius:5px;width:fit-content}
-.ar-org.ok{background:#ECFDF5;color:#059669}
-.ar-org.sis{background:#EFF6FF;color:#1A56DB}
-.ar-org.coord{background:#FFF8E6;color:#B45309}
-.ar-sel{width:100%;height:31px;border:1px solid var(--gris3);border-radius:8px;padding:0 7px;background:#fff;
-  font-family:inherit;font-size:11px;font-weight:700;color:var(--gris5)}
-.ar-sel:focus{outline:none;border-color:var(--rojo);color:var(--negro)}
-.ar-aviso{font-size:9.5px;font-weight:700;color:#B45309;line-height:1.35}
-.ar-poner{height:26px;border:none;border-radius:7px;background:var(--azul);color:#fff;font-family:inherit;
-  font-size:10px;font-weight:800;cursor:pointer}
+.ar-poner{display:block;margin-top:4px;height:24px;padding:0 9px;border:none;border-radius:7px;background:var(--azul);
+  color:#fff;font-family:inherit;font-size:9.5px;font-weight:800;cursor:pointer}
 .ar-poner:hover{background:#1443B0}
 .ar-maestro{border-top:1px solid var(--gris2);margin-top:6px}
 .ar-maestro summary{padding:12px 15px;font-size:12.5px;font-weight:800;color:var(--negro);cursor:pointer;
@@ -1873,14 +1872,15 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
           <span class="dm" id="ar-meta" style="margin-left:auto"></span>
           <button class="dchip" onclick="haptic();renderArmadoRutas()">↻ Actualizar</button>
         </div>
-        <div id="dash-veh-list" class="ar-lista"><div class="veh-cargando">Cargando rutas…</div></div>
+        <div style="padding:6px 15px 2px;font-size:11px;color:var(--gris4)">
+          El <b>conductor fijo</b> es del vehículo, no de la ruta: al cambiarlo aquí queda para siempre en esa placa
+          y se aplica a cualquier ruta que la lleve. Si un día no está —incapacidad, vacaciones, descanso— se cambia
+          solo por ese día en «Hoy maneja», al pie de la tabla.
+        </div>
+        <div id="dash-veh-list" class="ar-tabla-wrap"><div class="veh-cargando">Cargando rutas…</div></div>
         <details class="ar-maestro">
-          <summary><span class="h3ic">🧑‍✈️</span> Conductores fijos de la flota
-            <span class="ar-sum-s">quién maneja cada vehículo · se aplica solo al asignarlo</span></summary>
-          <div style="padding:6px 15px 10px;font-size:11px;color:var(--gris4)">
-            Cada vehículo tiene un conductor permanente. Si un día no está —incapacidad, vacaciones, descanso—
-            se cambia solo <b>para ese día</b> en «Hoy maneja»: el fijo no se pierde y el cambio queda en el histórico.
-          </div>
+          <summary><span class="h3ic">🚛</span> Resto de la flota y reemplazos del día
+            <span class="ar-sum-s">vehículos sin ruta hoy · quién maneja cada uno si el titular no está</span></summary>
           <div id="maestro-cond" style="padding:0 15px 14px"><div class="veh-cargando">Cargando la flota…</div></div>
         </details>
       </div>
@@ -4265,8 +4265,10 @@ function _condElegibles(){
 }
 function renderMaestroConductores(){
   const cont=document.getElementById('maestro-cond');if(!cont)return;
-  const flota=(_vehCache||[]).slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
-  if(!flota.length){cont.innerHTML='<div class="veh-cargando">Abre el módulo Vehículos para cargar la flota…</div>';return;}
+  // Los vehículos que hoy están en una ruta ya se editan en la tabla de arriba: aquí quedan los demás.
+  const enRuta=new Set(Object.values(_asigPorRuta||{}));
+  const flota=(_vehCache||[]).filter(v=>!enRuta.has(v.nombre)).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  if(!flota.length){cont.innerHTML='<div class="veh-cargando">Todos los vehículos de la flota están hoy en una ruta ✓</div>';return;}
   const opts=_condElegibles();
   const sel=(id,val,cls)=>'<select class="'+cls+'" data-unit="'+id+'" onchange="haptic();'+
     (cls==='mc-fijo'?'guardarConductorFijo':'guardarConductorDia')+'(this)">'+
@@ -6706,85 +6708,94 @@ async function renderArmadoRutas(rutas){
     const usoUnit={};asignadas.forEach(a=>usoUnit[a.unit_id]=(usoUnit[a.unit_id]||0)+1);
     await cargarMaestroConductores();
     try{ _tripAsignada=await cargarRegistroDia(fecha)||{}; }catch(e){ _tripAsignada={}; }
-    cont.innerHTML=rutas.map(r=>_arCard(r,usoUnit)).join('')||
-      '<div class="veh-cargando">No hay rutas cargadas hoy. Sube el PPAS desde la Rutina diaria.</div>';
+    cont.innerHTML=rutas.length
+      ? '<table class="ar-tabla"><thead><tr>'+
+          '<th>Ruta</th><th>Placa</th><th class="r">Clientes</th><th class="r">Cajas</th>'+
+          '<th>Conductor fijo</th><th>Auxiliar 1</th><th>Auxiliar 2</th><th>Auxiliar 3</th><th>Estado</th>'+
+        '</tr></thead><tbody>'+rutas.map(r=>_arFila(r,usoUnit)).join('')+'</tbody></table>'
+      : '<div class="veh-cargando">No hay rutas cargadas hoy. Sube el PPAS desde la Rutina diaria.</div>';
     _vehListCargada=true;
     const conVeh=rutas.filter(r=>_asigPorRuta[r]).length;
-    const completas=rutas.filter(r=>(_tripAsignada[r]||[]).some(x=>x.rol==='conductor')).length;
+    const conCond=rutas.filter(r=>(_tripAsignada[r]||[]).some(x=>x.rol==='conductor')).length;
     const meta=document.getElementById('ar-meta');
-    if(meta)meta.textContent=conVeh+' de '+rutas.length+' con vehículo · '+completas+' con conductor';
+    if(meta)meta.textContent=conVeh+' de '+rutas.length+' con placa · '+conCond+' con conductor';
   }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
 }
 
-function _arCard(ruta,usoUnit){
+/* Una fila por ruta, en el orden que pidió el coordinador:
+   Ruta · Placa · Clientes · Cajas · Conductor fijo · Auxiliar 1 · 2 · 3 · Estado.
+   El conductor fijo se edita aquí mismo (es del vehículo, no de la ruta), así que ya no hace falta
+   una segunda tabla para la flota: al pie quedan solo los vehículos que hoy no salen. */
+function _arFila(ruta,usoUnit){
   const col=rutaColor[ruta]||'#4A5060';
   const unit=_asigPorRuta[ruta]||'';
   const compartido=unit&&usoUnit[unit]>1;
   const personas=(_tripAsignada[ruta]||[]).slice();
   const cond=personas.find(x=>x.rol==='conductor')||null;
   const auxs=personas.filter(x=>x.rol!=='conductor');
-  const delVeh=unit?conductorDelVehiculo(unit):null;
-  const opciones=(_vehCache||[]).map(v=>'<option value="'+v.nombre+'"'+(v.nombre===unit?' selected':'')+'>'+
-    v.nombre+(v.marca?' · '+v.marca+' '+(v.modelo||''):'')+'</option>').join('');
+  const fijo=unit?((maestroConductores||{})[unit]||null):null;
+  const hoyManeja=unit?conductorDelVehiculo(unit):null;
   const pr=(_dashData&&_dashData.porRuta&&_dashData.porRuta[ruta])||null;
   const carg=(hojasIndex&&hojasIndex[ruta])?hojasIndex[ruta].cargueCaj:null;
-  const meta=[pr?pr.tot+' clientes':'',carg?Math.round(carg)+' cajas':''].filter(Boolean).join(' · ');
-  // Estado del armado
-  const est=!unit?['sin-veh','Falta vehículo']
-    :!cond?['sin-cond','Falta conductor']
+  const opciones=(_vehCache||[]).map(v=>'<option value="'+v.nombre+'"'+(v.nombre===unit?' selected':'')+'>'+
+    v.nombre+(v.marca?' · '+v.marca+' '+(v.modelo||''):'')+'</option>').join('');
+  const est=!unit?['sin-veh','Falta placa']
+    :!fijo?['sin-cond','Sin conductor fijo']
     :!auxs.length?['sin-aux','Sin auxiliar']
     :['ok','Lista'];
-  // Casillas
-  let slots='';
-  slots+=cond?_arSlot('conductor',cond,ruta)
-    :(unit&&delVeh
-      ? '<div class="ar-slot sugerido"><div class="ar-rol">Conductor</div>'+
-        '<div class="ar-per"><span class="ar-av cond">'+_tcIniciales(delVeh.nombre)+'</span>'+
-        '<span class="ar-nom">'+_nomCorto(delVeh.nombre)+'</span></div>'+
-        '<button class="ar-poner" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderArmadoRutas())">Poner como conductor</button></div>'
-      : _arVacio('conductor',ruta,unit?'El vehículo '+unit+' no tiene conductor fijo':'Asigna el vehículo primero'));
-  auxs.slice(0,AUX_MAX).forEach((a,i)=>{slots+=_arSlot('auxiliar',a,ruta,i+1);});
-  if(auxs.length<AUX_MAX)slots+=_arVacio('auxiliar',ruta,'',auxs.length+1);
-  return '<div class="ar-card '+est[0]+'" id="dvb-'+ruta+'">'+
-    '<div class="ar-head">'+
-      '<span class="ar-ruta" style="background:'+col+'">'+ruta+'</span>'+
-      '<select class="ar-veh" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
-        '<option value="">— sin vehículo —</option>'+opciones+'</select>'+
-      (compartido?'<span class="ar-chip warn">compartido</span>':'')+
-      (meta?'<span class="ar-meta">'+meta+'</span>':'')+
-      '<span class="ar-est '+est[0]+'">'+est[1]+'</span>'+
-    '</div>'+
-    '<div class="ar-slots">'+slots+'</div>'+
-  '</div>';
+  // Conductor: se elige el FIJO del vehículo; debajo se ve si él mismo confirmó desde su celular
+  let celCond;
+  if(!unit){
+    celCond='<span class="ar-nada">asigna la placa</span>';
+  }else{
+    const conductores=entregadoresDisponibles().filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
+    celCond='<select class="ar-sel cond" data-unit="'+unit+'" onchange="haptic();guardarConductorFijo(this)">'+
+      '<option value="">— sin asignar —</option>'+
+      conductores.map(o=>'<option value="'+o.ced+'"'+(fijo&&String(fijo.ced)===String(o.ced)?' selected':'')+'>'+o.nombre+'</option>').join('')+
+      '</select>';
+    if(hoyManeja&&hoyManeja.esReemplazo)
+      celCond+='<span class="ar-org coord" title="'+(hoyManeja.motivo||'')+'">hoy: '+_nomCorto(hoyManeja.nombre)+'</span>';
+    else if(cond&&cond.origen==='persona')celCond+='<span class="ar-org ok">confirmó</span>';
+    else if(cond&&cond.origen==='sistema')celCond+='<span class="ar-org sis">puesto</span>';
+    else if(fijo)celCond+='<button class="ar-poner" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderArmadoRutas())">Poner en la ruta</button>';
+  }
+  // Tres columnas de auxiliar; si llegara un cuarto, se muestra apilado en la última
+  let celAux='';
+  for(let i=0;i<3;i++){
+    const a=auxs[i];
+    if(a){
+      celAux+='<td>'+_arChip(a,ruta)+((i===2&&auxs.length>3)?auxs.slice(3).map(x=>_arChip(x,ruta)).join(''):'')+'</td>';
+    }else{
+      celAux+='<td>'+_arSelAux(ruta)+'</td>';
+    }
+  }
+  return '<tr class="ar-fila '+est[0]+'">'+
+    '<td><span class="ar-ruta" style="background:'+col+'">'+ruta+'</span></td>'+
+    '<td><select class="ar-sel placa" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
+      '<option value="">— sin placa —</option>'+opciones+'</select>'+
+      (compartido?'<span class="ar-org coord">compartido</span>':'')+'</td>'+
+    '<td class="r num">'+(pr?pr.tot:'—')+'</td>'+
+    '<td class="r num">'+(carg?Math.round(carg):'—')+'</td>'+
+    '<td>'+celCond+'</td>'+
+    celAux+
+    '<td><span class="ar-est '+est[0]+'">'+est[1]+'</span></td>'+
+  '</tr>';
 }
-
-function _arSlot(rol,p,ruta,n){
-  const et=p.origen==='persona'?['ok','confirmó']
-          :p.origen==='sistema'?['sis','del vehículo']
-          :['coord','puesto por ti'];
-  return '<div class="ar-slot '+(rol==='conductor'?'cond':'aux')+'">'+
-    '<div class="ar-rol">'+(rol==='conductor'?'Conductor':'Auxiliar '+n)+
-      '<button class="ar-x" title="Quitar de la ruta" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button></div>'+
-    '<div class="ar-per"><span class="ar-av '+(rol==='conductor'?'cond':'aux')+'">'+_tcIniciales(p.nombre)+'</span>'+
-      '<span class="ar-nom" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+_nomCorto(p.nombre)+'</span></div>'+
-    '<span class="ar-org '+et[0]+'">'+et[1]+'</span>'+
-    (p.reemplazo?'<span class="ar-org coord">reemplazo</span>':'')+
-  '</div>';
+function _arChip(p,ruta){
+  const et=p.origen==='persona'?['ok','confirmó']:p.origen==='sistema'?['sis','puesto']:['coord','asignado'];
+  return '<span class="ar-chip-per" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
+    '<span class="ar-av aux">'+_tcIniciales(p.nombre)+'</span>'+
+    '<span class="ar-cn"><b>'+_nomCorto(p.nombre)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
+    '<button class="ar-x" title="Quitar de la ruta" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button></span>';
 }
-
-function _arVacio(rol,ruta,aviso,n){
+function _arSelAux(ruta){
   // Nadie puede ir en dos rutas el mismo día: quien ya está asignado no vuelve a aparecer.
   const ocupados=new Set();
   Object.values(_tripAsignada||{}).forEach(arr=>(arr||[]).forEach(x=>ocupados.add(String(x.ced))));
-  let lista=entregadoresDisponibles().filter(o=>!ocupados.has(String(o.ced)));
-  if(rol==='conductor')lista=lista.filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
-  return '<div class="ar-slot vacio">'+
-    '<div class="ar-rol">'+(rol==='conductor'?'Conductor':'Auxiliar '+n)+'</div>'+
-    '<select class="ar-sel" data-ruta="'+ruta+'" data-rol="'+rol+'" onchange="haptic();asignarTripulante(this)">'+
-      '<option value="">+ agregar</option>'+
-      lista.map(o=>'<option value="'+o.ced+'">'+o.nombre+'</option>').join('')+'</select>'+
-    (aviso?'<span class="ar-aviso">'+aviso+'</span>':'')+
-  '</div>';
+  const lista=entregadoresDisponibles().filter(o=>!ocupados.has(String(o.ced)));
+  return '<select class="ar-sel aux" data-ruta="'+ruta+'" data-rol="auxiliar" onchange="haptic();asignarTripulante(this)">'+
+    '<option value="">+ agregar</option>'+
+    lista.map(o=>'<option value="'+o.ced+'">'+o.nombre+'</option>').join('')+'</select>';
 }
 
 async function asignarTripulante(sel){
