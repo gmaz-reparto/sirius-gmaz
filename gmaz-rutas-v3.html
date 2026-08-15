@@ -736,65 +736,73 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 
 /* ══ ASIGNAR VEHÍCULOS A RUTAS (panel coordinador) ══ */
 .veh-cargando{padding:14px;font-size:12px;color:var(--gris4);font-weight:600}
-.ar-tabla-wrap{padding:8px 13px 4px;overflow-x:auto}
-.ar-tabla{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:1240px}
-.ar-tabla th:nth-child(n+5),.ar-fila>td:nth-child(n+5){min-width:196px}
-.ar-tabla th:last-child,.ar-fila>td:last-child{min-width:0}
-.ar-tabla thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
-  color:var(--gris4);padding:0 9px 4px;white-space:nowrap}
-.ar-tabla thead th.r{text-align:right}
-.ar-fila>td{background:#fff;border-top:1px solid var(--gris2);border-bottom:1px solid var(--gris2);
-  padding:8px 9px;vertical-align:middle;font-size:12px}
-.ar-fila>td:first-child{border-left:1px solid var(--gris2);border-radius:11px 0 0 11px;border-left-width:3px}
-.ar-fila>td:last-child{border-right:1px solid var(--gris2);border-radius:0 11px 11px 0}
-.ar-fila.sin-veh>td:first-child{border-left-color:var(--rojo)}
-.ar-fila.sin-cond>td:first-child{border-left-color:var(--amarillo)}
-.ar-fila.sin-aux>td:first-child{border-left-color:var(--azul)}
-.ar-fila.ok>td:first-child{border-left-color:var(--verde)}
-.ar-fila:hover>td{background:var(--gris1)}
-.ar-fila>td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
-.ar-ruta{display:inline-block;color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px;padding:5px 9px;border-radius:8px;white-space:nowrap}
-.ar-sel{height:32px;border:1px solid var(--gris3);border-radius:8px;padding:0 7px;background:#fff;
+/* ══ CONSOLA DE FLOTA ══ una tabla, una fecha, todo el día de cada ruta ══ */
+.fl-barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 15px;background:var(--gris1);
+  border-bottom:1px solid var(--gris2)}
+.fl-barra input[type=date]{height:31px;border:1px solid var(--gris3);border-radius:9px;padding:0 9px;background:#fff;
+  font-family:inherit;font-size:11.5px;font-weight:800;color:var(--negro)}
+.fl-barra .chip{height:29px;padding:0 11px;border-radius:8px;border:1px solid var(--gris2);background:#fff;
+  color:var(--gris5);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.fl-barra .chip:hover{border-color:var(--gris4);color:var(--negro)}
+.fl-barra .chip.on{background:var(--negro);border-color:var(--negro);color:#fff}
+.fl-modo{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--gris5)}
+.fl-vivo{width:7px;height:7px;border-radius:50%;background:var(--verde);box-shadow:0 0 0 3px #ECFDF5}
+.fl-wrap{overflow-x:auto}
+.fl-tabla{width:100%;border-collapse:separate;border-spacing:0;min-width:1180px}
+.fl-tabla thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--gris4);padding:9px 10px;border-bottom:1px solid var(--gris2);white-space:nowrap;background:#fff}
+.fl-tabla thead th.r{text-align:right}
+.fl-tabla td{padding:8px 10px;border-bottom:1px solid var(--gris2);font-size:11.5px;vertical-align:middle}
+.fl-tabla td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+.fl-tabla th:nth-child(n+8),.fl-tabla td:nth-child(n+8){min-width:186px}
+.fl-tabla th:last-child,.fl-tabla td:last-child{min-width:0}
+.fl-fila{cursor:pointer;border-left:3px solid transparent}
+.fl-fila:hover td{background:var(--gris1)}
+.fl-fila.abierta td{background:var(--gris1)}
+.fl-fila>td:first-child{border-left:3px solid transparent}
+.fl-fila.sin-veh>td:first-child{border-left-color:var(--rojo)}
+.fl-fila.sin-cond>td:first-child{border-left-color:var(--amarillo)}
+.fl-fila.sin-aux>td:first-child{border-left-color:var(--azul)}
+.fl-fila.ok>td:first-child{border-left-color:var(--verde)}
+.fl-fila.sin-ruta{opacity:.62}
+.fl-fila.sin-ruta:hover{opacity:1}
+.fl-sub{font-size:9.5px;color:var(--gris4);font-weight:700}
+.fl-nada{font-size:10.5px;font-weight:700;color:var(--gris4)}
+.fl-cargando{color:var(--gris3);font-weight:700}
+.fl-gps{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;white-space:nowrap}
+.fl-gps i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fl-sel{height:31px;border:1px solid var(--gris3);border-radius:8px;padding:0 7px;background:#fff;
   font-family:inherit;font-size:11.5px;font-weight:700;color:var(--negro);max-width:100%}
-.ar-sel:focus{outline:none;border-color:var(--rojo)}
-.ar-sel.placa{min-width:184px}
-.ar-sel.cond{min-width:172px}
-.ar-sel.aux{min-width:158px;border-style:dashed;color:var(--gris4);font-weight:700}
-.ar-sel.aux:focus{color:var(--negro)}
-.ar-nada{font-size:10.5px;font-weight:700;color:var(--gris4)}
-.ar-chip-per{display:inline-flex;align-items:center;gap:7px;background:var(--gris1);border:1px solid var(--gris2);
-  border-radius:9px;padding:5px 6px 5px 5px;width:100%;max-width:250px}
-.ar-chip-per.es-cond{background:#FFF6F6;border-color:rgba(227,6,19,.22)}
-.ar-chip-per.sugerido{background:#fff;border-style:dashed}
-.ar-av.gris{background:var(--gris3);color:var(--gris5)}
-.ar-mas{width:20px;height:20px;border-radius:6px;border:none;background:var(--azul);color:#fff;
-  font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0;flex-shrink:0}
-.ar-mas:hover{background:#1443B0}
-.ar-chip-per+.ar-chip-per{margin-top:4px}
-.ar-av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
-.ar-av.cond{background:var(--rojo)} .ar-av.aux{background:var(--azul)}
-.ar-cn{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.22}
-/* El nombre puede ocupar dos renglones: con apellidos compuestos una sola línea no alcanza. */
-.ar-cn b{font-size:11px;font-weight:800;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;word-break:break-word}
-.ar-cn em{font-style:normal;font-size:8.5px;font-weight:800;margin-top:1px}
-.ar-cn em.ok{color:#059669} .ar-cn em.sis{color:#1A56DB} .ar-cn em.coord{color:#B45309}
-.ar-x{width:18px;height:18px;border-radius:5px;border:none;background:transparent;color:var(--gris3);
-  font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;line-height:1;padding:0;flex-shrink:0}
-.ar-chip-per:hover .ar-x{color:var(--gris4)}
-.ar-x:hover{background:#FFF0F1;color:var(--rojo)}
-.ar-org{display:inline-block;font-size:8.5px;font-weight:800;padding:2px 6px;border-radius:5px;margin-top:4px}
-.ar-org.ok{background:#ECFDF5;color:#059669}
-.ar-org.sis{background:#EFF6FF;color:#1A56DB}
-.ar-org.coord{background:#FFF8E6;color:#B45309}
-.ar-est{font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:7px;white-space:nowrap}
-.ar-est.ok{background:#ECFDF5;color:#059669}
-.ar-est.sin-veh{background:#FFF0F1;color:#E30613}
-.ar-est.sin-cond{background:#FFF8E6;color:#B45309}
-.ar-est.sin-aux{background:#EFF6FF;color:#1A56DB}
-.ar-poner{display:block;margin-top:4px;height:24px;padding:0 9px;border:none;border-radius:7px;background:var(--azul);
-  color:#fff;font-family:inherit;font-size:9.5px;font-weight:800;cursor:pointer}
-.ar-poner:hover{background:#1443B0}
+.fl-sel.placa{min-width:180px}
+.caret{color:var(--gris4);display:inline-block;transition:transform .15s;font-size:10px}
+.fl-fila.abierta .caret{transform:rotate(90deg)}
+.fl-det td{background:var(--gris1);padding:0;border-bottom:1px solid var(--gris2)}
+.fl-det-in{padding:13px 16px 15px 32px;display:grid;grid-template-columns:1.05fr 1fr;gap:12px}
+@media (max-width:980px){.fl-det-in{grid-template-columns:1fr}}
+.fl-det-col{display:flex;flex-direction:column;gap:12px}
+.fl-box{background:#fff;border:1px solid var(--gris2);border-radius:11px;padding:11px 12px}
+.fl-bt{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gris4);margin-bottom:8px}
+.fl-spark{width:100%;height:62px;display:block}
+.fl-metricas{display:flex;flex-wrap:wrap;gap:13px;margin-top:8px;font-size:10.5px;font-weight:700;color:var(--gris4)}
+.fl-metricas b{color:var(--negro);font-variant-numeric:tabular-nums}
+.fl-btn{margin-top:10px;height:30px;padding:0 12px;border-radius:8px;border:none;background:var(--negro);color:#fff;
+  font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.fl-btn:hover{background:var(--rojo)}
+.fl-crew{display:flex;flex-wrap:wrap;gap:7px}
+.fl-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px}
+.fl-nums div{background:var(--gris1);border-radius:9px;padding:8px 9px}
+.fl-nums b{display:block;font-size:17px;font-weight:800;letter-spacing:-.4px;line-height:1.15}
+.fl-nums small{font-size:8.5px;font-weight:800;color:var(--gris4);text-transform:uppercase;letter-spacing:.3px;line-height:1.3;display:block;margin-top:2px}
+.fl-hito{display:grid;grid-template-columns:44px 12px 1fr;gap:7px;align-items:start;font-size:11px}
+.fl-hito .h{font-variant-numeric:tabular-nums;font-weight:800;color:var(--gris5);font-size:10.5px;padding-top:1px}
+.fl-hito .l{position:relative;display:flex;justify-content:center}
+.fl-hito .l i{width:7px;height:7px;border-radius:50%;margin-top:4px;z-index:1}
+.fl-hito .l::before{content:'';position:absolute;top:9px;bottom:-6px;width:1.5px;background:var(--gris2)}
+.fl-hito:last-child .l::before{display:none}
+.fl-hito .x{color:var(--gris5);font-weight:600;padding-bottom:7px;line-height:1.45}
+.fl-pie{padding:11px 15px;border-top:1px solid var(--gris2);font-size:10.5px;color:var(--gris4);font-weight:600;line-height:1.55}
+.ruta-b{display:inline-block;color:#fff;font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:7px;white-space:nowrap}
+.ar-est.mute{background:var(--gris2);color:var(--gris4)}
 .ar-maestro{border-top:1px solid var(--gris2);margin-top:6px}
 .ar-maestro summary{padding:12px 15px;font-size:12.5px;font-weight:800;color:var(--negro);cursor:pointer;
   display:flex;align-items:center;gap:8px;list-style:none}
@@ -1860,40 +1868,25 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
 
     <!-- ══ MÓDULO VEHÍCULOS ══ -->
     <section class="mod" id="mod-vehiculos">
-      <div class="dcard" style="margin-bottom:14px">
-        <div class="dcard-h"><h3><span class="h3ic">🕒</span>Buscar cualquier vehículo · recorrido histórico</h3><span class="dm">Toda la flota, así no esté asignado hoy</span></div>
-        <div style="padding:14px 17px;display:flex;gap:9px;flex-wrap:wrap;align-items:center">
-          <select id="veh-buscar-select" style="flex:1;min-width:220px;height:38px;border:1px solid var(--gris3);border-radius:10px;padding:0 11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--negro)"><option value="">Cargando flota…</option></select>
-          <input type="date" id="veh-buscar-fecha" style="height:38px;border:1px solid var(--gris3);border-radius:10px;padding:0 11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--negro)">
-          <button class="vp-btn pri" style="flex:0 0 auto;padding:10px 16px" onclick="haptic();buscarRecorridoVehiculo()">Ver recorrido ▶</button>
+      <div class="dcard">
+        <div class="dcard-h"><h3><span class="h3ic">🚚</span>Flota y despacho</h3>
+          <span class="dm">placa, tripulación, km y pedido de cada ruta — de cualquier día</span>
+          <span class="dm" id="fl-meta" style="margin-left:auto"></span>
         </div>
-      </div>
-      <div class="dcard" style="margin-bottom:12px">
-        <div class="dcard-h"><h3><span class="h3ic">🧑‍🔧</span>Quién salió en cada vehículo</h3>
-          <span class="dm">del registro que hace cada entregador en su propio celular</span>
-          <input type="date" id="veh-trip-fecha" onchange="haptic();renderVehiculoCards(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+        <div class="fl-barra">
+          <input type="date" id="fl-fecha" onchange="haptic();renderFlota(this.value)">
+          <button class="chip on" id="fl-hoy" onclick="haptic();renderFlota(getColDate())">Hoy</button>
+          <button class="chip" onclick="haptic();renderFlota(_flotaAyer())">Ayer</button>
+          <span class="fl-modo" id="fl-modo"></span>
+          <div style="flex:1"></div>
+          <button class="chip" onclick="haptic();renderFlota(null,true)">↻ Actualizar</button>
+          <button class="chip" onclick="haptic();exportarFlota()">↓ Exportar</button>
         </div>
-        <div style="padding:8px 17px 12px;font-size:11px;color:var(--gris4)" id="veh-trip-nota">SecuritaGPS no tiene conductores cargados: la tripulación sale del registro de la app.</div>
-      </div>
-      <div id="veh-cards" class="veh-cards"><div class="veh-cargando">Abre este módulo para ver las tarjetas por vehículo…</div></div>
-      <div class="dcard" style="margin-top:14px">
-        <div class="dcard-h"><h3><span class="h3ic">🔑</span>Armado de rutas</h3>
-          <span class="dm">vehículo y tripulación de cada ruta, en un solo lugar</span>
-          <span class="dm" id="ar-meta" style="margin-left:auto"></span>
-          <button class="dchip" onclick="haptic();renderArmadoRutas()">↻ Actualizar</button>
+        <div id="dash-veh-list" class="fl-wrap"><div class="veh-cargando">Cargando la flota…</div></div>
+        <div class="fl-pie">
+          Toca una fila para ver el recorrido, con quién salió, qué pedido llevó y los hitos del día.
+          El <b>conductor fijo</b> es del vehículo: al cambiarlo queda para esa placa en cualquier ruta que la lleve.
         </div>
-        <div style="padding:6px 15px 2px;font-size:11px;color:var(--gris4)">
-          El <b>conductor fijo</b> es del vehículo, no de la ruta: al cambiarlo aquí queda para siempre en esa placa
-          y se aplica a cualquier ruta que la lleve. Si un día no está —incapacidad, vacaciones, descanso— se cambia
-          solo por ese día en «Hoy maneja», al pie de la tabla.
-        </div>
-        <div id="dash-veh-list" class="ar-tabla-wrap"><div class="veh-cargando">Cargando rutas…</div></div>
-        <details class="ar-maestro">
-          <summary><span class="h3ic">🚛</span> Resto de la flota y reemplazos del día
-            <span class="ar-sum-s">vehículos sin ruta hoy · quién maneja cada uno si el titular no está</span></summary>
-          <div id="maestro-cond" style="padding:0 15px 14px"><div class="veh-cargando">Cargando la flota…</div></div>
-        </details>
-      </div>
       </div>
     </section>
 
@@ -4286,7 +4279,7 @@ function _condElegibles(){
   return entregadoresDisponibles().filter(p=>/CONDUCTOR|SUPERNUMERARIO/.test(p.cargo));
 }
 function renderMaestroConductores(){
-  const cont=document.getElementById('maestro-cond');if(!cont)return;
+  const cont=document.getElementById('maestro-cond');if(!cont)return; // la tabla de flota lo reemplazó
   // Los vehículos que hoy están en una ruta ya se editan en la tabla de arriba: aquí quedan los demás.
   const enRuta=new Set(Object.values(_asigPorRuta||{}));
   const flota=(_vehCache||[]).filter(v=>!enRuta.has(v.nombre)).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
@@ -4326,7 +4319,7 @@ async function guardarConductorFijo(sel){
     toast(p?unit+' → '+_nomCorto(p.nombre):unit+' sin conductor fijo','ok');
     renderMaestroConductores();
     await _sincronizarConductoresDelDia(); // otras rutas con esa misma placa
-    if(document.getElementById('dash-veh-list'))await renderArmadoRutas();
+    if(document.getElementById('dash-veh-list'))await renderFlota();
   }catch(e){hideLoad();toast('No se pudo guardar: '+e.message,'err');}
 }
 async function guardarConductorDia(sel){
@@ -4355,7 +4348,7 @@ async function _sincronizarConductoresDelDia(){
     const asig=await r.json()||[];
     for(const a of asig)await registrarConductorAutomatico(a.ruta,a.unit_id,fecha);
     _tripPorFecha={};
-    if(document.getElementById('dash-veh-list'))await renderArmadoRutas();
+    if(document.getElementById('dash-veh-list'))await renderFlota();
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){}
 }
@@ -4982,7 +4975,7 @@ function _alertasActivas(){
   return fuera;
 }
 function refrescarModulo(m){
-  if(m==='vehiculos'){renderVehiculoCards();cargarMaestroConductores();}
+  if(m==='vehiculos')renderFlota();
   else if(m==='entregadores'){cargarEntregadores();cargarPersonalApp();}
   else if(m==='clientes')renderClientesModulo();
   else if(m==='rechazos')renderRechazosGraf();
@@ -5077,72 +5070,8 @@ async function _kmDelDia(unitId,fecha){
   }catch(e){cache[unitId]=null;}
   return cache[unitId];
 }
-/* Fila de tripulación: quién más va en ese vehículo además del conductor. */
-function _vcTripulacion(personas){
-  if(!personas||!personas.length)
-    return '<div class="vc-trip vacia">Nadie registró este vehículo ese día</div>';
-  return '<div class="vc-trip">'+personas.map(p=>
-    '<span class="vc-per" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
-      '<i class="'+(p.rol==='conductor'?'cond':'aux')+'"></i>'+_nomCorto(p.nombre)+
-      '<em>'+(p.rol==='conductor'?'Conductor':'Auxiliar')+'</em></span>').join('')+'</div>';
-}
-async function renderVehiculoCards(fechaSel){
-  const cont=document.getElementById('veh-cards');if(!cont)return;
-  poblarBuscarVehiculo();
-  const hoy=getColDate();
-  const fInp=document.getElementById('veh-trip-fecha');
-  const fecha=fechaSel||(fInp&&fInp.value)||hoy;
-  if(fInp){fInp.max=hoy;if(!fInp.value)fInp.value=fecha;}
-  const esHoy=fecha===hoy;
-  const nota=document.getElementById('veh-trip-nota');
-  if(nota)nota.innerHTML=esHoy
-    ? 'SecuritaGPS no tiene conductores cargados (por eso decía «Sin conductor»): la tripulación sale del registro que hace cada entregador en su celular.'
-    : 'Viendo el <b>'+fecha+'</b>. Visitados y pendientes son siempre de hoy; la tripulación y los km sí son de la fecha elegida.';
-  const trip=await _tripulacionDeFecha(fecha);
-  const fc=_flotaCache,dd=_dashData;
-  if(!fc||!dd){cont.innerHTML='<div class="veh-cargando">Cargando datos de la flota…</div>';return;}
-  const units=Object.keys(fc.rutaPorUnit);
-  if(!units.length){cont.innerHTML=estadoVacio('truck','Sin vehículos asignados','Asigna vehículos a las rutas para ver sus tarjetas.','gris');return;}
-  cont.innerHTML=units.sort((a,b)=>fc.rutaPorUnit[a].localeCompare(fc.rutaPorUnit[b])).map(unitId=>{
-    const ruta=fc.rutaPorUnit[unitId],u=fc.posPorUnit[unitId];
-    const col=rutaColor[ruta]||'#E30613';
-    const[est,ec,eb]=_estadoVehiculo(unitId,u);
-    const veh=(_vehCache||[]).find(v=>v.nombre===unitId);
-    const personas=(trip[ruta]||[]).slice().sort((a,b)=>(a.rol==='conductor'?0:1)-(b.rol==='conductor'?0:1));
-    const cond=personas.find(p=>p.rol==='conductor')||personas[0]||null;
-    const nombreCond=cond?_nomCorto(cond.nombre):'Sin registrar';
-    const pr=dd.porRuta[ruta]||{tot:0,ent:0,nov:0};
-    const pend=pr.tot-pr.ent;
-    const vel=u?(u.GpsSpeed||0):'—';
-    const mins=(u&&u.ReportDate)?Math.max(0,Math.round((Date.now()-new Date(u.ReportDate.replace(' ','T')).getTime())/60000)):null;
-    const encVc=u&&u.Ignition==='1';
-    const icoVc=dashTruckIcon(ruta,encVc,veh&&veh.tipo_vehiculo).url;
-    return '<div class="vc" onclick="haptic();abrirVehPanel(\''+unitId+'\',\''+ruta+'\')">'+
-      '<div class="vc-h"><img src="'+icoVc+'" width="30" height="21" alt=""><span class="vc-plate">'+unitId+'</span><span class="vc-badge" style="background:'+eb+';color:'+ec+'">'+est+'</span></div>'+
-      // La ruta y cuánta gente va; los nombres no se repiten aquí porque van en los chips de abajo.
-      '<div class="vc-sub"><b style="color:'+col+'">'+ruta+'</b> · '+
-        (personas.length?personas.length+(personas.length>1?' personas a bordo':' persona a bordo')
-                        :'<span style="color:#B45309">Sin registrar</span>')+'</div>'+
-      _vcTripulacion(personas)+
-      '<div class="vc-grid">'+
-        '<div class="vc-cell"><div class="v" style="color:#059669">'+pr.ent+'</div><div class="l">Visitados</div></div>'+
-        '<div class="vc-cell"><div class="v">'+pend+'</div><div class="l">Pendientes</div></div>'+
-        '<div class="vc-cell"><div class="v" style="color:'+(pr.nov>0?'#E30613':'#0F1117')+'">'+pr.nov+'</div><div class="l">Rechazos</div></div>'+
-      '</div>'+
-      '<div class="vc-sub" style="margin:11px 0 0;display:flex;gap:12px;flex-wrap:wrap">'+
-        '<span>▶ <b style="color:'+(vel>0?'#0E9F6E':'#6B7385')+'">'+vel+'</b> km/h</span>'+
-        '<span>🕒 '+(mins!=null?(mins<1?'ahora':'hace '+mins+' min'):'—')+'</span>'+
-        '<span id="km-'+unitId+'">📏 <span style="color:#8A90A0">calculando…</span></span>'+
-      '</div></div>';
-  }).join('');
-  // Un historial por vehículo: se pinta cada km apenas llega, sin bloquear la cuadrícula.
-  units.forEach(async unitId=>{
-    const km=await _kmDelDia(unitId,fecha);
-    const el=document.getElementById('km-'+unitId);
-    if(el)el.innerHTML='📏 <b>'+(km==null?'—':km.toLocaleString('es-CO'))+'</b> km'+
-      (km!=null?' <span style="color:#8A90A0;font-size:10px">'+(esHoy?'hoy':'ese día')+'</span>':'');
-  });
-}
+/* Las tarjetas por vehículo se reemplazaron por la consola de flota (una sola tabla con fecha
+   única). El render vive en renderFlota(); aquí solo quedaban restos del diseño anterior. */
 /* ══ MÓDULO CLIENTES: KPIs de atención + ranking ══ */
 function renderClientesModulo(){
   const cont=document.getElementById('clientes-kpis');if(!cont||!_dashData)return;
@@ -6703,56 +6632,119 @@ let _vehCache=null,_vehListCargada=false;
 let _driverCache=null;
 /* La consulta de conductores a SecuritaGPS se retiró: driverGetAll devuelve 0 registros (nunca se
    cargaron ahí) y el nombre chocaba con conductorDelVehiculo, que es el maestro propio de GMAZ. */
-/* ══ ARMADO DE RUTAS (15-ago-2026) ══
-   Antes había dos tarjetas separadas —una para el vehículo y otra para la gente— y la tripulación
-   se apilaba en filas sueltas que obligaban a desplazarse de lado. Ahora es UNA tarjeta por ruta:
-   arriba el vehículo, abajo los cinco puestos (conductor + 4 auxiliares) como casillas.
-   El conductor sale del vehículo; los auxiliares los pone el coordinador o se registran ellos. */
+/* ══════════════════════════════════════════════════════════════════════════
+   CONSOLA DE FLOTA (15-ago-2026)
+   Antes eran tres tarjetas —buscar recorrido, quién salió y armado de rutas— cada una con SU
+   selector de fecha: se podía estar viendo el recorrido de un día, la tripulación de otro y el
+   armado de hoy sin notarlo. Ahora es una sola tabla y **una sola fecha manda sobre todo**.
+   Una fila por ruta con placa, GPS, clientes, cajas, km, conductor, auxiliares y estado; al abrirla
+   se ve el recorrido, el pedido que llevó y los hitos del día — que es lo que se necesita para
+   auditar: dónde estuvo el vehículo, con quién salió y qué cargó.
+   La fecha de hoy se puede editar; las pasadas son de solo lectura (son evidencia, no borrador).
+   ══════════════════════════════════════════════════════════════════════════ */
 const AUX_MAX=4;
 let _tripAsignada={};   // {ruta:[personas]}
 let _asigPorRuta={};    // {ruta:unitId}
+let _flotaFecha=null;   // fecha que se está viendo
+let _flotaDia={};       // datos del día: clientes, cajas, novedades, geocerca, entregas
+let _flotaAbierta=null;
 
-async function renderAsignacionVehiculos(rutas){ return renderArmadoRutas(rutas); }
+const _flotaAyer=()=>{const d=new Date(getColDate()+'T12:00:00');d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];};
+async function renderAsignacionVehiculos(rutas){ return renderFlota(); }
+async function renderArmadoRutas(rutas){ return renderFlota(); }
+async function renderVehiculoCards(f){ return renderFlota(f); }
 
-async function renderArmadoRutas(rutas){
-  const cont=document.getElementById('dash-veh-list');
-  if(!cont)return;
-  window._rutasAsig=rutas||window._rutasAsig||[];
-  rutas=window._rutasAsig;
-  if(!_vehListCargada)cont.innerHTML='<div class="veh-cargando">Cargando rutas…</div>';
+async function renderFlota(fechaSel,forzar){
+  const cont=document.getElementById('dash-veh-list');if(!cont)return;
+  const hoy=getColDate();
+  _flotaFecha=fechaSel||_flotaFecha||hoy;
+  const fecha=_flotaFecha, esHoy=fecha===hoy;
+  const fInp=document.getElementById('fl-fecha');if(fInp){fInp.max=hoy;fInp.value=fecha;}
+  document.getElementById('fl-hoy')?.classList.toggle('on',esHoy);
+  const modo=document.getElementById('fl-modo');
+  if(modo)modo.innerHTML=esHoy
+    ? '<span class="fl-vivo"></span> en vivo · se puede editar'
+    : '🔒 '+_tcFechaLarga(fecha)+' · solo lectura';
+  cont.innerHTML='<div class="veh-cargando">Reuniendo la flota del '+fecha+'…</div>';
   try{
-    const fecha=getColDate();
     if(!_vehCache)_vehCache=await secVehiculos()||[];
-    const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=*&fecha=eq.'+fecha,
-      {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
-    if(!rAsig.ok&&rAsig.status===404){
-      cont.innerHTML='<div class="veh-cargando">⚠ Falta crear la tabla "asignacion_vehiculo" en Supabase. Pide el SQL para crearla.</div>';
-      return;
-    }
-    const asignadas=rAsig.ok?await rAsig.json():[];
-    _asigPorRuta={};asignadas.forEach(a=>_asigPorRuta[a.ruta]=a.unit_id);
-    const usoUnit={};asignadas.forEach(a=>usoUnit[a.unit_id]=(usoUnit[a.unit_id]||0)+1);
-    await cargarMaestroConductores();
-    try{ _tripAsignada=await cargarRegistroDia(fecha)||{}; }catch(e){ _tripAsignada={}; }
-    cont.innerHTML=rutas.length
-      ? '<table class="ar-tabla"><thead><tr>'+
-          '<th>Ruta</th><th>Placa</th><th class="r">Clientes</th><th class="r">Cajas</th>'+
-          '<th>Conductor fijo</th><th>Auxiliar 1</th><th>Auxiliar 2</th><th>Auxiliar 3</th><th>Estado</th>'+
-        '</tr></thead><tbody>'+rutas.map(r=>_arFila(r,usoUnit)).join('')+'</tbody></table>'
-      : '<div class="veh-cargando">No hay rutas cargadas hoy. Sube el PPAS desde la Rutina diaria.</div>';
-    _vehListCargada=true;
-    const conVeh=rutas.filter(r=>_asigPorRuta[r]).length;
-    const conCond=rutas.filter(r=>(_tripAsignada[r]||[]).some(x=>x.rol==='conductor')).length;
-    const meta=document.getElementById('ar-meta');
-    if(meta)meta.textContent=conVeh+' de '+rutas.length+' con placa · '+conCond+' con conductor';
+    await cargarMaestroConductores(forzar,fecha);
+    _flotaDia=await _flotaDatosDia(fecha);
+    _asigPorRuta=_flotaDia.asig;
+    _tripAsignada=_flotaDia.reg;
+    const rutas=Object.keys(_flotaDia.porRuta).length
+      ? [...new Set([...Object.keys(_flotaDia.porRuta),...Object.keys(_asigPorRuta)])].sort()
+      : [...new Set([...Object.keys(_asigPorRuta),...Object.keys(_flotaDia.hojas)])].sort();
+    const usoUnit={};Object.values(_asigPorRuta).forEach(u=>usoUnit[u]=(usoUnit[u]||0)+1);
+    const asignados=new Set(Object.values(_asigPorRuta));
+    const sinRuta=(_vehCache||[]).filter(v=>!asignados.has(v.nombre))
+      .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+    cont.innerHTML='<table class="fl-tabla"><thead><tr>'+
+      '<th style="width:22px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
+      '<th class="r">Clientes</th><th class="r">Cajas</th><th class="r">Km</th>'+
+      '<th>Conductor</th><th>Auxiliares</th><th>Estado</th></tr></thead><tbody>'+
+      (rutas.length?rutas.map((r,i)=>_flFila(r,i,usoUnit,esHoy)).join('')
+        :'<tr><td colspan="10"><div class="veh-cargando">No hay rutas ese día. Sube el PPAS desde la Rutina diaria.</div></td></tr>')+
+      sinRuta.map((v,i)=>_flFilaSinRuta(v,esHoy)).join('')+
+      '</tbody></table>';
+    const meta=document.getElementById('fl-meta');
+    if(meta)meta.textContent=rutas.length+' rutas · '+asignados.size+' vehículos en calle · '+sinRuta.length+' sin ruta';
+    // Los km salen de una consulta de historial por vehículo: se pintan al llegar.
+    [...asignados].forEach(async u=>{
+      const km=await _kmDelDia(u,fecha);
+      document.querySelectorAll('[data-km="'+u+'"]').forEach(el=>{
+        el.innerHTML=km==null?'—':'<b>'+km.toLocaleString('es-CO')+'</b>';
+      });
+    });
   }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
 }
 
-/* Una fila por ruta, en el orden que pidió el coordinador:
-   Ruta · Placa · Clientes · Cajas · Conductor fijo · Auxiliar 1 · 2 · 3 · Estado.
-   El conductor fijo se edita aquí mismo (es del vehículo, no de la ruta), así que ya no hace falta
-   una segunda tabla para la flota: al pie quedan solo los vehículos que hoy no salen. */
-function _arFila(ruta,usoUnit){
+/* Todo lo del día en una sola pasada: asignaciones, tripulación, cargue, clientes, pedido,
+   entregas confirmadas, novedades y eventos de geocerca. */
+async function _flotaDatosDia(fecha){
+  const H={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
+  const hoy=getColDate(), esHoy=fecha===hoy;
+  const out={asig:{},reg:{},hojas:{},porRuta:{},pedido:{},entregas:{},novedades:{},geo:{}};
+  const gj=async u=>{try{const r=await fetch(u,{headers:H});return r.ok?await r.json():null;}catch(e){return null;}};
+  const gs=async n=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/'+n+'?t='+Date.now());
+    return r.ok?await r.json():null;}catch(e){return null;}};
+  const [asig,reg,hojas,ppas,ped,ent,nov,geo]=await Promise.all([
+    gj(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha),
+    cargarRegistroDia(fecha),
+    gs('HOJAS_INDEX.json'),
+    gs('PPAS_INDEX.json'),
+    gs('PEDIDOS_INDEX.json'),
+    gj(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=ruta,codigo_cliente,created_at,estado&fecha=eq.'+fecha),
+    gj(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,nombre_cliente,motivo,created_at,conductor&fecha=eq.'+fecha),
+    gj(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=ruta,unit_id,tipo,hora,distancia_limite_m&fecha=eq.'+fecha)
+  ]);
+  (asig||[]).forEach(a=>out.asig[a.ruta]=a.unit_id);
+  out.reg=reg||{};
+  out.hojas=hojas||{};
+  // Clientes por ruta: del PPAS de esa fecha (clientes_rutas solo tiene el día en curso)
+  if(ppas)Object.values(ppas).forEach(c=>{const r=c.ruta||c.r;if(!r)return;
+    out.porRuta[r]=out.porRuta[r]||{tot:0,caj:0};out.porRuta[r].tot++;out.porRuta[r].caj+=parseFloat(c.caj||0)||0;});
+  else if(esHoy&&_dashData&&_dashData.porRuta)
+    Object.keys(_dashData.porRuta).forEach(r=>out.porRuta[r]={tot:_dashData.porRuta[r].tot,caj:0});
+  // Pedido del Libro por ruta: clientes, cajas y valor
+  if(ped)Object.keys(ped).forEach(cod=>{
+    const c=ped[cod],r=c.r||'—';
+    const p=out.pedido[r]=out.pedido[r]||{cli:0,caj:0,val:0};
+    p.cli++;
+    (c.b||[]).forEach(b=>(b.i||[]).forEach(it=>{
+      p.caj+=it[2]||0;
+      const pr=parseFloat(String(it[4]||'0').replace(/\./g,'').replace(',','.'))||0;
+      p.val+=pr*(it[2]||0);
+    }));
+  });
+  (ent||[]).filter(x=>x.estado==='entregado').forEach(x=>{
+    const r=x.ruta||'—';(out.entregas[r]=out.entregas[r]||[]).push(x);});
+  (nov||[]).forEach(x=>{const r=x.ruta||'—';(out.novedades[r]=out.novedades[r]||[]).push(x);});
+  (geo||[]).forEach(x=>{const r=x.ruta||'—';(out.geo[r]=out.geo[r]||[]).push(x);});
+  return out;
+}
+
+function _flFila(ruta,i,usoUnit,esHoy){
   const col=rutaColor[ruta]||'#4A5060';
   const unit=_asigPorRuta[ruta]||'';
   const compartido=unit&&usoUnit[unit]>1;
@@ -6760,61 +6752,204 @@ function _arFila(ruta,usoUnit){
   const cond=personas.find(x=>x.rol==='conductor')||null;
   const auxs=personas.filter(x=>x.rol!=='conductor');
   const fijo=unit?((maestroConductores||{})[unit]||null):null;
-  const hoyManeja=unit?conductorDelVehiculo(unit):null;
-  const pr=(_dashData&&_dashData.porRuta&&_dashData.porRuta[ruta])||null;
-  const carg=(hojasIndex&&hojasIndex[ruta])?hojasIndex[ruta].cargueCaj:null;
-  const opciones=(_vehCache||[]).map(v=>'<option value="'+v.nombre+'"'+(v.nombre===unit?' selected':'')+'>'+
-    v.nombre+(v.marca?' · '+v.marca+' '+(v.modelo||''):'')+'</option>').join('');
-  const est=!unit?['sin-veh','Falta placa']
-    :!fijo?['sin-cond','Sin conductor fijo']
-    :!auxs.length?['sin-aux','Sin auxiliar']
-    :['ok','Lista'];
-  // Conductor: una vez elegido se ve como ficha con iniciales, igual que los auxiliares.
-  // Elegirlo en el selector hace dos cosas: lo deja como conductor FIJO de esa placa (permanente)
-  // y lo pone de una vez en la ruta de hoy.
+  const pr=_flotaDia.porRuta[ruta]||null;
+  const carg=(_flotaDia.hojas[ruta]||{}).cargueCaj;
+  const est=!unit?['sin-veh','Falta placa']:!cond&&!fijo?['sin-cond','Sin conductor']
+    :!auxs.length?['sin-aux','Sin auxiliar']:['ok','Lista'];
+  const g=_flGps(unit,esHoy);
+  // Placa
+  const celPlaca=esHoy
+    ? '<select class="fl-sel placa" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
+      '<option value="">— sin placa —</option>'+
+      (_vehCache||[]).map(v=>'<option value="'+v.nombre+'"'+(v.nombre===unit?' selected':'')+'>'+
+        v.nombre+(v.marca?' · '+v.marca+' '+(v.modelo||''):'')+'</option>').join('')+'</select>'
+    : (unit?'<b>'+unit+'</b><div class="fl-sub">'+_flVehTxt(unit)+'</div>':'<span class="pill mute">sin placa</span>');
+  // Conductor
   let celCond;
-  if(!unit){
-    celCond='<span class="ar-nada">asigna la placa</span>';
-  }else if(cond){
-    celCond=_arChip(cond,ruta,'conductor');
-    if(hoyManeja&&hoyManeja.esReemplazo&&String(hoyManeja.ced)===String(cond.ced))
-      celCond+='<span class="ar-org coord" title="'+(hoyManeja.motivo||'')+'">reemplaza al fijo</span>';
-  }else if(fijo){
-    // Es el fijo de la placa pero todavía no está puesto en la ruta de hoy
-    celCond=_arChipSugerido(fijo,ruta,unit);
-  }else{
-    celCond=_arSelCond(ruta,unit,null);
-  }
-  // Tres columnas de auxiliar; si llegara un cuarto, se muestra apilado en la última
-  let celAux='';
-  for(let i=0;i<3;i++){
-    const a=auxs[i];
-    if(a){
-      celAux+='<td>'+_arChip(a,ruta,'auxiliar')+((i===2&&auxs.length>3)?auxs.slice(3).map(x=>_arChip(x,ruta,'auxiliar')).join(''):'')+'</td>';
-    }else{
-      celAux+='<td>'+_arSelAux(ruta)+'</td>';
-    }
-  }
-  return '<tr class="ar-fila '+est[0]+'">'+
-    '<td><span class="ar-ruta" style="background:'+col+'">'+ruta+'</span></td>'+
-    '<td><select class="ar-sel placa" data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)">'+
-      '<option value="">— sin placa —</option>'+opciones+'</select>'+
-      (compartido?'<span class="ar-org coord">compartido</span>':'')+'</td>'+
+  if(!unit)celCond='<span class="fl-nada">'+(esHoy?'asigna la placa':'—')+'</span>';
+  else if(cond)celCond=_arChip(cond,ruta,'conductor',!esHoy);
+  else if(fijo)celCond=esHoy?_arChipSugerido(fijo,ruta,unit)
+    :'<span class="pill mute">no salió registrado</span>';
+  else celCond=esHoy?_arSelCond(ruta,unit,null):'<span class="pill mute">sin conductor</span>';
+  // Auxiliares
+  let celAux=auxs.slice(0,AUX_MAX).map(a=>_arChip(a,ruta,'auxiliar',!esHoy)).join('');
+  if(esHoy&&auxs.length<AUX_MAX)celAux+=_arSelAux(ruta);
+  if(!celAux)celAux='<span class="pill mute">—</span>';
+  return '<tr class="fl-fila '+est[0]+'" id="flf-'+i+'" onclick="flAbrir('+i+',\''+ruta+'\',event)">'+
+    '<td><span class="caret">▸</span></td>'+
+    '<td><span class="ruta-b" style="background:'+col+'">'+ruta+'</span></td>'+
+    '<td>'+celPlaca+(compartido?'<span class="ar-org coord">compartido</span>':'')+'</td>'+
+    '<td>'+g+'</td>'+
     '<td class="r num">'+(pr?pr.tot:'—')+'</td>'+
-    '<td class="r num">'+(carg?Math.round(carg):'—')+'</td>'+
-    '<td>'+celCond+'</td>'+
-    celAux+
-    '<td><span class="ar-est '+est[0]+'">'+est[1]+'</span></td>'+
-  '</tr>';
+    '<td class="r num">'+(carg?Math.round(carg):(pr&&pr.caj?Math.round(pr.caj):'—'))+'</td>'+
+    '<td class="r num" data-km="'+unit+'">'+(unit?'<span class="fl-cargando">…</span>':'—')+'</td>'+
+    '<td>'+celCond+'</td><td>'+celAux+'</td>'+
+    '<td><span class="ar-est '+est[0]+'">'+est[1]+'</span></td></tr>'+
+    '<tr class="fl-det" id="fld-'+i+'" style="display:none"><td colspan="10"><div class="fl-det-in" id="fldc-'+i+'"></div></td></tr>';
 }
-function _arChip(p,ruta,rol){
+
+function _flFilaSinRuta(v,esHoy){
+  const fijo=(maestroConductores||{})[v.nombre]||null;
+  const celCond=esHoy?_arSelCond('',v.nombre,fijo)
+    :(fijo?'<span class="pill mute">'+_nomCorto(fijo.nombre,3)+'</span>':'<span class="pill mute">sin conductor fijo</span>');
+  return '<tr class="fl-fila sin-ruta">'+
+    '<td></td><td><span class="pill mute">sin ruta</span></td>'+
+    '<td><b>'+v.nombre+'</b><div class="fl-sub">'+(v.marca?v.marca+' '+(v.modelo||''):(v.tipo_vehiculo||''))+'</div></td>'+
+    '<td>'+_flGps(v.nombre,esHoy)+'</td>'+
+    '<td class="r">—</td><td class="r">—</td><td class="r num" data-km="'+v.nombre+'"><span class="fl-cargando">…</span></td>'+
+    '<td>'+celCond+'</td><td><span class="pill mute">—</span></td>'+
+    '<td><span class="ar-est mute">No salió</span></td></tr>';
+}
+
+function _flVehTxt(unit){
+  const v=(_vehCache||[]).find(x=>x.nombre===unit);
+  return v?((v.marca||'')+' '+(v.modelo||'')).trim()||(v.tipo_vehiculo||''):'';
+}
+function _flGps(unit,esHoy){
+  if(!unit)return '<span class="fl-nada">—</span>';
+  if(!esHoy)return '<span class="fl-gps" style="color:var(--gris4)"><i style="background:var(--gris3)"></i>histórico</span>';
+  const u=(_flotaCache&&_flotaCache.posPorUnit)?_flotaCache.posPorUnit[unit]:null;
+  if(!u)return '<span class="fl-gps" style="color:#8A90A0"><i style="background:#8A90A0"></i>sin señal</span>';
+  const vel=parseFloat(u.GpsSpeed||0)||0, enc=u.Ignition==='1';
+  const c=vel>3?'#1A56DB':enc?'#059669':'#D97706';
+  const t=vel>3?'en ruta · '+Math.round(vel)+' km/h':enc?'encendido':'detenido';
+  return '<span class="fl-gps" style="color:'+c+'"><i style="background:'+c+'"></i>'+t+'</span>';
+}
+
+/* ══ DETALLE DE AUDITORÍA ══ dónde estuvo, con quién, qué llevó y qué pasó. */
+async function flAbrir(i,ruta,ev){
+  if(ev&&ev.target.closest('select,button'))return; // no abrir al usar los controles
+  const d=document.getElementById('fld-'+i),f=document.getElementById('flf-'+i);
+  const ya=d.style.display!=='none';
+  if(_flotaAbierta!==null&&_flotaAbierta!==i){
+    const p=document.getElementById('fld-'+_flotaAbierta);if(p)p.style.display='none';
+    document.querySelectorAll('.fl-fila.abierta').forEach(x=>x.classList.remove('abierta'));
+  }
+  d.style.display=ya?'none':'table-row';
+  f.classList.toggle('abierta',!ya);
+  _flotaAbierta=ya?null:i;
+  if(ya)return;
+  const cont=document.getElementById('fldc-'+i);
+  cont.innerHTML='<div class="veh-cargando">Reuniendo el día de '+ruta+'…</div>';
+  const fecha=_flotaFecha||getColDate();
+  const unit=_asigPorRuta[ruta]||'';
+  const personas=(_tripAsignada[ruta]||[]);
+  const ped=_flotaDia.pedido[ruta]||null;
+  const ent=(_flotaDia.entregas[ruta]||[]);
+  const nov=(_flotaDia.novedades[ruta]||[]);
+  const geo=(_flotaDia.geo[ruta]||[]).filter(x=>!unit||x.unit_id===unit);
+  const km=unit?await _kmDelDia(unit,fecha):null;
+  const pts=unit?await _flPuntos(unit,fecha):[];
+  // Hitos ordenados por hora
+  const hitos=[];
+  personas.forEach(p=>{if(p.hora)hitos.push([p.hora,(p.rol==='conductor'?'Conductor':'Auxiliar')+': '+_nomCorto(p.nombre,3)+
+    (p.origen==='persona'?' se registró en su celular':p.origen==='sistema'?' quedó por el vehículo':' lo asignó el coordinador'),'ok']);});
+  if(ent.length){
+    const t=ent.filter(x=>x.created_at).map(x=>x.created_at).sort();
+    if(t.length){hitos.push([t[0],'Primera entrega confirmada','info']);
+      if(t.length>1)hitos.push([t[t.length-1],'Última entrega confirmada · '+ent.length+' en total','info']);}
+  }
+  nov.forEach(n=>{if(n.created_at)hitos.push([n.created_at,'Novedad · '+(n.motivo||'')+' · '+(n.nombre_cliente||''),'bad']);});
+  geo.forEach(g=>{if(g.hora)hitos.push([g.hora,(g.tipo==='salio'?'Salió de la geocerca':'Volvió a la geocerca')+
+    (g.distancia_limite_m?' · '+g.distancia_limite_m+' m':''),g.tipo==='salio'?'warn':'ok']);});
+  hitos.sort((a,b)=>new Date(a[0])-new Date(b[0]));
+  const hh=t=>{try{return new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});}catch(e){return '—';}};
+  cont.innerHTML=
+    '<div class="fl-det-col">'+
+      '<div class="fl-box"><div class="fl-bt">Recorrido del día'+(km!=null?' · '+km.toLocaleString('es-CO')+' km':'')+'</div>'+
+        (pts.length>1?_flSpark(pts):'<div class="fl-nada">Sin historial GPS guardado de ese día</div>')+
+        '<div class="fl-metricas">'+
+          '<span>Placa <b>'+(unit||'—')+'</b></span>'+
+          '<span>Puntos GPS <b>'+pts.length+'</b></span>'+
+          '<span>Velocidad máx <b>'+(pts.length?Math.round(Math.max(...pts.map(x=>x.v)))+' km/h':'—')+'</b></span>'+
+          '<span>En movimiento <b>'+_flHorasMov(pts)+'</b></span>'+
+        '</div>'+
+        (unit?'<button class="fl-btn" onclick="event.stopPropagation();toggleRecorrido(\''+unit+'\',\''+ruta+'\',\''+fecha+'\')">Ver el recorrido en el mapa ▶</button>':'')+
+      '</div>'+
+      '<div class="fl-box"><div class="fl-bt">Con quién salió</div>'+
+        (personas.length?'<div class="fl-crew">'+personas.map(p=>
+          '<span class="per '+(p.rol==='conductor'?'cond':'')+'"><span class="ar-av '+(p.rol==='conductor'?'cond':'aux')+'">'+
+          _tcIniciales(p.nombre)+'</span><span class="ar-cn"><b>'+_nomCorto(p.nombre,3)+'</b><em>'+
+          (p.rol==='conductor'?'Conductor':'Auxiliar')+' · C.C. '+(p.ced||'—')+'</em></span></span>').join('')+'</div>'
+          :'<div class="fl-nada">Nadie quedó registrado en esta ruta ese día</div>')+
+      '</div>'+
+    '</div>'+
+    '<div class="fl-det-col">'+
+      '<div class="fl-box"><div class="fl-bt">Qué llevó</div>'+
+        '<div class="fl-nums">'+
+          '<div><b class="num">'+(ped?ped.cli:'—')+'</b><small>Clientes con pedido</small></div>'+
+          '<div><b class="num">'+(ped?Math.round(ped.caj):'—')+'</b><small>Cajas del Libro</small></div>'+
+          '<div><b class="num">'+((_flotaDia.hojas[ruta]||{}).cargueCaj?Math.round(_flotaDia.hojas[ruta].cargueCaj):'—')+'</b><small>Cajas cargadas</small></div>'+
+          '<div><b class="num">'+(ped&&ped.val?_pesosCorto(ped.val):'—')+'</b><small>Valor del pedido</small></div>'+
+          '<div><b class="num" style="color:var(--verde)">'+ent.length+'</b><small>Entregas confirmadas</small></div>'+
+          '<div><b class="num" style="color:'+(nov.length?'var(--rojo)':'var(--negro)')+'">'+nov.length+'</b><small>Novedades</small></div>'+
+        '</div></div>'+
+      '<div class="fl-box"><div class="fl-bt">Hitos del día · '+hitos.length+'</div>'+
+        (hitos.length?hitos.map(h=>'<div class="fl-hito"><span class="h">'+hh(h[0])+'</span>'+
+          '<span class="l"><i style="background:'+(h[2]==='bad'?'var(--rojo)':h[2]==='warn'?'var(--amarillo)':h[2]==='info'?'var(--azul)':'var(--verde)')+'"></i></span>'+
+          '<span class="x">'+h[1]+'</span></div>').join('')
+          :'<div class="fl-nada">Sin hitos registrados ese día</div>')+
+      '</div>'+
+    '</div>';
+}
+
+/* Puntos del recorrido, normalizados: {t,v} hora y velocidad. */
+async function _flPuntos(unitId,fecha){
+  try{
+    const v=(_vehCache||[]).find(x=>x.nombre===unitId);if(!v)return [];
+    const pts=await obtenerHistorialVehiculo(v,fecha);
+    return (pts||[]).map(pt=>({
+      t:pt.ReportDate||pt.reportdate||pt.fecha||null,
+      v:parseFloat(pt.GpsSpeed!=null?pt.GpsSpeed:(pt.velocidad||0))||0
+    })).filter(x=>x.t);
+  }catch(e){return [];}
+}
+function _flSpark(pts){
+  const n=Math.min(pts.length,120), paso=Math.max(1,Math.floor(pts.length/n));
+  const m=[];for(let i=0;i<pts.length;i+=paso)m.push(pts[i].v);
+  const max=Math.max(20,...m);
+  const P=m.map((v,i)=>((i/(m.length-1||1))*300).toFixed(1)+','+(56-(v/max)*48).toFixed(1)).join(' ');
+  return '<svg class="fl-spark" viewBox="0 0 300 62" preserveAspectRatio="none" role="img" aria-label="Velocidad del vehículo a lo largo del día">'+
+    '<line x1="0" y1="56" x2="300" y2="56" stroke="var(--gris2)" stroke-width="1"/>'+
+    '<polyline points="'+P+'" fill="none" stroke="var(--azul)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+function _flHorasMov(pts){
+  if(pts.length<2)return '—';
+  let seg=0;
+  for(let i=1;i<pts.length;i++){
+    if(pts[i].v>3){const d=(new Date(pts[i].t)-new Date(pts[i-1].t))/1000;if(d>0&&d<1800)seg+=d;}
+  }
+  const h=Math.floor(seg/3600),mn=Math.round((seg%3600)/60);
+  return h?h+' h '+mn+' min':mn+' min';
+}
+
+/* Exportar la tabla del día para auditoría. */
+function exportarFlota(){
+  const fecha=_flotaFecha||getColDate();
+  const filas=[['Fecha','Ruta','Placa','Vehiculo','Clientes','Cajas','Km','Conductor','Cedula','Auxiliares','Estado']];
+  document.querySelectorAll('.fl-fila:not(.sin-ruta)').forEach(tr=>{
+    const t=tr.children;
+    const personas=Array.from(tr.querySelectorAll('.ar-chip-per')).map(c=>c.title.split(' · ')[0]);
+    filas.push([fecha,t[1].innerText.trim(),
+      (t[2].querySelector('select')?t[2].querySelector('select').value:t[2].innerText.trim().split('\n')[0]),
+      '', t[4].innerText.trim(), t[5].innerText.trim(), t[6].innerText.trim(),
+      personas[0]||'', '', personas.slice(1).join(' / '), t[9].innerText.trim()]);
+  });
+  const csv='\ufeff'+filas.map(f=>f.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='flota-'+fecha+'.csv';a.click();
+  toast('Exportado: flota-'+fecha+'.csv','ok');
+}
+
+function _arChip(p,ruta,rol,soloLectura){
   const esCond=rol==='conductor'||p.rol==='conductor';
   const et=p.origen==='persona'?['ok','confirmó']:p.origen==='sistema'?['sis','puesto']:['coord','asignado'];
   return '<span class="ar-chip-per'+(esCond?' es-cond':'')+'" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
     '<span class="ar-av '+(esCond?'cond':'aux')+'">'+_tcIniciales(p.nombre)+'</span>'+
     '<span class="ar-cn"><b>'+_nomCorto(p.nombre,3)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
-    '<button class="ar-x" title="'+(esCond?'Quitar de la ruta (el conductor fijo de la placa no se borra)':'Quitar de la ruta')+
-      '" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button></span>';
+    (soloLectura?'':'<button class="ar-x" title="'+(esCond?'Quitar de la ruta (el conductor fijo de la placa no se borra)':'Quitar de la ruta')+
+      '" onclick="haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">✕</button>')+'</span>';
 }
 /* El conductor fijo de la placa que todavía no está puesto en la ruta de hoy: misma ficha, en gris,
    con un toque para ponerlo. */
@@ -6822,7 +6957,7 @@ function _arChipSugerido(f,ruta,unit){
   return '<span class="ar-chip-per sugerido" title="Conductor fijo de '+unit+'">'+
     '<span class="ar-av gris">'+_tcIniciales(f.nombre)+'</span>'+
     '<span class="ar-cn"><b>'+_nomCorto(f.nombre,3)+'</b><em class="sis">fijo de la placa</em></span>'+
-    '<button class="ar-mas" title="Ponerlo en la ruta de hoy" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderArmadoRutas())">+</button></span>';
+    '<button class="ar-mas" title="Ponerlo en la ruta de hoy" onclick="haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderFlota())">+</button></span>';
 }
 /* Selector de conductor: al elegirlo queda como fijo de la placa y entra en la ruta de hoy. */
 function _arSelCond(ruta,unit,fijo){
@@ -6854,7 +6989,7 @@ async function asignarTripulante(sel){
     hideLoad();
     toast(_nomCorto(p.nombre)+' → '+ruta+' como '+(rol==='conductor'?'conductor':'auxiliar'),'ok');
     _tripPorFecha={};
-    await renderArmadoRutas();
+    await renderFlota();
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){hideLoad();toast('No se pudo asignar: '+e.message,'err');}
 }
@@ -6868,7 +7003,7 @@ async function quitarTripulante(ruta,ced){
       {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
     hideLoad();toast('Quitado de '+ruta,'ok');
     _tripPorFecha={};
-    await renderArmadoRutas();
+    await renderFlota();
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){hideLoad();toast('No se pudo quitar: '+e.message,'err');}
 }
@@ -6895,7 +7030,7 @@ async function guardarAsignacionRuta(sel){
       toast(ruta+' sin vehículo asignado','ok');
       pintarFlotaEnVivo();
       _tripPorFecha={};
-      await renderArmadoRutas();
+      await renderFlota();
       if(document.getElementById('tc-rutas'))cargarTorreControl(true);
     }catch(e){toast('Error quitando asignación','err');}
     return;
@@ -6918,7 +7053,7 @@ async function guardarAsignacionRuta(sel){
     if(!cond)toast('Asigna el conductor fijo de '+unitId+' abajo, en «Conductor fijo por vehículo»','err');
     pintarFlotaEnVivo();
     _tripPorFecha={};
-    await renderArmadoRutas();
+    await renderFlota();
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){toast('Error asignando vehículo','err');}
 }
