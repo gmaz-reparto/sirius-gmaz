@@ -62,6 +62,16 @@ strong{font-weight:700;color:var(--tinta)}
 code{font-family:var(--mono);font-size:.88em;background:var(--linea-2);padding:1px 5px;border-radius:4px}
 
 /* ── Índice ──────────────────────────────────────────── */
+.estado-impl{border:1px solid var(--verde);background:var(--verde-s);padding:18px 20px;margin-top:30px}
+.ei-t{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--verde);font-weight:700}
+.ei-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin:12px 0 4px}
+.ei-g>div{display:flex;flex-direction:column;gap:2px}
+.ei-g b{font-family:var(--mono);font-size:11px;color:var(--verde)}
+.ei-g span{font-size:13px;font-weight:600;color:var(--tinta)}
+.ei-g i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--verde)}
+.estado-impl p{font-size:13px;color:var(--tinta-2);margin:8px 0 0}
+.resuelto{border-top:1px solid var(--verde);margin-top:10px;padding-top:9px;font-size:13.5px;color:var(--tinta-2)}
+.resuelto b{color:var(--verde)}
 .indice{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;
   background:var(--linea);border:1px solid var(--linea);margin-top:34px}
 .indice a{background:var(--tarjeta);padding:13px 15px;text-decoration:none;color:var(--tinta);display:block}
@@ -187,6 +197,18 @@ td b{font-weight:700}
     <div class="meta"><dt>Hallazgos</dt><dd>17 · 6 críticos</dd></div>
     <div class="meta"><dt>Duplicidades</dt><dd>11 confirmadas</dd></div>
     <div class="meta"><dt>Estado</dt><dd>Sin modificar nada</dd></div>
+  </div>
+
+  <div class="estado-impl">
+    <div class="ei-t">Estado · las cinco fases quedaron implementadas</div>
+    <div class="ei-g">
+      <div><b>F1</b><span>Verdad de las cifras</span><i>listo</i></div>
+      <div><b>F2</b><span>Cerrar la caja</span><i>listo</i></div>
+      <div><b>F3</b><span>Un lugar por pregunta</span><i>listo</i></div>
+      <div><b>F4</b><span>Nombres y lectura</span><i>listo</i></div>
+      <div><b>F5</b><span>Retorno y cierre</span><i>listo</i></div>
+    </div>
+    <p>Este documento se conserva como la fotografía del <b>antes</b>. Cada hallazgo dice ahora cómo quedó resuelto.</p>
   </div>
 
   <nav class="indice">
@@ -577,6 +599,12 @@ y las sueltas ni siquiera entran en ella.</div>
       <ul><li>Acumulado por rango</li><li>Ranking de rutas y personas</li><li>Base de la comisión</li></ul>
       <div class="de">hoy · disperso en 5 pantallas</div>
     </div>
+    <div class="resuelto"><b>Resuelto.</b> El titular pasó a «Efectividad de entrega» y descuenta todo lo devuelto: 97 % el 15-ago. El tramo de comisión ya no aparece mientras haya devoluciones sin decidir — dice «faltan 26 por decidir».</div>
+    <div class="resuelto"><b>Resuelto.</b> Tres estados que suman el total: confirmado 35 + sin noticia 381 + con novedad 41 = 457. «Cumplimiento 91 %» desapareció.</div>
+    <div class="resuelto"><b>Resuelto.</b> El titular declara su base (1.944 cj de la Hoja) y el cuadre compara además el PPAS. Se descubrió de paso que el histórico usaba la hoja de ayer para cualquier día anterior: ahora cada día lee la suya.</div>
+    <div class="resuelto"><b>Resuelto.</b> Las unidades viajan al lado de las cajas en el titular, en la tabla de rutas, en la ficha de cada novedad y en la franja de la caja.</div>
+    <div class="resuelto"><b>Resuelto.</b> Alerta propia «Rutas cargadas sin clientes · 237 cj» en la bandeja del coordinador, y estado propio en el cuadre.</div>
+    <div class="resuelto"><b>Resuelto.</b> Los motivos parciales ya no dejan confirmar sin decir cuánto vuelve; los totales marcan el pedido completo solos. La ficha avisa «sin cuantificar» cuando nadie marcó nada.</div>
   </div>
 
   <h3>Flujo de la jornada</h3>
