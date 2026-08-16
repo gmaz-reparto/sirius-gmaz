@@ -1382,6 +1382,14 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
   font-family:inherit;font-size:9px;font-weight:800;color:var(--gris4);cursor:pointer;opacity:0;transition:opacity .12s}
 .tc-cm:hover .tc-rol{opacity:1}
 .tc-rol:hover{background:var(--negro);color:#fff;border-color:var(--negro)}
+.ec-fila{display:flex;gap:0;overflow-x:auto;margin:0 0 8px;border-radius:9px;overflow:hidden}
+.ec-b{flex:1;min-width:104px;padding:10px 12px}
+.ec-l{font-size:8.5px;font-weight:800;letter-spacing:.1em;opacity:.75}
+.ec-v{font-size:20px;font-weight:800;letter-spacing:-.5px;line-height:1.15;margin-top:2px;font-variant-numeric:tabular-nums}
+.ec-s{font-size:9.5px;font-weight:700;opacity:.75;margin-top:1px}
+.ec-b:first-child{background:var(--negro)!important;color:#fff!important}
+.ec-b:first-child .ec-l,.ec-b:first-child .ec-s{opacity:.6}
+.ec-nota{font-size:11px;color:var(--gris5);line-height:1.5;margin-bottom:12px}
 .tc-sub{font-size:9px;font-weight:700;color:var(--gris4);margin-top:2px;letter-spacing:.2px}
 .tc-warn{margin-top:4px;font-size:9.5px;font-weight:800;color:#B45309}
 .tc-vb{margin-top:6px;height:23px;padding:0 9px;border-radius:6px;border:1px solid var(--gris3);background:#fff;
@@ -2324,6 +2332,9 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <!-- "Cliente cerrado" exige foto de la FACHADA (no de la factura) -->
     <div id="ns-fachada" class="ns-fachada" style="display:none"></div>
   </div>
+  <div id="ns-aviso-cant" style="display:none;background:#FFF8E6;border:1px solid rgba(217,119,6,.25);border-radius:10px;padding:11px 13px;margin:10px 0;font-size:12px;color:#B45309;line-height:1.5">
+    <b>Marca cuánto se devuelve.</b> Toca los <b>+</b> de cada producto para decir cuántas cajas o unidades vuelven al camión. Sin eso no se puede liquidar ni reclamar la diferencia.
+  </div>
   <div id="ns-tabla" style="display:none"></div>
   <div class="ns-actions">
     <button class="ns-cancel" onclick="haptic();closeNovModal()">Cancelar</button>
@@ -3255,7 +3266,13 @@ function cerrarPedido(){document.getElementById('ped-ovl').classList.remove('sho
 /* ══════════════ TABLA DE DEVOLUCIÓN EMBEBIDA EN EL MODAL DE NOVEDAD ══════════════ */
 let devSel={}; // key -> {cod,desc,precio,pedCaj,pedBot,und,devCaj,devUnd}
 /* Solo "cliente cerrado" rechaza todo automáticamente; los demás motivos son a elección. */
-function _motivoEsTotal(m){return /CERRAD/i.test(m||'');}
+/* Motivos en los que vuelve el pedido COMPLETO: la tabla se marca sola.
+   Los demás —producto no cargado y rechazo parcial— son por definición una parte, así que el
+   entregador tiene que decir cuánta. Medido el 15-ago-2026: de 41 novedades, 15 se guardaron sin
+   un solo producto marcado y otras 10 solo con unidades sueltas; los 4 «cliente cerrado» fueron
+   los únicos completos, justamente porque el sistema los marcaba solo. */
+function _motivoEsTotal(m){return /CERRAD|SIN DINERO|NO HIZO PEDIDO|MAL ELABORADO/i.test(m||'');}
+function _motivoExigeCantidad(m){return /NO CARGADO|PARCIAL/i.test(m||'');}
 function _resumenDetalle(d){let c=0,u=0;(d||[]).forEach(x=>{c+=x.cajas;u+=x.und;});return c+' caja'+(c===1?'':'s')+(u?' + '+u+' und':'');}
 function _precioNum(p){return parseInt(String(p==null?'':p).replace(/,.*/,'').replace(/[^\d]/g,''))||0;}
 function _pesos(n){return '$'+Math.round(n||0).toLocaleString('es-CO');}
@@ -3332,6 +3349,18 @@ function rechazarTodoPedido(){
     const row=document.getElementById('drow_'+key);if(row)row.classList.add('on');
   });
   _recalcTablaDev();haptic(30);
+}
+/* Deja la tabla en cero: se usa al pasar a un motivo parcial, donde el entregador debe marcar. */
+function limpiarDevolucion(){
+  Object.keys(devSel).forEach(key=>{
+    const s=devSel[key];s.devCaj=0;s.devUnd=0;
+    const eC=document.getElementById('dv_'+key+'_caj');if(eC)eC.textContent='0';
+    const eU=document.getElementById('dv_'+key+'_und');if(eU)eU.textContent='0';
+    const df=document.getElementById('df_'+key);if(df)df.textContent=_normQty(_consUnits(s),s.und);
+    const dv=document.getElementById('dvv_'+key);if(dv)dv.textContent=_pesos(_valUnits(_consUnits(s),s));
+    const row=document.getElementById('drow_'+key);if(row)row.classList.remove('on');
+  });
+  _recalcTablaDev();
 }
 function _recalcTablaDev(){
   let valDev=0,valFact=0;const marcados=[];
@@ -4174,7 +4203,10 @@ function _novCardHTML(n,ctx){
         '<span class="dtag" style="background:'+mm.bg+';color:'+mm.c+'">'+n.motivo+'</span>'+
         _estBadgeNov(rd.estado)+
       '</div>'+
-      '<div class="nov-foot"><span>🕒 '+hora+'</span><span>📦 <b>'+Math.round(cajas)+'</b> cajas</span>'+
+      '<div class="nov-foot"><span>🕒 '+hora+'</span>'+
+        '<span>📦 '+((cajas||rd.und)
+          ? '<b>'+Math.round(cajas)+'</b> cj'+(rd.und?' + <b>'+rd.und+'</b> und':'')
+          : '<b style="color:#B45309">sin cuantificar</b>')+'</span>'+
         (vd&&vd!=='—'?'<span>🏷️ Vta '+vd+'</span>':'')+
       '</div>'+
       /* Quién de la tripulación reportó la novedad — sale de novedades.conductor, que desde el
@@ -4808,6 +4840,10 @@ function _tcDatosRutas(){
     const cargueB=h?(h.cargueBot||0):0;
     const totalCli=porRuta[r]?porRuta[r].tot:0;
     const conf=esHoy?(entregadosPorRuta[r]||new Set()).size:(porRuta[r]?porRuta[r].ent:0);
+    // Cajas que respaldan esas entregas confirmadas: del PPAS del día, cliente por cliente
+    let cajasConf=0;
+    if(esHoy&&_dashData&&_dashData.cajasCod)
+      (entregadosPorRuta[r]||new Set()).forEach(cod=>{cajasConf+=_dashData.cajasCod[String(cod)]||0;});
     // DOS efectividades, porque son dos preguntas distintas:
     //   ef      = de entrega. Descuenta TODO lo que volvió, decidido o no. Es lo que pasó en la calle.
     //   efCom   = para comisión. Descuenta solo lo que el coordinador declaró imputable al entregador.
@@ -4832,7 +4868,7 @@ function _tcDatosRutas(){
       txt:_nomCorto(pp.nombre)+' dice que hoy maneja él; el sistema tiene a '+_nomCorto(pp.conductor_sistema||'—')}));
     if(!personas.length&&h)
       anomalias.push({t:'sin-nadie',txt:'La ruta tiene vehículo asignado pero nadie registrado'});
-    return {ruta:r,placa:h?h.placa:'',cargue,cargueB,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef,efCom,
+    return {ruta:r,placa:h?h.placa:'',cargue,cargueB,totalCli,conf,cajasConf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef,efCom,
             validada,cambioTrasValidar,valHora:v&&v.hora?v.hora:null,conductores,anomalias,condSis,condPer};
   });
 }
@@ -5078,9 +5114,34 @@ function _tcFila(x,i){
     '<tr class="tc-det" id="tcd-'+i+'" style="display:none"><td colspan="8"><div class="tc-det-in">'+_tcDetalle(x)+'</div></td></tr>';
 }
 
+/* ══ LA ECUACIÓN DE LA CAJA ══
+   Lo que salió del CEDI tiene que poder explicarse: cargado = entregado + devuelto + sin explicar.
+   El eslabón que falta es el retorno físico, así que «sin explicar» es justamente lo que nadie
+   registró. Antes esta cuenta no existía en ninguna pantalla. */
+function _tcEcuacion(x){
+  if(!x.cargue)return '';
+  const dev=Math.round(x.devC||0);
+  // Entregado medible: cajas de los clientes con entrega confirmada, tomadas del pedido del día
+  const ent=Math.max(0,Math.round(x.cajasConf||0));
+  const resto=Math.max(0,Math.round(x.cargue-dev-ent));
+  const b=(l,v,sub,col,bg)=>'<div class="ec-b" style="background:'+bg+';color:'+col+'">'+
+    '<div class="ec-l">'+l+'</div><div class="ec-v">'+v+'</div><div class="ec-s">'+sub+'</div></div>';
+  return '<div class="tc-det-t">Qué pasó con las '+Math.round(x.cargue)+' cajas que salieron</div>'+
+    '<div class="ec-fila">'+
+      b('CARGADO',Math.round(x.cargue),(x.cargueB?'+'+x.cargueB+' bot':'de la Hoja'),'#fff','var(--negro)')+
+      b('ENTREGADO',ent||'—',(ent?x.conf+' clientes sellados'
+        :(x.conf?x.conf+' sellados, sin cajas':'nadie confirmó')),'var(--verde)','var(--verde-s)')+
+      b('DEVUELTO',dev||'—',(x.devU?x.devU+' und además':(x.clientes.length+' clientes')),'var(--rojo)','var(--rojo-s)')+
+      b('SIN EXPLICAR',resto,(resto?'nadie las reportó':'todo cuadra'),resto?'var(--amarillo)':'var(--verde)',resto?'#FFFBEB':'var(--verde-s)')+
+    '</div>'+
+    '<div class="ec-nota">'+(resto
+      ? 'Faltan <b>'+resto+' cajas</b> por explicar: ni se confirmó su entrega ni se reportaron como devolución. Con la liquidación de LiquiYa cargada, esta casilla debería quedar en cero.'
+      : 'La cuenta cierra: todo lo que salió está explicado.')+'</div>';
+}
 function _tcDetalle(x){
+  const ec=_tcEcuacion(x);
   if(!x.clientes.length){
-    return '<div class="tc-det-t">Sin devoluciones</div><div style="font-size:12px;color:var(--gris5)">'+
+    return ec+'<div class="tc-det-t">Sin devoluciones</div><div style="font-size:12px;color:var(--gris5)">'+
       (x.personas.length?'Esta ruta no ha reportado novedades hoy.'
         :'<b>Nadie se registró en la app para esta ruta.</b> Ninguna novedad quedaría con responsable — conviene avisar antes de que salga el camión.')+'</div>';
   }
@@ -5101,7 +5162,7 @@ function _tcDetalle(x){
       '<div class="val">'+(val?_pesos(val):'—')+'</div>'+
       '<div class="tc-acc">'+acc+'</div></div>';
   }).join('');
-  return '<div class="tc-det-t">Devoluciones de la ruta · '+x.clientes.length+' cliente(s)'+(x.pend?' · '+x.pend+' por aprobar':'')+'</div>'+filas;
+  return ec+'<div class="tc-det-t">Devoluciones de la ruta · '+x.clientes.length+' cliente(s)'+(x.pend?' · '+x.pend+' por aprobar':'')+'</div>'+filas;
 }
 
 /* ══ QUIÉN DEBE REGISTRARSE EN LA APP ══
@@ -8675,8 +8736,16 @@ function retakePhoto(){
 
 /* El botón "Confirmar y avisar" necesita motivo elegido y, en CLIENTE CERRADO, la foto de fachada. */
 function _nsActualizarOk(){
-  const falta=!motivo||(_motivoExigeFachada(motivo)&&!_fotoFachadaOK);
-  document.getElementById('ns-ok').disabled=falta;
+  // Sin cantidad no hay novedad: un «rechazo parcial» sin decir cuánto no se puede liquidar ni
+  // reclamar. Si el cliente no tiene pedido en el Libro no hay nada que marcar, y ahí sí se deja pasar.
+  const hayPedido=Object.keys(devSel||{}).length>0;
+  const marcado=Object.values(devSel||{}).some(x=>x.devCaj>0||x.devUnd>0);
+  const faltaCantidad=_motivoExigeCantidad(motivo)&&hayPedido&&!marcado;
+  const falta=!motivo||(_motivoExigeFachada(motivo)&&!_fotoFachadaOK)||faltaCantidad;
+  const b=document.getElementById('ns-ok');
+  b.disabled=falta;
+  const av=document.getElementById('ns-aviso-cant');
+  if(av)av.style.display=faltaCantidad?'block':'none';
 }
 /* ══ FOTO DE FACHADA EN "CLIENTE CERRADO" (2026-08-14) ══
    La foto de un cliente cerrado tiene que probar que el negocio estaba cerrado: es la FACHADA, no la
@@ -8756,8 +8825,12 @@ function pickReason(m,el){
   // La tabla de productos/devolución aparece DESPUÉS de elegir el motivo.
   const tabla=document.getElementById('ns-tabla');
   if(!tabla||tabla.style.display==='none'||!Object.keys(devSel).length)renderTablaDevolucion();
-  // "Cliente cerrado" → devolver todo el pedido automáticamente.
-  if(Object.keys(devSel).length&&_motivoEsTotal(m))rechazarTodoPedido();
+  // Motivo total → se marca todo el pedido solo. Motivo parcial → se limpia para que el entregador
+  // marque exactamente lo que devuelve; si venía marcado de un motivo anterior, quedaría mintiendo.
+  if(Object.keys(devSel).length){
+    if(_motivoEsTotal(m))rechazarTodoPedido();
+    else if(_motivoExigeCantidad(m))limpiarDevolucion();
+  }
   _nsActualizarOk();
 }
 
@@ -8790,8 +8863,9 @@ async function submitNovedad(){
       foto_url:fotoUrl,ruta:rutaActual,conductor:(_novReportero||_tripulacionPrincipal(rutaActual)||{}).nombre||'Repartidor'
     });
     if(ie)throw ie;
-    // 2b. Guardar detalle del rechazo por SKU en storage (sin tocar el esquema de la tabla)
-    if(rechazoDetalle&&rechazoDetalle.length){
+    // 2b. Detalle del rechazo por SKU. Se guarda SIEMPRE, incluso vacío: así el coordinador ve
+    // «reportado sin cuantificar» en vez de no ver nada, que era lo que pasaba con 15 de 41.
+    {
       try{
         const tot=rechazoDetalle.reduce((a,d)=>({c:a.c+d.cajas,u:a.u+d.und}),{c:0,u:0});
         const rep=_novReportero||_tripulacionPrincipal(rutaActual)||{};
