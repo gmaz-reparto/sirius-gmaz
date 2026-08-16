@@ -1,0 +1,412 @@
+<title>Tres Órdenes de Flota</title>
+<style>
+:root{
+  --rojo:#E30613; --rojo-o:#B5000F; --rojo-s:#FFF0F1;
+  --tinta:#0F1117; --tinta-2:#4A5060; --tinta-3:#8A90A0; --tinta-4:#B8BEC9;
+  --papel:#F5F6F8; --carta:#FFFFFF; --linea:#E4E7EE; --linea-2:#EFF1F5;
+  --ok:#059669; --ok-s:#ECFDF5; --alerta:#D97706; --alerta-s:#FFF8E6;
+  --dato:#1A56DB; --dato-s:#EFF6FF; --violeta:#7C3AED;
+  --sombra:0 1px 2px rgba(15,17,23,.05); --sombra-alta:0 8px 24px -6px rgba(15,17,23,.16);
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --rojo:#FF4D5A; --rojo-s:#2A1418;
+    --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90; --tinta-4:#5A6070;
+    --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+    --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+    --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF;
+    --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 10px 28px -8px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --rojo:#FF4D5A; --rojo-s:#2A1418;
+  --tinta:#EDEFF3; --tinta-2:#A8AEBD; --tinta-3:#767E90; --tinta-4:#5A6070;
+  --papel:#0D0F14; --carta:#14171F; --linea:#242935; --linea-2:#1C212B;
+  --ok:#34D399; --ok-s:#0E2A22; --alerta:#FBBF24; --alerta-s:#2B2113;
+  --dato:#7DA5FF; --dato-s:#131E33; --violeta:#C4A5FF;
+  --sombra:0 1px 2px rgba(0,0,0,.4); --sombra-alta:0 10px 28px -8px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1300px;margin:0 auto;padding:24px 18px 70px;display:flex;flex-direction:column;gap:26px}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+.hero{border-bottom:2px solid var(--tinta);padding-bottom:18px;display:flex;flex-direction:column;gap:8px}
+.hero .eye{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--rojo)}
+.hero h1{font-size:29px;font-weight:800;letter-spacing:-1px}
+.hero p{margin:0;font-size:13px;color:var(--tinta-2);max-width:76ch}
+
+.dx{background:var(--carta);border:1px solid var(--linea);border-left:3px solid var(--alerta);border-radius:10px;
+  padding:13px 15px;font-size:12.5px;color:var(--tinta-2);line-height:1.7}
+.dx b{color:var(--tinta)}
+.dx ul{margin:7px 0 0;padding-left:19px} .dx li{margin-bottom:3px}
+
+.op{display:flex;flex-direction:column;gap:12px}
+.op-h{display:flex;align-items:center;gap:11px;flex-wrap:wrap;border-left:3px solid var(--rojo);padding-left:12px}
+.op-n{width:25px;height:25px;border-radius:8px;background:var(--tinta);color:var(--carta);display:grid;place-items:center;
+  font-size:12px;font-weight:800;flex-shrink:0}
+.op-h h2{font-size:19px;font-weight:800;letter-spacing:-.4px}
+.op-h .q{font-size:12.5px;color:var(--tinta-3);font-weight:600}
+.reco{background:var(--ok-s);color:var(--ok);font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:5px;
+  letter-spacing:.4px;text-transform:uppercase}
+.demo{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);overflow:hidden}
+.nota{font-size:11.5px;color:var(--tinta-3);font-weight:600;line-height:1.6;padding-left:15px;border-left:2px solid var(--linea)}
+.nota b{color:var(--tinta-2)}
+
+/* barra */
+.barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 16px;border-bottom:1px solid var(--linea)}
+.barra .f{height:31px;border:1px solid var(--linea);border-radius:9px;padding:0 10px;background:var(--carta);
+  font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;gap:7px}
+.chip{height:29px;padding:0 11px;border-radius:8px;border:1px solid var(--linea);background:var(--carta);
+  color:var(--tinta-2);font:inherit;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chip.on{background:var(--tinta);border-color:var(--tinta);color:var(--carta)}
+.vivo{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-s)}
+
+/* ── piezas comunes ── */
+.rb{display:inline-flex;align-items:center;justify-content:center;min-width:62px;color:#fff;font-size:11px;font-weight:800;
+  padding:5px 9px;border-radius:7px;letter-spacing:.2px}
+.av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
+.av.c{background:var(--rojo)} .av.a{background:var(--dato)} .av.g{background:var(--linea);color:var(--tinta-3)}
+.pw{display:flex;align-items:center;gap:8px;min-width:0}
+.pw .tx{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.pw .tx b{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pw .tx em{font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.2px}
+em.ok{color:var(--ok)} em.sis{color:var(--dato)} em.co{color:var(--alerta)}
+.gps{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;white-space:nowrap}
+.gps i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.est{font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:20px;white-space:nowrap;display:inline-block}
+.est.ok{background:var(--ok-s);color:var(--ok)} .est.w{background:var(--alerta-s);color:var(--alerta)}
+.est.i{background:var(--dato-s);color:var(--dato)} .est.m{background:var(--linea-2);color:var(--tinta-3)}
+.add{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--tinta-4);
+  padding:5px 8px;border-radius:8px;border:1px dashed transparent;cursor:pointer}
+.add:hover{border-color:var(--linea);background:var(--papel);color:var(--tinta-2)}
+
+/* ══ A · rejilla estricta ══ */
+table.a{width:100%;border-collapse:separate;border-spacing:0;min-width:1080px}
+.awrap{overflow-x:auto}
+table.a th{font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--tinta-3);
+  padding:10px 12px;border-bottom:1px solid var(--linea);white-space:nowrap;background:var(--carta);text-align:left}
+table.a th.n{text-align:right} table.a th.c{text-align:center}
+table.a td{padding:10px 12px;border-bottom:1px solid var(--linea-2);vertical-align:middle}
+table.a td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;font-size:13px}
+table.a td.c{text-align:center}
+table.a tr.r:hover td{background:var(--papel)}
+.plc b{display:block;font-size:12.5px;font-weight:800;letter-spacing:-.2px;line-height:1.2}
+.plc small{font-size:9.5px;color:var(--tinta-3);font-weight:700}
+.grupo{display:flex;flex-direction:column;gap:5px}
+.enfila{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.pmini{display:inline-flex;align-items:center;gap:6px;background:var(--papel);border-radius:20px;
+  padding:3px 10px 3px 3px;min-width:0;flex-shrink:1}
+.pmini b{font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table.a td{height:56px}
+.sep{width:1px;background:var(--linea);align-self:stretch}
+.uni{font-size:9px;font-weight:700;color:var(--tinta-4);margin-left:3px}
+
+/* ══ B · tarjetas en carril ══ */
+.carril{display:flex;flex-direction:column;gap:9px;padding:12px 14px}
+.fila{display:grid;grid-template-columns:78px 1.05fr 118px 1.5fr 96px;gap:14px;align-items:center;
+  background:var(--carta);border:1px solid var(--linea);border-left-width:3px;border-radius:12px;padding:11px 13px;
+  transition:box-shadow .15s,transform .15s}
+.fila:hover{box-shadow:var(--sombra-alta);transform:translateY(-1px)}
+.fila.ok{border-left-color:var(--ok)} .fila.w{border-left-color:var(--alerta)} .fila.i{border-left-color:var(--dato)}
+@media (max-width:1080px){.fila{grid-template-columns:1fr 1fr;row-gap:11px}}
+.cifras{display:flex;gap:6px}
+.cif{flex:1;background:var(--papel);border-radius:9px;padding:6px 8px;text-align:center;min-width:52px}
+.cif b{display:block;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+.cif small{font-size:8px;font-weight:800;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.4px}
+.equipo{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.eq{display:inline-flex;align-items:center;gap:6px;background:var(--papel);border-radius:20px;padding:3px 10px 3px 3px}
+.eq.c{background:var(--rojo-s)}
+.eq b{font-size:10.5px;font-weight:800;white-space:nowrap}
+.derecha{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+
+/* ══ C · columnas con encabezado de grupo ══ */
+table.c3{width:100%;border-collapse:separate;border-spacing:0;min-width:1120px}
+table.c3 thead tr.g th{font-size:8.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--tinta-4);
+  padding:8px 12px 2px;background:var(--papel);border-bottom:none;text-align:left}
+table.c3 thead tr.g th.bl{border-left:1px solid var(--linea)}
+table.c3 thead tr.h th{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--tinta-3);
+  padding:2px 12px 9px;background:var(--papel);border-bottom:1px solid var(--linea);text-align:left;white-space:nowrap}
+table.c3 thead tr.h th.n{text-align:right} table.c3 thead tr.h th.bl{border-left:1px solid var(--linea)}
+table.c3 td{padding:10px 12px;border-bottom:1px solid var(--linea-2);vertical-align:middle}
+table.c3 td.bl{border-left:1px solid var(--linea)}
+table.c3 td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;font-size:13px}
+table.c3 tr.r:hover td{background:var(--papel)}
+.mini{display:flex;align-items:center;gap:6px}
+.barrita{width:44px;height:5px;border-radius:3px;background:var(--linea-2);overflow:hidden}
+.barrita i{display:block;height:100%;border-radius:3px}
+
+/* ── detalle expandido, común a los tres ── */
+.det{background:var(--papel);border-top:1px solid var(--linea)}
+.det-in{padding:15px 18px;display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+@media (max-width:980px){.det-in{grid-template-columns:1fr}}
+.dcol{display:flex;flex-direction:column;gap:12px}
+.box{background:var(--carta);border:1px solid var(--linea);border-radius:12px;overflow:hidden}
+.box-h{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--linea-2)}
+.box-h h4{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--tinta-2)}
+.box-h .r{margin-left:auto;font-size:11px;font-weight:800;color:var(--tinta);font-variant-numeric:tabular-nums}
+.box-b{padding:12px 13px}
+.spark{width:100%;height:60px;display:block}
+.met{display:flex;flex-wrap:wrap;gap:12px;margin-top:9px;font-size:10.5px;font-weight:700;color:var(--tinta-3)}
+.met b{color:var(--tinta);font-variant-numeric:tabular-nums}
+.btn{height:30px;padding:0 12px;border-radius:9px;border:1px solid var(--linea);background:var(--carta);
+  font:inherit;font-size:10.5px;font-weight:800;color:var(--tinta);cursor:pointer}
+.btn:hover{background:var(--tinta);color:var(--carta);border-color:var(--tinta)}
+.btn.p{background:var(--tinta);color:var(--carta);border-color:var(--tinta)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kp{background:var(--papel);border-radius:10px;padding:9px 10px}
+.kp b{display:block;font-size:17px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kp small{font-size:8.5px;font-weight:800;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.3px;line-height:1.3;display:block;margin-top:2px}
+/* hitos agrupados */
+.hgrupo+.hgrupo{margin-top:11px;padding-top:10px;border-top:1px solid var(--linea-2)}
+.hg-t{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--tinta-4);margin-bottom:6px;
+  display:flex;align-items:center;gap:6px}
+.hg-t span{background:var(--linea-2);color:var(--tinta-3);border-radius:10px;padding:1px 7px;font-size:8.5px}
+.h{display:grid;grid-template-columns:42px 10px 1fr;gap:9px;align-items:start;font-size:11.5px;padding:3px 0}
+.h .hh{font-variant-numeric:tabular-nums;font-weight:800;color:var(--tinta-3);font-size:10.5px;padding-top:1px}
+.h .hl{position:relative;display:flex;justify-content:center}
+.h .hl i{width:7px;height:7px;border-radius:50%;margin-top:5px;z-index:1}
+.h .hl::before{content:'';position:absolute;top:10px;bottom:-7px;width:1.5px;background:var(--linea)}
+.h:last-child .hl::before{display:none}
+.h .hx{color:var(--tinta-2);font-weight:600;line-height:1.45}
+.h .hx b{color:var(--tinta);font-weight:800}
+.rz{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--linea-2);font-size:11.5px}
+.rz:last-child{border-bottom:none}
+.rz .hora{font-size:10px;font-weight:800;color:var(--tinta-3);font-variant-numeric:tabular-nums;min-width:38px}
+.rz .cli{flex:1;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rz .mot{font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;background:var(--rojo-s);color:var(--rojo);white-space:nowrap}
+.masr{margin-top:8px;font-size:10.5px;font-weight:800;color:var(--dato);cursor:pointer}
+
+.cierre{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sombra)}
+.cierre h3{font-size:14px;font-weight:800;margin-bottom:9px}
+.cierre table{width:100%;border-collapse:collapse;font-size:12px}
+.cierre th{text-align:left;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--tinta-3);padding:6px 8px;border-bottom:1px solid var(--linea)}
+.cierre td{padding:8px;border-bottom:1px solid var(--linea-2);color:var(--tinta-2)}
+.cierre td b{color:var(--tinta)}
+footer{font-size:11.5px;color:var(--tinta-3);text-align:center;line-height:1.7}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eye">GMAZ Rutas · Flota y despacho</div>
+    <h1>Tres órdenes para la misma tabla</h1>
+    <p>Mismos datos del sábado 15 de agosto, tres maneras de acomodarlos. Cada una resuelve el desorden de alineación
+    y reordena el detalle que se abre al tocar la fila. Elige una y la implemento.</p>
+  </div>
+
+  <div class="dx"><b>Qué está desordenado hoy</b>
+    <ul>
+      <li><b>Alineación mezclada</b>: los encabezados van a la izquierda pero Clientes, Cajas y Km son números que deberían leerse alineados a la derecha, en columna.</li>
+      <li><b>«compartido» suelto</b> debajo de la placa, sin relación visual con nada.</li>
+      <li><b>Alturas desiguales</b>: una ruta con dos auxiliares mide el doble que una con uno, y las cifras dejan de estar en línea.</li>
+      <li><b>«agregar» flotando</b> en distinta posición según cuánta gente haya.</li>
+      <li><b>El detalle</b> mezcla recorrido, tripulación, cifras e hitos sin jerarquía: 22 hitos seguidos, casi todos «producto no cargado», tapan lo importante.</li>
+    </ul>
+  </div>
+
+  <!-- ══════════ A ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">A</div><h2>Rejilla estricta</h2>
+      <span class="q">la tabla de siempre, pero cuadrada al milímetro</span><span class="reco">Recomendada</span></div>
+    <div class="demo">
+      <div class="barra"><span class="f">📅 15/08/2026</span><span class="chip on">Hoy</span><span class="chip">Ayer</span>
+        <span class="chip"><span class="vivo"></span>en vivo</span><div style="flex:1"></div>
+        <span class="chip">↻ Actualizar</span><span class="chip">↓ Exportar</span></div>
+      <div class="awrap"><table class="a" id="tA"></table></div>
+    </div>
+    <div class="nota"><b>Qué corrige.</b> Números a la derecha con su unidad en gris; placa y modelo en bloque de dos
+    líneas; «compartido» convertido en distintivo junto a la placa; los auxiliares en fichas compactas en una sola línea, para que todas las filas midan igual; «agregar» siempre al final de su columna, no flotando.</div>
+  </section>
+
+  <!-- ══════════ B ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">B</div><h2>Carril de tarjetas</h2>
+      <span class="q">cada ruta una tarjeta con cinco zonas fijas</span></div>
+    <div class="demo">
+      <div class="barra"><span class="f">📅 15/08/2026</span><span class="chip on">Hoy</span><span class="chip">Ayer</span>
+        <span class="chip"><span class="vivo"></span>en vivo</span><div style="flex:1"></div><span class="chip">↓ Exportar</span></div>
+      <div class="carril" id="tB"></div>
+    </div>
+    <div class="nota"><b>Qué corrige.</b> Desaparece el problema de alturas: cada tarjeta tiene cinco zonas —ruta, vehículo,
+    cifras, equipo, estado— y el equipo crece hacia dentro sin descuadrar nada. Las cifras van en cápsulas iguales,
+    imposibles de desalinear. Se adapta mejor a pantallas angostas.</div>
+  </section>
+
+  <!-- ══════════ C ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">C</div><h2>Columnas agrupadas</h2>
+      <span class="q">encabezados en dos pisos: identificación · carga · equipo</span></div>
+    <div class="demo">
+      <div class="barra"><span class="f">📅 15/08/2026</span><span class="chip on">Hoy</span><span class="chip">Ayer</span>
+        <span class="chip"><span class="vivo"></span>en vivo</span><div style="flex:1"></div><span class="chip">↓ Exportar</span></div>
+      <div class="awrap"><table class="c3" id="tC"></table></div>
+    </div>
+    <div class="nota"><b>Qué corrige.</b> Agrupa las nueve columnas en tres bloques con línea divisoria, así el ojo sabe
+    dónde termina «qué vehículo» y empieza «qué carga». Los km traen barra de avance contra el máximo del día, y el
+    cumplimiento se lee sin abrir la fila.</div>
+  </section>
+
+  <!-- ══════════ DETALLE ══════════ -->
+  <section class="op">
+    <div class="op-h"><div class="op-n">▾</div><h2>El detalle al abrir la fila</h2>
+      <span class="q">igual para las tres · reordenado por prioridad</span></div>
+    <div class="demo"><div class="det"><div class="det-in" id="det"></div></div></div>
+    <div class="nota"><b>Qué corrige.</b> Los 22 hitos seguidos se agrupan por tipo: primero <b>lo que salió mal</b>
+    (los rechazos, con su hora, cliente y motivo), después el movimiento del vehículo y por último la jornada. Las cifras
+    quedan en tres KPI grandes en vez de seis cajas iguales, y el recorrido gana el ancho que necesita.</div>
+  </section>
+
+  <div class="cierre">
+    <h3>Cómo se comparan</h3>
+    <table>
+      <thead><tr><th>Para…</th><th>A · Rejilla</th><th>B · Tarjetas</th><th>C · Agrupada</th></tr></thead>
+      <tbody>
+        <tr><td><b>Comparar cifras entre rutas</b></td><td><b>Lo mejor</b> — columna limpia</td><td>Cápsulas, cuesta un poco más</td><td><b>Lo mejor</b> — con barras</td></tr>
+        <tr><td><b>Rutas con 3 y 4 auxiliares</b></td><td>Celda de alto fijo</td><td><b>Lo mejor</b> — crece sin romper</td><td>Alarga la fila</td></tr>
+        <tr><td><b>Pantalla angosta o tablet</b></td><td>Desplaza de lado</td><td><b>Lo mejor</b></td><td>Desplaza de lado</td></tr>
+        <tr><td><b>Parecerse a lo que ya conoces</b></td><td><b>Lo mejor</b></td><td>Cambia bastante</td><td>Cambia poco</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Mockup de organización · Flota y despacho · GMAZ Rutas · agosto 2026<br>
+  Datos reales del 15 de agosto, incluidos los 17 rechazos de KA4V13.</footer>
+</div>
+
+<script>
+const F=[
+ {r:'KA4V12',pl:'LFX110',vh:'JMC JX1044TC4',gps:['#059669','encendido'],cli:80,cj:187,km:42.6,
+  cond:{n:'DE LA CRUZ PISCAL CRISTIAN',e:'del vehículo',c:'sis'},
+  aux:[{n:'ROSERO RIASCOS JHONATAN',e:'asignado',c:'co'}],est:['ok','Lista']},
+ {r:'KA4V13',pl:'GIM332',vh:'JAC HFC1035KN',gps:['#D97706','detenido'],cli:70,cj:159,km:31.2,
+  cond:{n:'JAMA PANTOJA PABLO',e:'asignado',c:'co'},
+  aux:[{n:'DELGADO CADENA JULIO',e:'asignado',c:'co'}],est:['ok','Lista'],rech:17},
+ {r:'KA4V50',pl:'WLW165',vh:'Chevrolet NQR',gps:['#059669','encendido'],cli:76,cj:288,km:51.3,
+  cond:{n:'NARVAEZ MASMUTA HERMES',e:'asignado',c:'co'},
+  aux:[{n:'CUASPUD CARLOS ANDRES',e:'asignado',c:'co'},{n:'GUALGUAN MAFLA ANDRES',e:'asignado',c:'co'}],est:['ok','Lista']},
+ {r:'KA4V51',pl:'VBP909',vh:'International 4700',comp:true,gps:['#059669','encendido'],cli:2,cj:220,km:22.4,
+  cond:{n:'NARVAEZ GOMEZ JOHN',e:'asignado',c:'co'},
+  aux:[{n:'DIAZ ERAZO JESUS',e:'asignado',c:'co'}],est:['ok','Lista']},
+ {r:'KA4V53',pl:'VBP909',vh:'International 4700',comp:true,gps:['#059669','encendido'],cli:6,cj:140,km:22.4,
+  cond:{n:'NARVAEZ GOMEZ JOHN',e:'fijo de la placa',c:'sis',pend:true},aux:[],est:['i','Sin auxiliar']},
+ {r:'KA4V54',pl:'GIM671',vh:'JMC JX1044TC4',gps:['#D97706','detenido'],cli:85,cj:252,km:47.9,
+  cond:{n:'ERASO ARTEAGA JUAN',e:'asignado',c:'co'},
+  aux:[{n:'SUAREZ PAREDES JONATHA',e:'asignado',c:'co'},{n:'MONTILLA CHINGUA EDWIN',e:'asignado',c:'co'}],est:['ok','Lista']}
+];
+const COL={KA4V12:'#E30613',KA4V13:'#1A56DB',KA4V50:'#059669',KA4V51:'#D97706',KA4V53:'#7C3AED',KA4V54:'#0891B2'};
+const ini=n=>n.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('');
+const corto=(n,k)=>{const P=['DE','DEL','LA','LAS','LOS'],t=n.split(/\s+/),o=[];
+  for(let i=0;i<t.length;i++){let b=t[i];while(P.includes(b.toUpperCase())&&i+1<t.length){i++;b+=' '+t[i];}o.push(b);}
+  return o.slice(0,k||3).join(' ');};
+const per=(p,rol)=>'<span class="pw"><span class="av '+(rol==='c'?'c':(p.pend?'g':'a'))+'">'+ini(p.n)+'</span>'+
+  '<span class="tx"><b>'+corto(p.n,3)+'</b><em class="'+p.c+'">'+p.e+'</em></span></span>';
+const perMini=p=>'<span class="pmini" title="'+p.n+'"><span class="av a">'+ini(p.n)+'</span>'+
+  '<b>'+corto(p.n,2)+'</b></span>';
+const gps=g=>'<span class="gps" style="color:'+g[0]+'"><i style="background:'+g[0]+'"></i>'+g[1]+'</span>';
+
+/* A · rejilla estricta */
+document.getElementById('tA').innerHTML=
+ '<thead><tr><th style="width:20px"></th><th>Ruta</th><th>Vehículo</th><th>GPS</th>'+
+ '<th class="n">Clientes</th><th class="n">Cajas</th><th class="n">Km</th>'+
+ '<th>Conductor</th><th>Auxiliares</th><th class="c">Estado</th></tr></thead><tbody>'+
+ F.map(v=>'<tr class="r"><td style="color:var(--tinta-4)">▸</td>'+
+  '<td><span class="rb" style="background:'+COL[v.r]+'">'+v.r+'</span></td>'+
+  '<td><span class="plc"><b>'+v.pl+(v.comp?' <span class="est m" style="padding:2px 6px">2 rutas</span>':'')+'</b><small>'+v.vh+'</small></span></td>'+
+  '<td>'+gps(v.gps)+'</td>'+
+  '<td class="n">'+v.cli+'</td><td class="n">'+v.cj+'</td>'+
+  '<td class="n">'+v.km.toFixed(1)+'<span class="uni">km</span></td>'+
+  '<td>'+per(v.cond,'c')+'</td>'+
+  '<td><div class="enfila">'+(v.aux.map(a=>perMini(a)).join('')||'')+
+    '<span class="add">＋</span></div></td>'+
+  '<td class="c"><span class="est '+v.est[0]+'">'+v.est[1]+'</span></td></tr>').join('')+'</tbody>';
+
+/* B · carril de tarjetas */
+document.getElementById('tB').innerHTML=F.map(v=>
+ '<div class="fila '+v.est[0]+'">'+
+  '<div><span class="rb" style="background:'+COL[v.r]+'">'+v.r+'</span></div>'+
+  '<div class="plc"><b>'+v.pl+'</b><small>'+v.vh+(v.comp?' · 2 rutas':'')+'</small><div style="margin-top:4px">'+gps(v.gps)+'</div></div>'+
+  '<div class="cifras"><div class="cif"><b>'+v.cli+'</b><small>Clientes</small></div>'+
+    '<div class="cif"><b>'+v.cj+'</b><small>Cajas</small></div>'+
+    '<div class="cif"><b>'+v.km.toFixed(0)+'</b><small>Km</small></div></div>'+
+  '<div class="equipo"><span class="eq c"><span class="av c">'+ini(v.cond.n)+'</span><b>'+corto(v.cond.n,3)+'</b></span>'+
+    v.aux.map(a=>'<span class="eq"><span class="av a">'+ini(a.n)+'</span><b>'+corto(a.n,2)+'</b></span>').join('')+
+    '<span class="add">＋</span></div>'+
+  '<div class="derecha"><span class="est '+v.est[0]+'">'+v.est[1]+'</span>'+
+    '<span style="font-size:10px;font-weight:800;color:var(--tinta-4)">ver día ▸</span></div>'+
+ '</div>').join('');
+
+/* C · columnas agrupadas */
+const maxKm=Math.max(...F.map(v=>v.km));
+document.getElementById('tC').innerHTML=
+ '<thead><tr class="g"><th colspan="4">Identificación</th><th colspan="3" class="bl">Carga del día</th>'+
+ '<th colspan="2" class="bl">Equipo</th><th class="bl">Estado</th></tr>'+
+ '<tr class="h"><th style="width:20px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
+ '<th class="n bl">Clientes</th><th class="n">Cajas</th><th class="n">Km</th>'+
+ '<th class="bl">Conductor</th><th>Auxiliares</th><th class="bl">Situación</th></tr></thead><tbody>'+
+ F.map(v=>'<tr class="r"><td style="color:var(--tinta-4)">▸</td>'+
+  '<td><span class="rb" style="background:'+COL[v.r]+'">'+v.r+'</span></td>'+
+  '<td><span class="plc"><b>'+v.pl+'</b><small>'+v.vh+(v.comp?' · comparte':'')+'</small></span></td>'+
+  '<td>'+gps(v.gps)+'</td>'+
+  '<td class="n bl">'+v.cli+'</td><td class="n">'+v.cj+'</td>'+
+  '<td class="n"><span class="mini" style="justify-content:flex-end">'+
+    '<span class="barrita"><i style="width:'+(v.km/maxKm*100)+'%;background:var(--dato)"></i></span>'+v.km.toFixed(1)+'</span></td>'+
+  '<td class="bl">'+per(v.cond,'c')+'</td>'+
+  '<td><div class="grupo">'+(v.aux.map(a=>per(a,'a')).join('')||'<span class="add">＋ agregar</span>')+'</div></td>'+
+  '<td class="bl"><span class="est '+v.est[0]+'">'+v.est[1]+'</span>'+
+    (v.rech?'<div style="margin-top:4px;font-size:9.5px;font-weight:800;color:var(--rojo)">'+v.rech+' rechazos</div>':'')+'</td></tr>').join('')+'</tbody>';
+
+/* Detalle reordenado — KA4V13, la de los 17 rechazos */
+const RECH=[['09:00','EXITO PASTO PANAMERICANA','PRODUCTO NO CARGADO'],['09:21','LUBRIPOINT','PRODUCTO NO CARGADO'],
+ ['09:34','TIENDA DE SEBAS','PRODUCTO NO CARGADO'],['09:58','DISTRIMARKET SOFI','PRODUCTO NO CARGADO'],
+ ['11:27','TIENDA SOFI','PRODUCTO NO CARGADO'],['11:53','ENPANADAS AURA','PRODUCTO NO CARGADO'],
+ ['12:15','SUPER POLLO 2','PRODUCTO NO CARGADO'],['12:28','TIENDA ROSITA','PEDIDO MAL ELABORADO']];
+let pts='';for(let i=0;i<=60;i++){const x=i/60*300,y=48-Math.abs(Math.sin(i*.5))*30-((i%9===0)?10:0);pts+=x.toFixed(1)+','+y.toFixed(1)+' ';}
+document.getElementById('det').innerHTML=
+ '<div class="dcol">'+
+  '<div class="box"><div class="box-h"><h4>Lo que salió mal</h4>'+
+    '<span class="r" style="color:var(--rojo)">17 rechazos</span></div><div class="box-b">'+
+    RECH.map(x=>'<div class="rz"><span class="hora">'+x[0]+'</span><span class="cli">'+x[1]+'</span>'+
+      '<span class="mot">'+x[2]+'</span></div>').join('')+
+    '<div class="masr">Ver los 9 restantes ▾</div></div></div>'+
+  '<div class="box"><div class="box-h"><h4>Recorrido del día</h4><span class="r">31,2 km</span></div><div class="box-b">'+
+    '<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-label="Velocidad del vehículo durante el día">'+
+    '<line x1="0" y1="52" x2="300" y2="52" stroke="var(--linea)" stroke-width="1"/>'+
+    '<polyline points="'+pts+'" fill="none" stroke="var(--dato)" stroke-width="1.8" stroke-linejoin="round"/></svg>'+
+    '<div class="met"><span>Placa <b>GIM332</b></span><span>Puntos GPS <b>751</b></span>'+
+    '<span>Máx <b>36 km/h</b></span><span>Salida <b>07:02</b></span></div>'+
+    '<button class="btn p" style="margin-top:10px">Ver el recorrido en el mapa ▶</button></div></div>'+
+ '</div>'+
+ '<div class="dcol">'+
+  '<div class="box"><div class="box-h"><h4>Qué llevó</h4></div><div class="box-b">'+
+    '<div class="kpis"><div class="kp"><b>70</b><small>Clientes con pedido</small></div>'+
+    '<div class="kp"><b>159</b><small>Cajas cargadas</small></div>'+
+    '<div class="kp"><b>$4,2M</b><small>Valor del pedido</small></div></div>'+
+    '<div class="met" style="margin-top:10px"><span>Cajas del Libro <b>128</b></span>'+
+    '<span>Entregas confirmadas <b style="color:var(--ok)">1</b></span></div></div></div>'+
+  '<div class="box"><div class="box-h"><h4>Con quién salió</h4></div><div class="box-b" style="display:flex;flex-direction:column;gap:8px">'+
+    per({n:'JAMA PANTOJA PABLO ALBEIRO',e:'Conductor · C.C. 1233195085',c:'sis'},'c')+
+    per({n:'DELGADO CADENA JULIO ALEJANDRO',e:'Auxiliar · C.C. 1130623794',c:'co'},'a')+
+    '</div></div>'+
+  '<div class="box"><div class="box-h"><h4>Jornada y vehículo</h4></div><div class="box-b">'+
+    '<div class="hgrupo"><div class="hg-t">Movimiento del vehículo <span>2</span></div>'+
+      '<div class="h"><span class="hh">08:08</span><span class="hl"><i style="background:var(--ok)"></i></span>'+
+        '<span class="hx">Volvió a la geocerca · <b>97 m</b></span></div>'+
+      '<div class="h"><span class="hh">14:16</span><span class="hl"><i style="background:var(--ok)"></i></span>'+
+        '<span class="hx">Volvió a la geocerca · <b>163 m</b></span></div></div>'+
+    '<div class="hgrupo"><div class="hg-t">Jornada <span>3</span></div>'+
+      '<div class="h"><span class="hh">06:25</span><span class="hl"><i style="background:var(--dato)"></i></span>'+
+        '<span class="hx"><b>JAMA PANTOJA</b> quedó por el vehículo</span></div>'+
+      '<div class="h"><span class="hh">06:31</span><span class="hl"><i style="background:var(--dato)"></i></span>'+
+        '<span class="hx"><b>DELGADO CADENA</b> lo asignó el coordinador</span></div>'+
+      '<div class="h"><span class="hh">16:21</span><span class="hl"><i style="background:var(--ok)"></i></span>'+
+        '<span class="hx">Primera entrega confirmada</span></div></div>'+
+  '</div></div>'+
+ '</div>';
+</script>
