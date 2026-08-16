@@ -1,0 +1,759 @@
+<title>Auditoría del Puesto de Mando</title>
+<style>
+:root{
+  --papel:#FBFAF8; --tarjeta:#FFFFFF; --tinta:#14171E; --tinta-2:#3D4550; --tinta-3:#6B7482;
+  --linea:#E4E2DD; --linea-2:#EFEDE8;
+  --rojo:#C4161C; --rojo-s:#FBEEEE; --ambar:#A9670A; --ambar-s:#FDF4E5;
+  --verde:#126B4F; --verde-s:#E9F4EF; --azul:#1B4E7E; --azul-s:#EAF1F7;
+  --sombra:0 1px 2px rgba(20,23,30,.04),0 8px 24px rgba(20,23,30,.05);
+  --disp:"Segoe UI Semibold","Segoe UI",system-ui,-apple-system,sans-serif;
+  --cuerpo:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --ui:"Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"Cascadia Mono",Consolas,ui-monospace,"SF Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --papel:#0F1115; --tarjeta:#171A20; --tinta:#EDEBE6; --tinta-2:#B9BDC5; --tinta-3:#868D98;
+    --linea:#282C34; --linea-2:#20242B;
+    --rojo:#F2635F; --rojo-s:#2A1A1B; --ambar:#E0A44A; --ambar-s:#2A2113;
+    --verde:#5FBF95; --verde-s:#12241D; --azul:#7FB4E4; --azul-s:#131F2B;
+    --sombra:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#0F1115; --tarjeta:#171A20; --tinta:#EDEBE6; --tinta-2:#B9BDC5; --tinta-3:#868D98;
+  --linea:#282C34; --linea-2:#20242B;
+  --rojo:#F2635F; --rojo-s:#2A1A1B; --ambar:#E0A44A; --ambar-s:#2A2113;
+  --verde:#5FBF95; --verde-s:#12241D; --azul:#7FB4E4; --azul-s:#131F2B;
+  --sombra:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--ui);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.env{max-width:1180px;margin:0 auto;padding:0 26px 90px}
+@media(max-width:700px){.env{padding:0 16px 60px}}
+
+/* ── Portada ─────────────────────────────────────────── */
+.port{padding:64px 0 34px;border-bottom:2px solid var(--tinta)}
+.sello{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--rojo);font-weight:700}
+.port h1{font-family:var(--disp);font-size:clamp(34px,6vw,60px);line-height:1.02;letter-spacing:-.025em;
+  margin:14px 0 0;text-wrap:balance;font-weight:700}
+.port .bajada{font-family:var(--cuerpo);font-size:19px;line-height:1.55;color:var(--tinta-2);
+  max-width:62ch;margin:16px 0 0}
+.metas{display:flex;flex-wrap:wrap;gap:0;margin-top:30px;border-top:1px solid var(--linea)}
+.meta{padding:12px 22px 12px 0;margin-right:22px;border-right:1px solid var(--linea)}
+.meta:last-child{border-right:none}
+.meta dt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-3)}
+.meta dd{margin:3px 0 0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ── Secciones ───────────────────────────────────────── */
+section{padding-top:52px;scroll-margin-top:20px}
+h2{font-family:var(--disp);font-size:27px;letter-spacing:-.02em;margin:0 0 4px;font-weight:700;
+  display:flex;align-items:baseline;gap:12px}
+h2 .n{font-family:var(--mono);font-size:13px;color:var(--rojo);font-weight:700;letter-spacing:0}
+h3{font-family:var(--disp);font-size:18px;letter-spacing:-.01em;margin:34px 0 10px;font-weight:700}
+h4{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--tinta-3);margin:26px 0 8px;font-weight:700}
+p{margin:0 0 14px;max-width:74ch}
+.lead{font-family:var(--cuerpo);font-size:17px;line-height:1.62;color:var(--tinta-2);max-width:70ch}
+a{color:var(--azul)}
+strong{font-weight:700;color:var(--tinta)}
+code{font-family:var(--mono);font-size:.88em;background:var(--linea-2);padding:1px 5px;border-radius:4px}
+
+/* ── Índice ──────────────────────────────────────────── */
+.indice{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;
+  background:var(--linea);border:1px solid var(--linea);margin-top:34px}
+.indice a{background:var(--tarjeta);padding:13px 15px;text-decoration:none;color:var(--tinta);display:block}
+.indice a:hover{background:var(--linea-2)}
+.indice .k{font-family:var(--mono);font-size:10px;color:var(--rojo);letter-spacing:.1em}
+.indice .t{font-weight:600;font-size:14px;margin-top:2px}
+
+/* ── Hallazgos ───────────────────────────────────────── */
+.hall{background:var(--tarjeta);border:1px solid var(--linea);border-left:4px solid var(--tinta-3);
+  padding:18px 20px;margin:0 0 14px;box-shadow:var(--sombra)}
+.hall.crit{border-left-color:var(--rojo)}
+.hall.alta{border-left-color:var(--ambar)}
+.hall.media{border-left-color:var(--azul)}
+.hall-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.hall-h .id{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--tinta-3)}
+.hall-h h5{margin:0;font-family:var(--disp);font-size:17px;letter-spacing:-.01em;font-weight:700;flex:1;min-width:200px}
+.chip{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  padding:3px 8px;border-radius:3px;white-space:nowrap}
+.chip.crit{background:var(--rojo-s);color:var(--rojo)}
+.chip.alta{background:var(--ambar-s);color:var(--ambar)}
+.chip.media{background:var(--azul-s);color:var(--azul)}
+.chip.ok{background:var(--verde-s);color:var(--verde)}
+.hall p{margin:0 0 10px;font-size:14.5px}
+.prueba{font-family:var(--mono);font-size:12.5px;line-height:1.75;background:var(--linea-2);
+  border-radius:5px;padding:11px 13px;margin:10px 0;overflow-x:auto;white-space:pre;color:var(--tinta-2)}
+.prueba b{color:var(--tinta);font-weight:700}
+.impacto{font-size:13.5px;color:var(--tinta-2);border-top:1px dashed var(--linea);padding-top:9px;margin-top:4px}
+.impacto b{color:var(--tinta)}
+
+/* ── Tablas ──────────────────────────────────────────── */
+.tabla-env{overflow-x:auto;border:1px solid var(--linea);background:var(--tarjeta);margin:14px 0 6px;
+  box-shadow:var(--sombra)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3);
+  text-align:left;padding:11px 13px;border-bottom:1px solid var(--linea);white-space:nowrap;font-weight:700}
+td{padding:11px 13px;border-bottom:1px solid var(--linea-2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+td b{font-weight:700}
+.mini{font-size:12px;color:var(--tinta-3);display:block;margin-top:2px}
+.pie-t{font-size:12.5px;color:var(--tinta-3);margin:4px 0 0}
+
+/* ── Wireframes ──────────────────────────────────────── */
+.wf{background:var(--tarjeta);border:1px solid var(--linea);box-shadow:var(--sombra);margin:16px 0 8px;
+  overflow:hidden}
+.wf-cab{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--linea);
+  background:var(--linea-2)}
+.wf-cab .pt{width:9px;height:9px;border-radius:50%;background:var(--linea)}
+.wf-cab .tt{font-family:var(--mono);font-size:11px;color:var(--tinta-3);letter-spacing:.06em}
+.wf-in{padding:16px;font-family:var(--ui)}
+.wf-barra{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--linea);
+  border-radius:7px;margin-bottom:14px;background:var(--papel)}
+.wf-fecha{font-family:var(--mono);font-weight:700;font-size:13px;border:1px solid var(--tinta);
+  border-radius:5px;padding:5px 11px}
+.wf-tag{font-size:11.5px;font-weight:600;border:1px solid var(--linea);border-radius:20px;padding:4px 11px;color:var(--tinta-2)}
+.wf-tag.on{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.wf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.wf-k{border:1px solid var(--linea);border-radius:8px;padding:13px}
+.wf-k .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3)}
+.wf-k .v{font-size:29px;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-top:5px;
+  font-variant-numeric:tabular-nums;font-family:var(--disp)}
+.wf-k .f{font-family:var(--mono);font-size:10.5px;color:var(--tinta-3);margin-top:5px;padding-top:5px;
+  border-top:1px dashed var(--linea)}
+.wf-k.v-ok .v{color:var(--verde)} .wf-k.v-mal .v{color:var(--rojo)} .wf-k.v-med .v{color:var(--ambar)}
+.wf-t{width:100%;border-collapse:collapse;font-size:12px;min-width:0}
+.wf-t th{font-size:9px;padding:7px 8px}
+.wf-t td{padding:8px;font-size:12px}
+.wf-nota{font-family:var(--mono);font-size:11px;color:var(--tinta-3);margin-top:10px;line-height:1.6}
+.wf-flujo{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px}
+.wf-paso{flex:1;min-width:118px;border:1px solid var(--linea);border-right:none;padding:11px 12px;background:var(--papel)}
+.wf-paso:last-child{border-right:1px solid var(--linea)}
+.wf-paso .p-n{font-family:var(--mono);font-size:9.5px;color:var(--rojo);letter-spacing:.1em}
+.wf-paso .p-t{font-weight:700;font-size:13px;margin-top:3px}
+.wf-paso .p-s{font-size:11.5px;color:var(--tinta-3);margin-top:3px;line-height:1.45}
+.wf-paso.act{background:var(--tinta);border-color:var(--tinta)}
+.wf-paso.act .p-t{color:var(--papel)} .wf-paso.act .p-s{color:rgba(255,255,255,.66)}
+.wf-paso.act .p-n{color:#F2635F}
+
+/* ── Bloques de arquitectura ─────────────────────────── */
+.arq{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px;margin:16px 0}
+.arq-m{border:1px solid var(--linea);background:var(--tarjeta);padding:15px 16px;box-shadow:var(--sombra)}
+.arq-m .num{font-family:var(--mono);font-size:10px;color:var(--rojo);letter-spacing:.1em}
+.arq-m h5{margin:4px 0 6px;font-family:var(--disp);font-size:16px;font-weight:700;letter-spacing:-.01em}
+.arq-m p{font-size:13px;margin:0 0 8px;color:var(--tinta-2)}
+.arq-m ul{margin:0;padding-left:16px;font-size:12.5px;color:var(--tinta-3);line-height:1.65}
+.arq-m .de{font-family:var(--mono);font-size:10.5px;color:var(--tinta-3);border-top:1px dashed var(--linea);
+  padding-top:7px;margin-top:9px}
+
+/* ── Comparación antes/después ───────────────────────── */
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+@media(max-width:760px){.dos{grid-template-columns:1fr}}
+.col-h{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  padding-bottom:7px;border-bottom:2px solid;margin-bottom:11px;font-weight:700}
+.col-h.hoy{color:var(--rojo);border-color:var(--rojo)}
+.col-h.prop{color:var(--verde);border-color:var(--verde)}
+.lista-mod{list-style:none;margin:0;padding:0;font-size:13.5px}
+.lista-mod li{padding:7px 0;border-bottom:1px solid var(--linea-2);display:flex;gap:9px;align-items:baseline}
+.lista-mod li:last-child{border-bottom:none}
+.lista-mod .b{font-family:var(--mono);font-size:10px;color:var(--tinta-3);min-width:20px}
+.lista-mod .d{color:var(--tinta-3);font-size:12.5px}
+
+/* ── Preguntas finales ───────────────────────────────── */
+.qa{border-top:1px solid var(--linea);padding:15px 0}
+.qa .q{font-family:var(--disp);font-size:15.5px;font-weight:700;margin-bottom:5px;display:flex;gap:10px}
+.qa .q .qn{font-family:var(--mono);font-size:12px;color:var(--rojo)}
+.qa .a{font-size:14px;color:var(--tinta-2);max-width:76ch}
+.veredicto{background:var(--tinta);color:var(--papel);padding:26px 28px;margin-top:26px}
+.veredicto h3{margin:0 0 10px;color:var(--papel);font-size:20px}
+.veredicto p{color:rgba(255,255,255,.78);max-width:74ch;margin-bottom:10px;font-family:var(--cuerpo);font-size:15.5px}
+.veredicto strong{color:#fff}
+.cierre{margin-top:40px;padding-top:20px;border-top:2px solid var(--tinta);font-size:13.5px;color:var(--tinta-3)}
+</style>
+
+<div class="env">
+
+<header class="port">
+  <div class="sello">Auditoría funcional · GMAZ Rutas · módulo coordinador</div>
+  <h1>Auditoría del Puesto de Mando</h1>
+  <p class="bajada">Recorrido completo de la aplicación en operación, con los datos reales del sábado 15 de agosto de 2026. No es una revisión de código: es la revisión de si un coordinador puede dirigir el reparto desde aquí sin equivocarse.</p>
+  <div class="metas">
+    <div class="meta"><dt>Fecha auditada</dt><dd>15-ago-2026 · en vivo</dd></div>
+    <div class="meta"><dt>Módulos recorridos</dt><dd>10 + panel móvil</dd></div>
+    <div class="meta"><dt>Hallazgos</dt><dd>17 · 6 críticos</dd></div>
+    <div class="meta"><dt>Duplicidades</dt><dd>11 confirmadas</dd></div>
+    <div class="meta"><dt>Estado</dt><dd>Sin modificar nada</dd></div>
+  </div>
+
+  <nav class="indice">
+    <a href="#a"><span class="k">A</span><div class="t">Resumen ejecutivo</div></a>
+    <a href="#b"><span class="k">B</span><div class="t">Mapa actual</div></a>
+    <a href="#e"><span class="k">C</span><div class="t">Los seis críticos</div></a>
+    <a href="#caja"><span class="k">D</span><div class="t">La ecuación de la caja</div></a>
+    <a href="#d"><span class="k">E</span><div class="t">Matriz de duplicidades</div></a>
+    <a href="#f"><span class="k">F</span><div class="t">Matriz de funciones</div></a>
+    <a href="#h"><span class="k">G</span><div class="t">Arquitectura propuesta</div></a>
+    <a href="#i"><span class="k">H</span><div class="t">Mockups</div></a>
+    <a href="#j"><span class="k">I</span><div class="t">Plan por fases</div></a>
+    <a href="#k"><span class="k">J</span><div class="t">Las 15 respuestas</div></a>
+  </nav>
+</header>
+
+<!-- ══════════ A ══════════ -->
+<section id="a">
+  <h2><span class="n">A</span>Resumen ejecutivo</h2>
+  <p class="lead">La aplicación hace mucho más de lo que hace una hoja de cálculo, y varias piezas están construidas con criterio real de distribución: la auditoría contra LiquiYa, el cuadre del cargue antes de que salgan los camiones, la consola de flota con visto bueno, el registro de tripulación desde el celular. Ese es el patrimonio y no hay que tocarlo.</p>
+  <p class="lead">El problema no es lo que falta. El problema es que <strong>el tablero le está diciendo al coordinador que el día va perfecto cuando el día no va perfecto</strong>, y que la misma pregunta se responde en cuatro pantallas distintas con cuatro números distintos.</p>
+
+  <h4>Lo que la aplicación mostraba el 15 de agosto, al mismo tiempo, en la misma sesión</h4>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Cifra en pantalla</th><th>Dónde</th><th>Qué mide en realidad</th><th style="text-align:right">Valor</th></tr></thead>
+      <tbody>
+        <tr><td><b>Efectividad de hoy</b><span class="mini">titular de la Torre, con tramo de comisión</span></td><td>Operación</td><td>Cargue menos devoluciones <b>que usted ya aprobó</b>. Hay 26 sin aprobar.</td><td class="num" style="color:var(--verde)"><b>100 %</b></td></tr>
+        <tr><td><b>Cumplimiento cajas</b></td><td>Operación</td><td>Cajas del PPAS menos cajas rechazadas</td><td class="num">97 %</td></tr>
+        <tr><td><b>Cumplimiento clientes</b></td><td>Operación · Clientes</td><td>Clientes sin novedad reportada. <b>Nadie confirmó la entrega.</b></td><td class="num">91 %</td></tr>
+        <tr><td><b>Avance confirmado</b></td><td>Operación</td><td>Entregas realmente selladas por el entregador</td><td class="num" style="color:var(--rojo)"><b>8 %</b></td></tr>
+        <tr><td><b>Efectividad real</b></td><td>Entregadores</td><td>Clientes facturados en LiquiYa ÷ programados (mes)</td><td class="num">96 %</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pie-t">Cinco respuestas a “¿cómo vamos?”. Ninguna de las cinco tarjetas dice en su cara de qué está hecha, y las dos que más grande se ven —100 % y 91 %— son las dos menos sostenibles.</p>
+
+  <h4>Fortalezas que hay que blindar</h4>
+  <p>El cruce de <strong>Auditoría contra LiquiYa</strong> es la pieza más valiosa del sistema: detectó 85 alertas el 14 de agosto, incluidos 8 “rechazo falso” por $1,8 M. El <strong>cuadre del cargue</strong> compara Libro contra Hoja antes de la salida, que es cuando todavía se puede corregir en bodega. El <strong>visto bueno de tripulación</strong> con firma de cédula y rol es un control de verdad. La <strong>consola de flota unificada</strong> resolvió la dispersión de vehículos, tripulación y kilómetros.</p>
+
+  <h4>Debilidades estructurales</h4>
+  <p>Indicadores que miden intención en vez de hecho; tres verdades numéricas para las cajas del mismo día; catorce calendarios independientes; dos paneles de coordinador viviendo en paralelo; y un vocabulario que llama rechazo, novedad y devolución a la misma cosa.</p>
+
+  <h4>Riesgo principal</h4>
+  <p>La cifra que alimenta el tramo de comisión <strong>mejora cuando el coordinador no trabaja</strong>. Mientras las devoluciones sigan pendientes de aprobación, la efectividad se queda en 100 % y el tramo en $250.000. Eso no es un error de cálculo: es un incentivo mal puesto, y es el hallazgo más serio de esta auditoría.</p>
+</section>
+
+<!-- ══════════ B ══════════ -->
+<section id="b">
+  <h2><span class="n">B</span>Cómo está organizada hoy</h2>
+  <p>Recorrí los diez módulos del menú, el panel móvil oculto y los desplegables de cada tabla. La aplicación tiene <strong>dos cáscaras completas</strong> para el mismo trabajo.</p>
+
+  <div class="dos">
+    <div>
+      <div class="col-h hoy">Menú de escritorio · 10 entradas</div>
+      <ul class="lista-mod">
+        <li><span class="b">01</span><div><b>Operación</b> <span class="d">— Torre de control, 3 KPI, «esperando al coordinador», Rutas de hoy, mapa, flota en vivo</span></div></li>
+        <li><span class="b">02</span><div><b>Vehículos</b> <span class="d">— Flota y despacho: placa, GPS, clientes, cajas, km, tripulación, visto bueno</span></div></li>
+        <li><span class="b">03</span><div><b>Clientes</b> <span class="d">— 4 KPI, cumplimiento por ruta, buscador de 457 clientes</span></div></li>
+        <li><span class="b">04</span><div><b>Entregadores</b> <span class="d">— quién debe registrarse, desempeño por persona, efectividad por ruta</span></div></li>
+        <li><span class="b">05</span><div><b>Rechazos</b> <span class="d">— donut por motivo, impacto en cajas, novedades por día, vista mes</span></div></li>
+        <li><span class="b">06</span><div><b>Alertas</b> <span class="d">— exceso de velocidad, eventos de geocerca, vista mes</span></div></li>
+        <li><span class="b">07</span><div><b>Rutina diaria</b> <span class="d">— cargas del día, cuadre del cargue, historial de archivos</span></div></li>
+        <li><span class="b">08</span><div><b>Asistencia</b> <span class="d">— marcación mensual de 80 personas</span></div></li>
+        <li><span class="b">09</span><div><b>Auditoría</b> <span class="d">— LiquiYa contra lo reportado</span></div></li>
+        <li><span class="b">10</span><div><b>Obsequios</b> <span class="d">— productos a $0 y foto de entrega</span></div></li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-h hoy">Panel móvil oculto · 4 pestañas</div>
+      <ul class="lista-mod">
+        <li><span class="b">1</span><div><b>Rutina</b> <span class="d">— cuadre del cargue + historial de archivos <b>(mismos que el 07)</b></span></div></li>
+        <li><span class="b">2</span><div><b>Operación</b> <span class="d">— «requiere atención» + «tripulación de hoy» <b>(mismos que el 01 y el 02)</b></span></div></li>
+        <li><span class="b">3</span><div><b>Histórico</b> <span class="d">— histórico inteligente del día, acumulado por rango, flota km y tiempos, novedades por día <b>(mismos que 02, 05 y 09)</b></span></div></li>
+        <li><span class="b">4</span><div><b>Más</b> <span class="d">— mosaicos que abren los mismos módulos del escritorio</span></div></li>
+      </ul>
+      <p class="pie-t" style="margin-top:14px">El panel móvil no es una versión reducida: es una implementación paralela con sus propios calendarios, sus propias consultas y sus propios históricos. Todo lo que se arregle en un lado hay que acordarse de arreglarlo en el otro.</p>
+    </div>
+  </div>
+
+  <h4>Nota de método</h4>
+  <p>Todo lo que sigue está comprobado ejecutando la aplicación contra Supabase y SecuritaGPS con los datos del día, no leyendo el código. Cuando cito una cifra, la cifra salió de la pantalla o del cálculo que la produce.</p>
+</section>
+
+<!-- ══════════ C ══════════ -->
+<section id="e">
+  <h2><span class="n">C</span>Los seis hallazgos críticos</h2>
+  <p class="lead">Ordenados por lo que pueden costar. Los tres primeros afectan plata y decisiones de nómina; los tres siguientes hacen que el tablero no cuadre con la bodega.</p>
+
+  <div class="hall crit">
+    <div class="hall-h"><span class="id">C-01</span><h5>La efectividad mejora cuando usted no aprueba las devoluciones</h5><span class="chip crit">Crítica</span></div>
+    <p>El titular de la Torre es <b>Efectividad de hoy 100 %</b> con el rótulo <i>«✓ sin devoluciones aprobadas»</i> y el <b>Tramo de comisión $250.000</b> debajo. La fórmula descuenta únicamente las devoluciones marcadas como «sí afecta» por el coordinador.</p>
+    <div class="prueba">efectividad = (cargue − cajas de devoluciones <b>aprobadas</b>) ÷ cargue
+15-ago: cargue 1.944 cj · devoluciones aprobadas <b>0</b> · pendientes <b>26</b>
+        → 100 % → tramo $250.000
+
+el mismo día, sin aprobar nada:  41 rechazos · 49 cajas · $1,6 M sin facturar</div>
+    <p class="impacto"><b>Impacto:</b> la cifra que se lee como resultado del día, y que está pegada a un valor en pesos, se mantiene perfecta mientras la bandeja de aprobación siga llena. Un coordinador que no entra a aprobar sale mejor calificado que uno que sí entra.</p>
+  </div>
+
+  <div class="hall crit">
+    <div class="hall-h"><span class="id">C-02</span><h5>«Clientes entregados 416» es una suposición, no una entrega</h5><span class="chip crit">Crítica</span></div>
+    <p>Operación y Clientes muestran <b>416 de 457 entregados · 91 % de cumplimiento</b>. Ese 416 no viene de ninguna confirmación: es una resta.</p>
+    <div class="prueba">entregados = total de clientes − novedades reportadas
+           416 = 457 − 41
+
+confirmados de verdad (sello del entregador): <b>35</b>  ·  8 %</div>
+    <p>Un cliente al que nadie visitó, nadie llamó y nadie reportó, cuenta como entregado. Es el mismo vicio que ya corregimos en Entregadores —medir con un botón que casi nadie pulsa—, pero aquí el resultado se presenta como logro en vez de como vacío.</p>
+    <p class="impacto"><b>Impacto:</b> el indicador más visible del sistema premia el silencio. Si mañana un entregador deja de reportar, el cumplimiento <b>sube</b>.</p>
+  </div>
+
+  <div class="hall crit">
+    <div class="hall-h"><span class="id">C-03</span><h5>Hay tres cifras distintas de «cajas del día» y el panel usa la más pequeña</h5><span class="chip crit">Crítica</span></div>
+    <p>Las tres fuentes del mismo 15 de agosto no coinciden entre sí, y el tablero toma como denominador la más baja.</p>
+    <div class="prueba">Libro de pedidos    <b>1.792 cj</b>  + 2.331 sueltas
+Hoja de cargue      <b>1.944 cj</b>  +   502 botellas
+PPAS (programado)   <b>1.671 cj</b>
+
+el panel dice:  1.671 programadas · 1.622 entregadas · 49 rechazadas → 97 %
+
+Hoja − PPAS = <b>273 cajas</b> (16 %) que salieron del CEDI y no están
+en el denominador de ningún indicador.</div>
+    <p class="impacto"><b>Impacto:</b> el 97 % de cumplimiento en cajas se calcula sobre una base que no es la que se cargó al camión. La diferencia no aparece en ninguna pantalla, ni siquiera como advertencia.</p>
+  </div>
+
+  <div class="hall crit">
+    <div class="hall-h"><span class="id">C-04</span><h5>Las sueltas y las botellas no existen para el sistema</h5><span class="chip crit">Crítica</span></div>
+    <p>La Hoja distingue <code>cargueCaj</code> de <code>cargueBot</code> y el Libro distingue cajas de sub-unidades. Todos los indicadores hablan solo de cajas.</p>
+    <div class="prueba">15-ago:  2.331 sueltas pedidas   ·   502 botellas cargadas
+         0 pantallas donde aparezcan
+
+el único lugar donde asoma una unidad: «49 cj · 157 und» (Venta devuelta),
+y ahí se muestran juntas sin explicar la relación entre las dos.</div>
+    <p class="impacto"><b>Impacto:</b> un cliente que pidió 12 sueltas y recibió 6 queda perfecto. En una operación de bebidas, las sueltas son el margen y el reclamo del tendero.</p>
+  </div>
+
+  <div class="hall crit">
+    <div class="hall-h"><span class="id">C-05</span><h5>Dos rutas cargaron 237 cajas y no tienen un solo cliente</h5><span class="chip crit">Crítica</span></div>
+    <p>KA4V01 y KA4V63 aparecen en la Hoja de cargue y en el Libro, pero no tienen clientes en el PPAS del día. No entran en cumplimiento, no entran en rechazos, no entran en efectividad.</p>
+    <div class="prueba">RUTA      LIBRO   HOJA   PPAS
+KA4V01        5     21      <b>0</b>
+KA4V63      216    216      <b>0</b>
+                   ───
+                   <b>237 cajas fuera de todo control de entrega</b></div>
+    <p class="impacto"><b>Impacto:</b> producto que sale del CEDI sin trazabilidad de entrega. Puede ser autoventa o traslado legítimo, pero el sistema no lo dice ni lo distingue: simplemente no lo cuenta.</p>
+  </div>
+
+  <div class="hall crit">
+    <div class="hall-h"><span class="id">C-06</span><h5>Seis de cada cuarenta y un rechazos valen «0 cajas»</h5><span class="chip crit">Crítica</span></div>
+    <p>Las cajas rechazadas se toman del campo <code>CAJA_</code> del cliente en el PPAS. Cuando ese campo viene vacío, el rechazo pesa cero.</p>
+    <div class="prueba">rechazos del 15-ago: 41   ·   con 0 cajas: <b>6</b>  (15 %)
+«49 cajas rechazadas» es un piso, no la cifra real.
+
+Además: rechazo PARCIAL y rechazo TOTAL descuentan lo mismo — todas
+las cajas del cliente — aunque en el parcial sí se entregó una parte.</div>
+    <p class="impacto"><b>Impacto:</b> la venta devuelta ($1,6 M) está mal por los dos lados: subestimada por los ceros y sobreestimada por los parciales. Es la cifra que se usa para decir «esto no se facturó».</p>
+  </div>
+</section>
+
+<!-- ══════════ D ══════════ -->
+<section id="caja">
+  <h2><span class="n">D</span>La ecuación de la caja</h2>
+  <p class="lead">Usted pidió comprobar si el sistema puede explicar qué pasó con las 100 cajas que salieron. Hoy no puede: cada eslabón responde con una unidad distinta y ninguno se resta del anterior.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Eslabón</th><th>Fuente real</th><th>Qué guarda</th><th style="text-align:right">15-ago</th><th>¿Se cruza con el anterior?</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 · Pedido</b></td><td>Libro (<code>PEDIDOS_INDEX</code>)</td><td>cajas + sueltas por SKU y cliente</td><td class="num">1.792 cj<span class="mini">2.331 sueltas</span></td><td><span class="chip ok">Sí</span> contra la Hoja, en el cuadre</td></tr>
+        <tr><td><b>2 · Cargue</b></td><td>Hoja (<code>HOJAS_INDEX</code>)</td><td>cajas + botellas por SKU y ruta</td><td class="num">1.944 cj<span class="mini">502 botellas</span></td><td><span class="chip alta">Parcial</span> solo cajas, tolerancia 5 %</td></tr>
+        <tr><td><b>3 · Programado</b></td><td>PPAS</td><td>cajas por cliente</td><td class="num">1.671 cj</td><td><span class="chip crit">No</span> nadie lo compara con el cargue</td></tr>
+        <tr><td><b>4 · Entregado</b></td><td>Botón del entregador</td><td>sello de hora por cliente</td><td class="num">35 cli</td><td><span class="chip crit">No</span> no descuenta cajas</td></tr>
+        <tr><td><b>5 · Rechazado</b></td><td>novedades</td><td>motivo + foto por cliente</td><td class="num">41 cli<span class="mini">49 cj estimadas</span></td><td><span class="chip alta">Parcial</span> hereda las cajas del PPAS</td></tr>
+        <tr><td><b>6 · Devuelto</b></td><td>aprobación del coordinador</td><td>«sí afecta» / «omitir»</td><td class="num">0 aprob.<span class="mini">26 pendientes</span></td><td><span class="chip ok">Sí</span> es lo único que baja la efectividad</td></tr>
+        <tr><td><b>7 · Liquidado</b></td><td>LiquiYa</td><td>cajas + sub-unidades + $ por SKU</td><td class="num">pendiente<span class="mini">llega al día siguiente</span></td><td><span class="chip ok">Sí</span> en Auditoría, con un día de retraso</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pie-t">Los eslabones 3, 4 y 5 son los que rompen la cadena. El sistema sabe qué se pidió, qué se cargó y qué se facturó; lo que no sabe con certeza es <b>qué se entregó</b>, y por eso lo deduce restando.</p>
+
+  <h4>Lo que debería poder responderse en una sola línea</h4>
+  <div class="prueba">CARGADO 1.944  =  ENTREGADO ?  +  DEVUELTO ?  +  A BORDO ?
+
+hoy, ninguna pantalla cierra esta ecuación,
+y las sueltas ni siquiera entran en ella.</div>
+</section>
+
+<!-- ══════════ E ══════════ -->
+<section id="d">
+  <h2><span class="n">E</span>Matriz de duplicidades</h2>
+  <p>Once duplicidades confirmadas recorriendo la aplicación. La columna final dice qué debería sobrevivir, no qué hay que borrar hoy.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Función</th><th>Ubicación 1</th><th>Ubicación 2 y 3</th><th>Tipo</th><th>Qué sobrevive</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Una fila por ruta con responsable y cargue</b></td>
+          <td>Operación · Rutas de hoy<span class="mini">ruta, responsable, cargue, avance, devolución, valor, efectividad</span></td>
+          <td>Vehículos · Flota y despacho<span class="mini">ruta, placa, GPS, clientes, cajas, km, tripulación, visto bueno</span></td>
+          <td><span class="chip alta">Parcial</span></td>
+          <td><b>Fusionar.</b> Una sola tabla de ruta con dos vistas: despacho y resultado.</td>
+        </tr>
+        <tr>
+          <td><b>Desempeño por ruta</b></td>
+          <td>Clientes · Cumplimiento por ruta<span class="mini">% sobre clientes sin novedad</span></td>
+          <td>Entregadores · Efectividad por ruta <span class="mini">% LiquiYa</span> · Operación · columna Efectividad <span class="mini">% cargue aprobado</span></td>
+          <td><span class="chip crit">Misma pregunta, 3 respuestas</span></td>
+          <td><b>Unificar la definición</b> primero; después dejar una sola tabla.</td>
+        </tr>
+        <tr>
+          <td><b>Histórico del día completo</b></td>
+          <td>Panel móvil · Histórico inteligente</td>
+          <td>Auditoría · LiquiYa vs reportado</td>
+          <td><span class="chip alta">Parcial</span></td>
+          <td><b>Auditoría.</b> Es la que cruza las cinco fuentes.</td>
+        </tr>
+        <tr>
+          <td><b>Rechazo que en realidad se facturó</b></td>
+          <td>Auditoría · «RECHAZO FALSO»<span class="mini">8 casos · $1,8 M</span></td>
+          <td>Entregadores · columna «Reportó» y «Sin reportar»</td>
+          <td><span class="chip alta">Mismo cruce, dos nombres</span></td>
+          <td><b>Un solo nombre</b> en los dos sitios; el dato se calcula una vez.</td>
+        </tr>
+        <tr>
+          <td><b>Novedades por día</b></td>
+          <td>Rechazos · lista del día</td>
+          <td>Panel móvil · Novedades por día</td>
+          <td><span class="chip crit">Total</span></td>
+          <td><b>Rechazos.</b> La del panel móvil sobra.</td>
+        </tr>
+        <tr>
+          <td><b>Cuadre del cargue</b></td>
+          <td>Rutina diaria</td>
+          <td>Panel móvil · pestaña Rutina</td>
+          <td><span class="chip crit">Total</span></td>
+          <td><b>Rutina diaria.</b> Misma función, dos copias.</td>
+        </tr>
+        <tr>
+          <td><b>Kilómetros por vehículo</b></td>
+          <td>Vehículos · columna Km</td>
+          <td>Panel móvil · Flota km y tiempos</td>
+          <td><span class="chip crit">Total</span></td>
+          <td><b>Vehículos.</b> Ya trae km del día y por fecha.</td>
+        </tr>
+        <tr>
+          <td><b>Quién salió en cada camión</b></td>
+          <td>Vehículos · conductor y auxiliares</td>
+          <td>Panel móvil · Tripulación de hoy · Operación · columna Responsable</td>
+          <td><span class="chip alta">Parcial</span></td>
+          <td><b>Vehículos.</b> Es donde se edita y se aprueba.</td>
+        </tr>
+        <tr>
+          <td><b>Recorrido GPS</b></td>
+          <td>Ficha de la fila en Vehículos</td>
+          <td>Mapa de Operación · Flota en vivo · ficha del vehículo</td>
+          <td><span class="chip media">Distinta presentación</span></td>
+          <td><b>Los dos</b>, pero abriendo el mismo visor.</td>
+        </tr>
+        <tr>
+          <td><b>Pendientes del coordinador</b></td>
+          <td>Operación · Esperando al coordinador<span class="mini">31 cosas por resolver</span></td>
+          <td>Panel móvil · Requiere atención</td>
+          <td><span class="chip crit">Total</span></td>
+          <td><b>Operación.</b> Es la mejor versión de las dos.</td>
+        </tr>
+        <tr>
+          <td><b>Personal del día</b></td>
+          <td>Entregadores · quién debe registrarse</td>
+          <td>Asistencia · marcación mensual</td>
+          <td><span class="chip media">Propósito distinto</span></td>
+          <td><b>No duplicada</b>, pero deben hablarse: hoy no se cruzan.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ F ══════════ -->
+<section id="f">
+  <h2><span class="n">F</span>Matriz de problemas y funciones</h2>
+
+  <h3>Problemas por severidad</h3>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>#</th><th>Problema</th><th>Módulo</th><th>Sever.</th><th>Solución propuesta</th></tr></thead>
+      <tbody>
+        <tr><td class="num">01</td><td>La efectividad sube si no se aprueban devoluciones</td><td>Operación</td><td><span class="chip crit">Crítica</span></td><td>Contar toda devolución reportada; la aprobación reclasifica, no borra</td></tr>
+        <tr><td class="num">02</td><td>Entregado = total − novedades</td><td>Operación · Clientes</td><td><span class="chip crit">Crítica</span></td><td>Separar «confirmado», «sin noticia» y «con novedad» en tres cifras</td></tr>
+        <tr><td class="num">03</td><td>Tres bases de cajas para el mismo día</td><td>Transversal</td><td><span class="chip crit">Crítica</span></td><td>El cargue de la Hoja es la única base; lo demás se compara contra él</td></tr>
+        <tr><td class="num">04</td><td>Sueltas y botellas invisibles</td><td>Transversal</td><td><span class="chip crit">Crítica</span></td><td>Toda cifra de volumen viaja como par cajas + unidades</td></tr>
+        <tr><td class="num">05</td><td>Rutas con cargue y sin clientes</td><td>Rutina · Operación</td><td><span class="chip crit">Crítica</span></td><td>Alerta propia: «ruta cargada sin clientes asignados»</td></tr>
+        <tr><td class="num">06</td><td>Rechazos con 0 cajas y parciales que descuentan todo</td><td>Rechazos</td><td><span class="chip crit">Crítica</span></td><td>Pedir cajas al reportar el parcial; separar parcial de total</td></tr>
+        <tr><td class="num">07</td><td>Catorce calendarios independientes</td><td>Transversal</td><td><span class="chip alta">Alta</span></td><td>Una sola barra de contexto: fecha + ruta para toda la aplicación</td></tr>
+        <tr><td class="num">08</td><td>Dos paneles de coordinador en paralelo</td><td>Arquitectura</td><td><span class="chip alta">Alta</span></td><td>El panel móvil pasa a ser la misma pantalla en otro tamaño</td></tr>
+        <tr><td class="num">09</td><td>«$74 M en juego» dominado por un mayorista legítimo</td><td>Auditoría</td><td><span class="chip alta">Alta</span></td><td>Separar el titular: desvío real aparte de lo informativo</td></tr>
+        <tr><td class="num">10</td><td>Rechazo / novedad / devolución son la misma cosa con tres nombres</td><td>Transversal</td><td><span class="chip alta">Alta</span></td><td>Un glosario y un solo término por concepto</td></tr>
+        <tr><td class="num">11</td><td>Ninguna tarjeta explica su fórmula en su cara</td><td>Transversal</td><td><span class="chip alta">Alta</span></td><td>Pie de tarjeta con la definición y la fuente</td></tr>
+        <tr><td class="num">12</td><td>Clave del coordinador escrita en el archivo; la llave pública permite borrar</td><td>Seguridad</td><td><span class="chip alta">Alta</span></td><td>Sacar la clave del HTML y cerrar el borrado por RLS</td></tr>
+        <tr><td class="num">13</td><td>Rutina diaria se abre con un cuadro de diálogo del navegador</td><td>Rutina</td><td><span class="chip media">Media</span></td><td>Reusar el desbloqueo del panel, sin <code>prompt()</code></td></tr>
+        <tr><td class="num">14</td><td>«Rutas activas 0» mientras hay 8 rutas con vehículo</td><td>Operación</td><td><span class="chip media">Media</span></td><td>Contar por asignación, no por encendido del GPS</td></tr>
+        <tr><td class="num">15</td><td>Cuatro puertas al mismo recorrido GPS</td><td>Vehículos · Operación</td><td><span class="chip media">Media</span></td><td>Un visor único al que todas apuntan</td></tr>
+        <tr><td class="num">16</td><td>El histórico por persona solo existe desde el 3 de agosto</td><td>Entregadores</td><td><span class="chip media">Media</span></td><td>Aceptado: se llena solo. Dejarlo dicho en pantalla</td></tr>
+        <tr><td class="num">17</td><td>Obsequios y Asistencia no alimentan ningún indicador</td><td>Obsequios · Asistencia</td><td><span class="chip media">Media</span></td><td>Conectar al cierre del día</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Qué se hace con cada función</h3>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Módulo</th><th>Función</th><th>Estado</th><th>Decisión</th></tr></thead>
+      <tbody>
+        <tr><td>Operación</td><td>Esperando al coordinador</td><td><span class="chip ok">Funciona bien</span></td><td><b>Mantener</b> — es lo mejor del sistema</td></tr>
+        <tr><td>Operación</td><td>Efectividad de hoy</td><td><span class="chip crit">Fórmula peligrosa</span></td><td><b>Mejorar</b> — cambiar la base de cálculo</td></tr>
+        <tr><td>Operación</td><td>Rutas de hoy</td><td><span class="chip alta">Duplica flota</span></td><td><b>Fusionar</b> con Vehículos</td></tr>
+        <tr><td>Operación</td><td>Mapa · Centro de control</td><td><span class="chip ok">Funciona</span></td><td><b>Mantener</b> y volverlo transversal</td></tr>
+        <tr><td>Operación</td><td>Flota en vivo (lista lateral)</td><td><span class="chip alta">Duplica</span></td><td><b>Fusionar</b> en el mapa</td></tr>
+        <tr><td>Vehículos</td><td>Flota y despacho + visto bueno</td><td><span class="chip ok">Recién arreglado</span></td><td><b>Mantener</b> — pasa a ser el módulo Ruta</td></tr>
+        <tr><td>Clientes</td><td>Cumplimiento por ruta</td><td><span class="chip crit">Mide suposición</span></td><td><b>Mover</b> a Ruta con la definición corregida</td></tr>
+        <tr><td>Clientes</td><td>Buscador de clientes</td><td><span class="chip ok">Funciona</span></td><td><b>Mantener</b></td></tr>
+        <tr><td>Entregadores</td><td>Desempeño con LiquiYa</td><td><span class="chip ok">Recién construido</span></td><td><b>Mantener</b> — es la definición correcta</td></tr>
+        <tr><td>Entregadores</td><td>Quién debe registrarse</td><td><span class="chip media">Aislado</span></td><td><b>Mover</b> a Personal, junto a Asistencia</td></tr>
+        <tr><td>Rechazos</td><td>Motivos y novedades del día</td><td><span class="chip ok">Funciona</span></td><td><b>Mantener</b></td></tr>
+        <tr><td>Alertas</td><td>Geocercas + exceso de velocidad</td><td><span class="chip ok">Recién depurado</span></td><td><b>Mover</b> dentro de Ruta como pestaña</td></tr>
+        <tr><td>Rutina</td><td>Cargas del día + cuadre</td><td><span class="chip ok">Funciona</span></td><td><b>Mantener</b> — es el paso 1 del día</td></tr>
+        <tr><td>Auditoría</td><td>LiquiYa vs reportado</td><td><span class="chip ok">La joya</span></td><td><b>Mantener</b> y volverlo el cierre del día</td></tr>
+        <tr><td>Asistencia</td><td>Marcación mensual</td><td><span class="chip ok">Funciona</span></td><td><b>Mover</b> a Personal</td></tr>
+        <tr><td>Obsequios</td><td>Productos a $0 con foto</td><td><span class="chip media">Suelto</span></td><td><b>Mover</b> dentro del cierre del día</td></tr>
+        <tr><td>Panel móvil</td><td>Las 4 pestañas completas</td><td><span class="chip alta">Duplicado</span></td><td><b>Eliminar</b> como implementación aparte</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ G ══════════ -->
+<section id="h">
+  <h2><span class="n">G</span>Arquitectura propuesta</h2>
+  <p class="lead">Seis módulos que siguen la jornada, más una barra de contexto que manda sobre todos. La regla: <strong>una pregunta, un lugar</strong>. Ninguna función desaparece; catorce se mueven o se fusionan.</p>
+
+  <div class="arq">
+    <div class="arq-m">
+      <span class="num">00 · siempre visible</span>
+      <h5>Barra de contexto</h5>
+      <p>Fecha y ruta que mandan sobre toda la aplicación. Hoy hay catorce calendarios sueltos.</p>
+      <ul><li>Fecha única con «hoy / ayer»</li><li>Filtro de ruta global</li><li>Semáforo de archivos del día</li></ul>
+      <div class="de">reemplaza · 14 selectores</div>
+    </div>
+    <div class="arq-m">
+      <span class="num">01 · antes de salir</span>
+      <h5>Rutina del día</h5>
+      <p>Los cuatro archivos, el cuadre contra el Libro y las rutas sin clientes.</p>
+      <ul><li>Cargas del día</li><li>Cuadre Libro ↔ Hoja</li><li>Alerta de ruta sin clientes</li></ul>
+      <div class="de">hoy · Rutina + panel móvil 1</div>
+    </div>
+    <div class="arq-m">
+      <span class="num">02 · el corazón</span>
+      <h5>Ruta</h5>
+      <p>Una ruta, una fila, todo lo suyo: camión, gente, carga, avance, GPS, novedades y su visto bueno.</p>
+      <ul><li>Despacho y tripulación</li><li>Avance y novedades</li><li>Recorrido y geocercas</li><li>Histórico por fecha</li></ul>
+      <div class="de">hoy · Vehículos + Rutas de hoy + Clientes/ruta + Alertas</div>
+    </div>
+    <div class="arq-m">
+      <span class="num">03 · el mapa</span>
+      <h5>Mapa operativo</h5>
+      <p>Transversal, no un módulo. Se abre desde cualquier ruta, vehículo o cliente y conserva el contexto.</p>
+      <ul><li>Vivo y por fecha</li><li>Clientes, geocercas, recorrido</li></ul>
+      <div class="de">hoy · mapa + flota en vivo + 4 visores</div>
+    </div>
+    <div class="arq-m">
+      <span class="num">04 · la gente</span>
+      <h5>Personal</h5>
+      <p>Quién trabaja, quién debe registrarse, quién asistió y cómo le fue.</p>
+      <ul><li>Asistencia mensual</li><li>Desempeño con LiquiYa</li><li>Histórico por persona</li></ul>
+      <div class="de">hoy · Entregadores + Asistencia</div>
+    </div>
+    <div class="arq-m">
+      <span class="num">05 · al cerrar</span>
+      <h5>Cierre del día</h5>
+      <p>Donde se aprueban las devoluciones, se revisan obsequios y se cruza LiquiYa. Un día no se cierra solo.</p>
+      <ul><li>Aprobación de devoluciones</li><li>Auditoría LiquiYa</li><li>Obsequios con foto</li><li>Firma de cierre</li></ul>
+      <div class="de">hoy · Auditoría + Obsequios + aprobaciones</div>
+    </div>
+    <div class="arq-m">
+      <span class="num">06 · después</span>
+      <h5>Análisis</h5>
+      <p>Lo acumulado: tendencias, rutas que siempre fallan, clientes que siempre rechazan, nómina.</p>
+      <ul><li>Acumulado por rango</li><li>Ranking de rutas y personas</li><li>Base de la comisión</li></ul>
+      <div class="de">hoy · disperso en 5 pantallas</div>
+    </div>
+  </div>
+
+  <h3>Flujo de la jornada</h3>
+  <div class="wf-flujo">
+    <div class="wf-paso"><div class="p-n">06:00</div><div class="p-t">Rutina</div><div class="p-s">subir los 4 archivos y cuadrar el cargue</div></div>
+    <div class="wf-paso act"><div class="p-n">06:30</div><div class="p-t">Despacho</div><div class="p-s">placa, conductor, auxiliares y su visto bueno</div></div>
+    <div class="wf-paso"><div class="p-n">07:00</div><div class="p-t">Salida</div><div class="p-s">geocerca de planta y hora real</div></div>
+    <div class="wf-paso"><div class="p-n">día</div><div class="p-t">Seguimiento</div><div class="p-s">avance, GPS, novedades en vivo</div></div>
+    <div class="wf-paso"><div class="p-n">tarde</div><div class="p-t">Novedades</div><div class="p-s">resolver o confirmar cada devolución</div></div>
+    <div class="wf-paso"><div class="p-n">18:00</div><div class="p-t">Retorno</div><div class="p-s">producto a bordo y km del día</div></div>
+    <div class="wf-paso"><div class="p-n">noche</div><div class="p-t">Cierre</div><div class="p-s">aprobar, cruzar LiquiYa, firmar</div></div>
+    <div class="wf-paso"><div class="p-n">mes</div><div class="p-t">Análisis</div><div class="p-s">tendencia, nómina, reincidencias</div></div>
+  </div>
+  <p class="pie-t">Hoy el sistema cubre bien Rutina, Despacho y Seguimiento. <b>Retorno no existe</b> —nadie registra el producto que vuelve al CEDI— y <b>Cierre está repartido</b> entre tres módulos que no se hablan.</p>
+</section>
+
+<!-- ══════════ H ══════════ -->
+<section id="i">
+  <h2><span class="n">H</span>Mockups</h2>
+  <p class="lead">Cuatro propuestas, en orden de impacto. Ninguna requiere botar funciones: son la misma información puesta donde se decide.</p>
+
+  <h3>1 · Tres cifras honestas en vez de cinco confusas</h3>
+  <p>Cada tarjeta dice de qué está hecha, en su propia cara. La cifra que manda deja de ser la más bonita y pasa a ser la que se puede sostener frente a la bodega.</p>
+  <div class="wf">
+    <div class="wf-cab"><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="tt">Torre de control · propuesta</span></div>
+    <div class="wf-in">
+      <div class="wf-barra">
+        <span class="wf-fecha">15 / 08 / 2026</span>
+        <span class="wf-tag on">Hoy</span><span class="wf-tag">Ayer</span>
+        <span class="wf-tag">Todas las rutas</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--verde)">✓ PPAS ✓ Libro ✓ Hoja</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--rojo)">✕ LiquiYa</span>
+      </div>
+      <div class="wf-kpis">
+        <div class="wf-k v-mal"><div class="l">Cerrado de verdad</div><div class="v">35 <span style="font-size:15px;color:var(--tinta-3)">de 457</span></div><div class="f">confirmado por el entregador · 8 %</div></div>
+        <div class="wf-k v-med"><div class="l">Sin noticia</div><div class="v">381</div><div class="f">ni entrega ni novedad · nadie sabe</div></div>
+        <div class="wf-k v-mal"><div class="l">Con novedad</div><div class="v">41</div><div class="f">49 cj + 157 und · $1,6 M · 26 sin aprobar</div></div>
+        <div class="wf-k"><div class="l">Cargue del día</div><div class="v">1.944</div><div class="f">cj + 502 botellas · Hoja · +273 sobre PPAS</div></div>
+      </div>
+      <div class="wf-nota">Cambios: «cumplimiento 91 %» desaparece porque no se puede sostener · «sin noticia» es nuevo y es la cifra que obliga a llamar · el pie de cada tarjeta trae la fórmula y la fuente · la efectividad con tramo de comisión se muda al Cierre del día, cuando ya están aprobadas las devoluciones.</div>
+    </div>
+  </div>
+
+  <h3>2 · Una sola tabla de ruta</h3>
+  <p>Fusiona «Rutas de hoy» y «Flota y despacho». Dos pestañas sobre la misma fila: cómo salió y cómo le fue.</p>
+  <div class="wf">
+    <div class="wf-cab"><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="tt">Ruta · propuesta</span></div>
+    <div class="wf-in">
+      <div class="wf-barra" style="margin-bottom:10px">
+        <span class="wf-tag on">Despacho</span><span class="wf-tag">Resultado</span><span class="wf-tag">Recorrido</span><span class="wf-tag">Histórico</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tinta-3)">8 rutas · 6 con visto bueno · faltan 2</span>
+      </div>
+      <div class="tabla-env" style="margin:0;box-shadow:none">
+        <table class="wf-t" style="min-width:600px">
+          <thead><tr><th>Ruta</th><th>Camión</th><th>Tripulación</th><th style="text-align:right">Cargue</th><th style="text-align:right">Cerrado</th><th style="text-align:right">Novedad</th><th>Su OK</th></tr></thead>
+          <tbody>
+            <tr><td><b>KA4V12</b></td><td>LFX110<span class="mini">JMC</span></td><td>De la Cruz +1</td><td class="num">187 cj<span class="mini">+40 und</span></td><td class="num" style="color:var(--verde)">80/80</td><td class="num">—</td><td><span class="chip ok">Aprobada</span></td></tr>
+            <tr><td><b>KA4V13</b></td><td>GIM332<span class="mini">JAC</span></td><td>Jama +1</td><td class="num">159 cj<span class="mini">+12 und</span></td><td class="num" style="color:var(--ambar)">53/70</td><td class="num" style="color:var(--rojo)">17</td><td><span class="chip ok">Aprobada</span></td></tr>
+            <tr><td><b>KA4V53</b></td><td>VBP909<span class="mini">2 rutas</span></td><td style="color:var(--rojo)">sin auxiliar</td><td class="num">140 cj</td><td class="num" style="color:var(--rojo)">4/6</td><td class="num" style="color:var(--rojo)">2</td><td><span class="chip crit">Dar el OK</span></td></tr>
+            <tr style="opacity:.75"><td><b>KA4V63</b></td><td>—</td><td>—</td><td class="num">216 cj</td><td class="num" style="color:var(--rojo)">sin clientes</td><td class="num">—</td><td><span class="chip crit">Revisar</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wf-nota">Cambios: «cargue» pasa a ser el de la Hoja, con sus unidades al lado · «cerrado» son entregas confirmadas, no restas · KA4V63 aparece aunque no tenga clientes, en vez de desaparecer del tablero.</div>
+    </div>
+  </div>
+
+  <h3>3 · La ecuación de la caja, cerrada</h3>
+  <p>Una franja por ruta que explica dónde quedó cada caja que salió del CEDI. Es la pantalla que hoy no existe.</p>
+  <div class="wf">
+    <div class="wf-cab"><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="tt">Cierre del día · KA4V13</span></div>
+    <div class="wf-in">
+      <div style="display:flex;align-items:stretch;gap:0;font-family:var(--mono);font-size:11px;margin-bottom:12px;overflow-x:auto">
+        <div style="flex:1;min-width:96px;background:var(--tinta);color:var(--papel);padding:12px 13px">
+          <div style="opacity:.6;font-size:9.5px;letter-spacing:.1em">CARGADO</div><div style="font-size:21px;font-weight:700;margin-top:3px">159</div><div style="opacity:.6">+12 und</div></div>
+        <div style="flex:1;min-width:96px;background:var(--verde-s);color:var(--verde);padding:12px 13px">
+          <div style="font-size:9.5px;letter-spacing:.1em;opacity:.75">ENTREGADO</div><div style="font-size:21px;font-weight:700;margin-top:3px">?</div><div style="opacity:.75">hoy no se mide</div></div>
+        <div style="flex:1;min-width:96px;background:var(--rojo-s);color:var(--rojo);padding:12px 13px">
+          <div style="font-size:9.5px;letter-spacing:.1em;opacity:.75">DEVUELTO</div><div style="font-size:21px;font-weight:700;margin-top:3px">?</div><div style="opacity:.75">17 clientes, cajas sin pedir</div></div>
+        <div style="flex:1;min-width:96px;background:var(--ambar-s);color:var(--ambar);padding:12px 13px">
+          <div style="font-size:9.5px;letter-spacing:.1em;opacity:.75">A BORDO</div><div style="font-size:21px;font-weight:700;margin-top:3px">?</div><div style="opacity:.75">nadie registra el retorno</div></div>
+      </div>
+      <div class="wf-nota" style="margin-top:0">Los <b>159</b> del cargue son reales, de la Hoja del 15 de agosto. Los otros tres campos van con interrogante <b>a propósito</b>: así está hoy el sistema. Sabe qué cargó y sabe cuántos clientes reclamaron, pero no cuántas cajas entregó, cuántas volvieron ni cuántas quedaron en el camión. Para llenarlos hacen falta dos cosas de la fase 2 — pedir las cajas al reportar el rechazo, y registrar el retorno al CEDI.</div>
+    </div>
+  </div>
+
+  <h3>4 · La barra de contexto</h3>
+  <p>Una fecha para toda la aplicación. Se elige el 12 de agosto y los seis módulos muestran el 12 de agosto.</p>
+  <div class="wf">
+    <div class="wf-cab"><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="tt">Contexto global · propuesta</span></div>
+    <div class="wf-in">
+      <div class="wf-barra" style="margin-bottom:0">
+        <span class="wf-fecha">12 / 08 / 2026</span>
+        <span class="wf-tag">◀</span><span class="wf-tag on">Hoy</span><span class="wf-tag">▶</span>
+        <span class="wf-tag on">KA4V13</span><span class="wf-tag">todas</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tinta-3)">Rutina ✓ · Ruta ✓ · Personal ✓ · Cierre ✓ — todos en la misma fecha</span>
+      </div>
+      <div class="wf-nota">Hoy: Vehículos tiene su fecha, Rechazos otra, Entregadores dos, Auditoría otra, Asistencia otra, Obsequios otra, y el panel móvil cuatro más. Cambiar de día obliga a hacerlo siete veces y a acordarse de todas.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ I ══════════ -->
+<section id="j">
+  <h2><span class="n">I</span>Plan por fases</h2>
+  <p>Ordenado por lo que cuesta no hacerlo. Nada de esto empieza sin su aprobación explícita, fase por fase.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Fase</th><th>Qué se hace</th><th>Por qué primero</th><th>Riesgo de tocar</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>1 · Verdad de las cifras</b><span class="mini">crítica</span></td>
+          <td>Cambiar la base de la efectividad · separar confirmado / sin noticia / con novedad · unificar la base de cajas en la Hoja · mostrar unidades junto a cajas · alerta de ruta cargada sin clientes</td>
+          <td>Son las cifras con las que se habla de comisión y de desempeño. Hoy dicen lo que no es.</td>
+          <td><span class="chip alta">Medio</span><span class="mini">cambia números que la gente ya vio</span></td>
+        </tr>
+        <tr>
+          <td><b>2 · Cerrar la caja</b><span class="mini">crítica</span></td>
+          <td>Pedir cajas en el rechazo parcial · separar parcial de total · construir la franja cargado = entregado + devuelto + sin explicar</td>
+          <td>Sin esto no se puede auditar una ruta ni sostener un reclamo.</td>
+          <td><span class="chip alta">Medio</span><span class="mini">toca la app del entregador</span></td>
+        </tr>
+        <tr>
+          <td><b>3 · Un solo lugar por pregunta</b><span class="mini">importante</span></td>
+          <td>Fusionar Rutas de hoy con Flota · barra de contexto única · retirar el panel móvil duplicado · un visor de recorrido</td>
+          <td>Quita el trabajo doble y el riesgo de arreglar en un lado y no en el otro.</td>
+          <td><span class="chip media">Bajo</span><span class="mini">es mover, no reescribir</span></td>
+        </tr>
+        <tr>
+          <td><b>4 · Nombres y lectura</b><span class="mini">optimización</span></td>
+          <td>Glosario único · fórmula al pie de cada tarjeta · reordenar el menú según la jornada</td>
+          <td>Un coordinador nuevo debe entender sin capacitación larga.</td>
+          <td><span class="chip ok">Mínimo</span></td>
+        </tr>
+        <tr>
+          <td><b>5 · Lo que falta</b><span class="mini">futuro</span></td>
+          <td>Registro de retorno al CEDI · cierre firmado del día · nómina desde la efectividad real · histórico por cliente</td>
+          <td>Completa el ciclo. Hoy la jornada no tiene final formal.</td>
+          <td><span class="chip media">Nuevo</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Aparte, y urgente por otra razón</h4>
+  <p>La clave del coordinador (<code>gmaz2024</code>) está escrita en el archivo que cualquiera puede abrir, y comprobé que la llave pública de Supabase permite <strong>borrar</strong> objetos del almacenamiento. Hoy eso significa que quien tenga el enlace puede borrar registros de tripulación o validaciones. No es parte del rediseño, pero debería atenderse antes.</p>
+</section>
+
+<!-- ══════════ J ══════════ -->
+<section id="k">
+  <h2><span class="n">J</span>Las quince respuestas</h2>
+
+  <div class="qa"><div class="q"><span class="qn">01</span>¿La aplicación está bien estructurada?</div><div class="a">A medias. Los módulos individuales están bien resueltos; la estructura que los une, no. Está organizada por objetos (vehículos, clientes, entregadores) cuando la operación se vive por momentos de la jornada.</div></div>
+  <div class="qa"><div class="q"><span class="qn">02</span>¿Qué está duplicado?</div><div class="a">Once funciones, listadas en la matriz E. La duplicidad grande no es una tabla: es el panel móvil completo, que reimplementa cuatro pantallas del escritorio.</div></div>
+  <div class="qa"><div class="q"><span class="qn">03</span>¿Qué debería fusionarse?</div><div class="a">Rutas de hoy con Flota y despacho. Flota en vivo con el mapa. Los cuatro visores de recorrido en uno. Clientes por ruta dentro de Ruta.</div></div>
+  <div class="qa"><div class="q"><span class="qn">04</span>¿Qué debería moverse?</div><div class="a">Asistencia y «quién debe registrarse» a Personal. Alertas dentro de Ruta. Obsequios y la efectividad con tramo de comisión al Cierre del día.</div></div>
+  <div class="qa"><div class="q"><span class="qn">05</span>¿Qué debería desaparecer?</div><div class="a">Solo el panel móvil como implementación aparte, y la tarjeta «cumplimiento 91 %» tal como está calculada. Nada más: lo demás se mueve.</div></div>
+  <div class="qa"><div class="q"><span class="qn">06</span>¿Qué falta?</div><div class="a">El registro del producto que vuelve al CEDI, el cierre formal del día, el histórico por cliente y el enlace entre efectividad real y nómina.</div></div>
+  <div class="qa"><div class="q"><span class="qn">07</span>¿La lógica de cargue y liquidación es correcta?</div><div class="a">La de cargue contra Libro, sí, y es buena. La de liquidación también, y es la mejor pieza del sistema. Lo que no existe es el eslabón del medio: nadie descuenta cajas al entregar, así que la cadena no cierra.</div></div>
+  <div class="qa"><div class="q"><span class="qn">08</span>¿La lógica de cajas y unidades es correcta?</div><div class="a">No. Las sueltas y botellas se guardan pero no se muestran ni se suman: 2.331 sueltas y 502 botellas invisibles solo el 15 de agosto.</div></div>
+  <div class="qa"><div class="q"><span class="qn">09</span>¿Los históricos están bien organizados?</div><div class="a">Están fragmentados en cinco sitios con calendarios propios. El de vehículo y el de persona ya quedaron bien; falta el de cliente y unificar la fecha.</div></div>
+  <div class="qa"><div class="q"><span class="qn">10</span>¿Los recorridos están bien ubicados?</div><div class="a">Se consultan desde cuatro sitios. Deberían ser cuatro puertas al mismo visor, no cuatro visores.</div></div>
+  <div class="qa"><div class="q"><span class="qn">11</span>¿El mapa debe ser independiente o central?</div><div class="a">Ninguno de los dos: transversal. No un módulo del menú, sino una vista que se abre desde cualquier ruta, vehículo o cliente conservando el contexto.</div></div>
+  <div class="qa"><div class="q"><span class="qn">12</span>¿El coordinador tiene la información que necesita?</div><div class="a">Tiene más de la que necesita y menos de la que le sirve. Le sobran porcentajes; le falta saber qué pasó con las cajas que salieron y qué clientes quedaron sin noticia.</div></div>
+  <div class="qa"><div class="q"><span class="qn">13</span>¿Puede escalar?</div><div class="a">A 20 vehículos, sí. A 50, no: la Torre carga el día completo en memoria, hay catorce calendarios que sincronizar a mano y el panel duplicado obliga a hacer todo dos veces.</div></div>
+  <div class="qa"><div class="q"><span class="qn">14</span>¿Cuál sería el orden definitivo de los módulos?</div><div class="a">Rutina del día · Ruta · Personal · Cierre del día · Análisis, con el mapa como herramienta transversal y la barra de contexto arriba de todo.</div></div>
+  <div class="qa"><div class="q"><span class="qn">15</span>¿Cuál es la arquitectura ideal?</div><div class="a">La de la sección G: seis módulos que siguen la jornada en vez de catalogar objetos, una sola fecha, una sola definición por indicador y un cierre del día que obligue a cuadrar antes de pasar la página.</div></div>
+
+  <div class="veredicto">
+    <h3>Veredicto</h3>
+    <p>GMAZ Rutas <strong>ya opera</strong>, y varias de sus piezas están por encima de lo que se ve en sistemas comprados de este tamaño. No hay que reconstruirla.</p>
+    <p>Pero hoy el tablero informa <strong>optimismo por defecto</strong>: cuando no hay dato, asume que salió bien. Un sistema de distribución tiene que hacer lo contrario — cuando no hay dato, tiene que decir <em>«esto no lo sé»</em> y pedir que alguien lo averigüe. Ese cambio de criterio es la fase 1, y es más importante que cualquier reorganización de menús.</p>
+    <p>Lo demás —fusionar, mover, renombrar— es trabajo de orden, con poco riesgo, y se puede hacer sin tocar una sola fórmula que hoy funcione.</p>
+  </div>
+
+  <p class="cierre">Auditoría realizada sobre la aplicación en operación el 15 de agosto de 2026, con los datos reales del día y el histórico desde el 19 de mayo. <b>No se modificó ninguna línea del sistema.</b> Esperando aprobación fase por fase antes de implementar.</p>
+</section>
+
+</div>

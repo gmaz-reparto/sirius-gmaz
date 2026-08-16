@@ -1382,6 +1382,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
   font-family:inherit;font-size:9px;font-weight:800;color:var(--gris4);cursor:pointer;opacity:0;transition:opacity .12s}
 .tc-cm:hover .tc-rol{opacity:1}
 .tc-rol:hover{background:var(--negro);color:#fff;border-color:var(--negro)}
+.tc-sub{font-size:9px;font-weight:700;color:var(--gris4);margin-top:2px;letter-spacing:.2px}
 .tc-warn{margin-top:4px;font-size:9.5px;font-weight:800;color:#B45309}
 .tc-vb{margin-top:6px;height:23px;padding:0 9px;border-radius:6px;border:1px solid var(--gris3);background:#fff;
   font-family:inherit;font-size:9.5px;font-weight:800;color:var(--gris5);cursor:pointer;letter-spacing:.2px}
@@ -4276,14 +4277,20 @@ async function cargarDash(){
     // Cajas REALMENTE rechazadas (del detalle en storage), no el total del pedido.
     const rechCod=await mapaCajasRechazadas(novedades_,fecha);
     const cajRech=cod=>(rechCod[String(cod)]?rechCod[String(cod)].caj:0);
-    // MODELO: todos entregados por defecto; una novedad = NO entregado.
-    // El % arranca en 100% en la mañana y BAJA con cada rechazo (por clientes y por cajas).
+    // MODELO (corregido 16-ago-2026). Antes: "todos entregados por defecto; una novedad = no
+    // entregado", así que entregados = total − novedades y el tablero decía 416 entregados el día
+    // que solo 35 estaban confirmados. Un cliente al que nadie visitó contaba como entregado y el
+    // cumplimiento SUBÍA si el entregador dejaba de reportar.
+    // Ahora cada cliente cae en uno de tres estados que suman el total, sin suponer nada:
+    //   confirmado  → el entregador selló la entrega (estados_entrega)
+    //   con novedad → reportó un rechazo
+    //   sin noticia → ni lo uno ni lo otro. Nadie sabe qué pasó, y hay que llamar.
     const novSet=new Set(novedades_.map(n=>String(n.codigo_cliente)));
-    const entSet=new Set(clientes_.map(c=>String(c.id)).filter(id=>!novSet.has(id)));
+    const entSet=new Set(clientes_.map(c=>String(c.id)).filter(id=>!novSet.has(id))); // compat.
     const totCli=clientes_.length,totNov=novedades_.length,totEnt=entSet.size;
     const cajasRej=novedades_.reduce((s,n)=>s+cajRech(n.codigo_cliente),0);
     const cajasProg=clientes_.reduce((s,c)=>s+(cajasCod[String(c.id)]||0),0);
-    const cajasEnt=cajasProg-cajasRej; // cajas entregadas = programadas menos rechazadas
+    const cajasEnt=cajasProg-cajasRej; // se conserva para el histórico; ya no es un titular
     const pctG=totCli?Math.round(totEnt/totCli*100):100;
     const pctCajas=cajasProg?Math.round(cajasEnt/cajasProg*100):100;
     // Momentos de los rechazos del día
@@ -4305,6 +4312,16 @@ async function cargarDash(){
       }
     }catch(e){}
     const pctConf=totCli?Math.round(confirmados/totCli*100):0;
+    // Los tres estados suman el total: nadie queda clasificado por descarte
+    const sinNoticia=Math.max(0,totCli-confirmados-totNov);
+    // Rutas realmente despachadas: por asignación de vehículo, no por encendido del GPS.
+    // «Rutas activas» leía el diccionario de colores y por eso mostraba 0 con 8 rutas en calle.
+    let rutasConVehiculo=0,rutasDia=new Set(clientes_.map(c=>c.ruta).filter(Boolean)).size;
+    try{
+      const ra=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta&fecha=eq.'+fecha,
+        {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+      if(ra.ok)rutasConVehiculo=new Set((await ra.json()||[]).map(x=>x.ruta)).size;
+    }catch(e){}
     // VENTA EN PESOS — sobre la base del Libro (lo pedido). Lo rechazado sale del campo 'valor'
     // que guarda cada rechazo, que está en la misma base (verificado: cajas × precio = valor).
     let ventaPed=0;
@@ -4323,12 +4340,13 @@ async function cargarDash(){
       {i:'target',v:confirmados+' / '+totCli,l:'Avance confirmado',pct:pctConf,pc:pctConf>=90?'#059669':pctConf>=50?'#1A56DB':'#8A90A0',
        drill:"drillAvance('"+fecha+"')",
        foot:confirmados?['Última entrega','<b>'+(ultimaEnt||'—')+'</b>']:['Sin confirmaciones','<b style="color:#8A90A0">aún</b>']},
-      {i:'target',v:pctG+'%',l:'Cumplimiento clientes',pct:pctG,pc:colPct(pctG),drill:"drillCumplimiento('"+fecha+"')",foot:['Entregados','<b>'+totEnt+'/'+totCli+'</b>']},
-      {i:'box',v:pctCajas+'%',l:'Cumplimiento cajas',pct:pctCajas,pc:'#1A56DB',drill:"drillCumplimiento('"+fecha+"')",foot:['Entregadas','<b>'+Math.round(cajasEnt).toLocaleString('es-CO')+'/'+Math.round(cajasProg).toLocaleString('es-CO')+'</b>']},
-      {i:'store',v:totEnt+' / '+totCli,l:'Clientes entregados',drill:"drillCumplimiento('"+fecha+"')",foot:['Con novedad','<b>'+(totCli-totEnt)+'</b>']},
-      {i:'box',v:Math.round(cajasRej).toLocaleString('es-CO'),l:'Cajas rechazadas',drill:"drillRechazos('"+fecha+"')",foot:['Hoy','<b style="color:#E30613">'+(cajasRej>0?'revisar':'—')+'</b>']},
-      {i:'truck',v:Object.keys(rutaColor).length,l:'Rutas activas',foot:['Vehículos','<b>SecuritaGPS</b>']},
-      {i:'alert',v:totNov,l:'Rechazos hoy',drill:"drillRechazos('"+fecha+"')",foot:['Estado',totNov>0?'<b style="color:#E30613">revisar</b>':'<b style="color:#059669">sin novedad</b>']}
+      {i:'store',v:String(sinNoticia),l:'Sin noticia',pct:totCli?Math.round(sinNoticia/totCli*100):0,
+       pc:sinNoticia?'#D97706':'#059669',drill:"drillCumplimiento('"+fecha+"')",
+       foot:['Ni entrega ni novedad','<b style="color:'+(sinNoticia?'#B45309':'#059669')+'">'+
+         (totCli?Math.round(sinNoticia/totCli*100):0)+'% del día</b>']},
+      {i:'alert',v:String(totNov),l:'Con novedad',drill:"drillRechazos('"+fecha+"')",
+       foot:['Cajas devueltas','<b style="color:'+(cajasRej?'#E30613':'#059669')+'">'+Math.round(cajasRej).toLocaleString('es-CO')+'</b>']},
+      {i:'truck',v:String(rutasConVehiculo),l:'Rutas en calle',foot:['Con vehículo asignado','<b>'+(rutasDia||'—')+' del día</b>']},
     ];
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
       '<div class="dkpi'+(k.drill?' drillable" onclick="haptic();'+k.drill+'"':'"')+'><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic">'+icoSvg(k.i,16,2)+'</span></div>'+
@@ -4338,14 +4356,23 @@ async function cargarDash(){
       '</div>').join('');
     // Ranking por ruta
     const porRuta={};
-    clientes_.forEach(c=>{const r=c.ruta||'—';if(!porRuta[r])porRuta[r]={tot:0,ent:0,nov:0,cajas:0};porRuta[r].tot++;porRuta[r].cajas+=cajasCod[String(c.id)]||0;
-      if(entSet.has(String(c.id)))porRuta[r].ent++;if(novSet.has(String(c.id)))porRuta[r].nov++;});
+    // Confirmados por ruta: del sello del entregador, no de la resta
+    const confSet=new Set((estados_||[]).filter(x=>x.estado==='entregado').map(x=>String(x.codigo_cliente)));
+    clientes_.forEach(c=>{const r=c.ruta||'—';if(!porRuta[r])porRuta[r]={tot:0,ent:0,nov:0,conf:0,sin:0,cajas:0};
+      porRuta[r].tot++;porRuta[r].cajas+=cajasCod[String(c.id)]||0;
+      const id=String(c.id);
+      if(entSet.has(id))porRuta[r].ent++;
+      if(novSet.has(id))porRuta[r].nov++;
+      if(confSet.has(id))porRuta[r].conf++;});
+    Object.values(porRuta).forEach(x=>{x.sin=Math.max(0,x.tot-x.conf-x.nov);});
+    // El aro muestra lo CONFIRMADO, no lo supuesto. Debajo, los tres estados del día.
     document.getElementById('dash-ranking').innerHTML=Object.keys(porRuta).sort().map(code=>{
-      const r=porRuta[code],pct=r.tot?Math.round(r.ent/r.tot*100):0;
-      const col=pct>=90?'#059669':pct>=75?'#D97706':pct>0?'#E30613':'#8A90A0';
+      const r=porRuta[code],pct=r.tot?Math.round(r.conf/r.tot*100):0;
+      const col=pct>=90?'#059669':pct>=50?'#1A56DB':pct>0?'#D97706':'#8A90A0';
       return '<div class="drow"><div class="dg">'+gaugeSvg(pct,40,4.5)+'<div class="dp2" style="color:'+col+'">'+pct+'%</div></div>'+
-        '<div class="di"><b style="color:'+(rutaColor[code]||'#0F1117')+'">'+code+'</b><small>'+r.ent+'/'+r.tot+' clientes · '+Math.round(r.cajas)+' cajas</small></div>'+
-        '<div class="dr"><b style="color:'+(r.nov>=3?'#E30613':'#059669')+'">'+r.nov+'</b><small>RECHAZOS</small></div></div>';
+        '<div class="di"><b style="color:'+(rutaColor[code]||'#0F1117')+'">'+code+'</b>'+
+          '<small>'+r.conf+' confirmados · <span style="color:#B45309">'+r.sin+' sin noticia</span> · '+Math.round(r.cajas)+' cajas</small></div>'+
+        '<div class="dr"><b style="color:'+(r.nov>=3?'#E30613':'#059669')+'">'+r.nov+'</b><small>NOVEDADES</small></div></div>';
     }).join('');
     renderAsignacionVehiculos(Object.keys(porRuta).sort());
     poblarFiltroRutas(Object.keys(porRuta).sort());
@@ -4362,7 +4389,7 @@ async function cargarDash(){
     pintarDashMap(clientes_,entSet,novSet);
     cargarEventosGeocerca();
     // Cache para que los módulos (Vehículos/Clientes/Rechazos) reutilicen sin nuevas llamadas
-    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,vendPed,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos,
+    _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,vendPed,totCli,totEnt,totNov,sinNoticia,cajasProg,cajasEnt,cajasRej,tiempos,
       fecha,confirmados,ultimaEnt,ventaPed,ventaRech,pctCajas,pctConf};
     actualizarBadgesModulos();
     cargarTorreControl(); // cabecera del módulo Operación (usa este mismo _dashData)
@@ -4778,9 +4805,16 @@ function _tcDatosRutas(){
       (c.detalle||[]).forEach(d=>{valor+=d.valor||0;});
     });
     const cargue=h?(h.cargueCaj||0):0;
+    const cargueB=h?(h.cargueBot||0):0;
     const totalCli=porRuta[r]?porRuta[r].tot:0;
     const conf=esHoy?(entregadosPorRuta[r]||new Set()).size:(porRuta[r]?porRuta[r].ent:0);
-    const ef=cargue>0?Math.round((cargue-afeC)/cargue*100):null;
+    // DOS efectividades, porque son dos preguntas distintas:
+    //   ef      = de entrega. Descuenta TODO lo que volvió, decidido o no. Es lo que pasó en la calle.
+    //   efCom   = para comisión. Descuenta solo lo que el coordinador declaró imputable al entregador.
+    // Antes existía solo la segunda y se mostraba como si fuera la primera: con las devoluciones sin
+    // decidir daba 100 % un día con 41 rechazos, y no aprobar mejoraba el resultado.
+    const ef=cargue>0?Math.round((cargue-devC)/cargue*100):null;
+    const efCom=cargue>0?Math.round((cargue-afeC)/cargue*100):null;
     // Visto bueno del coordinador: vale solo si la tripulación no cambió después de validarla
     const v=((C.val||{})[r])||null;
     const firmaHoy=_firmaTripulacion(personas);
@@ -4798,7 +4832,7 @@ function _tcDatosRutas(){
       txt:_nomCorto(pp.nombre)+' dice que hoy maneja él; el sistema tiene a '+_nomCorto(pp.conductor_sistema||'—')}));
     if(!personas.length&&h)
       anomalias.push({t:'sin-nadie',txt:'La ruta tiene vehículo asignado pero nadie registrado'});
-    return {ruta:r,placa:h?h.placa:'',cargue,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef,
+    return {ruta:r,placa:h?h.placa:'',cargue,cargueB,totalCli,conf,devC,devU,afeC,pend,valor,fotosDuda,personas,clientes,ef,efCom,
             validada,cambioTrasValidar,valHora:v&&v.hora?v.hora:null,conductores,anomalias,condSis,condPer};
   });
 }
@@ -4833,14 +4867,21 @@ function pintarTorreControl(){
 
   /* ── 2. Los tres indicadores que mandan + la frase de lectura ── */
   const cargTot=R.reduce((s,x)=>s+x.cargue,0);
+  const cargBTot=R.reduce((s,x)=>s+(x.cargueB||0),0);
   const afeTot=R.reduce((s,x)=>s+x.afeC,0);
   const devTot=R.reduce((s,x)=>s+x.devC,0);
   const devUTot=R.reduce((s,x)=>s+x.devU,0);
   const valTot=R.reduce((s,x)=>s+x.valor,0);
-  const efecHoy=cargTot>0?Math.round((cargTot-afeTot)/cargTot*100):(D.pctCajas!=null?D.pctCajas:100);
+  const pendTot=R.reduce((s,x)=>s+x.pend,0);
+  // Titular = efectividad DE ENTREGA: cargue menos todo lo que volvió. No depende de decisiones.
+  const efecHoy=cargTot>0?Math.round((cargTot-devTot)/cargTot*100):(D.pctCajas!=null?D.pctCajas:100);
+  // Comisión = solo lo imputable. Mientras haya devoluciones sin decidir, NO se muestra un tramo:
+  // antes se mostraba $250.000 con 26 sin revisar, y eso premiaba no entrar a decidir.
+  const efecCom=cargTot>0?Math.round((cargTot-afeTot)/cargTot*100):null;
   const colEf=efecHoy>=97?'var(--verde)':efecHoy>=95?'var(--azul)':efecHoy>=90?'var(--amarillo)':'var(--rojo)';
   const claseEf=efecHoy>=96?'v-ok':efecHoy>=95?'':efecHoy>=90?'v-al':'v-ro';
-  const tramo=efecHoy>=97?'$250.000':efecHoy>=96?'$150.000':efecHoy>=95?'$100.000':'bajo el 95 %';
+  const tramo=pendTot?'faltan '+pendTot+' por decidir'
+    :(efecCom>=97?'$250.000':efecCom>=96?'$150.000':efecCom>=95?'$100.000':'bajo el 95 %');
   const totCliDia=(esHoy?D.totCli:H.totCli)||0;
   const confDia=(esHoy?D.confirmados:H.confirmados)||0;
   const ultimaDia=(esHoy?D.ultimaEnt:H.ultimaEnt)||null;
@@ -4860,12 +4901,13 @@ function pintarTorreControl(){
 
   const kp=document.getElementById('tc-kpis');
   if(kp)kp.innerHTML=
-    kpi({l:'Efectividad de hoy',cls:claseEf,i:'target',ibg:'rgba(5,150,105,.1)',ic:'#059669',
-      def:'Cajas entregadas sobre cajas cargadas. Solo descuenta las devoluciones que usted aprobó como «afecta»; las pendientes y las omitidas no bajan la comisión.',
+    kpi({l:'Efectividad de entrega',cls:claseEf,i:'target',ibg:'rgba(5,150,105,.1)',ic:'#059669',
+      def:'De cada 100 cajas que se cargaron al camión, cuántas se quedaron en la calle. Descuenta TODO lo que volvió, esté decidido o no. La versión para comisión —que descuenta solo lo imputable al entregador— aparece abajo, y solo se cierra cuando usted decide las devoluciones pendientes.',
       v:String(efecHoy).replace('.',',')+'<small>%</small>',
-      d:cargTot?(afeTot?'▼ '+Math.round(afeTot)+' cajas descontadas':'✓ sin devoluciones aprobadas'):'Falta la hoja de cargue',
-      dcls:afeTot?'dn':'up', pct:efecHoy,pcol:colEf,
-      f1:'Tramo de comisión',f2:tramo, drill:"activarModulo('rechazos')"})+
+      d:cargTot?(devTot?'▼ '+Math.round(devTot)+' cj de '+Math.round(cargTot)+' cargadas'+(cargBTot?' (+'+cargBTot+' bot)':''):'✓ volvió el camión vacío'):'Falta la hoja de cargue',
+      dcls:devTot?'dn':'up', pct:efecHoy,pcol:colEf,
+      f1:pendTot?'Comisión · sin cerrar':'Comisión · '+(efecCom==null?'—':efecCom+' %'),f2:tramo,
+      drill:"activarModulo('rechazos')"})+
     kpi({l:'Avance de entrega',i:'store',ibg:'rgba(26,86,219,.1)',ic:'#1A56DB',
       def:'Clientes que el entregador confirmó como entregados, sobre el total programado en el PPAS de hoy.',
       v:confDia+'<small>/'+totCliDia+'</small>',
@@ -4909,9 +4951,16 @@ function pintarTorreControl(){
   const obsFoto=[...(_tcCache.obsFoto||new Set())].filter(c=>!obsTot||obsequiosClientes[c]).length;
   const item=(cls,n,l,accion)=>'<div class="tc-p '+cls+'"><div class="tc-p-n">'+n+'</div><div class="tc-p-l">'+l+'</div>'+
     (accion?'<button class="tc-p-a" onclick="haptic();'+accion+'">'+(cls==='ok'?'Ver':'Revisar')+'</button>':'')+'</div>';
+  // Ruta cargada sin un solo cliente en el PPAS: el producto salió del CEDI y no entra en ningún
+  // indicador de entrega. El 15-ago eran KA4V01 y KA4V63 con 237 cajas entre las dos.
+  const cargaHuerfana=R.filter(x=>x.cargue>0&&!x.totalCli);
+  const cajasHuerfanas=cargaHuerfana.reduce((a,x)=>a+x.cargue,0);
   const pd=document.getElementById('tc-pend');
   if(pd)pd.innerHTML=
     item(devPend?'urg':'ok',devPend,'Devoluciones por aprobar',devPend?"tcIrPrimeraPendiente()":'')+
+    item(cargaHuerfana.length?'urg':'ok',cargaHuerfana.length,
+      'Rutas cargadas sin clientes'+(cajasHuerfanas?' · '+Math.round(cajasHuerfanas)+' cj':''),
+      cargaHuerfana.length?"tcAbrirRuta('"+(cargaHuerfana[0]||{}).ruta+"')":'')+
     item(fotosDuda?'urg':'ok',fotosDuda,'Fotos que no parecen fachada',fotosDuda?"tcIrPrimeraFoto()":'')+
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
     item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
@@ -4920,7 +4969,7 @@ function pintarTorreControl(){
     item(hayLiq?'med':'mute',hayLiq?'✓':'—','Auditoría LiquiYa'+(hayLiq?' lista':' · falta cargar'),"abrirAuditoria()")+
     item(obsTot&&obsFoto>=obsTot?'ok':'med',obsFoto+'<span style="font-size:14px;color:var(--gris4)">/'+obsTot+'</span>','Obsequios con foto',"abrirObsequiosSup()");
   const pm=document.getElementById('tc-pend-meta');
-  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length+conAnomalia.length;
+  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length+conAnomalia.length+cargaHuerfana.length;
   if(pm)pm.textContent=porResolver===0?'todo al día ✓':porResolver===1?'1 cosa por resolver':porResolver+' cosas por resolver';
 
   /* ── 4. Tabla maestra de rutas ── */
@@ -5015,13 +5064,16 @@ function _tcFila(x,i){
     '<td>'+resp+
       (x.anomalias&&x.anomalias.length?x.anomalias.map(a=>'<div class="tc-warn">⚠ '+a.txt+'</div>').join(''):'')+
       (x.conductores>1?'<div class="tc-warn">⚠ '+x.conductores+' conductores registrados</div>':'')+vb+'</td>'+
-    '<td class="r">'+(x.cargue?Math.round(x.cargue)+' cj':'—')+'</td>'+
+    '<td class="r">'+(x.cargue?Math.round(x.cargue)+' cj'+(x.cargueB?'<div class="tc-sub">+'+x.cargueB+' bot</div>':''):'—')+'</td>'+
     '<td><div class="tc-mini"><div class="bt"><i style="width:'+pct+'%;background:'+colAv+'"></i></div>'+
       '<span class="pv">'+x.conf+'/'+x.totalCli+'</span></div></td>'+
     '<td class="r">'+(x.devC?Math.round(x.devC)+' cj'+(x.devU?' + '+Math.round(x.devU)+' u':''):'—')+'</td>'+
     '<td class="r">'+(x.valor?_pesosCorto(x.valor):'—')+'</td>'+
     '<td><div class="tc-mini"><div class="bt"><i style="width:'+(x.ef||0)+'%;background:'+colEf+'"></i></div>'+
-      '<span class="pv">'+(x.ef!==null?x.ef+'%':'—')+'</span></div></td>'+
+      '<span class="pv">'+(x.ef!==null?x.ef+'%':'—')+'</span></div>'+
+      (x.ef!==null&&x.efCom!==null&&x.efCom!==x.ef
+        ?'<div class="tc-sub">comisión '+x.efCom+' %'+(x.pend?' · '+x.pend+' sin decidir':'')+'</div>'
+        :(x.pend?'<div class="tc-sub">'+x.pend+' sin decidir</div>':''))+'</td>'+
     '<td>'+estado+'</td></tr>'+
     '<tr class="tc-det" id="tcd-'+i+'" style="display:none"><td colspan="8"><div class="tc-det-in">'+_tcDetalle(x)+'</div></td></tr>';
 }
@@ -5279,12 +5331,13 @@ function _pintaSiCambia(el,html){
 }
 function renderClientesModulo(){
   const cont=document.getElementById('clientes-kpis');if(!cont||!_dashData)return;
-  const d=_dashData,pct=d.totCli?Math.round(d.totEnt/d.totCli*100):0,pend=d.totCli-d.totEnt;
+  const d=_dashData;
+  const conf=d.confirmados||0, sin=d.sinNoticia!=null?d.sinNoticia:Math.max(0,d.totCli-conf-d.totNov);
   const K=[
-    {v:d.totEnt,l:'Clientes entregados'},
-    {v:pend,l:'Con novedad'},
-    {v:pct+'%',l:'Cumplimiento'},
-    {v:Math.round(d.cajasEnt).toLocaleString('es-CO'),l:'Cajas entregadas'}
+    {v:conf+' / '+d.totCli,l:'Entrega confirmada'},
+    {v:sin,l:'Sin noticia'},
+    {v:d.totNov,l:'Con novedad'},
+    {v:Math.round(d.cajasRej).toLocaleString('es-CO'),l:'Cajas devueltas'}
   ];
   _pintaSiCambia(cont,K.map(k=>'<div class="dkpi simple"><span class="dk-l">'+k.l+'</span><div class="dk-v">'+k.v+'</div></div>').join(''));
   // Tabla buscable de clientes individuales (antes este módulo solo repetía el ranking por ruta)
@@ -10276,6 +10329,12 @@ async function chequearCuadreCargue(fechaFija){
       'Falta '+(!ped?'<b>el Libro de pedidos</b>':'')+((!ped&&!hoj)?' y ':'')+(!hoj?'<b>la Hoja de cargue</b>':'')+
       ' del '+fecha+'. El cuadre necesita los dos.</div>';return;
   }
+  // Clientes y cajas del PPAS por ruta: es la tercera base del día y hasta ahora nadie la comparaba
+  // con el cargue. El 15-ago el PPAS sumaba 1.671 cj y la Hoja 1.944: 273 cajas de diferencia.
+  let ppas=null; try{ ppas=await _get('PPAS_INDEX.json'); }catch(e){}
+  const ppasRuta={},ppasCli={};
+  if(ppas)Object.values(ppas).forEach(c=>{const r=c.ruta||c.r||'—';
+    ppasRuta[r]=(ppasRuta[r]||0)+(parseFloat(c.caj)||0); ppasCli[r]=(ppasCli[r]||0)+1;});
   // Cajas pedidas por ruta (Libro) y cajas cargadas por ruta (Hoja)
   const pedRuta={},pedSku={};
   for(const cod in ped){const c=ped[cod],r=c.r||'—';
@@ -10288,11 +10347,14 @@ async function chequearCuadreCargue(fechaFija){
   rutas.forEach(r=>{
     if(!pasaFiltroRuta(r))return;
     const p=pedRuta[r]||0,h=hoj[r]?hoj[r].cargueCaj||0:null;
-    if(h==null){filas.push({ruta:r,pedido:p,cargado:null,dif:null,estado:'Sin hoja de cargue',orden:2});return;}
-    if(!p){filas.push({ruta:r,pedido:0,cargado:h,dif:h,estado:'Cargó sin pedido en el Libro',orden:0});return;}
+    const cli=ppasCli[r]||0;
+    if(h==null){filas.push({ruta:r,pedido:p,cargado:null,dif:null,cli,estado:'Sin hoja de cargue',orden:2});return;}
+    if(!cli&&h>0){filas.push({ruta:r,pedido:p,cargado:h,dif:h-p,cli:0,
+      estado:'Cargó sin clientes en el PPAS',orden:0});return;}
+    if(!p){filas.push({ruta:r,pedido:0,cargado:h,dif:h,cli,estado:'Cargó sin pedido en el Libro',orden:0});return;}
     const d=h-p;
     const tol=Math.max(3,p*0.05);
-    filas.push({ruta:r,pedido:p,cargado:h,dif:d,
+    filas.push({ruta:r,pedido:p,cargado:h,dif:d,cli,
       estado:Math.abs(d)<=tol?'Cuadra':(d>0?'Cargó de más':'Cargó de menos'),
       orden:Math.abs(d)<=tol?3:0});
   });
@@ -10314,6 +10376,8 @@ async function chequearCuadreCargue(fechaFija){
     archivo:'cuadre-'+fecha, unidad:'rutas', buscar:['ruta','estado'], placeholder:'Buscar ruta…',
     cols:[
       {k:'ruta',t:'Ruta',b:true},
+      {k:'cli',t:'Clientes',num:true,tot:'sum',
+       fmt:v=>v?v:'<span style="color:#B91C1C;font-weight:800">sin clientes</span>'},
       {k:'pedido',t:'Cajas pedidas',num:true,tot:'sum'},
       {k:'cargado',t:'Cajas cargadas',num:true,tot:'sum',fmt:v=>v==null?'—':v},
       {k:'dif',t:'Diferencia',num:true,tot:'sum',
