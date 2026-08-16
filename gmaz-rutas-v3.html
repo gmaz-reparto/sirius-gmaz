@@ -2070,18 +2070,25 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
             <input type="date" id="ent-dia" onchange="haptic();cargarEntregadores()" style="display:none;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
           </div>
         </div>
-        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">El semáforo compara contra el promedio de la propia operación, no contra una meta fija — una ruta con más clientes difíciles no debe leerse como mal desempeño.</div>
+        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">Lo que se mide es <b>lo que de verdad se facturó</b>: el cruce del listado de clientes del día (PPAS) contra la liquidación de LiquiYa. No depende de que el entregador pulse ningún botón.</div>
         <div class="ent-leyenda">
           <b>Qué significa cada columna</b>
-          <span><i>Días</i> días distintos en que esa persona registró actividad.</span>
-          <span><i>Entregas</i> veces que pulsó «Confirmar entrega» en el celular.</span>
-          <span><i>Rechazos</i> novedades que reportó (cliente cerrado, sin dinero, rechazo parcial…).</span>
-          <span><i>Cumpl.</i> entregas ÷ (entregas + rechazos). Cuántas de sus visitas terminaron entregadas.</span>
-          <span><i>Entregas/h</i> ritmo: entregas por hora efectiva, midiendo de su primera a su última entrega de cada día.</span>
-          <span><i>Min/entrega</i> lo mismo al revés: cuántos minutos tarda en promedio entre una entrega y la siguiente. Menos es más rápido.</span>
-          <span><i>Semáforo</i> compara su cumplimiento con el promedio del equipo: <b>Referente</b> +3 pts o más · <b>En meta</b> ±3 · <b>Seguimiento</b> −3 a −8 · <b>Atención</b> peor que −8.</span>
+          <span><i>Días</i> días en que esa persona salió a ruta, según el registro que hace en su celular.</span>
+          <span><i>Clientes</i> clientes que llevaba asignados esos días, del listado del día.</span>
+          <span><i>Entregados</i> de esos clientes, cuántos aparecen facturados en LiquiYa esa misma fecha.</span>
+          <span><i>Efectividad</i> entregados ÷ clientes. Esta es la cifra de desempeño real.</span>
+          <span><i>Rechazos</i> novedades reportadas en su ruta ese día (cerrado, sin dinero, parcial…).</span>
+          <span><i>Sin reportar</i> clientes que <b>no quedaron facturados y nadie reportó</b>. Es el hueco de información que hay que reclamar.</span>
+          <span><i>Reportó</i> cuántas de esas novedades quedaron con su nombre: mide si usa la app o si la usa el compañero.</span>
+          <span><i>Semáforo</i> compara su efectividad con el promedio de la operación: <b>Referente</b> +3 pts o más · <b>En meta</b> ±3 · <b>Seguimiento</b> −3 a −8 · <b>Atención</b> peor que −8.</span>
         </div>
         <div style="overflow:auto;padding:10px 17px 16px" id="ent-body"><div class="veh-cargando">Elige un mes…</div></div>
+      </div>
+      <div class="dcard" style="margin-top:14px">
+        <div class="dcard-h"><h3><span class="h3ic">🛣️</span>Efectividad por ruta</h3>
+          <span class="dm">histórico completo · no necesita que nadie se registre</span></div>
+        <div style="padding:6px 17px 4px;font-size:11px;color:var(--gris4)">La ruta sí tiene historia desde julio: aquí se ve qué rutas fallan siempre y cuáles no, aunque en esos días la app todavía no supiera quién iba manejando.</div>
+        <div style="overflow:auto;padding:10px 17px 16px" id="ent-rutas"><div class="veh-cargando">Elige un mes…</div></div>
       </div>
     </section>
 
@@ -5137,7 +5144,7 @@ function _alertasActivas(){
 /* `fondo` = lo llamó el refresco automático del dashboard (cada 30 s), no el usuario. */
 function refrescarModulo(m,fondo){
   if(m==='vehiculos')renderFlota(null,false,fondo);
-  else if(m==='entregadores'){cargarEntregadores();cargarPersonalApp();}
+  else if(m==='entregadores'){cargarEntregadores(null,fondo);if(!fondo)cargarPersonalApp();}
   else if(m==='clientes')renderClientesModulo();
   else if(m==='rechazos')renderRechazosGraf();
   else if(m==='indicadores')renderIndicadores();
@@ -5234,6 +5241,14 @@ async function _kmDelDia(unitId,fecha){
 /* Las tarjetas por vehículo se reemplazaron por la consola de flota (una sola tabla con fecha
    única). El render vive en renderFlota(); aquí solo quedaban restos del diseño anterior. */
 /* ══ MÓDULO CLIENTES: KPIs de atención + ranking ══ */
+/* Escribe solo si el HTML cambió. El dashboard repinta el módulo activo cada 30 s y, si el
+   contenido es idéntico, reemplazar el innerHTML igual hace parpadear la pantalla y pierde el
+   scroll de la tabla. */
+function _pintaSiCambia(el,html){
+  if(!el)return false;
+  if(el.innerHTML===html)return false;
+  el.innerHTML=html; return true;
+}
 function renderClientesModulo(){
   const cont=document.getElementById('clientes-kpis');if(!cont||!_dashData)return;
   const d=_dashData,pct=d.totCli?Math.round(d.totEnt/d.totCli*100):0,pend=d.totCli-d.totEnt;
@@ -5243,7 +5258,7 @@ function renderClientesModulo(){
     {v:pct+'%',l:'Cumplimiento'},
     {v:Math.round(d.cajasEnt).toLocaleString('es-CO'),l:'Cajas entregadas'}
   ];
-  cont.innerHTML=K.map(k=>'<div class="dkpi simple"><span class="dk-l">'+k.l+'</span><div class="dk-v">'+k.v+'</div></div>').join('');
+  _pintaSiCambia(cont,K.map(k=>'<div class="dkpi simple"><span class="dk-l">'+k.l+'</span><div class="dk-v">'+k.v+'</div></div>').join(''));
   // Tabla buscable de clientes individuales (antes este módulo solo repetía el ranking por ruta)
   const selRuta=document.getElementById('clitbl-ruta');
   if(selRuta&&selRuta.options.length<=1){
@@ -5269,14 +5284,15 @@ function filtrarTablaClientes(){
   filas.sort((a,b)=>a.nombre.localeCompare(b.nombre));
   const meta=document.getElementById('clitbl-meta');if(meta)meta.textContent=filas.length+' de '+d.clientes_.length+' clientes';
   const MAX=300; // no renderizar miles de filas de una — se afina con el buscador/filtros
-  body.innerHTML=filas.slice(0,MAX).map(f=>
+  const htmlFilas=filas.slice(0,MAX).map(f=>
     '<tr><td style="font-weight:700">'+f.nombre+'</td><td style="color:#8A90A0">'+f.cod+'</td>'+
     '<td><span class="dtag" style="background:'+(rutaColor[f.ruta]||'#4A5060')+'1A;color:'+(rutaColor[f.ruta]||'#4A5060')+'">'+f.ruta+'</span></td>'+
     '<td style="color:#6B7385;font-size:11.5px">'+f.direccion+'</td>'+
     '<td style="text-align:right;font-weight:700">'+Math.round(f.cajas)+'</td>'+
     '<td>'+(f.estado==='entregado'?'<span class="nov-est" style="background:var(--verde-s);color:var(--verde)">✓ Entregado</span>':'<span class="nov-est pendiente">⚠ Con novedad</span>')+'</td></tr>'
   ).join('')||'<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:20px">Sin resultados</td></tr>';
-  if(filas.length>MAX){const tr=document.createElement('tr');tr.innerHTML='<td colspan="6" style="text-align:center;color:#8A90A0;font-size:11px;padding:10px">Mostrando los primeros '+MAX+' — usa el buscador para acotar</td>';body.appendChild(tr);}
+  const pie=filas.length>MAX?'<tr><td colspan="6" style="text-align:center;color:#8A90A0;font-size:11px;padding:10px">Mostrando los primeros '+MAX+' — usa el buscador para acotar</td></tr>':'';
+  _pintaSiCambia(body,htmlFilas+pie);
 }
 /* ══ MÓDULO RECHAZOS: donut por motivo + KPIs ══ */
 function renderRechazosGraf(){
@@ -5286,14 +5302,14 @@ function renderRechazosGraf(){
   const PAL=['#E30613','#D97706','#7C3AED','#0891B2','#DB2777','#65A30D','#EA580C','#475569'];
   const segs=Object.keys(porMotivo).sort((a,b)=>porMotivo[b]-porMotivo[a]).map((m,i)=>({n:m,v:porMotivo[m],c:PAL[i%PAL.length]}));
   const leyenda=segs.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:'+s.c+';flex-shrink:0"></span><span style="flex:1">'+s.n+'</span><b>'+s.v+'</b></div>').join('');
-  cont.innerHTML=
+  _pintaSiCambia(cont,
     '<div class="graf-card"><h4>Rechazos por motivo</h4><div class="gq">¿Por qué están devolviendo hoy?</div>'+
       (segs.length?'<div style="display:flex;align-items:center;gap:18px"><div style="position:relative;flex-shrink:0">'+donutSvg(segs,130,20)+'<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:24px;font-weight:900">'+d.totNov+'</div><div style="font-size:9px;font-weight:800;color:#8A90A0">RECHAZOS</div></div></div></div><div style="flex:1">'+leyenda+'</div></div>':'<div class="veh-cargando" style="color:#0E9F6E">✓ Sin rechazos hoy</div>')+
     '</div>'+
     '<div class="graf-card"><h4>Impacto en cajas</h4><div class="gq">Cuántas cajas se dejaron de entregar</div>'+
       '<div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><div style="font-size:34px;font-weight:900;color:#E30613">'+Math.round(d.cajasRej).toLocaleString('es-CO')+'</div><div style="font-size:12px;color:#8A90A0;font-weight:700">cajas rechazadas</div></div>'+
       '<div style="font-size:11.5px;color:#6B7385;font-weight:600;margin-top:8px">De '+Math.round(d.cajasProg).toLocaleString('es-CO')+' programadas · '+(d.cajasProg?Math.round(d.cajasRej/d.cajasProg*100):0)+'% del total</div>'+
-    '</div>';
+    '</div>');
 }
 /* ══ MÓDULO INDICADORES: gráficos ejecutivos ══ */
 function renderIndicadores(){
@@ -5310,14 +5326,14 @@ function renderIndicadores(){
   const rutas=Object.keys(d.porRuta).sort((a,b)=>{const pa=d.porRuta[a].tot?d.porRuta[a].ent/d.porRuta[a].tot:0,pb=d.porRuta[b].tot?d.porRuta[b].ent/d.porRuta[b].tot:0;return pb-pa;});
   const ranking=rutas.map(code=>{const r=d.porRuta[code],pct=r.tot?Math.round(r.ent/r.tot*100):0;const c=pct>=90?'#059669':pct>=75?'#D97706':'#E30613';
     return '<div class="barrow"><div class="bl" style="color:'+(rutaColor[code]||'#0F1117')+'">'+code+'</div><div class="bt"><i style="width:'+pct+'%;background:'+c+'"></i></div><div class="bv">'+pct+'% · '+r.ent+'/'+r.tot+'</div></div>';}).join('');
-  cont.innerHTML=
+  _pintaSiCambia(cont,
     '<div class="dgrid" style="margin-bottom:14px">'+
       '<div class="graf-card"><h4>Ranking de cumplimiento por ruta</h4><div class="gq">¿Qué rutas van adelantadas y cuáles atrasadas?</div>'+ranking+'</div>'+
       '<div class="graf-card"><h4>Cumplimiento global</h4><div class="gq">Estado de la operación del día</div><div style="display:flex;align-items:center;gap:16px"><div style="position:relative;flex-shrink:0">'+donutSvg(segsCumpl,120,18)+'<div style="position:absolute;inset:0;display:grid;place-items:center"><div style="text-align:center"><div style="font-size:22px;font-weight:900">'+(d.totCli?Math.round(d.totEnt/d.totCli*100):0)+'%</div></div></div></div><div>'+segsCumpl.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px;font-weight:600"><span style="width:10px;height:10px;border-radius:3px;background:'+s.c+'"></span>'+s.n+' <b style="margin-left:auto">'+s.v+'</b></div>').join('')+'</div></div></div>'+
     '</div>'+
     '<div class="graf-card"><div style="display:flex;align-items:baseline;justify-content:space-between"><div><h4>Tendencia de rechazos</h4><div class="gq">Monto diario de rechazos · '+_nomMes()+'</div></div><span style="font-size:11px;font-weight:800;color:#E30613;background:#FEF2F2;padding:4px 10px;border-radius:8px" id="tend-tot">—</span></div>'+
       '<div id="indic-tend" class="tend-wrap"><div class="veh-cargando">Cargando tendencia…</div></div>'+
-    '</div>';
+    '</div>');
   renderTendenciaMes();
 }
 let _tendCache=null;
@@ -9797,121 +9813,278 @@ async function _registrosDelRango(ini,fin){
   }));
   return salida;
 }
-async function cargarEntregadores(mesSel){
+/* Un día ya cruzado, por ruta: cuántos clientes llevaba, cuántos terminaron facturados en LiquiYa
+   y cuáles quedaron sin facturar. Un día cerrado no vuelve a cambiar, así que se guarda en memoria
+   y el mes solo se arma una vez por sesión. */
+let _entDia={};
+async function _entDatosDia(fecha){
+  const hoy=getColDate();
+  if(_entDia[fecha]!==undefined&&fecha!==hoy)return _entDia[fecha];
+  const gs=async n=>{
+    try{
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/'+n+
+        (fecha===hoy?'?t='+Date.now():''));
+      return r.ok?await r.json():null;
+    }catch(e){return null;}
+  };
+  const [ppas,liq,hojas]=await Promise.all([gs('PPAS_INDEX.json'),gs('LIQUIDACION_INDEX.json'),gs('HOJAS_INDEX.json')]);
+  if(!ppas||!Object.keys(ppas).length)return (_entDia[fecha]=null);
+  const fact=new Set(Object.keys(liq||{}).map(String));
+  const out={fecha,liquidado:fact.size>0,rutas:{}};
+  Object.entries(ppas).forEach(([cod,c])=>{
+    const r=c.ruta||c.r||'—';
+    const o=out.rutas[r]||(out.rutas[r]={asig:0,fact:0,cajAsig:0,cargue:0,sinFact:[]});
+    o.asig++; o.cajAsig+=(+c.caj||0);
+    if(fact.has(String(cod)))o.fact++;
+    else o.sinFact.push({cod:String(cod),nombre:c.nombre||'',caj:+c.caj||0});
+  });
+  Object.entries(hojas||{}).forEach(([r,h])=>{if(out.rutas[r])out.rutas[r].cargue=+h.cargueCaj||0;});
+  _entDia[fecha]=out;
+  return out;
+}
+/* Los días se piden de a pocos: son 3 archivos por día y pedir 26 días de golpe satura la red. */
+async function _entCargarDias(dias,avisar){
+  const res={};
+  const TANDA=5;
+  for(let i=0;i<dias.length;i+=TANDA){
+    const t=dias.slice(i,i+TANDA);
+    if(avisar)avisar(Math.min(i+TANDA,dias.length),dias.length);
+    const r=await Promise.all(t.map(f=>_entDatosDia(f)));
+    t.forEach((f,k)=>{if(r[k])res[f]=r[k];});
+  }
+  return res;
+}
+const _entSem=d=>d==null?['Sin datos aún','#F1F3F7','#6B7385']:
+  d>=3?['Referente','#ECFDF5','#059669']:d>=-3?['En meta','#ECFDF5','#059669']:
+  d>=-8?['Seguimiento','#FFF8E6','#B45309']:['Atención','#FEE2E2','#B91C1C'];
+const _entPct=v=>v==null?'<span style="color:#8A90A0">—</span>':v+'%';
+const _entColPct=v=>v==null?null:v>=97?'#059669':v>=92?'#D97706':'#E30613';
+
+let _entFirma='';
+async function cargarEntregadores(mesSel,fondo){
   const mes=(typeof mesSel==='string'&&mesSel)||document.getElementById('ent-mes')?.value||_mesActualStr();
   const inp=document.getElementById('ent-mes');if(inp)inp.value=mes;
   const cont=document.getElementById('ent-body');if(!cont)return;
+  const contR=document.getElementById('ent-rutas');
   const _h={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
-  // Rango: el mes elegido, o un solo día si está en modo "Un día"
   const [aa,mm]=mes.split('-').map(Number);
+  const hoy=getColDate();
   let ini=mes+'-01',fin=mes+'-'+String(new Date(aa,mm,0).getDate()).padStart(2,'0');
+  if(fin>hoy)fin=hoy;
   let etiqueta=mes;
   if(_entModo==='dia'){
     const d=document.getElementById('ent-dia');
-    ini=fin=(d&&d.value)||getColDate();
+    ini=fin=(d&&d.value)||hoy;
     etiqueta='el '+ini;
   }
-  cont.innerHTML='<div class="veh-cargando">Cruzando entregas, rechazos y registro de '+etiqueta+'…</div>';
+  // En un refresco de fondo NO se borra lo que hay en pantalla: eso era el parpadeo.
+  const yaPintado=!!cont.querySelector('.tg');
+  if(!fondo||!yaPintado)cont.innerHTML='<div class="veh-cargando">Cruzando el listado del día con la liquidación de '+etiqueta+'…</div>';
   try{
-    const [rN,rE]=await Promise.all([
-      fetch(CFG.SUPABASE_URL+'/rest/v1/novedades?select=conductor,ruta,fecha,codigo_cliente&fecha=gte.'+ini+'&fecha=lte.'+fin+'&limit=5000',{headers:_h}),
-      fetch(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=motivo,ruta,fecha,codigo_cliente,created_at,estado&fecha=gte.'+ini+'&fecha=lte.'+fin+'&limit=10000',{headers:_h})
+    const dias=[];
+    for(let d=new Date(ini+'T12:00:00');d<=new Date(fin+'T12:00:00');d.setDate(d.getDate()+1))
+      dias.push(d.toISOString().split('T')[0]);
+    if(dias.length>31)dias.length=31;
+    const [rN,regs]=await Promise.all([
+      fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=conductor,ruta,fecha,codigo_cliente,nombre_cliente,motivo&fecha=gte.'+ini+'&fecha=lte.'+fin+'&limit=5000',{headers:_h}),
+      _registrosDelRango(ini,fin)
     ]);
     const novs=rN.ok?await rN.json()||[]:[];
-    const ests=rE.ok?await rE.json()||[]:[];
-    const entregas=ests.filter(x=>x.estado==='entregado');
-    const P={}; // nombre → acumulado
-    const get=n=>P[n]||(P[n]={nombre:n,ent:0,rech:0,dias:new Set(),rutas:new Set(),horas:[],ced:'',cargo:'',registrado:false});
-    entregas.forEach(e=>{const n=(e.motivo||'').trim();if(!n)return;
-      if(!pasaFiltroRuta(e.ruta))return; // respeta el filtro global de ruta
-      const p=get(n);p.ent++;p.dias.add(e.fecha);if(e.ruta)p.rutas.add(e.ruta);
-      if(e.created_at)p.horas.push({f:e.fecha,t:new Date(e.created_at).getTime()});});
-    novs.forEach(x=>{const n=(x.conductor||'').trim();if(!n||n==='Repartidor')return;
-      if(!pasaFiltroRuta(x.ruta))return;
-      const p=get(n);p.rech++;p.dias.add(x.fecha);if(x.ruta)p.rutas.add(x.ruta);});
-    const genericos=novs.filter(x=>(x.conductor||'').trim()==='Repartidor').length;
-    // Quien se registró en su celular ya trabajó ese día, aunque no haya confirmado ninguna entrega
-    // ni reportado novedades. Antes solo aparecían los que dejaban rastro, y por eso "faltaba gente".
-    const regs=await _registrosDelRango(ini,fin);
+    const datos=await _entCargarDias(dias,(k,t)=>{
+      if(!fondo&&!yaPintado)cont.innerHTML='<div class="veh-cargando">Cruzando el día '+k+' de '+t+'…</div>';
+    });
+    // Novedades indexadas por ruta y fecha
+    const novRD={};
+    novs.forEach(n=>{const k=n.fecha+'|'+(n.ruta||'—');(novRD[k]=novRD[k]||[]).push(n);});
+
+    // ── 1) Por ruta: existe desde julio y no depende de que nadie se registre ───────────────
+    const R={};
+    Object.values(datos).forEach(d=>{
+      if(!d.liquidado)return;               // día sin liquidación cargada: no se puede medir
+      Object.entries(d.rutas).forEach(([ruta,o])=>{
+        if(!pasaFiltroRuta(ruta))return;
+        const rr=R[ruta]||(R[ruta]={ruta,dias:0,cli:0,fact:0,cargue:0,rech:0,sinRep:0,gente:new Set()});
+        const nn=novRD[d.fecha+'|'+ruta]||[];
+        const rep=new Set(nn.map(x=>String(x.codigo_cliente)));
+        rr.dias++; rr.cli+=o.asig; rr.fact+=o.fact; rr.cargue+=o.cargue;
+        rr.rech+=nn.length;
+        rr.sinRep+=o.sinFact.filter(x=>!rep.has(x.cod)).length;
+      });
+    });
+    regs.forEach(r=>{if(R[r.ruta]&&r.nombre)R[r.ruta].gente.add(_nomCorto(r.nombre,2));});
+    const filasR=Object.values(R).map(r=>({...r,
+      efec:r.cli?Math.round(r.fact/r.cli*100):null,
+      falta:r.cli-r.fact,
+      gente:[...r.gente].sort().join(', ')||'—'
+    })).sort((a,b)=>(a.efec??999)-(b.efec??999));
+    const totCli=filasR.reduce((s,r)=>s+r.cli,0), totFact=filasR.reduce((s,r)=>s+r.fact,0);
+    const efecProm=totCli?Math.round(totFact/totCli*100):null;
+    filasR.forEach(r=>{r.dif=r.efec==null||efecProm==null?null:r.efec-efecProm;});
+
+    // ── 2) Por persona: solo los días en que la app supo quién salió ────────────────────────
+    const P={};
+    const get=n=>P[n]||(P[n]={nombre:n,ced:'',cargo:'',rol:'',dias:new Set(),rutas:new Set(),
+      cli:0,fact:0,cargue:0,rech:0,sinRep:0,reporto:0,mot:{},det:[],rd:new Set()});
     regs.forEach(r=>{
-      const n=(r.nombre||'').trim(); if(!n)return;
+      const nom=(r.nombre||'').trim();
+      if(!nom||/^repartidor$/i.test(nom))return;
       if(!pasaFiltroRuta(r.ruta))return;
-      const pp=get(n); pp.dias.add(r.fecha); if(r.ruta)pp.rutas.add(r.ruta);
-      if(r.ced)pp.ced=r.ced; if(r.cargo)pp.cargo=r.cargo; pp.registrado=true;
+      const p=get(nom);
+      if(r.ced)p.ced=r.ced;
+      if(r.cargo)p.cargo=r.cargo;
+      if(r.rol==='conductor')p.rol='Conductor'; else if(!p.rol)p.rol='Auxiliar';
+      p.dias.add(r.fecha); p.rutas.add(r.ruta);
+      const k=r.fecha+'|'+r.ruta;
+      if(p.rd.has(k))return;                 // la misma ruta el mismo día no se cuenta dos veces
+      p.rd.add(k);
+      const o=(datos[r.fecha]&&datos[r.fecha].liquidado)?datos[r.fecha].rutas[r.ruta]:null;
+      const nn=novRD[k]||[];
+      const rep=new Set(nn.map(x=>String(x.codigo_cliente)));
+      const sinFact=o?o.sinFact.filter(x=>!rep.has(x.cod)):[];
+      if(o){p.cli+=o.asig;p.fact+=o.fact;p.cargue+=o.cargue;p.sinRep+=sinFact.length;}
+      p.rech+=nn.length;
+      nn.forEach(x=>{
+        const m=(x.motivo||'—').toUpperCase();
+        p.mot[m]=(p.mot[m]||0)+1;
+        if((x.conductor||'').trim()===nom)p.reporto++;
+      });
+      p.det.push({fecha:r.fecha,ruta:r.ruta,asig:o?o.asig:null,fact:o?o.fact:null,
+        rech:nn.length,sinRep:sinFact.length,sinFact});
+    });
+    // Quien reportó novedades pero no alcanzó a registrarse: igual tiene que aparecer
+    novs.forEach(n=>{
+      const nom=(n.conductor||'').trim();
+      if(!nom||/^repartidor$/i.test(nom)||P[nom])return;
+      if(!pasaFiltroRuta(n.ruta))return;
+      const p=get(nom);p.dias.add(n.fecha);if(n.ruta)p.rutas.add(n.ruta);
+      p.rech++;p.reporto++;
+      const m=(n.motivo||'—').toUpperCase();p.mot[m]=(p.mot[m]||0)+1;
     });
     const filas=Object.values(P).map(p=>{
-      const tot=p.ent+p.rech;
-      // Productividad: entregas por hora efectiva, midiendo cada día de la primera a la última entrega
-      const porDia={};p.horas.forEach(h=>{(porDia[h.f]=porDia[h.f]||[]).push(h.t);});
-      let minTot=0,entConHora=0;
-      for(const f in porDia){const v=porDia[f].sort((a,b)=>a-b);
-        if(v.length>1){minTot+=(v[v.length-1]-v[0])/60000;entConHora+=v.length;}}
-      // El cumplimiento SOLO es interpretable si la persona usó el botón "Confirmar entrega".
-      // Si reportó rechazos pero casi no confirmó entregas, el porcentaje no mide su desempeño
-      // sino la adopción del botón: una ruta real atiende 50-100 clientes al día, así que menos de
-      // 10 confirmaciones por día trabajado significa que el dato todavía no dice nada de la persona.
-      const dias=p.dias.size||1;
-      const fiable=p.ent>=10*dias;
-      return{...p,tot,dias,rutas:[...p.rutas].sort().join(', '),fiable,
-        pct:fiable&&tot?Math.round(p.ent/tot*100):null,
-        porHora:fiable&&minTot>30?+(entConHora/(minTot/60)).toFixed(1):null,
-        minPorEnt:fiable&&entConHora>1?Math.round(minTot/entConHora):null};
-    }).sort((a,b)=>b.tot-a.tot);
-    let html='';
-    if(!filas.length){
-      html='<div style="background:#FFF8E6;border-radius:11px;padding:16px;font-size:12px;color:#B45309;line-height:1.55">'+
-        '<b>Todavía no hay datos por persona en '+mes+'.</b><br>'+
-        'Hasta ahora la app no sabía quién iba en cada ruta: el login del entregador es por rol con clave compartida y las novedades se guardaban con el texto fijo «Repartidor»'+
-        (genericos?' ('+genericos+' registros de este mes)':'')+'.<br><br>'+
-        'Desde esta versión se pregunta <b>«¿quién está entregando hoy?»</b> al iniciar la primera ruta del día. A medida que los entregadores se identifiquen, esta tabla se va llenando sola.</div>';
-      document.getElementById('ent-kpis').innerHTML='';
-      cont.innerHTML=html;return;
-    }
-    const T=filas.reduce((s,f)=>({ent:s.ent+f.ent,rech:s.rech+f.rech,tot:s.tot+f.tot}),{ent:0,rech:0,tot:0});
-    const conf=filas.filter(f=>f.fiable);
-    // El promedio se calcula SOLO con quienes tienen datos suficientes; si no hay ninguno, no se inventa
-    const pctProm=conf.length?Math.round(conf.reduce((s,f)=>s+f.pct,0)/conf.length):null;
+      const top=Object.entries(p.mot).sort((a,b)=>b[1]-a[1])[0];
+      return{...p,dias:p.dias.size,rutas:[...p.rutas].sort().join(', '),
+        efec:p.cli?Math.round(p.fact/p.cli*100):null,
+        topMot:top?top[0]:'', topN:top?top[1]:0,
+        det:p.det.sort((a,b)=>a.fecha<b.fecha?1:-1)};
+    }).sort((a,b)=>(b.cli-a.cli)||(b.rech-a.rech));
+    filas.forEach(f=>{f.dif=f.efec==null||efecProm==null?null:f.efec-efecProm;});
+
+    // Nada cambió respecto al pintado anterior: no se toca el DOM (ni parpadeo ni scroll perdido)
+    const firma=JSON.stringify({m:mes,d:_entModo,i:ini,f:fin,
+      p:filas.map(f=>[f.nombre,f.dias,f.cli,f.fact,f.rech,f.sinRep,f.reporto]),
+      r:filasR.map(r=>[r.ruta,r.dias,r.cli,r.fact,r.rech,r.sinRep])});
+    if(fondo&&firma===_entFirma&&yaPintado)return;
+    _entFirma=firma;
+
+    const genericos=novs.filter(x=>(x.conductor||'').trim()==='Repartidor').length;
+    const totRech=filasR.reduce((s,r)=>s+r.rech,0), totSin=filasR.reduce((s,r)=>s+r.sinRep,0);
+    const diasMedidos=Object.values(datos).filter(d=>d.liquidado).length;
     document.getElementById('ent-kpis').innerHTML=
-      '<div class="dkpi simple"><div class="dk-v">'+filas.length+'</div><div class="dk-l">Entregadores activos</div></div>'+
-      '<div class="dkpi simple"><div class="dk-v">'+T.ent.toLocaleString('es-CO')+'</div><div class="dk-l">Entregas confirmadas</div></div>'+
-      '<div class="dkpi simple"><div class="dk-v" style="color:#E30613">'+T.rech.toLocaleString('es-CO')+'</div><div class="dk-l">Rechazos</div></div>'+
-      '<div class="dkpi simple"><div class="dk-v" style="color:'+(pctProm==null?'#8A90A0':pctProm>=95?'#059669':pctProm>=85?'#D97706':'#E30613')+'">'+(pctProm==null?'—':pctProm+'%')+'</div><div class="dk-l">Cumplimiento promedio</div></div>';
-    html='';
-    const sinDatos=filas.length-conf.length;
-    if(sinDatos)html+='<div style="margin-bottom:10px;background:#EFF6FF;border-radius:10px;padding:11px 13px;font-size:11.5px;color:#1E429F;line-height:1.5">'+
-      '<b>'+sinDatos+' de '+filas.length+' entregadores todavía sin cumplimiento calculable.</b> '+
-      'Reportaron rechazos pero aún casi no usan el botón «Confirmar entrega», y una ruta atiende 50-100 clientes al día. '+
-      'Mostrar su porcentaje sería medir la adopción del botón, no su trabajo — por eso aparece «—» y no un 0 %.</div>';
-    html+='<div id="tbl-ent"></div>';
-    if(genericos)html+='<div style="margin-top:10px;background:var(--gris1);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--gris4)">'+
-      genericos+' rechazo(s) de este mes quedaron sin persona («Repartidor») porque se registraron antes de que la app preguntara quién entrega. No se reparten entre nadie.</div>';
+      '<div class="dkpi simple"><div class="dk-v">'+filas.length+'</div><div class="dk-l">Personas con jornada</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v">'+totCli.toLocaleString('es-CO')+'</div><div class="dk-l">Clientes programados</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(_entColPct(efecProm)||'#0F1117')+'">'+(efecProm==null?'—':efecProm+'%')+'</div><div class="dk-l">Efectividad real</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:#E30613">'+totRech.toLocaleString('es-CO')+'</div><div class="dk-l">Rechazos reportados</div></div>'+
+      '<div class="dkpi simple"><div class="dk-v" style="color:'+(totSin?'#B45309':'#059669')+'">'+totSin.toLocaleString('es-CO')+'</div><div class="dk-l">Sin facturar y sin reportar</div></div>';
+
+    // ── Tabla por ruta ──────────────────────────────────────────────────────────────────────
+    if(contR){
+      if(!filasR.length){
+        contR.innerHTML='<div class="veh-cargando">No hay liquidación de LiquiYa cargada en '+etiqueta+'.</div>';
+      }else{
+        contR.innerHTML='<div id="tbl-ent-rutas"></div>'+
+          '<div style="margin-top:10px;font-size:11px;color:var(--gris4);line-height:1.5">'+
+          'Medido sobre <b>'+diasMedidos+' día'+(diasMedidos===1?'':'s')+'</b> con liquidación cargada. '+
+          '«Faltó» son clientes programados que no aparecieron facturados: unos están explicados por un rechazo y otros no.</div>';
+        montarTabla('tbl-ent-rutas',{
+          archivo:'efectividad-rutas-'+mes, unidad:'rutas', buscar:['ruta','gente'],
+          placeholder:'Buscar ruta o persona…', orden:{k:'efec',dir:'asc'},
+          cols:[
+            {k:'ruta',t:'Ruta',b:true},
+            {k:'dias',t:'Días',num:true},
+            {k:'cli',t:'Clientes',num:true,tot:'sum'},
+            {k:'fact',t:'Entregados',num:true,tot:'sum'},
+            {k:'efec',t:'Efectividad',num:true,fmt:_entPct,col:_entColPct},
+            {k:'falta',t:'Faltó',num:true,tot:'sum',col:v=>v?'#B45309':null},
+            {k:'rech',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
+            {k:'sinRep',t:'Sin reportar',num:true,tot:'sum',col:v=>v?'#B45309':'#059669'},
+            {k:'cargue',t:'Cajas',num:true,tot:'sum'},
+            {k:'gente',t:'Quién fue',fmt:v=>'<span style="font-size:10.5px;color:#6B7385">'+(v||'—')+'</span>'},
+            {k:'dif',t:'Semáforo',fmt:v=>{const x=_entSem(v);
+              return '<span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+x[1]+';color:'+x[2]+'">'+x[0]+'</span>';}}
+          ],
+          filas:filasR, vacio:'Sin rutas con liquidación en el rango.'
+        });
+      }
+    }
+
+    // ── Tabla por persona ───────────────────────────────────────────────────────────────────
+    if(!filas.length){
+      cont.innerHTML='<div style="background:#FFF8E6;border-radius:11px;padding:16px;font-size:12px;color:#B45309;line-height:1.55">'+
+        '<b>Nadie registró jornada en '+etiqueta+'.</b><br>'+
+        'La app pregunta «¿quién está entregando hoy?» desde el 3 de agosto de 2026; antes las novedades se guardaban con el texto fijo «Repartidor»'+
+        (genericos?' ('+genericos+' de este rango)':'')+
+        ' y no hay forma de saber quién iba en cada camión.<br><br>'+
+        'Para esas fechas usa la tabla de abajo: <b>la ruta sí tiene historia</b>.</div>';
+      return;
+    }
+    let html='';
+    const sinCruce=filas.filter(f=>f.efec==null).length;
+    if(sinCruce)html+='<div style="margin-bottom:10px;background:#EFF6FF;border-radius:10px;padding:11px 13px;font-size:11.5px;color:#1E429F;line-height:1.5">'+
+      '<b>'+sinCruce+' de '+filas.length+' sin efectividad calculable.</b> '+
+      'Son días en que aún no se había subido la liquidación de LiquiYa, así que no hay contra qué comparar. '+
+      'Se sube desde Rutina diaria y la cifra aparece sola.</div>';
+    html+='<div id="tbl-ent"></div>'+
+      '<div style="margin-top:10px;font-size:11px;color:var(--gris4);line-height:1.5">'+
+      'Cuando dos personas salen en el mismo camión, <b>las dos cargan el mismo resultado de la ruta</b>: el reparto es de la pareja. '+
+      'La columna «Reportó» es la que las diferencia — dice quién está usando la app. Toca una fila para ver día por día.</div>';
+    if(genericos)html+='<div style="margin-top:8px;background:var(--gris1);border-radius:9px;padding:10px 12px;font-size:11px;color:var(--gris4)">'+
+      genericos+' novedad(es) de este rango quedaron sin persona («Repartidor»): se registraron antes de que la app preguntara quién entrega. No se le cargan a nadie.</div>';
     cont.innerHTML=html;
-    // El semáforo compara contra el promedio de la operación, no contra una meta fija
-    filas.forEach(f=>{f.dif=f.fiable&&pctProm!=null?f.pct-pctProm:null;});
-    const _sem=d=>d==null?['Sin datos aún','#F1F3F7','#6B7385']:
-                d>=3?['Referente','#ECFDF5','#059669']:d>=-3?['En meta','#ECFDF5','#059669']:
-                d>=-8?['Seguimiento','#FFF8E6','#B45309']:['Atención','#FEE2E2','#B91C1C'];
     montarTabla('tbl-ent',{
-      archivo:'entregadores-'+mes, unidad:'entregadores', buscar:['nombre','rutas'],
-      placeholder:'Buscar entregador o ruta…', orden:{k:'tot',dir:'desc'},
+      archivo:'entregadores-'+mes, unidad:'personas', buscar:['nombre','rutas','cargo'],
+      placeholder:'Buscar entregador o ruta…', orden:{k:'cli',dir:'desc'},
       cols:[
         {k:'nombre',t:'Entregador',b:true},
-        {k:'cargo',t:'Cargo',fmt:v=>v?'<span style="font-size:10.5px;color:#6B7385">'+v+'</span>':'<span style="color:#B5BAC6">—</span>'},
-        {k:'rutas',t:'Rutas',fmt:v=>v||'—'},
+        {k:'rol',t:'Rol',fmt:(v,f)=>'<span style="font-size:10.5px;color:'+(v==='Conductor'?'#E30613':'#1A56DB')+';font-weight:700">'+(v||'—')+'</span>'+
+          (f.cargo?'<div style="font-size:9.5px;color:#8A90A0">'+f.cargo+'</div>':'')},
+        {k:'rutas',t:'Rutas',fmt:v=>'<span style="font-size:10.5px">'+(v||'—')+'</span>'},
         {k:'dias',t:'Días',num:true},
-        {k:'ent',t:'Entregas',num:true,tot:'sum'},
+        {k:'cli',t:'Clientes',num:true,tot:'sum'},
+        {k:'fact',t:'Entregados',num:true,tot:'sum'},
+        {k:'efec',t:'Efectividad',num:true,fmt:_entPct,col:_entColPct},
         {k:'rech',t:'Rechazos',num:true,tot:'sum',col:v=>v?'#E30613':null},
-        {k:'pct',t:'Cumpl.',num:true,fmt:v=>v==null?'<span style="color:#8A90A0" title="Aún no usa el botón Confirmar entrega lo suficiente">—</span>':Math.round(v)+'%',
-         col:v=>v==null?null:v>=95?'#059669':v>=85?'#D97706':'#E30613'},
-        {k:'porHora',t:'Entregas/h',num:true,fmt:v=>v!=null?v:'<span style="color:#8A90A0">—</span>'},
-        {k:'minPorEnt',t:'Min/entrega',num:true,fmt:v=>v!=null?v:'<span style="color:#8A90A0">—</span>'},
-        {k:'dif',t:'Semáforo',noOrd:false,fmt:v=>{const s=_sem(v);
-          return '<span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+s[1]+';color:'+s[2]+'">'+s[0]+'</span>';}}
+        {k:'sinRep',t:'Sin reportar',num:true,tot:'sum',col:v=>v?'#B45309':'#059669'},
+        // El pie de la tabla llama a fmt() sin la fila, así que `f` puede venir vacío
+        {k:'reporto',t:'Reportó',num:true,tot:'sum',fmt:(v,f)=>v?v+(f&&f.rech?' <span style="font-size:9.5px;color:#8A90A0">de '+f.rech+'</span>':''):'<span style="color:#B5BAC6">0</span>'},
+        {k:'topMot',t:'Motivo que más repite',fmt:(v,f)=>v?'<span style="font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;border-radius:5px;padding:2px 6px">'+v+'</span> <span style="font-size:10px;color:#8A90A0">×'+f.topN+'</span>':'<span style="color:#B5BAC6">—</span>'},
+        {k:'dif',t:'Semáforo',fmt:v=>{const x=_entSem(v);
+          return '<span style="display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;background:'+x[1]+';color:'+x[2]+'">'+x[0]+'</span>';}}
       ],
-      filas, vacio:'Sin entregadores con actividad este mes.'
+      expandir:f=>{
+        const dd=f.det.map(d=>{
+          const ef=d.asig?Math.round(d.fact/d.asig*100):null;
+          return '<tr><td style="white-space:nowrap">'+d.fecha.slice(8)+'/'+d.fecha.slice(5,7)+'</td><td><b>'+d.ruta+'</b></td>'+
+            '<td class="num">'+(d.asig==null?'—':d.asig)+'</td>'+
+            '<td class="num">'+(d.fact==null?'—':d.fact)+'</td>'+
+            '<td class="num" style="color:'+(_entColPct(ef)||'#8A90A0')+';font-weight:800">'+(ef==null?'—':ef+'%')+'</td>'+
+            '<td class="num" style="color:'+(d.rech?'#E30613':'#8A90A0')+'">'+d.rech+'</td>'+
+            '<td class="num" style="color:'+(d.sinRep?'#B45309':'#059669')+'">'+d.sinRep+'</td>'+
+            '<td style="font-size:10.5px;color:#6B7385">'+(d.sinFact.slice(0,3).map(x=>x.nombre||x.cod).join(' · ')||'—')+
+              (d.sinFact.length>3?' <b>+'+(d.sinFact.length-3)+'</b>':'')+'</td></tr>';
+        }).join('');
+        const mots=Object.entries(f.mot).sort((a,b)=>b[1]-a[1]).map(([m,n])=>
+          '<span style="display:inline-block;font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;border-radius:5px;padding:2px 7px;margin:0 5px 5px 0">'+m+' · '+n+'</span>').join('');
+        return '<div style="padding:4px 2px 8px">'+
+          (mots?'<div style="margin-bottom:9px"><div style="font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8A90A0;margin-bottom:5px">Por qué no entregó</div>'+mots+'</div>':'')+
+          '<div style="font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8A90A0;margin-bottom:5px">Día por día</div>'+
+          '<table class="tg" style="font-size:11px"><thead><tr><th>Fecha</th><th>Ruta</th><th class="num">Clientes</th>'+
+          '<th class="num">Entregados</th><th class="num">Efectividad</th><th class="num">Rechazos</th>'+
+          '<th class="num">Sin reportar</th><th>Clientes sin explicar</th></tr></thead><tbody>'+dd+'</tbody></table></div>';
+      },
+      filas, vacio:'Sin personas con jornada registrada en el rango.'
     });
   }catch(e){
-    cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
+    if(!fondo)cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:14px;font-size:11.5px;color:#B91C1C">No se pudo cargar: '+e.message+'</div>';
   }
 }
 /* ══ BANDEJA DE EXCEPCIONES ══
