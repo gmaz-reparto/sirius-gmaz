@@ -3571,7 +3571,18 @@ function parseHojaCarga(lineas,acc){
   acc._adic=enAdic;
   return acc;
 }
-async function cargarIndiceHojas(){
+/* Con `fechaSel` lee la hoja de ESE día y la devuelve sin tocar el índice en vivo. Sin ella,
+   el comportamiento de siempre: hoy y, si no hay, ayer.
+   Antes solo existía la segunda forma, así que al mirar un día anterior a ayer la Torre seguía
+   usando el cargue de ayer y la efectividad histórica salía calculada sobre la base equivocada. */
+async function cargarIndiceHojas(fechaSel){
+  if(fechaSel){
+    try{
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fechaSel+'/HOJAS_INDEX.json?t='+Date.now());
+      if(r.ok){const d=await r.json();if(d&&Object.keys(d).length)return d;}
+    }catch(e){}
+    return {};
+  }
   hojasIndex={};
   const offset=CFG.UTC_OFFSET||-5,ahora=new Date();
   const hoy=new Date(ahora.getTime()+offset*3600000).toISOString().split('T')[0];
@@ -4497,7 +4508,11 @@ async function cargarTorreControl(forzar,fechaSel){
   // al pulsar Actualizar o si aún no se han leído. El refresco de 30 s solo repinta.
   if(forzar||_tcCache.fecha!==fecha||!_tcCache.hojas){
     try{
-      await cargarIndiceHojas();
+      // Copia propia: _tcCache.hojas apuntaba al índice global, y cuando el refresco del dashboard
+      // lo repoblaba con el día de hoy, el cargue del día que se estaba mirando se perdía solo.
+      const hojasDia=fecha===getColDate()
+        ? await cargarIndiceHojas().then(h=>Object.assign({},h))
+        : await cargarIndiceHojas(fecha);
       const [rech,reg,obsFoto,hist,val]=await Promise.all([
         cargarRechazosDelDia(fecha),
         cargarRegistroDia(fecha),
@@ -4505,8 +4520,8 @@ async function cargarTorreControl(forzar,fechaSel){
         fecha===getColDate()?Promise.resolve(null):_tcHistoricoDia(fecha),
         cargarValidaciones(fecha)
       ]);
-      _tcCache={fecha,hojas:hojasIndex||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist,val:val||{}};
-    }catch(e){ _tcCache={fecha,hojas:hojasIndex||{},rech:{},reg:{},obsFoto:new Set(),hist:null,val:{}}; }
+      _tcCache={fecha,hojas:hojasDia||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist,val:val||{},rechOK:!!rech};
+    }catch(e){ _tcCache={fecha,hojas:Object.assign({},hojasIndex||{}),rech:{},reg:{},obsFoto:new Set(),hist:null,val:{},rechOK:false}; }
   }
   try{ await cargarPersonalApp(); }catch(e){}
   try{ pintarTorreControl(); }catch(e){ console.log('torre:',e.message); }
@@ -4908,6 +4923,11 @@ function _tcDatosRutas(){
 
 function pintarTorreControl(){
   const D=_dashData; if(!D)return;
+  // No pintar con datos de otra fecha. Al cambiar de día conviven dos cargas (la del refresco
+  // automático y la del cambio de fecha) y la que llegaba tarde repintaba el día equivocado: por un
+  // instante el titular mostraba 100 % y un tramo de comisión que no correspondían.
+  const _fv=_tcFechaVista||getColDate();
+  if(_tcCache.fecha&&_tcCache.fecha!==_fv)return;
   const R=_tcDatosRutas();
   const hoy=getColDate();
   const fecha=_tcCache.fecha||D.fecha||hoy;
@@ -4943,13 +4963,16 @@ function pintarTorreControl(){
   const valTot=R.reduce((s,x)=>s+x.valor,0);
   const pendTot=R.reduce((s,x)=>s+x.pend,0);
   // Titular = efectividad DE ENTREGA: cargue menos todo lo que volvió. No depende de decisiones.
-  const efecHoy=cargTot>0?Math.round((cargTot-devTot)/cargTot*100):(D.pctCajas!=null?D.pctCajas:100);
+  // Si las devoluciones no se alcanzaron a leer, no se muestra un 100 % falso: se dice que falta el dato.
+  const datoOK=_tcCache.rechOK!==false;
+  const efecHoy=(datoOK&&cargTot>0)?Math.round((cargTot-devTot)/cargTot*100):null;
   // Comisión = solo lo imputable. Mientras haya devoluciones sin decidir, NO se muestra un tramo:
   // antes se mostraba $250.000 con 26 sin revisar, y eso premiaba no entrar a decidir.
   const efecCom=cargTot>0?Math.round((cargTot-afeTot)/cargTot*100):null;
-  const colEf=efecHoy>=97?'var(--verde)':efecHoy>=95?'var(--azul)':efecHoy>=90?'var(--amarillo)':'var(--rojo)';
-  const claseEf=efecHoy>=96?'v-ok':efecHoy>=95?'':efecHoy>=90?'v-al':'v-ro';
-  const tramo=pendTot?'faltan '+pendTot+' por decidir'
+  const colEf=efecHoy==null?'var(--gris3)':efecHoy>=97?'var(--verde)':efecHoy>=95?'var(--azul)':efecHoy>=90?'var(--amarillo)':'var(--rojo)';
+  const claseEf=efecHoy==null?'':efecHoy>=96?'v-ok':efecHoy>=95?'':efecHoy>=90?'v-al':'v-ro';
+  const tramo=!datoOK?'sin dato'
+    :pendTot?'faltan '+pendTot+' por decidir'
     :(efecCom>=97?'$250.000':efecCom>=96?'$150.000':efecCom>=95?'$100.000':'bajo el 95 %');
   const totCliDia=(esHoy?D.totCli:H.totCli)||0;
   const confDia=(esHoy?D.confirmados:H.confirmados)||0;
@@ -4972,8 +4995,9 @@ function pintarTorreControl(){
   if(kp)kp.innerHTML=
     kpi({l:'Efectividad de entrega',cls:claseEf,i:'target',ibg:'rgba(5,150,105,.1)',ic:'#059669',
       def:'De cada 100 cajas que se cargaron al camión, cuántas se quedaron en la calle. Descuenta TODO lo que volvió, esté decidido o no. La versión para comisión —que descuenta solo lo imputable al entregador— aparece abajo, y solo se cierra cuando usted decide las devoluciones pendientes.',
-      v:String(efecHoy).replace('.',',')+'<small>%</small>',
-      d:cargTot?(devTot?'▼ '+Math.round(devTot)+' cj de '+Math.round(cargTot)+' cargadas'+(cargBTot?' (+'+cargBTot+' bot)':''):'✓ volvió el camión vacío'):'Falta la hoja de cargue',
+      v:(efecHoy==null?'<span style="color:var(--gris3)">—</span>':String(efecHoy).replace('.',',')+'<small>%</small>'),
+      d:!datoOK?'No se pudieron leer las devoluciones'
+        :(cargTot?(devTot?'▼ '+Math.round(devTot)+' cj de '+Math.round(cargTot)+' cargadas'+(cargBTot?' (+'+cargBTot+' bot)':''):'✓ volvió el camión vacío'):'Falta la hoja de cargue'),
       dcls:devTot?'dn':'up', pct:efecHoy,pcol:colEf,
       f1:pendTot?'Comisión · sin cerrar':'Comisión · '+(efecCom==null?'—':efecCom+' %'),f2:tramo,
       drill:"activarModulo('rechazos')"})+
@@ -7096,6 +7120,8 @@ async function renderFlota(fechaSel,forzar,silencioso){
   _flPintando=true;
   const hoy=getColDate();
   const cambioFecha=fechaSel&&fechaSel!==_flotaFecha;
+  // Sin fecha explícita manda el día de contexto, igual que la Torre
+  if(!fechaSel&&fechaCtx()!==_flotaFecha)_flotaFecha=fechaCtx();
   _flotaFecha=fechaSel||_flotaFecha||hoy;
   const fecha=_flotaFecha, esHoy=fecha===hoy;
   const fInp=document.getElementById('fl-fecha');if(fInp){fInp.max=hoy;fInp.value=fecha;}
