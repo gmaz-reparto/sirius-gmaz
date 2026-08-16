@@ -748,14 +748,68 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .fl-modo{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--gris5)}
 .fl-vivo{width:7px;height:7px;border-radius:50%;background:var(--verde);box-shadow:0 0 0 3px #ECFDF5}
 .fl-wrap{overflow-x:auto}
-.fl-tabla{width:100%;border-collapse:separate;border-spacing:0;min-width:1180px}
+/* ── Consola de flota · rejilla estricta ──────────────────────────────
+   Cada columna tiene ancho fijo (table-layout:fixed) y cada fila mide
+   exactamente 56 px, lleve un auxiliar o lleve tres. Antes la altura
+   dependía de cuánta gente hubiera y las cifras quedaban desalineadas
+   de una fila a otra. */
+.fl-tabla{width:100%;border-collapse:separate;border-spacing:0;min-width:1210px;table-layout:fixed}
 .fl-tabla thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
   color:var(--gris4);padding:9px 10px;border-bottom:1px solid var(--gris2);white-space:nowrap;background:#fff}
-.fl-tabla thead th.r{text-align:right}
-.fl-tabla td{padding:8px 10px;border-bottom:1px solid var(--gris2);font-size:11.5px;vertical-align:middle}
-.fl-tabla td.r{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
-.fl-tabla th:nth-child(n+8),.fl-tabla td:nth-child(n+8){min-width:186px}
-.fl-tabla th:last-child,.fl-tabla td:last-child{min-width:0}
+.fl-tabla thead th.n{text-align:right}
+.fl-tabla td{padding:5px 10px;border-bottom:1px solid var(--gris2);font-size:11.5px;vertical-align:middle;
+  height:56px;overflow:hidden}
+/* Números: a la derecha y con cifras de ancho igual, para que se lean en columna */
+.fl-tabla td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;font-size:13.5px;
+  letter-spacing:-.3px;color:var(--negro)}
+.fl-tabla td.cen{text-align:center}
+.fl-tabla td.fl-c1{padding:0 0 0 10px}
+/* Anchos: identificación · carga del día · equipo */
+.fl-tabla col.c1{width:26px}  .fl-tabla col.c2{width:76px}   .fl-tabla col.c3{width:154px}
+.fl-tabla col.c4{width:112px} .fl-tabla col.c5{width:78px}   .fl-tabla col.c6{width:72px}
+.fl-tabla col.c7{width:78px}  .fl-tabla col.c8{width:266px}  .fl-tabla col.c10{width:112px}
+/* Dentro de la tabla la ficha ocupa toda la celda y el nombre va en UNA sola línea: si se parte en
+   dos, la fila crece a 62 px y se rompe la rejilla. El nombre completo queda en el tooltip. */
+   Se apunta a .fl-fila y no a .fl-tabla: el detalle también vive dentro de la tabla y allí los
+   nombres sí deben verse completos. */
+.fl-fila .perf{width:100%;padding:4px}
+.fl-fila .perf-t b{display:block;-webkit-line-clamp:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-fila .perf-c{width:18px;height:18px;font-size:12px;padding:0;border-radius:5px;line-height:1}
+.fl-fila .perf-p{font-size:9px;padding:3px 7px}
+/* Placa: bloque de dos líneas, sin marco hasta que se pasa el mouse */
+.fl-placa{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;padding:4px 8px;
+  border-radius:8px;border:1px solid transparent;background:transparent;font-family:inherit;text-align:left;
+  cursor:pointer;transition:background .12s,border-color .12s}
+button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
+.fl-placa b{font-size:12.5px;font-weight:800;color:var(--negro);letter-spacing:-.2px;display:flex;
+  align-items:center;gap:6px;white-space:nowrap}
+.fl-placa small{font-size:9.5px;color:var(--gris4);font-weight:700;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:100%}
+.fl-placa.vacia{flex-direction:row;align-items:center;gap:6px;color:var(--gris4);font-size:11px;font-weight:700}
+.fl-placa.vacia svg{opacity:.7}
+/* «Compartido» deja de ser una línea suelta y pasa a ser un distintivo junto a la placa */
+.fl-tag{font-size:8px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--amarillo);
+  background:#FFFBEB;border:1px solid rgba(217,119,6,.22);border-radius:5px;padding:1px 5px;line-height:1.5}
+/* Ficha compacta del auxiliar: todas caben en una línea */
+.fl-enfila{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden}
+.fl-mini{display:inline-flex;align-items:center;gap:6px;background:var(--gris1);border:1px solid transparent;
+  border-radius:20px;padding:3px 4px 3px 3px;min-width:0;flex:0 1 auto;transition:background .12s,border-color .12s}
+.fl-mini:hover{background:#fff;border-color:var(--gris2)}
+.fl-mini .perf-av{width:22px;height:22px;font-size:8px}
+.fl-mini b{font-size:10.5px;font-weight:800;color:var(--negro);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;min-width:0}
+.fl-mini-c{border:none;background:transparent;color:var(--gris4);font-family:inherit;font-size:12px;
+  font-weight:800;cursor:pointer;width:18px;height:18px;border-radius:5px;padding:0;flex-shrink:0;
+  opacity:0;transition:opacity .12s,background .12s,color .12s;line-height:1}
+.fl-mini:hover .fl-mini-c,.fl-mini:focus-within .fl-mini-c{opacity:1}
+.fl-mini-c:hover{background:var(--negro);color:#fff}
+/* Botón de agregar: un signo, no una frase que cambia de sitio según cuánta gente haya */
+.fl-add{width:26px;height:26px;border-radius:50%;border:1px dashed var(--gris3);background:transparent;
+  color:var(--gris4);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;
+  display:grid;place-items:center;padding:0;line-height:1;transition:background .12s,border-color .12s,color .12s}
+.fl-add:hover{background:var(--negro);border-color:var(--negro);border-style:solid;color:#fff}
+/* Rechazos del día, bajo el estado */
+.fl-rech{font-size:9px;font-weight:800;color:var(--rojo);margin-top:3px;letter-spacing:.2px}
 .fl-fila{cursor:pointer;border-left:3px solid transparent}
 .fl-fila:hover td{background:var(--gris1)}
 .fl-fila.abierta td{background:var(--gris1)}
@@ -779,9 +833,32 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .fl-det-col{display:flex;flex-direction:column;gap:12px}
 .fl-box{background:#fff;border:1px solid var(--gris2);border-radius:11px;padding:11px 12px}
 .fl-bt{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gris4);margin-bottom:8px}
-.fl-spark{width:100%;height:62px;display:block}
-.fl-metricas{display:flex;flex-wrap:wrap;gap:13px;margin-top:8px;font-size:10.5px;font-weight:700;color:var(--gris4)}
-.fl-metricas b{color:var(--negro);font-variant-numeric:tabular-nums}
+/* ── Detalle de la fila, por prioridad: primero lo que salió mal ── */
+.fl-box-h{display:flex;align-items:baseline;gap:10px;margin-bottom:9px}
+.fl-box-h h4{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gris4);margin:0}
+.fl-box-r{margin-left:auto;font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--negro)}
+.fl-rz{display:grid;grid-template-columns:42px minmax(0,max-content) 1fr;gap:9px;align-items:baseline;
+  padding:5px 0;border-bottom:1px solid var(--gris1);font-size:11px}
+.fl-rz:last-child{border-bottom:none}
+.fl-rz .hora{font-variant-numeric:tabular-nums;font-weight:800;color:var(--gris4);font-size:10.5px}
+.fl-rz .cli{font-weight:700;color:var(--negro);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fl-rz .mot{font-size:9px;font-weight:800;letter-spacing:.2px;text-transform:uppercase;color:var(--rojo);
+  background:var(--rojo-s);border-radius:5px;padding:2px 6px;white-space:nowrap;justify-self:start}
+.fl-mas{margin-top:8px;border:none;background:transparent;color:var(--gris5);font-family:inherit;font-size:10.5px;
+  font-weight:800;cursor:pointer;padding:4px 0}
+.fl-mas:hover{color:var(--rojo)}
+.fl-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fl-kp{background:var(--gris1);border-radius:10px;padding:10px}
+.fl-kp b{display:block;font-size:21px;font-weight:800;letter-spacing:-.7px;line-height:1.1;color:var(--negro);
+  font-variant-numeric:tabular-nums}
+.fl-kp small{display:block;margin-top:3px;font-size:8.5px;font-weight:800;color:var(--gris4);
+  text-transform:uppercase;letter-spacing:.3px;line-height:1.3}
+.fl-met{display:flex;flex-wrap:wrap;gap:13px;font-size:10.5px;font-weight:700;color:var(--gris4)}
+.fl-met b{color:var(--negro);font-variant-numeric:tabular-nums}
+/* Los hitos van agrupados por tipo: 22 líneas seguidas no se leían */
+.fl-hg+.fl-hg{margin-top:11px;padding-top:10px;border-top:1px solid var(--gris1)}
+.fl-hg-t{font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--gris4);margin-bottom:6px}
+.fl-hg-t span{color:var(--gris3)}
 .fl-btn{margin-top:10px;height:30px;padding:0 12px;border-radius:8px;border:none;background:var(--negro);color:#fff;
   font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
 .fl-btn:hover{background:var(--rojo)}
@@ -4027,6 +4104,7 @@ function motivoMeta(m){
    no identifica a nadie: las partículas se pegan a la palabra que siguen antes de contar.
    Las novedades viejas traen el texto fijo "Repartidor" o vienen vacías → sin identificar. */
 const _PARTICULAS=['DE','DEL','LA','LAS','LOS','DA','DI','VAN','MC','SAN','SANTA'];
+const _esParticula=t=>_PARTICULAS.includes(String(t||'').toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ]/gi,''));
 function _nomCorto(nom,palabras){
   const n=String(nom||'').trim();
   if(!n||/^repartidor$/i.test(n))return 'Sin identificar';
@@ -4034,8 +4112,9 @@ function _nomCorto(nom,palabras){
   const partes=[];
   for(let i=0;i<tk.length;i++){
     let bloque=tk[i];
-    // "DE LA CRUZ" cuenta como una sola parte, no como tres
-    while(_PARTICULAS.includes(bloque.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ]/gi,''))&&i+1<tk.length){
+    // "DE LA CRUZ" cuenta como una sola parte, no como tres. Se mira la ÚLTIMA palabra pegada, no
+    // el bloque completo: si no, "DE LA" ya no coincidía con la lista y el apellido quedaba a medias.
+    while(_esParticula(tk[i])&&i+1<tk.length){
       i++;bloque+=' '+tk[i];
     }
     partes.push(bloque);
@@ -6791,10 +6870,14 @@ async function renderFlota(fechaSel,forzar,silencioso){
       return;
     }
     _flFirmaPrev=firma;
-    const html='<table class="fl-tabla"><thead><tr>'+
-      '<th style="width:22px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
-      '<th class="r">Clientes</th><th class="r">Cajas</th><th class="r">Km</th>'+
-      '<th>Conductor</th><th>Auxiliares</th><th>Estado</th></tr></thead><tbody>'+
+    const html='<table class="fl-tabla">'+
+      '<colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5">'+
+      '<col class="c6"><col class="c7"><col class="c8"><col><col class="c10"></colgroup>'+
+      '<thead><tr>'+
+      '<th></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
+      '<th class="n">Clientes</th><th class="n">Cajas</th><th class="n">Km</th>'+
+      '<th>Conductor fijo</th><th>Auxiliares</th><th style="text-align:center">Estado</th>'+
+      '</tr></thead><tbody>'+
       (rutas.length?rutas.map((r,i)=>_flFila(r,i,usoUnit,esHoy)).join('')
         :'<tr><td colspan="10"><div class="veh-cargando">No hay rutas ese día. Sube el PPAS desde la Rutina diaria.</div></td></tr>')+
       sinRuta.map((v,i)=>_flFilaSinRuta(v,esHoy)).join('')+
@@ -6883,54 +6966,92 @@ function _flFila(ruta,i,usoUnit,esHoy){
   const fijo=unit?((maestroConductores||{})[unit]||null):null;
   const pr=_flotaDia.porRuta[ruta]||null;
   const carg=(_flotaDia.hojas[ruta]||{}).cargueCaj;
+  const nov=(_flotaDia.novedades[ruta]||[]).length;
   const est=!unit?['sin-veh','Falta placa']:!cond&&!fijo?['sin-cond','Sin conductor']
     :!auxs.length?['sin-aux','Sin auxiliar']:['ok','Lista'];
-  const g=_flGps(unit,esHoy);
-  // Placa
+  // Placa: bloque de dos líneas. «Compartido» pasa a ser un distintivo al lado, no una línea suelta.
+  const tag=compartido?'<span class="fl-tag">2 rutas</span>':'';
   const celPlaca=esHoy
-    ? '<label class="placa-sel'+(unit?' puesta':'')+'" title="Vehículo de '+ruta+'">'+
-        (unit?'<b>'+unit+'</b><small>'+_flVehTxt(unit)+'</small>'
-             :icoSvg('truck',13,2.1)+'<span>asignar placa</span>')+
-        '<select data-ruta="'+ruta+'" onchange="guardarAsignacionRuta(this)" onclick="event.stopPropagation()">'+
-        '<option value="">— sin placa —</option>'+
-        (_vehCache||[]).map(v=>'<option value="'+v.nombre+'"'+(v.nombre===unit?' selected':'')+'>'+
-          v.nombre+(v.marca?' · '+v.marca+' '+(v.modelo||''):'')+'</option>').join('')+'</select></label>'
-    : (unit?'<b>'+unit+'</b><div class="fl-sub">'+_flVehTxt(unit)+'</div>':'<span class="pill mute">sin placa</span>');
+    ? '<button class="fl-placa'+(unit?'':' vacia')+'" title="Vehículo de '+ruta+'"'+
+        ' onclick="event.stopPropagation();abrirPickerPlaca(this,\''+ruta+'\')">'+
+        (unit?'<b>'+unit+tag+'</b><small>'+_flVehTxt(unit)+'</small>'
+             :icoSvg('truck',13,2.1)+'<span>asignar placa</span>')+'</button>'
+    : (unit?'<span class="fl-placa"><b>'+unit+tag+'</b><small>'+_flVehTxt(unit)+'</small></span>'
+           :'<span class="fl-nada">sin placa</span>');
   // Conductor
   let celCond;
   if(!unit)celCond='<span class="fl-nada">'+(esHoy?'asigna la placa':'—')+'</span>';
   else if(cond)celCond=_arChip(cond,ruta,'conductor',!esHoy);
-  else if(fijo)celCond=esHoy?_arChipSugerido(fijo,ruta,unit)
-    :'<span class="pill mute">no salió registrado</span>';
-  else celCond=esHoy?_arSelCond(ruta,unit,null):'<span class="pill mute">sin conductor</span>';
-  // Auxiliares
-  let celAux=auxs.slice(0,AUX_MAX).map(a=>_arChip(a,ruta,'auxiliar',!esHoy)).join('');
-  if(esHoy&&auxs.length<AUX_MAX)celAux+=_arSelAux(ruta);
-  if(!celAux)celAux='<span class="pill mute">—</span>';
+  else if(fijo)celCond=esHoy?_arChipSugerido(fijo,ruta,unit):'<span class="fl-nada">no salió registrado</span>';
+  else celCond=esHoy?_arSelCond(ruta,unit,null):'<span class="fl-nada">sin conductor</span>';
+  // Auxiliares en fichas compactas, todas en una línea: así la fila mide igual con uno o con tres
+  // Con tres auxiliares no cabe el nombre completo en una línea: se muestra el primer nombre y el
+  // resto queda en el tooltip. Con uno o dos, caben dos palabras.
+  const pal=auxs.length>=3?1:2;
+  let celAux=auxs.slice(0,AUX_MAX).map(a=>_flChipMini(a,ruta,esHoy,pal)).join('');
+  if(esHoy&&auxs.length<AUX_MAX)celAux+='<button class="fl-add" title="Agregar un auxiliar a '+ruta+'"'+
+    ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\'auxiliar\')">+</button>';
+  if(!celAux)celAux='<span class="fl-nada">—</span>';
   return '<tr class="fl-fila '+est[0]+'" id="flf-'+i+'" onclick="flAbrir('+i+',\''+ruta+'\',event)">'+
-    '<td><span class="caret">▸</span></td>'+
+    '<td class="fl-c1"><span class="caret">▸</span></td>'+
     '<td><span class="ruta-b" style="background:'+col+'">'+ruta+'</span></td>'+
-    '<td>'+celPlaca+(compartido?'<span class="ar-org coord">compartido</span>':'')+'</td>'+
-    '<td><span class="gpsc" data-gps="'+(unit||'')+'">'+g+'</span></td>'+
-    '<td class="r num">'+(pr?pr.tot:'—')+'</td>'+
-    '<td class="r num">'+(carg?Math.round(carg):(pr&&pr.caj?Math.round(pr.caj):'—'))+'</td>'+
-    '<td class="r num" data-km="'+unit+'">'+(unit?'<span class="fl-cargando">…</span>':'—')+'</td>'+
-    '<td>'+celCond+'</td><td>'+celAux+'</td>'+
-    '<td><span class="ar-est '+est[0]+'">'+est[1]+'</span></td></tr>'+
+    '<td>'+celPlaca+'</td>'+
+    '<td><span class="gpsc" data-gps="'+(unit||'')+'">'+_flGps(unit,esHoy)+'</span></td>'+
+    '<td class="n">'+(pr?pr.tot:'<span class="fl-nada">—</span>')+'</td>'+
+    '<td class="n">'+(carg?Math.round(carg):(pr&&pr.caj?Math.round(pr.caj):'<span class="fl-nada">—</span>'))+'</td>'+
+    '<td class="n" data-km="'+unit+'">'+(unit?'<span class="fl-cargando">…</span>':'<span class="fl-nada">—</span>')+'</td>'+
+    '<td>'+celCond+'</td>'+
+    '<td><div class="fl-enfila">'+celAux+'</div></td>'+
+    '<td class="cen"><span class="ar-est '+est[0]+'">'+est[1]+'</span>'+
+      (nov?'<div class="fl-rech">'+nov+' rechazo'+(nov>1?'s':'')+'</div>':'')+'</td></tr>'+
     '<tr class="fl-det" id="fld-'+i+'" style="display:none"><td colspan="10"><div class="fl-det-in" id="fldc-'+i+'"></div></td></tr>';
 }
 
+/* Ficha compacta del auxiliar: círculo de iniciales + nombre, en una sola línea. */
+function _flChipMini(p,ruta,esHoy,palabras){
+  const et=p.origen==='persona'?'confirmó desde su celular':p.origen==='sistema'?'quedó por el vehículo':'lo asignó el coordinador';
+  return '<span class="fl-mini" title="'+p.nombre+' · C.C. '+(p.ced||'—')+' · '+et+'">'+
+    '<span class="perf-av a">'+_tcIniciales(p.nombre)+'</span><b>'+_nomCorto(p.nombre,palabras||2)+'</b>'+
+    (esHoy?'<button class="fl-mini-c" title="Cambiar o quitar a '+_nomCorto(p.nombre,2)+'"'+
+      ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\'auxiliar\',\''+p.ced+'\')">⋯</button>':'')+
+    '</span>';
+}
+
+/* La placa también se elige escribiendo, con el mismo buscador del personal. */
+function abrirPickerPlaca(btn,ruta){
+  _fpk={ruta,rol:'placa',reemplaza:'',unit:_asigPorRuta[ruta]||''};
+  const pk=document.getElementById('fl-picker');
+  const r=btn.getBoundingClientRect();
+  pk.style.display='block';
+  let x=r.left+window.scrollX, y=r.bottom+window.scrollY+6;
+  if(x+286>window.scrollX+window.innerWidth-12)x=window.scrollX+window.innerWidth-298;
+  if(y+320>window.scrollY+window.innerHeight)y=Math.max(window.scrollY+8,r.top+window.scrollY-326);
+  pk.style.left=x+'px'; pk.style.top=y+'px';
+  document.getElementById('fpk-t').textContent='Vehículo de '+ruta;
+  const bq=document.getElementById('fpk-quitar');
+  bq.style.display=_asigPorRuta[ruta]?'block':'none';
+  bq.textContent='Dejar la ruta sin vehículo';
+  const q=document.getElementById('fpk-q');
+  q.value=''; q.placeholder='Escribe la placa o la marca…';
+  _fpkBuscar(); setTimeout(()=>q.focus(),40);
+  document.addEventListener('keydown',_fpkEsc);
+  setTimeout(()=>document.addEventListener('click',_fpkFuera),0);
+}
+
+/* El vehículo que ese día no salió a ninguna ruta: misma rejilla, en gris. */
 function _flFilaSinRuta(v,esHoy){
   const fijo=(maestroConductores||{})[v.nombre]||null;
-  const celCond=esHoy?_arSelCond('',v.nombre,fijo)
-    :(fijo?'<span class="pill mute">'+_nomCorto(fijo.nombre,3)+'</span>':'<span class="pill mute">sin conductor fijo</span>');
+  const celCond=esHoy?(fijo?_arChipSugerido(fijo,'',v.nombre):_arSelCond('',v.nombre,null))
+    :(fijo?'<span class="fl-nada">'+_nomCorto(fijo.nombre,3)+'</span>':'<span class="fl-nada">sin conductor fijo</span>');
   return '<tr class="fl-fila sin-ruta">'+
-    '<td></td><td><span class="pill mute">sin ruta</span></td>'+
-    '<td><b>'+v.nombre+'</b><div class="fl-sub">'+(v.marca?v.marca+' '+(v.modelo||''):(v.tipo_vehiculo||''))+'</div></td>'+
+    '<td class="fl-c1"></td>'+
+    '<td><span class="fl-nada">sin ruta</span></td>'+
+    '<td><span class="fl-placa"><b>'+v.nombre+'</b><small>'+(v.marca?v.marca+' '+(v.modelo||''):(v.tipo_vehiculo||''))+'</small></span></td>'+
     '<td><span class="gpsc" data-gps="'+v.nombre+'">'+_flGps(v.nombre,esHoy)+'</span></td>'+
-    '<td class="r">—</td><td class="r">—</td><td class="r num" data-km="'+v.nombre+'"><span class="fl-cargando">…</span></td>'+
-    '<td>'+celCond+'</td><td><span class="pill mute">—</span></td>'+
-    '<td><span class="ar-est mute">No salió</span></td></tr>';
+    '<td class="n"><span class="fl-nada">—</span></td><td class="n"><span class="fl-nada">—</span></td>'+
+    '<td class="n" data-km="'+v.nombre+'"><span class="fl-cargando">…</span></td>'+
+    '<td>'+celCond+'</td><td><span class="fl-nada">—</span></td>'+
+    '<td class="cen"><span class="ar-est mute">No salió</span></td></tr>';
 }
 
 function _flVehTxt(unit){
@@ -6972,57 +7093,87 @@ async function flAbrir(i,ruta,ev){
   const geo=(_flotaDia.geo[ruta]||[]).filter(x=>!unit||x.unit_id===unit);
   const km=unit?await _kmDelDia(unit,fecha):null;
   const pts=unit?await _flPuntos(unit,fecha):[];
-  // Hitos ordenados por hora
-  const hitos=[];
-  personas.forEach(p=>{if(p.hora)hitos.push([p.hora,(p.rol==='conductor'?'Conductor':'Auxiliar')+': '+_nomCorto(p.nombre,3)+
-    (p.origen==='persona'?' se registró en su celular':p.origen==='sistema'?' quedó por el vehículo':' lo asignó el coordinador'),'ok']);});
+  const hh=t=>{try{return new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});}catch(e){return '—';}};
+  // Lo que salió mal va primero: es lo que el coordinador tiene que resolver.
+  const novOrd=nov.slice().sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+  const VER=8, sobran=Math.max(0,novOrd.length-VER);
+  const pintaRz=n=>'<div class="fl-rz"><span class="hora">'+hh(n.created_at)+'</span>'+
+    '<span class="cli">'+(n.nombre_cliente||n.codigo_cliente||'—')+'</span>'+
+    '<span class="mot">'+(n.motivo||'sin motivo')+'</span></div>';
+  // Hitos separados por tipo: 22 líneas seguidas no se leían
+  const hMov=[],hJor=[];
+  personas.forEach(p=>{if(p.hora)hJor.push([p.hora,'<b>'+_nomCorto(p.nombre,3)+'</b> '+
+    (p.origen==='persona'?'se registró en su celular':p.origen==='sistema'?'quedó por el vehículo':'lo asignó el coordinador'),'info']);});
   if(ent.length){
     const t=ent.filter(x=>x.created_at).map(x=>x.created_at).sort();
-    if(t.length){hitos.push([t[0],'Primera entrega confirmada','info']);
-      if(t.length>1)hitos.push([t[t.length-1],'Última entrega confirmada · '+ent.length+' en total','info']);}
+    if(t.length){hJor.push([t[0],'Primera entrega confirmada','ok']);
+      if(t.length>1)hJor.push([t[t.length-1],'Última entrega · <b>'+ent.length+'</b> en total','ok']);}
   }
-  nov.forEach(n=>{if(n.created_at)hitos.push([n.created_at,'Novedad · '+(n.motivo||'')+' · '+(n.nombre_cliente||''),'bad']);});
-  geo.forEach(g=>{if(g.hora)hitos.push([g.hora,(g.tipo==='salio'?'Salió de la geocerca':'Volvió a la geocerca')+
-    (g.distancia_limite_m?' · '+g.distancia_limite_m+' m':''),g.tipo==='salio'?'warn':'ok']);});
-  hitos.sort((a,b)=>new Date(a[0])-new Date(b[0]));
-  const hh=t=>{try{return new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});}catch(e){return '—';}};
+  geo.forEach(g=>{if(g.hora)hMov.push([g.hora,(g.tipo==='salio'?'Salió de la geocerca':'Volvió a la geocerca')+
+    (g.distancia_limite_m?' · <b>'+g.distancia_limite_m+' m</b>':''),g.tipo==='salio'?'warn':'ok']);});
+  hMov.sort((a,b)=>new Date(a[0])-new Date(b[0]));
+  hJor.sort((a,b)=>new Date(a[0])-new Date(b[0]));
+  const grupo=(arr,titulo)=>!arr.length?'':
+    '<div class="fl-hg"><div class="fl-hg-t">'+titulo+' <span>'+arr.length+'</span></div>'+
+    arr.map(h=>'<div class="fl-hito"><span class="h">'+hh(h[0])+'</span>'+
+      '<span class="l"><i style="background:'+(h[2]==='warn'?'var(--amarillo)':h[2]==='info'?'var(--azul)':'var(--verde)')+'"></i></span>'+
+      '<span class="x">'+h[1]+'</span></div>').join('')+'</div>';
   cont.innerHTML=
     '<div class="fl-det-col">'+
-      '<div class="fl-box"><div class="fl-bt">Recorrido del día'+(km!=null?' · '+km.toLocaleString('es-CO')+' km':'')+'</div>'+
-        (pts.length>1?_flSpark(pts):'<div class="fl-nada">Sin historial GPS guardado de ese día</div>')+
-        '<div class="fl-metricas">'+
+      '<div class="fl-box"><div class="fl-box-h"><h4>Lo que salió mal</h4>'+
+        '<span class="fl-box-r" style="color:'+(nov.length?'var(--rojo)':'var(--verde)')+'">'+
+          (nov.length?nov.length+(nov.length>1?' rechazos':' rechazo'):'sin novedades')+'</span></div>'+
+        (nov.length
+          ? novOrd.slice(0,VER).map(pintaRz).join('')+
+            (sobran?'<div id="flr-'+i+'" style="display:none">'+novOrd.slice(VER).map(pintaRz).join('')+'</div>'+
+              '<button class="fl-mas" onclick="event.stopPropagation();_flVerMas('+i+',this,'+sobran+')">Ver los '+sobran+' restantes ▾</button>':'')
+          : '<div class="fl-nada">Ninguna entrega quedó pendiente ese día.</div>')+
+      '</div>'+
+      '<div class="fl-box"><div class="fl-box-h"><h4>Recorrido del día</h4>'+
+        '<span class="fl-box-r">'+(km!=null?km.toLocaleString('es-CO')+' km':'—')+'</span></div>'+
+        '<div class="fl-met">'+
           '<span>Placa <b>'+(unit||'—')+'</b></span>'+
           '<span>Puntos GPS <b>'+pts.length+'</b></span>'+
           '<span>Velocidad máx <b>'+(pts.length?Math.round(Math.max(...pts.map(x=>x.v)))+' km/h':'—')+'</b></span>'+
           '<span>En movimiento <b>'+_flHorasMov(pts)+'</b></span>'+
+          (pts.length?'<span>Primer reporte <b>'+hh(pts[0].t)+'</b></span>'+
+                      '<span>Último <b>'+hh(pts[pts.length-1].t)+'</b></span>':'')+
         '</div>'+
         (unit?'<button class="fl-btn" onclick="event.stopPropagation();toggleRecorrido(\''+unit+'\',\''+ruta+'\',\''+fecha+'\')">Ver el recorrido en el mapa ▶</button>':'')+
       '</div>'+
-      '<div class="fl-box"><div class="fl-bt">Con quién salió</div>'+
+    '</div>'+
+    '<div class="fl-det-col">'+
+      '<div class="fl-box"><div class="fl-box-h"><h4>Qué llevó</h4></div>'+
+        '<div class="fl-kpis">'+
+          '<div class="fl-kp"><b>'+(ped?ped.cli:((_flotaDia.porRuta[ruta]||{}).tot||'—'))+'</b><small>Clientes con pedido</small></div>'+
+          '<div class="fl-kp"><b>'+((_flotaDia.hojas[ruta]||{}).cargueCaj?Math.round(_flotaDia.hojas[ruta].cargueCaj):'—')+'</b><small>Cajas cargadas</small></div>'+
+          '<div class="fl-kp"><b>'+(ped&&ped.val?_pesosCorto(ped.val):'—')+'</b><small>Valor del pedido</small></div>'+
+        '</div>'+
+        '<div class="fl-met" style="margin-top:10px">'+
+          '<span>Cajas del Libro <b>'+(ped?Math.round(ped.caj):'—')+'</b></span>'+
+          '<span>Entregas confirmadas <b style="color:var(--verde)">'+ent.length+'</b></span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="fl-box"><div class="fl-box-h"><h4>Con quién salió</h4>'+
+        '<span class="fl-box-r">'+(personas.length||'')+'</span></div>'+
         (personas.length?'<div class="fl-crew">'+personas.map(p=>
-          '<span class="per '+(p.rol==='conductor'?'cond':'')+'"><span class="ar-av '+(p.rol==='conductor'?'cond':'aux')+'">'+
-          _tcIniciales(p.nombre)+'</span><span class="ar-cn"><b>'+_nomCorto(p.nombre,3)+'</b><em>'+
+          '<span class="perf '+(p.rol==='conductor'?'cond':'')+'"><span class="perf-av '+(p.rol==='conductor'?'c':'a')+'">'+
+          _tcIniciales(p.nombre)+'</span><span class="perf-t"><b>'+_nomCorto(p.nombre,3)+'</b><em>'+
           (p.rol==='conductor'?'Conductor':'Auxiliar')+' · C.C. '+(p.ced||'—')+'</em></span></span>').join('')+'</div>'
           :'<div class="fl-nada">Nadie quedó registrado en esta ruta ese día</div>')+
       '</div>'+
-    '</div>'+
-    '<div class="fl-det-col">'+
-      '<div class="fl-box"><div class="fl-bt">Qué llevó</div>'+
-        '<div class="fl-nums">'+
-          '<div><b class="num">'+(ped?ped.cli:'—')+'</b><small>Clientes con pedido</small></div>'+
-          '<div><b class="num">'+(ped?Math.round(ped.caj):'—')+'</b><small>Cajas del Libro</small></div>'+
-          '<div><b class="num">'+((_flotaDia.hojas[ruta]||{}).cargueCaj?Math.round(_flotaDia.hojas[ruta].cargueCaj):'—')+'</b><small>Cajas cargadas</small></div>'+
-          '<div><b class="num">'+(ped&&ped.val?_pesosCorto(ped.val):'—')+'</b><small>Valor del pedido</small></div>'+
-          '<div><b class="num" style="color:var(--verde)">'+ent.length+'</b><small>Entregas confirmadas</small></div>'+
-          '<div><b class="num" style="color:'+(nov.length?'var(--rojo)':'var(--negro)')+'">'+nov.length+'</b><small>Novedades</small></div>'+
-        '</div></div>'+
-      '<div class="fl-box"><div class="fl-bt">Hitos del día · '+hitos.length+'</div>'+
-        (hitos.length?hitos.map(h=>'<div class="fl-hito"><span class="h">'+hh(h[0])+'</span>'+
-          '<span class="l"><i style="background:'+(h[2]==='bad'?'var(--rojo)':h[2]==='warn'?'var(--amarillo)':h[2]==='info'?'var(--azul)':'var(--verde)')+'"></i></span>'+
-          '<span class="x">'+h[1]+'</span></div>').join('')
-          :'<div class="fl-nada">Sin hitos registrados ese día</div>')+
-      '</div>'+
+      (hMov.length||hJor.length
+        ? '<div class="fl-box"><div class="fl-box-h"><h4>Jornada y vehículo</h4></div>'+
+            grupo(hMov,'Movimiento del vehículo')+grupo(hJor,'Jornada')+'</div>'
+        : '')+
     '</div>';
+}
+/* Desplegar el resto de rechazos sin cerrar la fila. */
+function _flVerMas(i,btn,n){
+  const e=document.getElementById('flr-'+i);if(!e)return;
+  const ver=e.style.display==='none';
+  e.style.display=ver?'block':'none';
+  btn.textContent=ver?'Ver menos ▴':'Ver los '+n+' restantes ▾';
 }
 
 /* Refresco en vivo sin reconstruir nada: se reescribe solo el contenido de las celdas de GPS
@@ -7052,15 +7203,9 @@ async function _flPuntos(unitId,fecha){
     })).filter(x=>x.t);
   }catch(e){return [];}
 }
-function _flSpark(pts){
-  const n=Math.min(pts.length,120), paso=Math.max(1,Math.floor(pts.length/n));
-  const m=[];for(let i=0;i<pts.length;i+=paso)m.push(pts[i].v);
-  const max=Math.max(20,...m);
-  const P=m.map((v,i)=>((i/(m.length-1||1))*300).toFixed(1)+','+(56-(v/max)*48).toFixed(1)).join(' ');
-  return '<svg class="fl-spark" viewBox="0 0 300 62" preserveAspectRatio="none" role="img" aria-label="Velocidad del vehículo a lo largo del día">'+
-    '<line x1="0" y1="56" x2="300" y2="56" stroke="var(--gris2)" stroke-width="1"/>'+
-    '<polyline points="'+P+'" fill="none" stroke="var(--azul)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
-}
+/* El gráfico de velocidad se retiró del detalle: ocupaba media tarjeta y no se leía nada en él.
+   Las cifras del recorrido (puntos, velocidad máxima, tiempo en movimiento y hora del primer y
+   último reporte) dicen lo mismo en una sola línea. */
 function _flHorasMov(pts){
   if(pts.length<2)return '—';
   let seg=0;
@@ -7077,9 +7222,9 @@ function exportarFlota(){
   const filas=[['Fecha','Ruta','Placa','Vehiculo','Clientes','Cajas','Km','Conductor','Cedula','Auxiliares','Estado']];
   document.querySelectorAll('.fl-fila:not(.sin-ruta)').forEach(tr=>{
     const t=tr.children;
-    const personas=Array.from(tr.querySelectorAll('.perf')).map(c=>c.title.split(' · ')[0]);
+    const personas=Array.from(tr.querySelectorAll('.perf,.fl-mini')).map(c=>c.title.split(' · ')[0]);
     filas.push([fecha,t[1].innerText.trim(),
-      (t[2].querySelector('select')?t[2].querySelector('select').value:t[2].innerText.trim().split('\n')[0]),
+      t[2].innerText.trim().split('\n')[0],
       '', t[4].innerText.trim(), t[5].innerText.trim(), t[6].innerText.trim(),
       personas[0]||'', '', personas.slice(1).join(' / '), t[9].innerText.trim()]);
   });
@@ -7100,7 +7245,7 @@ function _arChip(p,ruta,rol,soloLectura){
     '<span class="perf-av '+(esCond?'c':'a')+'">'+_tcIniciales(p.nombre)+'</span>'+
     '<span class="perf-t"><b>'+_nomCorto(p.nombre,3)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
     (soloLectura?'':'<button class="perf-c" title="Cambiar o quitar a '+_nomCorto(p.nombre,3)+'"'+
-      ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\''+(esCond?'conductor':'auxiliar')+'\',\''+p.ced+'\')">Cambiar</button>')+
+      ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\''+(esCond?'conductor':'auxiliar')+'\',\''+p.ced+'\')">⋯</button>')+
     '</span>';
 }
 /* El conductor fijo de la placa que aún no está puesto en la ruta: ficha en gris con un botón que
@@ -7145,8 +7290,10 @@ function abrirPicker(btn,ruta,rol,reemplaza,unit){
     : (rol==='conductor'?'Conductor de '+ruta:'Auxiliar de '+ruta);
   const bq=document.getElementById('fpk-quitar');
   bq.style.display=per?'block':'none';
+  if(per)bq.textContent='Quitar a '+_nomCorto(per.nombre,2)+' de la ruta';
   const q=document.getElementById('fpk-q');
-  q.value=''; _fpkBuscar(); setTimeout(()=>q.focus(),40);
+  q.value=''; q.placeholder='Escribe el nombre o la cédula…';
+  _fpkBuscar(); setTimeout(()=>q.focus(),40);
   document.addEventListener('keydown',_fpkEsc);
   setTimeout(()=>document.addEventListener('click',_fpkFuera),0);
 }
@@ -7164,6 +7311,19 @@ function _fpkBuscar(){
   const ocupados=new Set();
   Object.values(_tripAsignada||{}).forEach(arr=>(arr||[]).forEach(x=>{
     if(String(x.ced)!==String(_fpk.reemplaza))ocupados.add(String(x.ced));}));
+  // Elegir vehículo: mismo popover, escribiendo la placa o la marca
+  if(_fpk.rol==='placa'){
+    const enUso={};Object.entries(_asigPorRuta||{}).forEach(([r,u])=>{if(r!==_fpk.ruta)enUso[u]=r;});
+    let vh=(_vehCache||[]).map(v=>({n:v.nombre,d:((v.marca||'')+' '+(v.modelo||'')).trim()||v.tipo_vehiculo||''}))
+      .sort((a,b)=>String(a.n).localeCompare(String(b.n)));
+    if(txt)vh=vh.filter(o=>o.n.toUpperCase().includes(txt)||o.d.toUpperCase().includes(txt));
+    cont.innerHTML=vh.length?vh.map(o=>
+      '<button class="fpk-r" onclick="_fpkElegirPlaca(\''+o.n+'\')">'+
+        '<span class="fpk-av">'+icoSvg('truck',13,2)+'</span>'+
+        '<span class="fpk-n"><b>'+o.n+'</b><em>'+(enUso[o.n]?'ya está en '+enUso[o.n]:(o.d||'sin datos'))+'</em></span></button>').join('')
+      :'<div class="fpk-vacio">'+(txt?'Ningún vehículo coincide con «'+txt+'»':'No hay vehículos en Securita')+'</div>';
+    return;
+  }
   let lista=entregadoresDisponibles().filter(o=>!ocupados.has(String(o.ced)));
   if(_fpk.rol==='conductor')lista=lista.filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
   if(txt)lista=lista.filter(o=>o.nombre.toUpperCase().includes(txt)||String(o.ced).includes(txt));
@@ -7202,9 +7362,16 @@ async function _fpkElegir(ced){
     _flRefrescoSuave();
   }catch(e){toast('No se pudo asignar: '+e.message,'err');}
 }
-async function _fpkQuitar(){
-  const {ruta,reemplaza}=_fpk;
+/* Elegir vehículo desde el buscador: entra por el mismo camino de siempre. */
+async function _fpkElegirPlaca(unit){
+  const ruta=_fpk.ruta;
   cerrarPicker();
+  return guardarAsignacionRuta({dataset:{ruta},value:unit});
+}
+async function _fpkQuitar(){
+  const {ruta,reemplaza,rol}=_fpk;
+  cerrarPicker();
+  if(rol==='placa')return guardarAsignacionRuta({dataset:{ruta},value:''});
   if(!reemplaza)return;
   const per=(_tripAsignada[ruta]||[]).find(x=>String(x.ced)===String(reemplaza));
   if(per&&per.origen==='persona'&&!confirm(_nomCorto(per.nombre,3)+' se registró desde su propio celular.\n\n¿Seguro que lo quitas de '+ruta+'?'))return;
