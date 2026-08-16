@@ -4266,7 +4266,7 @@ async function cargarDash(){
       fecha,confirmados,ultimaEnt,ventaPed,ventaRech,pctCajas,pctConf};
     actualizarBadgesModulos();
     cargarTorreControl(); // cabecera del módulo Operación (usa este mismo _dashData)
-    const modAct=document.querySelector('.dnav.on');if(modAct)refrescarModulo(modAct.dataset.mod);
+    const modAct=document.querySelector('.dnav.on');if(modAct)refrescarModulo(modAct.dataset.mod,true);
     _dashCargadoUnaVez=true;
   }catch(e){console.log('dash:',e.message);}
 }
@@ -4430,7 +4430,6 @@ async function _sincronizarConductoresDelDia(){
     const asig=await r.json()||[];
     for(const a of asig)await registrarConductorAutomatico(a.ruta,a.unit_id,fecha);
     _tripPorFecha={};
-    if(document.getElementById('dash-veh-list'))await renderFlota();
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
   }catch(e){}
 }
@@ -5056,8 +5055,9 @@ function _alertasActivas(){
   let fuera=0;try{Object.values(geocercaEstado||{}).forEach(e=>{if(e&&e.dentro===false&&e.salidaEn)fuera++;});}catch(e){}
   return fuera;
 }
-function refrescarModulo(m){
-  if(m==='vehiculos')renderFlota();
+/* `fondo` = lo llamó el refresco automático del dashboard (cada 30 s), no el usuario. */
+function refrescarModulo(m,fondo){
+  if(m==='vehiculos')renderFlota(null,false,fondo);
   else if(m==='entregadores'){cargarEntregadores();cargarPersonalApp();}
   else if(m==='clientes')renderClientesModulo();
   else if(m==='rechazos')renderRechazosGraf();
@@ -6736,9 +6736,18 @@ async function renderAsignacionVehiculos(rutas){ return renderFlota(); }
 async function renderArmadoRutas(rutas){ return renderFlota(); }
 async function renderVehiculoCards(f){ return renderFlota(f); }
 
-async function renderFlota(fechaSel,forzar){
+/* `silencioso` = refresco de fondo (el dashboard repinta el módulo activo cada 30 s). En ese modo
+   NO se borra la tabla para poner "Reuniendo la flota…" y, si el resultado es idéntico al anterior,
+   ni siquiera se toca el DOM: eso era el parpadeo — la tabla desaparecía y volvía sola cada medio
+   minuto, como si fuera una falla. */
+let _flHtmlPrev='', _flPintando=false;
+async function renderFlota(fechaSel,forzar,silencioso){
   const cont=document.getElementById('dash-veh-list');if(!cont)return;
+  if(_flPintando&&silencioso)return;            // ya hay un pintado en curso
+  if(document.getElementById('fl-picker')?.style.display==='block'&&silencioso)return; // buscador abierto
+  _flPintando=true;
   const hoy=getColDate();
+  const cambioFecha=fechaSel&&fechaSel!==_flotaFecha;
   _flotaFecha=fechaSel||_flotaFecha||hoy;
   const fecha=_flotaFecha, esHoy=fecha===hoy;
   const fInp=document.getElementById('fl-fecha');if(fInp){fInp.max=hoy;fInp.value=fecha;}
@@ -6747,7 +6756,9 @@ async function renderFlota(fechaSel,forzar){
   if(modo)modo.innerHTML=esHoy
     ? '<span class="fl-vivo"></span> en vivo · se puede editar'
     : '🔒 '+_tcFechaLarga(fecha)+' · solo lectura';
-  cont.innerHTML='<div class="veh-cargando">Reuniendo la flota del '+fecha+'…</div>';
+  // El aviso de carga solo la primera vez o al cambiar de fecha; nunca en un refresco de fondo.
+  const primeraVez=!cont.querySelector('.fl-tabla');
+  if(primeraVez||cambioFecha)cont.innerHTML='<div class="veh-cargando">Reuniendo la flota del '+fecha+'…</div>';
   try{
     if(!_vehCache)_vehCache=await secVehiculos()||[];
     await cargarMaestroConductores(forzar,fecha);
@@ -6763,7 +6774,7 @@ async function renderFlota(fechaSel,forzar){
       .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
     window._flIdx={};rutas.forEach((r,i)=>window._flIdx[r]=i);
     window._flUso=usoUnit; window._flEsHoy=esHoy; window._rutasAsig=rutas;
-    cont.innerHTML='<table class="fl-tabla"><thead><tr>'+
+    const html='<table class="fl-tabla"><thead><tr>'+
       '<th style="width:22px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
       '<th class="r">Clientes</th><th class="r">Cajas</th><th class="r">Km</th>'+
       '<th>Conductor</th><th>Auxiliares</th><th>Estado</th></tr></thead><tbody>'+
@@ -6771,6 +6782,19 @@ async function renderFlota(fechaSel,forzar){
         :'<tr><td colspan="10"><div class="veh-cargando">No hay rutas ese día. Sube el PPAS desde la Rutina diaria.</div></td></tr>')+
       sinRuta.map((v,i)=>_flFilaSinRuta(v,esHoy)).join('')+
       '</tbody></table>';
+    // Si el resultado es igual al anterior, no se toca el DOM: sin repintado, sin parpadeo y sin
+    // perder la fila que el coordinador tenga abierta.
+    if(html!==_flHtmlPrev||!cont.querySelector('.fl-tabla')){
+      const abierta=_flotaAbierta;
+      cont.innerHTML=html;
+      _flHtmlPrev=html;
+      if(abierta!==null&&!silencioso)_flotaAbierta=null;
+      else if(abierta!==null){ // en refresco de fondo se vuelve a abrir la misma fila
+        const r=(window._rutasAsig||[])[abierta];
+        _flotaAbierta=null;
+        if(r)flAbrir(abierta,r,{target:document.body});
+      }
+    }
     const meta=document.getElementById('fl-meta');
     if(meta)meta.textContent=rutas.length+' rutas · '+asignados.size+' vehículos en calle · '+sinRuta.length+' sin ruta';
     // Los km salen de una consulta de historial por vehículo: se pintan al llegar.
@@ -6780,7 +6804,9 @@ async function renderFlota(fechaSel,forzar){
         el.innerHTML=km==null?'—':'<b>'+km.toLocaleString('es-CO')+'</b>';
       });
     });
-  }catch(e){cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';}
+  }catch(e){
+    if(!silencioso)cont.innerHTML='<div class="veh-cargando">No se pudo cargar: '+e.message+'</div>';
+  }finally{ _flPintando=false; }
 }
 
 /* Todo lo del día en una sola pasada: asignaciones, tripulación, cargue, clientes, pedido,
@@ -7238,8 +7264,10 @@ async function guardarAsignacionRuta(sel){
       toast(ruta+' sin vehículo asignado','ok');
       pintarFlotaEnVivo();
       _tripPorFecha={};
-      await renderFlota();
-      if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+      delete _asigPorRuta[ruta];
+      _tripAsignada[ruta]=(_tripAsignada[ruta]||[]).filter(x=>x.origen!=='sistema');
+      _flRepintarFila(ruta);
+      _flRefrescoSuave();
     }catch(e){toast('Error quitando asignación','err');}
     return;
   }
@@ -7257,12 +7285,14 @@ async function guardarAsignacionRuta(sel){
     // El conductor del vehículo queda registrado solo: es la regla desde el 15-ago-2026.
     await cargarMaestroConductores();
     const cond=await registrarConductorAutomatico(ruta,unitId);
-    toast(ruta+' → '+unitId+' asignado'+(cond?' · conductor: '+_nomCorto(cond.nombre):' · sin conductor fijo'),'ok');
-    if(!cond)toast('Asigna el conductor fijo de '+unitId+' abajo, en «Conductor fijo por vehículo»','err');
+    toast(ruta+' → '+unitId+' asignado'+(cond?' · conductor: '+_nomCorto(cond.nombre,3):' · sin conductor fijo'),'ok');
+    if(!cond)toast('Ese vehículo no tiene conductor fijo: elígelo en la columna Conductor','err');
     pintarFlotaEnVivo();
     _tripPorFecha={};
-    await renderFlota();
-    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+    _asigPorRuta[ruta]=unitId;
+    if(cond){const a=(_tripAsignada[ruta]||[]).filter(x=>x.rol!=='conductor');a.push(cond);_tripAsignada[ruta]=a;}
+    _flRepintarFila(ruta);
+    _flRefrescoSuave();
   }catch(e){toast('Error asignando vehículo','err');}
 }
 
