@@ -5331,7 +5331,8 @@ function filtrarPorRutaSel(ruta){
   if(typeof aplicarFiltroRutas==='function')aplicarFiltroRutas();
   // Refrescar el módulo abierto para que respete el filtro, sin sacar al usuario de donde está
   const act=document.querySelector('.dnav.on');
-  if(act&&act.dataset.mod){_pintarSubtitulo(act.dataset.mod);refrescarModulo(act.dataset.mod);}
+  // `true` = refresco de fondo: la flota se actualiza en vivo sin reconstruir su tabla
+  if(act&&act.dataset.mod){_pintarSubtitulo(act.dataset.mod);refrescarModulo(act.dataset.mod,true);}
 }
 function cambiarPeriodo(){
   const ms=document.getElementById('fil-mes'), as=document.getElementById('fil-anio');
@@ -6740,7 +6741,7 @@ async function renderVehiculoCards(f){ return renderFlota(f); }
    NO se borra la tabla para poner "Reuniendo la flota…" y, si el resultado es idéntico al anterior,
    ni siquiera se toca el DOM: eso era el parpadeo — la tabla desaparecía y volvía sola cada medio
    minuto, como si fuera una falla. */
-let _flHtmlPrev='', _flPintando=false;
+let _flHtmlPrev='', _flFirmaPrev='', _flPintando=false;
 async function renderFlota(fechaSel,forzar,silencioso){
   const cont=document.getElementById('dash-veh-list');if(!cont)return;
   if(_flPintando&&silencioso)return;            // ya hay un pintado en curso
@@ -6774,6 +6775,22 @@ async function renderFlota(fechaSel,forzar,silencioso){
       .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
     window._flIdx={};rutas.forEach((r,i)=>window._flIdx[r]=i);
     window._flUso=usoUnit; window._flEsHoy=esHoy; window._rutasAsig=rutas;
+    // Firma de lo que de verdad cambia la tabla: rutas, placas, tripulación y cifras del día.
+    // El GPS y los km quedan FUERA a propósito: se refrescan solos cada 25-30 s y si entraran aquí
+    // obligarían a reconstruir la tabla todo el tiempo — eso era el parpadeo que cerraba la fila.
+    const firma=JSON.stringify({
+      r:rutas, a:_asigPorRuta,
+      t:rutas.map(r=>(_tripAsignada[r]||[]).map(x=>x.ced+':'+x.rol+':'+(x.origen||'')).sort().join('|')),
+      c:rutas.map(r=>[(_flotaDia.porRuta[r]||{}).tot,(_flotaDia.hojas[r]||{}).cargueCaj]),
+      f:Object.keys(maestroConductores||{}).map(k=>k+':'+maestroConductores[k].ced),
+      s:sinRuta.map(v=>v.nombre), d:fecha, e:esHoy
+    });
+    if(silencioso&&firma===_flFirmaPrev&&cont.querySelector('.fl-tabla')){
+      _flActualizarEnVivo(esHoy);   // solo GPS y km, sin tocar el resto
+      _flPintando=false;
+      return;
+    }
+    _flFirmaPrev=firma;
     const html='<table class="fl-tabla"><thead><tr>'+
       '<th style="width:22px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
       '<th class="r">Clientes</th><th class="r">Cajas</th><th class="r">Km</th>'+
@@ -6798,7 +6815,9 @@ async function renderFlota(fechaSel,forzar,silencioso){
     const meta=document.getElementById('fl-meta');
     if(meta)meta.textContent=rutas.length+' rutas · '+asignados.size+' vehículos en calle · '+sinRuta.length+' sin ruta';
     // Los km salen de una consulta de historial por vehículo: se pintan al llegar.
-    [...asignados].forEach(async u=>{
+    // Los km se piden por vehículo (una consulta de historial cada uno) y se escriben en su celda
+    // apenas llegan, sin reconstruir la tabla.
+    [...asignados,...sinRuta.map(v=>v.nombre)].forEach(async u=>{
       const km=await _kmDelDia(u,fecha);
       document.querySelectorAll('[data-km="'+u+'"]').forEach(el=>{
         el.innerHTML=km==null?'—':'<b>'+km.toLocaleString('es-CO')+'</b>';
@@ -6892,7 +6911,7 @@ function _flFila(ruta,i,usoUnit,esHoy){
     '<td><span class="caret">▸</span></td>'+
     '<td><span class="ruta-b" style="background:'+col+'">'+ruta+'</span></td>'+
     '<td>'+celPlaca+(compartido?'<span class="ar-org coord">compartido</span>':'')+'</td>'+
-    '<td>'+g+'</td>'+
+    '<td><span class="gpsc" data-gps="'+(unit||'')+'">'+g+'</span></td>'+
     '<td class="r num">'+(pr?pr.tot:'—')+'</td>'+
     '<td class="r num">'+(carg?Math.round(carg):(pr&&pr.caj?Math.round(pr.caj):'—'))+'</td>'+
     '<td class="r num" data-km="'+unit+'">'+(unit?'<span class="fl-cargando">…</span>':'—')+'</td>'+
@@ -6908,7 +6927,7 @@ function _flFilaSinRuta(v,esHoy){
   return '<tr class="fl-fila sin-ruta">'+
     '<td></td><td><span class="pill mute">sin ruta</span></td>'+
     '<td><b>'+v.nombre+'</b><div class="fl-sub">'+(v.marca?v.marca+' '+(v.modelo||''):(v.tipo_vehiculo||''))+'</div></td>'+
-    '<td>'+_flGps(v.nombre,esHoy)+'</td>'+
+    '<td><span class="gpsc" data-gps="'+v.nombre+'">'+_flGps(v.nombre,esHoy)+'</span></td>'+
     '<td class="r">—</td><td class="r">—</td><td class="r num" data-km="'+v.nombre+'"><span class="fl-cargando">…</span></td>'+
     '<td>'+celCond+'</td><td><span class="pill mute">—</span></td>'+
     '<td><span class="ar-est mute">No salió</span></td></tr>';
@@ -7006,6 +7025,22 @@ async function flAbrir(i,ruta,ev){
     '</div>';
 }
 
+/* Refresco en vivo sin reconstruir nada: se reescribe solo el contenido de las celdas de GPS
+   (y de km si ya se calcularon). Así la tabla no parpadea ni se cierra la fila abierta. */
+function _flActualizarEnVivo(esHoy){
+  document.querySelectorAll('.gpsc').forEach(el=>{
+    const u=el.dataset.gps;
+    const nuevo=_flGps(u,esHoy!==false);
+    if(el.innerHTML!==nuevo)el.innerHTML=nuevo;
+  });
+  const km=_kmPorFecha[_flotaFecha||getColDate()]||{};
+  document.querySelectorAll('[data-km]').forEach(el=>{
+    const v=km[el.dataset.km];
+    if(v===undefined)return;
+    const txt=v==null?'—':'<b>'+v.toLocaleString('es-CO')+'</b>';
+    if(el.innerHTML!==txt)el.innerHTML=txt;
+  });
+}
 /* Puntos del recorrido, normalizados: {t,v} hora y velocidad. */
 async function _flPuntos(unitId,fecha){
   try{
