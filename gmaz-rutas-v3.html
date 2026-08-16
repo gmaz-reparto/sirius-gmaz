@@ -2147,9 +2147,17 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <section class="mod" id="mod-alertas">
       <div class="segtog-bar"><button class="segtog-b on" id="at-hoy" onclick="haptic();setModoHist('alert','hoy')">Hoy</button><button class="segtog-b" id="at-mes" onclick="haptic();setModoHist('alert','mes')">Este mes</button></div>
       <div id="alertas-hoy">
+        <!-- La tabla de alarmas de SecuritaGPS se retiró: su API devuelve «No alerts found» todos los
+             días (la cuenta GMAZ no tiene el módulo de alarmas activo). En su lugar va el exceso de
+             velocidad calculado por nosotros con los puntos GPS, que sí tenemos. -->
         <div class="dcard" style="margin-bottom:14px">
-          <div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas de hoy — SecuritaGPS</h3><span class="dm" id="dash-alarmas-meta">—</span></div>
-          <div style="overflow:auto;max-height:340px"><table class="dtbl"><thead><tr><th>Hora</th><th>Vehículo</th><th>Ruta</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody id="dash-alarmas"></tbody></table></div>
+          <div class="dcard-h"><h3><span class="h3ic">⚡</span>Exceso de velocidad</h3>
+            <span class="dm">calculado con los puntos GPS del día · urbano 40 · regional 60 km/h</span>
+            <span class="dm" id="vel-meta" style="margin-left:auto">—</span></div>
+          <div id="vel-body" style="padding:14px 17px">
+            <button class="dchip rojo" onclick="haptic();cargarExcesosVelocidad()">Revisar la velocidad de hoy</button>
+            <div style="font-size:11px;color:#8A90A0;font-weight:600;margin-top:8px">Se piden los recorridos vehículo por vehículo; con la flota completa tarda unos segundos.</div>
+          </div>
         </div>
         <div class="dcard">
           <div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca</h3><span class="dm" id="dash-geo-meta">—</span></div>
@@ -4362,7 +4370,6 @@ async function cargarDash(){
     await actualizarGeocercas(clientes_); // geocercas listas antes de pintar la flota (no bloquea si ya estaban calculadas)
     pintarDashMap(clientes_,entSet,novSet);
     cargarEventosGeocerca();
-    cargarAlarmasSecurita();
     // Cache para que los módulos (Vehículos/Clientes/Rechazos/Indicadores) reutilicen sin nuevas llamadas
     _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,vendPed,totCli,totEnt,totNov,cajasProg,cajasEnt,cajasRej,tiempos,
       fecha,confirmados,ultimaEnt,ventaPed,ventaRech,pctCajas,pctConf};
@@ -5538,34 +5545,15 @@ async function cargarAlertasMes(){
   let geoRows=[];
   try{ const r=await fetch(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=*&fecha=gte.'+_mesInicio()+'&fecha=lte.'+_mesFin()+'&order=fecha.desc,hora.desc&limit=3000',{headers:_hdrSup()}); geoRows=r.ok?await r.json():[]; }catch(e){}
   const geoTabla=geoRows.map(e=>{const col=rutaColor[e.ruta]||'#4A5060';const esS=e.tipo==='salio';return '<tr><td>'+(e.fecha||'').slice(5)+' '+(e.hora?new Date(e.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'')+'</td><td style="font-weight:700">'+e.unit_id+'</td><td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e.ruta+'</span></td><td><span class="dtag" style="background:'+(esS?'#FFF1F2':'#E6F7F0')+';color:'+(esS?'#E30613':'#0E9F6E')+'">'+(esS?'Salió':'Ingresó')+'</span></td><td>'+(e.tiempo_fuera_seg!=null?Math.round(e.tiempo_fuera_seg/60)+' min':'—')+'</td><td style="font-size:11px">'+(e.estado_fuera||'—')+'</td></tr>';}).join('');
+  // Los eventos de geocerca son los que sí tienen historia: la tarjeta de alarmas de Securita se
+  // retiró porque su API nunca devolvió una sola fila en ningún día consultado.
   cont.innerHTML=
-    '<div class="dcard" style="margin-bottom:14px"><div class="dcard-h"><h3><span class="h3ic">🚨</span>Alarmas del mes — SecuritaGPS</h3><span class="dm" id="alarmas-mes-meta">'+_nomMes()+'</span></div>'+
-      '<div id="alarmas-mes-body" style="padding:16px 17px"><button class="dchip rojo" onclick="haptic();cargarAlarmasMesSecurita()">Traer alarmas del mes desde SecuritaGPS</button><div style="font-size:11px;color:#8A90A0;font-weight:600;margin-top:8px">Consulta Securita día por día; en un mes con varios vehículos puede tardar ~30s.</div></div></div>'+
     '<div class="dcard"><div class="dcard-h"><h3><span class="h3ic">📍</span>Eventos de geocerca del mes</h3><span class="dm">'+geoRows.length+' eventos</span></div>'+
       '<div style="overflow:auto;max-height:400px"><table class="dtbl"><thead><tr><th>Fecha/Hora</th><th>Vehículo</th><th>Ruta</th><th>Evento</th><th>Tiempo fuera</th><th>Estado fuera</th></tr></thead><tbody>'+(geoTabla||'<tr><td colspan="6" style="text-align:center;color:#8A90A0;padding:16px">Sin eventos de geocerca este mes</td></tr>')+'</tbody></table></div></div>';
 }
-async function cargarAlarmasMesSecurita(){
-  const body=document.getElementById('alarmas-mes-body');
-  if(!body)return;
-  if(!_vehCache)_vehCache=await secVehiculos()||[];
-  const vehs=_vehCache.filter(v=>v.idgps);
-  const hoy=new Date();
-  // Días del período seleccionado: si es el mes actual, hasta hoy; si es un mes pasado, todo el mes
-  const ultimoDia=_esMesActual()?hoy.getDate():new Date(_periodoAnio,_periodoMes,0).getDate();
-  const dias=[];for(let d=1;d<=ultimoDia;d++)dias.push(_periodoAnio+'-'+String(_periodoMes).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
-  const todas=[];
-  for(let i=0;i<dias.length;i++){
-    body.innerHTML='<div class="veh-cargando">Consultando '+dias[i]+' … ('+(i+1)+'/'+dias.length+')</div>';
-    const res=await Promise.all(vehs.map(async v=>{ try{ const al=await secAlertas(v.idgps,dias[i])||[]; return (Array.isArray(al)?al:[al]).filter(x=>x&&x.TipoAlerta).map(x=>({...x,_fecha:dias[i],_placa:v.nombre})); }catch(e){return[];} }));
-    res.flat().forEach(a=>todas.push(a));
-  }
-  todas.sort((a,b)=>(b._fecha+' '+(b.Hora||'')).localeCompare(a._fecha+' '+(a.Hora||'')));
-  const porTipo={};todas.forEach(a=>{const t=a.TipoAlerta||'Alerta';porTipo[t]=(porTipo[t]||0)+1;});
-  const resumen=Object.keys(porTipo).sort((a,b)=>porTipo[b]-porTipo[a]).map(t=>'<span class="dtag" style="background:#FFF1F2;color:#E30613;margin:2px 4px 2px 0;display:inline-block">'+t+': '+porTipo[t]+'</span>').join('');
-  const tabla=todas.map(a=>{const crit=/PANICO|EXCESO|VELOCIDAD|IMPACTO|FRENADA|ACELERACION/i.test(a.TipoAlerta||'');return '<tr><td>'+a._fecha.slice(5)+' '+(a.Hora||'')+'</td><td style="font-weight:700">'+a._placa+'</td><td><span class="dtag" style="background:'+(crit?'#FFF1F2':'#FFF8E6')+';color:'+(crit?'#E30613':'#D97706')+'">'+a.TipoAlerta+'</span></td><td style="font-size:11px;color:#6B7385">'+((a.StatusAlerta||a.Domicilio||'').slice(0,50))+'</td></tr>';}).join('');
-  const meta=document.getElementById('alarmas-mes-meta');if(meta)meta.textContent=todas.length+' alarmas · '+_nomMes();
-  body.innerHTML='<div style="margin-bottom:10px;line-height:2">'+(resumen||'<span style="color:#0E9F6E;font-weight:700">✓ Sin alarmas en el mes</span>')+'</div><div style="overflow:auto;max-height:380px"><table class="dtbl"><thead><tr><th>Fecha/Hora</th><th>Vehículo</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>'+(tabla||'<tr><td colspan="4" style="text-align:center;color:#8A90A0;padding:16px">Sin alarmas en el mes</td></tr>')+'</tbody></table></div>';
-}
+/* cargarAlarmasMesSecurita() se eliminó junto con su tabla: recorría el mes día por día
+   llamando a getAlerts (unos 400 requests) para terminar siempre en «Sin alarmas en el mes».
+   El exceso de velocidad ahora se calcula del historial GPS en cargarExcesosVelocidad(). */
 /* ══ Estilo de mapa profesional (monocromo suave para que resalten los colores de ruta) ══ */
 const MAP_STYLE=[
   {elementType:'geometry',stylers:[{color:'#f4f5f7'}]},
@@ -5885,20 +5873,30 @@ async function compartirUbicacion(unitId){
   try{ await navigator.clipboard.writeText(texto); toast('Ubicación de '+unitId+' copiada','ok'); }
   catch(e){ window.open(link,'_blank'); }
 }
+/* Antes esto llamaba a getAlerts de Securita. Esa API responde «No alerts found» todos los días
+   —la cuenta no tiene el módulo de alarmas activo— y el objeto de respuesta se pintaba como una
+   alerta fantasma sin hora ni tipo. Ahora la alerta se calcula con los puntos GPS del vehículo. */
 async function verAlertasVehiculo(unitId,ruta){
   const cont=document.getElementById('vp-alertas');
   if(!cont)return;
   try{
-    const veh=(_vehCache||[]).find(v=>v.nombre===unitId);
-    if(!veh){cont.innerHTML='<div style="font-size:12px;color:#8A90A0;padding:6px 2px">Vehículo no encontrado</div>';return;}
-    const al=await secAlertas(veh.idgps,getColDate())||[];
-    const lista=Array.isArray(al)?al:[al];
-    if(!lista.length||!lista[0]){cont.innerHTML='<div style="font-size:12px;color:#0E9F6E;font-weight:700;padding:6px 2px">✓ Sin alertas hoy</div>';return;}
-    cont.innerHTML=lista.map(e=>{
-      const crit=/PANICO|EXCESO|VELOCIDAD|IMPACTO|FRENADA|ACELERACION/i.test(e.TipoAlerta||e.Descripcion||'');
-      return '<div class="vp-alerta" style="background:'+(crit?'#FFF1F2':'#FFF8E6')+'"><div><div class="va-t" style="color:'+(crit?'#E30613':'#D97706')+'">'+(e.TipoAlerta||'Alerta')+'</div><div class="va-s">'+(e.StatusAlerta||e.Domicilio||'').slice(0,50)+'</div></div><div class="va-h">'+(e.Hora||'')+'</div></div>';
+    const pts=await _flPuntos(unitId,getColDate());
+    if(!pts.length){cont.innerHTML='<div style="font-size:12px;color:#8A90A0;padding:6px 2px">Sin puntos GPS todavía hoy</div>';return;}
+    const max=Math.round(Math.max(...pts.map(p=>p.v)));
+    const eps=_velEpisodios(pts,VEL_URBANO);
+    if(!eps.length){
+      cont.innerHTML='<div style="font-size:12px;color:#0E9F6E;font-weight:700;padding:6px 2px">✓ Sin exceso de velocidad hoy · máx '+max+' km/h</div>';
+      return;
+    }
+    const hh=t=>new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+    cont.innerHTML=eps.sort((a,b)=>b.max-a.max).slice(0,5).map(e=>{
+      const crit=e.max>VEL_REGIONAL;
+      return '<div class="vp-alerta" style="background:'+(crit?'#FFF1F2':'#FFF8E6')+'">'+
+        '<div><div class="va-t" style="color:'+(crit?'#E30613':'#D97706')+'">'+Math.round(e.max)+' km/h</div>'+
+        '<div class="va-s">'+e.min+' min por encima de '+VEL_URBANO+'</div></div>'+
+        '<div class="va-h">'+hh(e.ini)+'</div></div>';
     }).join('');
-  }catch(e){cont.innerHTML='<div style="font-size:12px;color:#8A90A0;padding:6px 2px">No se pudieron cargar las alertas</div>';}
+  }catch(e){cont.innerHTML='<div style="font-size:12px;color:#8A90A0;padding:6px 2px">No se pudo revisar la velocidad</div>';}
 }
 
 /* ══ API SECURITAGPS (service24gps) — rastreo real de la flota ══ */
@@ -6430,84 +6428,88 @@ function verParadaEnMapa(i){
   recParadaIW.open(dashMap);
 }
 
-/* ══ ALARMAS DEL DÍA (SecuritaGPS getAlerts) — solo de los vehículos asignados hoy ══ */
-/* ══ LECTURA DE ALARMAS DE SECURITAGPS ══
-   La respuesta de getAlerts no tiene un esquema fijo: según la cuenta y el tipo de alerta los
-   campos llegan como Hora/Fecha/FechaHora, TipoAlerta/Alerta/Descripcion, StatusAlerta/Domicilio/
-   Direccion. Y cuando no hay nada devuelve {status:40100,message:"No alerts found."}.
-   Estas tres funciones leen lo que haya, en vez de asumir un nombre. */
-function _alarmaValida(a){
-  if(!a||typeof a!=='object')return false;
-  if(a.status||a.message)return false;              // respuesta de "sin alarmas", no una alarma
-  return !!(_alarmaHoraRaw(a)||a.TipoAlerta||a.Alerta||a.tipo_alerta||a.Descripcion);
+/* ══ EXCESO DE VELOCIDAD — CALCULADO POR NOSOTROS ══
+   Aquí había una tabla de "Alarmas de SecuritaGPS" alimentada con getAlerts. Se comprobó vehículo
+   por vehículo y día por día (15, 14, 13 y 8 de agosto; 31 y 15 de julio): la API responde SIEMPRE
+   {status:40100, "No alerts found."}. Las dos geocercas de límite que crea la app sí existen en la
+   cuenta (Zona urbana 40 km/h · idCerca 1278922, Cobertura regional 60 km/h · idCerca 1278923),
+   pero la cuenta GMAZ no tiene activo el módulo que genera y publica alarmas. Una tabla que nunca
+   puede traer una fila es ruido, así que se retiró.
+   Lo que sí tenemos es el historial GPS —el mismo que ya se usa para los km— y ahí viene la
+   velocidad de cada punto. Con eso el exceso se calcula aquí, sin depender de Securita. */
+const VEL_URBANO=40, VEL_REGIONAL=60;
+/* Un episodio = puntos seguidos por encima del límite. Dos picos separados por menos de 3 minutos
+   son el mismo episodio: si no, una sola bajada por un semáforo aparecía como dos infracciones. */
+function _velEpisodios(pts,limite){
+  const eps=[];let act=null;
+  pts.forEach(p=>{
+    const t=new Date(p.t).getTime();
+    if(p.v>limite){
+      if(act&&t-act.fin<=180000){act.fin=t;act.max=Math.max(act.max,p.v);act.n++;}
+      else{act={ini:t,fin:t,max:p.v,n:1,lat:p.lat,lng:p.lng};eps.push(act);}
+    }
+  });
+  return eps.map(e=>({...e,min:Math.max(1,Math.round((e.fin-e.ini)/60000))}));
 }
-function _alarmaHoraRaw(a){
-  return a.Hora||a.hora||a.FechaHora||a.fechahora||a.Fecha||a.fecha||a.DateTime||a.datetime||
-         a.ReportDate||a.fecha_hora||'';
-}
-function _alarmaHora(a){
-  const v=String(_alarmaHoraRaw(a)||'').trim();
-  if(!v)return '<span style="color:#B5BAC6">—</span>';
-  // Puede venir "2026-08-14 17:33:10", "17:33:10" o ISO; se muestra solo la hora.
-  const m=v.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
-  if(!m)return v;
-  const d=v.includes('-')||v.includes('/')?v.split(/[ T]/)[0]:'';
-  const hoy=getColDate();
-  const hh=m[1].padStart(2,'0')+':'+m[2];
-  return (d&&d!==hoy?'<span style="color:#8A90A0;font-size:10px">'+d+'</span> ':'')+hh;
-}
-function _alarmaTipo(a){
-  return String(a.TipoAlerta||a.Alerta||a.tipo_alerta||a.tipo||a.Evento||a.Descripcion||'Alerta').trim();
-}
-function _alarmaDetalle(a){
-  const partes=[];
-  const vel=a.Velocidad!=null?a.Velocidad:(a.GpsSpeed!=null?a.GpsSpeed:null);
-  if(vel!=null&&vel!=='')partes.push(Math.round(parseFloat(vel))+' km/h');
-  const lugar=a.StatusAlerta||a.Domicilio||a.Direccion||a.direccion||a.Ubicacion||a.Descripcion||'';
-  if(lugar&&String(lugar).trim())partes.push(String(lugar).trim());
-  const cond=a.Conductor||a.conductor||'';
-  if(cond&&String(cond).trim())partes.push('👤 '+cond);
-  return partes.length?partes.join(' · '):'<span style="color:#B5BAC6">sin detalle</span>';
-}
-async function cargarAlarmasSecurita(){
-  const tbody=document.getElementById('dash-alarmas');
-  if(!tbody)return;
+async function cargarExcesosVelocidad(fechaSel){
+  const cont=document.getElementById('vel-body');if(!cont)return;
+  const fecha=fechaSel||getColDate();
+  cont.innerHTML='<div class="veh-cargando">Leyendo los recorridos del día…</div>';
   try{
-    const fecha=getColDate();
-    const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=*&fecha=eq.'+fecha,{
-      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}
-    });
-    const asignaciones=rAsig.ok?await rAsig.json():[];
-    if(!asignaciones.length){
-      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">Asigna vehículos para ver sus alarmas</td></tr>';
-      const meta=document.getElementById('dash-alarmas-meta');if(meta)meta.textContent='—';
+    if(!_vehCache)_vehCache=await secVehiculos()||[];
+    const rAsig=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha,
+      {headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+    const asig=rAsig.ok?await rAsig.json()||[]:[];
+    const porUnit={};asig.forEach(a=>{(porUnit[a.unit_id]=porUnit[a.unit_id]||[]).push(a.ruta);});
+    const units=Object.keys(porUnit);
+    if(!units.length){
+      cont.innerHTML='<div class="veh-cargando">Todavía no hay vehículos asignados a rutas ese día.</div>';
       return;
     }
-    if(!_vehCache)_vehCache=await secVehiculos()||[];
-    const listas=await Promise.all(asignaciones.map(async a=>{
-      const v=_vehCache.find(x=>x.nombre===a.unit_id);
-      if(!v)return[];
-      try{
-        const al=await secAlertas(v.idgps,fecha);
-        // Cuando no hay alarmas, SecuritaGPS NO devuelve una lista vacía: devuelve el objeto
-        // {status:40100, message:"No alerts found."}. Envolverlo en un array pintaba una fila
-        // fantasma con hora "—" y tipo "Alerta" — que es justo lo que se veía en el módulo.
-        const lista=Array.isArray(al)?al:(al&&typeof al==='object'&&!al.status&&!al.message?[al]:[]);
-        return lista.filter(_alarmaValida).map(x=>({...x,_unit:a.unit_id,_ruta:a.ruta}));
-      }catch(e){return[];}
-    }));
-    const eventos=listas.flat().sort((a,b)=>(b.Hora||'').localeCompare(a.Hora||''));
-    const meta=document.getElementById('dash-alarmas-meta');if(meta)meta.textContent=eventos.length+' alarmas hoy';
-    if(!eventos.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">Sin alarmas registradas hoy ✓</td></tr>';return;}
-    tbody.innerHTML=eventos.map(e=>{
-      const col=rutaColor[e._ruta]||'#4A5060';
-      const esCritica=/PANICO|EXCESO|REMOLCADO|VELOCIDAD MAXIMA|IMPACTO|FRENADA|ACELERACION|ALARMA ACTIVADA/i.test(_alarmaTipo(e));
-      return '<tr><td>'+_alarmaHora(e)+'</td><td style="font-weight:800">'+e._unit+'</td>'+
-        '<td><span class="dtag" style="background:'+col+'1A;color:'+col+'">'+e._ruta+'</span></td>'+
-        '<td><span class="dtag" style="background:'+(esCritica?'#FFF1F2':'#FFF8E6')+';color:'+(esCritica?'#E30613':'#D97706')+'">'+_alarmaTipo(e)+'</span></td>'+
-        '<td style="font-size:11px;color:#6B7385">'+_alarmaDetalle(e)+'</td></tr>';
-    }).join('');
-  }catch(e){console.log('alarmas:',e.message);tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8A90A0;padding:16px">No se pudo cargar alarmas de Securita</td></tr>';}
+    let hechos=0;
+    const filas=[];
+    for(const u of units){
+      cont.innerHTML='<div class="veh-cargando">Revisando '+(++hechos)+' de '+units.length+'…</div>';
+      const pts=await _flPuntos(u,fecha);
+      if(!pts.length)continue;
+      const max=Math.max(...pts.map(p=>p.v));
+      const eps=_velEpisodios(pts,VEL_URBANO);
+      const graves=eps.filter(e=>e.max>VEL_REGIONAL);
+      filas.push({unit:u,rutas:porUnit[u].join(' + '),max:Math.round(max),
+        eps:eps.length,graves:graves.length,
+        minFuera:eps.reduce((s,e)=>s+e.min,0),
+        peor:eps.sort((a,b)=>b.max-a.max)[0]||null,pts:pts.length});
+    }
+    filas.sort((a,b)=>b.max-a.max);
+    const conExceso=filas.filter(f=>f.eps>0);
+    const meta=document.getElementById('vel-meta');
+    if(meta)meta.textContent=conExceso.length?conExceso.length+' de '+filas.length+' vehículos con exceso':'ningún exceso ✓';
+    if(!filas.length){cont.innerHTML='<div class="veh-cargando">Sin puntos GPS guardados de ese día.</div>';return;}
+    const hh=t=>new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+    cont.innerHTML='<div style="overflow:auto"><table class="dtbl"><thead><tr>'+
+      '<th>Vehículo</th><th>Ruta</th><th style="text-align:right">Velocidad máx</th>'+
+      '<th style="text-align:right">Veces sobre 40</th><th style="text-align:right">Sobre 60</th>'+
+      '<th style="text-align:right">Minutos en exceso</th><th>El peor momento</th></tr></thead><tbody>'+
+      filas.map(f=>{
+        const col=f.max>VEL_REGIONAL?'#E30613':f.max>VEL_URBANO?'#D97706':'#059669';
+        const rc=rutaColor[porUnit[f.unit][0]]||'#4A5060';
+        return '<tr><td style="font-weight:800">'+f.unit+'</td>'+
+          '<td><span class="dtag" style="background:'+rc+'1A;color:'+rc+'">'+f.rutas+'</span></td>'+
+          '<td style="text-align:right;font-weight:800;color:'+col+'">'+f.max+' km/h</td>'+
+          '<td style="text-align:right;font-weight:700">'+(f.eps||'<span style="color:#B5BAC6">0</span>')+'</td>'+
+          '<td style="text-align:right;font-weight:800;color:'+(f.graves?'#E30613':'#B5BAC6')+'">'+f.graves+'</td>'+
+          '<td style="text-align:right;font-weight:700">'+(f.minFuera||'<span style="color:#B5BAC6">—</span>')+'</td>'+
+          '<td style="font-size:11px;color:#6B7385">'+(f.peor
+            ? hh(f.peor.ini)+' · <b>'+Math.round(f.peor.max)+' km/h</b> durante '+f.peor.min+' min'
+            : '<span style="color:#0E9F6E;font-weight:700">nunca pasó de 40</span>')+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+
+      '<div style="margin-top:10px;font-size:11px;color:var(--gris4);line-height:1.5">'+
+      'Medido sobre los puntos GPS que reporta el equipo (uno cada 1-2 minutos), no sobre una alarma de Securita. '+
+      'Un pico aislado puede ser un dato sucio del GPS; lo que vale es <b>repetirse</b> y los <b>minutos en exceso</b>. '+
+      'Los límites son los de las geocercas de GMAZ: '+VEL_URBANO+' km/h en ciudad y '+VEL_REGIONAL+' en vía regional.</div>';
+  }catch(e){
+    cont.innerHTML='<div style="background:#FEE2E2;border-radius:10px;padding:12px;font-size:11.5px;color:#B91C1C">No se pudo revisar: '+e.message+'</div>';
+  }
 }
 
 /* ══ GEOCERCAS DINÁMICAS POR RUTA (Turf.js) ══
@@ -7303,7 +7305,9 @@ async function _flPuntos(unitId,fecha){
     const pts=await obtenerHistorialVehiculo(v,fecha);
     return (pts||[]).map(pt=>({
       t:pt.ReportDate||pt.reportdate||pt.fecha||null,
-      v:parseFloat(pt.GpsSpeed!=null?pt.GpsSpeed:(pt.velocidad||0))||0
+      v:parseFloat(pt.GpsSpeed!=null?pt.GpsSpeed:(pt.velocidad||0))||0,
+      lat:parseFloat(pt.Latitude||pt.latitud||pt.lat||0)||null,
+      lng:parseFloat(pt.Longitude||pt.longitud||pt.lng||0)||null
     })).filter(x=>x.t);
   }catch(e){return [];}
 }
@@ -11017,7 +11021,7 @@ async function abrirModuloMovil(m){
   else if(m==='obseq')abrirObsequiosSup();
   else{
     activarModulo(m);
-    if(m==='alertas'){cargarEventosGeocerca();cargarAlarmasSecurita();} // no están en refrescarModulo()
+    if(m==='alertas')cargarEventosGeocerca(); // el exceso de velocidad se pide con su botón
     if(m==='vehiculos'){
       // _flotaCache lo llena pintarFlotaEnVivo(), que cargarDash() dispara SIN esperar (dibuja el
       // mapa en segundo plano) — la primera pintada de arriba puede llegar antes de que exista.
