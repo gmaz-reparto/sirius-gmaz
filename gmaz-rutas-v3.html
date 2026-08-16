@@ -1407,6 +1407,13 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
 .ec-s{font-size:9.5px;font-weight:700;opacity:.75;margin-top:1px}
 .ec-b:first-child{background:var(--negro)!important;color:#fff!important}
 .ec-b:first-child .ec-l,.ec-b:first-child .ec-s{opacity:.6}
+.ret-form{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;background:var(--gris1);border-radius:10px;padding:11px 12px;margin:0 0 10px}
+.ret-form label{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--gris4)}
+.ret-form input{width:104px;height:34px;border:1px solid var(--gris3);border-radius:8px;padding:0 10px;font-family:inherit;font-size:14px;font-weight:800;color:var(--negro);font-variant-numeric:tabular-nums}
+.ret-form input:focus{outline:none;border-color:var(--negro)}
+.ret-ok{height:34px;padding:0 16px;border:none;border-radius:8px;background:var(--negro);color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.ret-ok:hover{background:var(--verde)}
+.ret-x{height:34px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:var(--gris4);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .ec-nota{font-size:11px;color:var(--gris5);line-height:1.5;margin-bottom:12px}
 .tc-sub{font-size:9px;font-weight:700;color:var(--gris4);margin-top:2px;letter-spacing:.2px}
 .tc-warn{margin-top:4px;font-size:9.5px;font-weight:800;color:#B45309}
@@ -4473,6 +4480,7 @@ let _tcCache={fecha:null,hojas:null,rech:null,reg:null,obsFoto:null};
 let _tcFechaVista=null;
 async function cargarTorreControl(forzar,fechaSel){
   if(!_dashData)return;
+  try{ await cargarCierre(fechaSel||undefined); }catch(e){}
   // En el panel móvil esta cabecera no existe: no gastar llamadas de storage donde no se va a pintar.
   if(!document.getElementById('tc-rutas'))return;
   const hoy=getColDate();
@@ -5028,9 +5036,20 @@ function pintarTorreControl(){
     item(conAnomalia.length?'urg':'ok',conAnomalia.length,'Rutas que no cuadran con lo designado',conAnomalia.length?"tcAbrirRuta('"+(conAnomalia[0]||{}).ruta+"')":'')+
     item(sinRegistrarse.length?'med':'ok',sinRegistrarse.length,'Personal sin registrarse hoy',sinRegistrarse.length?"verSinRegistrarse()":'')+
     item(hayLiq?'med':'mute',hayLiq?'✓':'—','Auditoría LiquiYa'+(hayLiq?' lista':' · falta cargar'),"abrirAuditoria()")+
-    item(obsTot&&obsFoto>=obsTot?'ok':'med',obsFoto+'<span style="font-size:14px;color:var(--gris4)">/'+obsTot+'</span>','Obsequios con foto',"abrirObsequiosSup()");
+    item(obsTot&&obsFoto>=obsTot?'ok':'med',obsFoto+'<span style="font-size:14px;color:var(--gris4)">/'+obsTot+'</span>','Obsequios con foto',"abrirObsequiosSup()")+
+    // El día no se cierra solo: hay que contar lo que volvió y firmar
+    (function(){
+      const conCargue=R.filter(x=>x.cargue>0);
+      const sinRet=conCargue.filter(x=>!(_cierreDia&&_cierreDia.rutas[x.ruta])).length;
+      const firmado=!!(_cierreDia&&_cierreDia.firmado);
+      return item(firmado?'ok':sinRet?'urg':'med',
+        firmado?'✓':(sinRet||'—'),
+        firmado?'Día cerrado y firmado':(sinRet?'Rutas sin contar el retorno':'Listo para firmar el día'),
+        firmado?'':(sinRet?"activarModulo('vehiculos');verPestanaRuta('res')":"firmarCierreDia()"));
+    })();
   const pm=document.getElementById('tc-pend-meta');
-  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length+conAnomalia.length+cargaHuerfana.length;
+  const sinRetorno=R.filter(x=>x.cargue>0&&!(_cierreDia&&_cierreDia.rutas[x.ruta])).length;
+  const porResolver=devPend+fotosDuda+sinReg.length+porValidar.length+conAnomalia.length+cargaHuerfana.length+sinRetorno;
   if(pm)pm.textContent=porResolver===0?'todo al día ✓':porResolver===1?'1 cosa por resolver':porResolver+' cosas por resolver';
 
   /* ── 4. Tabla maestra de rutas ── */
@@ -5148,7 +5167,9 @@ function _tcEcuacion(x){
   const dev=Math.round(x.devC||0);
   // Entregado medible: cajas de los clientes con entrega confirmada, tomadas del pedido del día
   const ent=Math.max(0,Math.round(x.cajasConf||0));
-  const resto=Math.max(0,Math.round(x.cargue-dev-ent));
+  // Lo que el coordinador contó de vuelta en el CEDI, si ya lo anotó
+  const ret=(_cierreDia&&_cierreDia.rutas[x.ruta])?_cierreDia.rutas[x.ruta]:null;
+  const resto=Math.max(0,Math.round(x.cargue-dev-ent-(ret?ret.caj:0)));
   const b=(l,v,sub,col,bg)=>'<div class="ec-b" style="background:'+bg+';color:'+col+'">'+
     '<div class="ec-l">'+l+'</div><div class="ec-v">'+v+'</div><div class="ec-s">'+sub+'</div></div>';
   return '<div class="tc-det-t">Qué pasó con las '+Math.round(x.cargue)+' cajas que salieron</div>'+
@@ -5157,8 +5178,12 @@ function _tcEcuacion(x){
       b('ENTREGADO',ent||'—',(ent?x.conf+' clientes sellados'
         :(x.conf?x.conf+' sellados, sin cajas':'nadie confirmó')),'var(--verde)','var(--verde-s)')+
       b('DEVUELTO',dev||'—',(x.devU?x.devU+' und además':(x.clientes.length+' clientes')),'var(--rojo)','var(--rojo-s)')+
+      b('VOLVIÓ AL CEDI',ret?ret.caj:'—',(ret?(ret.und?ret.und+' und · contado':'contado por usted'):'sin anotar'),'var(--azul)','var(--azul-s)')+
       b('SIN EXPLICAR',resto,(resto?'nadie las reportó':'todo cuadra'),resto?'var(--amarillo)':'var(--verde)',resto?'#FFFBEB':'var(--verde-s)')+
     '</div>'+
+    ('<button class="fl-btn" style="margin:0 0 9px" onclick="event.stopPropagation();abrirRetorno(&#39;'+x.ruta+'&#39;)">'+
+      (ret?'Corregir el retorno de '+x.ruta:'Anotar lo que volvió de '+x.ruta)+'</button>'+
+     '<div id="ret-form-'+x.ruta+'"></div>')+
     '<div class="ec-nota">'+(resto
       ? 'Faltan <b>'+resto+' cajas</b> por explicar: ni se confirmó su entrega ni se reportaron como devolución. Con la liquidación de LiquiYa cargada, esta casilla debería quedar en cero.'
       : 'La cuenta cierra: todo lo que salió está explicado.')+'</div>';
@@ -5190,6 +5215,70 @@ function _tcDetalle(x){
   return ec+'<div class="tc-det-t">Devoluciones de la ruta · '+x.clientes.length+' cliente(s)'+(x.pend?' · '+x.pend+' por aprobar':'')+'</div>'+filas;
 }
 
+/* ══ RETORNO AL CEDI Y CIERRE DE LA JORNADA ══
+   El eslabón que faltaba. El sistema sabía qué se cargó, qué se reportó y qué se facturó, pero
+   nadie registraba lo que el camión trae de vuelta, así que la ecuación de la caja siempre dejaba
+   un resto sin explicar. Aquí el coordinador anota, ruta por ruta, cuántas cajas y unidades
+   volvieron físicamente, y firma el día cuando ya cuadra.
+   Se guarda en CIERRE/{fecha}.json con el mismo patrón de siempre (borrar + crear). */
+let _cierreDia=null, _cierreFecha=null;
+async function cargarCierre(fecha){
+  fecha=fecha||fechaCtx();
+  if(_cierreDia&&_cierreFecha===fecha)return _cierreDia;
+  _cierreFecha=fecha; _cierreDia={rutas:{},firmado:null};
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/CIERRE/'+fecha+'.json?t='+Date.now());
+    if(r.ok){const d=await r.json();if(d)_cierreDia={rutas:d.rutas||{},firmado:d.firmado||null};}
+  }catch(e){}
+  return _cierreDia;
+}
+async function guardarCierre(){
+  const fecha=_cierreFecha||fechaCtx();
+  await _storageGuardar('CIERRE/'+fecha+'.json',{fecha,rutas:_cierreDia.rutas,firmado:_cierreDia.firmado,
+    actualizado:new Date().toISOString()});
+}
+/* El coordinador anota el retorno de una ruta. Sin esto, «sin explicar» nunca llega a cero.
+   Se pide dentro de la propia franja y no con un cuadro del navegador: prompt() está bloqueado en
+   parte de los contextos donde corre la app, y en el celular no se puede escribir con comodidad. */
+function abrirRetorno(ruta){
+  const cont=document.getElementById('ret-form-'+ruta);
+  if(!cont)return;
+  const y=(_cierreDia&&_cierreDia.rutas[ruta])||{caj:'',und:''};
+  cont.innerHTML='<div class="ret-form">'+
+    '<label>Cajas que volvieron<input type="number" min="0" id="ret-c-'+ruta+'" value="'+(y.caj||'')+'" placeholder="0"></label>'+
+    '<label>Unidades sueltas<input type="number" min="0" id="ret-u-'+ruta+'" value="'+(y.und||'')+'" placeholder="0"></label>'+
+    '<button class="ret-ok" onclick="event.stopPropagation();guardarRetorno(&#39;'+ruta+'&#39;)">Guardar</button>'+
+    '<button class="ret-x" onclick="event.stopPropagation();this.parentElement.parentElement.innerHTML=&#39;&#39;">Cancelar</button>'+
+    '</div>';
+  const i=document.getElementById('ret-c-'+ruta); if(i)i.focus();
+}
+async function guardarRetorno(ruta){
+  const c=document.getElementById('ret-c-'+ruta), u=document.getElementById('ret-u-'+ruta);
+  if(!c)return;
+  await cargarCierre();
+  _cierreDia.rutas[ruta]={caj:Math.max(0,parseInt(c.value)||0),und:Math.max(0,parseInt(u&&u.value)||0),
+    hora:new Date().toISOString()};
+  _cierreDia.firmado=null; // cambió el conteo: la firma anterior deja de valer
+  try{
+    await guardarCierre();
+    toast('Retorno de '+ruta+' anotado','ok');
+    pintarTorreControl();
+  }catch(e){ toast('No se pudo guardar: '+e.message,'err'); }
+}
+/* Firmar el día: solo cuando todas las rutas con cargue tienen su retorno anotado y no quedan
+   devoluciones sin decidir. Un día que no cuadra no se firma. */
+async function firmarCierreDia(){
+  const R=_tcDatosRutas().filter(x=>x.cargue>0);
+  await cargarCierre();
+  const faltan=R.filter(x=>!_cierreDia.rutas[x.ruta]);
+  const pend=R.reduce((a,x)=>a+x.pend,0);
+  if(faltan.length){toast('Falta anotar el retorno de '+faltan.length+' ruta(s)','err');return;}
+  if(pend){toast('Quedan '+pend+' devolución(es) sin decidir','err');return;}
+  if(!confirm('¿Cerrar el día '+(_cierreFecha||fechaCtx())+'? Queda firmado con la hora.'))return;
+  _cierreDia.firmado={hora:new Date().toISOString(),por:'Coordinador'};
+  try{ await guardarCierre(); toast('✓ Día cerrado y firmado','ok'); pintarTorreControl(); }
+  catch(e){ toast('No se pudo firmar: '+e.message,'err'); }
+}
 /* ══ LAS DOS CARAS DE UNA RUTA ══
    La tarjeta «Rutas de hoy» se MUEVE (no se copia) desde Operación al módulo de Ruta la primera vez
    que se entra. Se mueve el nodo entero, con sus mismos ids, así que la lógica que la pinta
