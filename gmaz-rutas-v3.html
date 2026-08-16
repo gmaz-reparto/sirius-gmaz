@@ -753,7 +753,9 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
    exactamente 56 px, lleve un auxiliar o lleve tres. Antes la altura
    dependía de cuánta gente hubiera y las cifras quedaban desalineadas
    de una fila a otra. */
-.fl-tabla{width:100%;border-collapse:separate;border-spacing:0;min-width:1210px;table-layout:fixed}
+/* El ancho mínimo lo manda la columna de auxiliares: por debajo de esto las fichas se comprimen
+   tanto que los nombres se cortan a la mitad. Antes de eso, mejor que la tabla se desplace. */
+.fl-tabla{width:100%;border-collapse:separate;border-spacing:0;min-width:1330px;table-layout:fixed}
 .fl-tabla thead th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
   color:var(--gris4);padding:9px 10px;border-bottom:1px solid var(--gris2);white-space:nowrap;background:#fff}
 .fl-tabla thead th.n{text-align:right}
@@ -767,7 +769,7 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 /* Anchos: identificación · carga del día · equipo */
 .fl-tabla col.c1{width:26px}  .fl-tabla col.c2{width:76px}   .fl-tabla col.c3{width:154px}
 .fl-tabla col.c4{width:112px} .fl-tabla col.c5{width:78px}   .fl-tabla col.c6{width:72px}
-.fl-tabla col.c7{width:78px}  .fl-tabla col.c8{width:266px}  .fl-tabla col.c10{width:112px}
+.fl-tabla col.c7{width:78px}  .fl-tabla col.c8{width:266px}  .fl-tabla col.c10{width:132px}
 /* Dentro de la tabla la ficha ocupa toda la celda y el nombre va en UNA sola línea: si se parte en
    dos, la fila crece a 62 px y se rompe la rejilla. El nombre completo queda en el tooltip. */
    Se apunta a .fl-fila y no a .fl-tabla: el detalle también vive dentro de la tabla y allí los
@@ -809,7 +811,21 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
   display:grid;place-items:center;padding:0;line-height:1;transition:background .12s,border-color .12s,color .12s}
 .fl-add:hover{background:var(--negro);border-color:var(--negro);border-style:solid;color:#fff}
 /* Rechazos del día, bajo el estado */
-.fl-rech{font-size:9px;font-weight:800;color:var(--rojo);margin-top:3px;letter-spacing:.2px}
+.fl-rech{font-size:9px;font-weight:800;color:var(--rojo);margin-top:1px;letter-spacing:.2px;line-height:1.3}
+/* Visto bueno del coordinador: la columna Estado deja de ser un letrero y pasa a ser la acción */
+.vb{display:inline-flex;flex-direction:column;align-items:center;gap:0;border:1px solid transparent;
+  border-radius:8px;padding:3px 10px;font-family:inherit;font-size:10.5px;font-weight:800;cursor:pointer;
+  line-height:1.3;transition:background .12s,border-color .12s,color .12s;max-width:100%}
+.vb em{font-style:normal;font-size:8px;font-weight:700;opacity:.75;letter-spacing:.2px;line-height:1.3}
+.vb svg{margin-bottom:1px}
+.vb.pend{background:var(--negro);border-color:var(--negro);color:#fff}
+.vb.pend:hover{background:var(--rojo);border-color:var(--rojo)}
+.vb.ok{background:#ECFDF5;border-color:rgba(5,150,105,.25);color:var(--verde)}
+.vb.ok:hover{background:#D1FAE5}
+.vb.cambio{background:#FFFBEB;border-color:rgba(217,119,6,.3);color:var(--amarillo)}
+.vb.cambio:hover{background:#FEF3C7}
+.vb:disabled{cursor:default;opacity:.75}
+.vb-nota{font-size:8.5px;font-weight:700;color:var(--gris4);margin-top:2px}
 .fl-fila{cursor:pointer;border-left:3px solid transparent}
 .fl-fila:hover td{background:var(--gris1)}
 .fl-fila.abierta td{background:var(--gris1)}
@@ -4603,20 +4619,30 @@ async function cargarValidaciones(fecha){
 function _firmaTripulacion(personas){
   return (personas||[]).map(p=>String(p.ced)+':'+(p.rol||'')).sort().join('|');
 }
+/* Se llama desde la Torre y también desde la consola de flota: la tripulación se toma de la vista
+   que esté abierta, para que el OK siempre apruebe lo que el coordinador tiene delante. */
 async function validarTripulacion(ruta){
-  const fecha=_tcCache.fecha||getColDate();
-  const personas=((_tcCache.reg||{})[ruta])||[];
+  const enFlota=!!document.querySelector('#dash-veh-list .fl-tabla');
+  const fecha=(enFlota?_flotaFecha:_tcCache.fecha)||getColDate();
+  const personas=(enFlota?(_tripAsignada||{})[ruta]:((_tcCache.reg||{})[ruta]))||[];
   if(!personas.length){toast('Esa ruta todavía no tiene a nadie registrado','err');return;}
-  showLoad('Validando la tripulación de '+ruta+'…');
+  const cond=personas.filter(p=>p.rol==='conductor').length;
+  if(cond>1){toast('Hay dos conductores en '+ruta+': deja uno solo antes de aprobar','err');return;}
+  showLoad('Aprobando la tripulación de '+ruta+'…');
   try{
     const payload={ruta,fecha,ok:true,hora:new Date().toISOString(),
-      personas:personas.map(p=>({ced:p.ced,nombre:p.nombre,rol:p.rol})),
+      personas:personas.map(p=>({ced:p.ced,nombre:p.nombre,rol:p.rol,origen:p.origen||''})),
       firma:_firmaTripulacion(personas)};
     await _storageGuardar('VALIDACION/'+fecha+'/'+ruta+'.json',payload);
     hideLoad();
-    toast('✓ '+ruta+' validada: '+personas.length+' persona(s)','ok');
-    cargarTorreControl(true);
-  }catch(e){hideLoad();toast('No se pudo validar: '+e.message,'err');}
+    toast('✓ '+ruta+' aprobada · '+personas.length+' persona'+(personas.length>1?'s':''),'ok');
+    if(enFlota){
+      (_flotaDia.val=_flotaDia.val||{})[ruta]=payload;
+      _flRepintarFila(ruta);            // se repinta solo esa fila: sin parpadeo
+      _flRefrescoSuave();
+    }
+    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
+  }catch(e){hideLoad();toast('No se pudo aprobar: '+e.message,'err');}
 }
 /* ══ CAMBIO DE ROL POR EL COORDINADOR ══
    El entregador no puede cambiarse el rol solo (si se equivocó, la app le dice que hable con el
@@ -6878,6 +6904,7 @@ async function renderFlota(fechaSel,forzar,silencioso){
       t:rutas.map(r=>(_tripAsignada[r]||[]).map(x=>x.ced+':'+x.rol+':'+(x.origen||'')).sort().join('|')),
       c:rutas.map(r=>[(_flotaDia.porRuta[r]||{}).tot,(_flotaDia.hojas[r]||{}).cargueCaj]),
       f:Object.keys(maestroConductores||{}).map(k=>k+':'+maestroConductores[k].ced),
+      v:rutas.map(r=>{const x=(_flotaDia.val||{})[r];return x&&x.ok?(x.hora||'1')+'|'+(x.firma||''):'0';}),
       s:sinRuta.map(v=>v.nombre), d:fecha, e:esHoy
     });
     if(silencioso&&firma===_flFirmaPrev&&cont.querySelector('.fl-tabla')){
@@ -6892,7 +6919,7 @@ async function renderFlota(fechaSel,forzar,silencioso){
       '<thead><tr>'+
       '<th></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
       '<th class="n">Clientes</th><th class="n">Cajas</th><th class="n">Km</th>'+
-      '<th>Conductor fijo</th><th>Auxiliares</th><th style="text-align:center">Estado</th>'+
+      '<th>Conductor fijo</th><th>Auxiliares</th><th style="text-align:center">Tu visto bueno</th>'+
       '</tr></thead><tbody>'+
       (rutas.length?rutas.map((r,i)=>_flFila(r,i,usoUnit,esHoy)).join('')
         :'<tr><td colspan="10"><div class="veh-cargando">No hay rutas ese día. Sube el PPAS desde la Rutina diaria.</div></td></tr>')+
@@ -6912,7 +6939,9 @@ async function renderFlota(fechaSel,forzar,silencioso){
       }
     }
     const meta=document.getElementById('fl-meta');
-    if(meta)meta.textContent=rutas.length+' rutas · '+asignados.size+' vehículos en calle · '+sinRuta.length+' sin ruta';
+    const vb=rutas.filter(r=>_flValidada(r)==='ok').length;
+    if(meta)meta.textContent=rutas.length+' rutas · '+asignados.size+' vehículos en calle · '+
+      vb+' con tu visto bueno'+(vb<rutas.length?' · faltan '+(rutas.length-vb):'');
     // Los km salen de una consulta de historial por vehículo: se pintan al llegar.
     // Los km se piden por vehículo (una consulta de historial cada uno) y se escriben en su celda
     // apenas llegan, sin reconstruir la tabla.
@@ -6932,11 +6961,11 @@ async function renderFlota(fechaSel,forzar,silencioso){
 async function _flotaDatosDia(fecha){
   const H={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
   const hoy=getColDate(), esHoy=fecha===hoy;
-  const out={asig:{},reg:{},hojas:{},porRuta:{},pedido:{},entregas:{},novedades:{},geo:{}};
+  const out={asig:{},reg:{},hojas:{},porRuta:{},pedido:{},entregas:{},novedades:{},geo:{},val:{}};
   const gj=async u=>{try{const r=await fetch(u,{headers:H});return r.ok?await r.json():null;}catch(e){return null;}};
   const gs=async n=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/'+n+'?t='+Date.now());
     return r.ok?await r.json():null;}catch(e){return null;}};
-  const [asig,reg,hojas,ppas,ped,ent,nov,geo]=await Promise.all([
+  const [asig,reg,hojas,ppas,ped,ent,nov,geo,val]=await Promise.all([
     gj(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha),
     cargarRegistroDia(fecha),
     gs('HOJAS_INDEX.json'),
@@ -6944,10 +6973,12 @@ async function _flotaDatosDia(fecha){
     gs('PEDIDOS_INDEX.json'),
     gj(CFG.SUPABASE_URL+'/rest/v1/estados_entrega?select=ruta,codigo_cliente,created_at,estado&fecha=eq.'+fecha),
     gj(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_NOV+'?select=ruta,nombre_cliente,motivo,created_at,conductor&fecha=eq.'+fecha),
-    gj(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=ruta,unit_id,tipo,hora,distancia_limite_m&fecha=eq.'+fecha)
+    gj(CFG.SUPABASE_URL+'/rest/v1/'+CFG.TBL_GEO+'?select=ruta,unit_id,tipo,hora,distancia_limite_m&fecha=eq.'+fecha),
+    cargarValidaciones(fecha)
   ]);
   (asig||[]).forEach(a=>out.asig[a.ruta]=a.unit_id);
   out.reg=reg||{};
+  out.val=val||{};
   out.hojas=hojas||{};
   // Clientes por ruta: del PPAS de esa fecha (clientes_rutas solo tiene el día en curso)
   if(ppas)Object.values(ppas).forEach(c=>{const r=c.ruta||c.r;if(!r)return;
@@ -7001,9 +7032,9 @@ function _flFila(ruta,i,usoUnit,esHoy){
   else if(fijo)celCond=esHoy?_arChipSugerido(fijo,ruta,unit):'<span class="fl-nada">no salió registrado</span>';
   else celCond=esHoy?_arSelCond(ruta,unit,null):'<span class="fl-nada">sin conductor</span>';
   // Auxiliares en fichas compactas, todas en una línea: así la fila mide igual con uno o con tres
-  // Con tres auxiliares no cabe el nombre completo en una línea: se muestra el primer nombre y el
-  // resto queda en el tooltip. Con uno o dos, caben dos palabras.
-  const pal=auxs.length>=3?1:2;
+  // Con dos o más auxiliares no cabe el nombre completo en una línea: se muestra el primer nombre
+  // y el resto queda en el tooltip. Con uno solo, caben dos palabras.
+  const pal=auxs.length>=2?1:2;
   let celAux=auxs.slice(0,AUX_MAX).map(a=>_flChipMini(a,ruta,esHoy,pal)).join('');
   if(esHoy&&auxs.length<AUX_MAX)celAux+='<button class="fl-add" title="Agregar un auxiliar a '+ruta+'"'+
     ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\'auxiliar\')">+</button>';
@@ -7018,9 +7049,52 @@ function _flFila(ruta,i,usoUnit,esHoy){
     '<td class="n" data-km="'+unit+'">'+(unit?'<span class="fl-cargando">…</span>':'<span class="fl-nada">—</span>')+'</td>'+
     '<td>'+celCond+'</td>'+
     '<td><div class="fl-enfila">'+celAux+'</div></td>'+
-    '<td class="cen"><span class="ar-est '+est[0]+'">'+est[1]+'</span>'+
+    '<td class="cen">'+_flCelVB(ruta,personas,est,esHoy)+
       (nov?'<div class="fl-rech">'+nov+' rechazo'+(nov>1?'s':'')+'</div>':'')+'</td></tr>'+
     '<tr class="fl-det" id="fld-'+i+'" style="display:none"><td colspan="10"><div class="fl-det-in" id="fldc-'+i+'"></div></td></tr>';
+}
+
+/* ══ EL VISTO BUENO DEL COORDINADOR ══
+   Lo que la gente registra desde su celular es una PROPUESTA, no el registro definitivo: queda en
+   firme cuando el coordinador da su OK. Si después alguien entra, sale o cambia de rol, la firma
+   deja de coincidir y la ruta vuelve a quedar pendiente — así nadie puede cambiar la tripulación
+   después de aprobada sin que se note. */
+function _flValidada(ruta){
+  const v=(_flotaDia.val||{})[ruta];
+  if(!v||!v.ok)return 'no';
+  return v.firma===_firmaTripulacion(_tripAsignada[ruta]||[])?'ok':'cambio';
+}
+function _flCelVB(ruta,personas,est,esHoy){
+  const v=(_flotaDia.val||{})[ruta];
+  const estado=_flValidada(ruta);
+  const hora=v&&v.hora?new Date(v.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+  if(estado==='ok')
+    return '<button class="vb ok" title="Aprobada por ti a las '+hora+' · '+(v.personas||[]).length+
+      ' persona(s). Toca para quitar el visto bueno."'+
+      (esHoy?' onclick="event.stopPropagation();quitarVistoBueno(\''+ruta+'\')"':' disabled')+'>'+
+      icoSvg('check',12,2.4)+'<span>Aprobada</span><em>'+hora+'</em></button>';
+  if(estado==='cambio')
+    return '<button class="vb cambio" title="La tripulación cambió después de que la aprobaras: revísala y vuelve a dar el OK"'+
+      (esHoy?' onclick="event.stopPropagation();validarTripulacion(\''+ruta+'\')"':' disabled')+'>'+
+      '<span>Cambió · revisar</span><em>aprobada '+hora+'</em></button>';
+  if(!esHoy)return '<span class="ar-est mute">Sin aprobar</span>';
+  if(!personas.length)
+    return '<span class="ar-est '+est[0]+'">'+est[1]+'</span><div class="vb-nota">nadie se ha registrado</div>';
+  return '<button class="vb pend" title="Confirmar que '+ruta+' salió con esta gente"'+
+    ' onclick="event.stopPropagation();validarTripulacion(\''+ruta+'\')">'+
+    '<span>Dar el OK</span><em>'+est[1].toLowerCase()+'</em></button>';
+}
+/* Quitar el visto bueno: se equivocó al aprobar, o cambió algo y quiere volver a revisar. */
+async function quitarVistoBueno(ruta){
+  if(!confirm('¿Quitar tu visto bueno de '+ruta+'?\n\nLa ruta vuelve a quedar pendiente de aprobación.'))return;
+  const fecha=_flotaFecha||getColDate();
+  try{
+    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/VALIDACION/'+fecha+'/'+ruta+'.json',
+      {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+    delete (_flotaDia.val||{})[ruta];
+    _flRepintarFila(ruta);
+    toast(ruta+' vuelve a quedar pendiente','ok');
+  }catch(e){toast('No se pudo quitar: '+e.message,'err');}
 }
 
 /* Ficha compacta del auxiliar: círculo de iniciales + nombre, en una sola línea. */
@@ -7171,11 +7245,16 @@ async function flAbrir(i,ruta,ev){
         '</div>'+
       '</div>'+
       '<div class="fl-box"><div class="fl-box-h"><h4>Con quién salió</h4>'+
-        '<span class="fl-box-r">'+(personas.length||'')+'</span></div>'+
-        (personas.length?'<div class="fl-crew">'+personas.map(p=>
-          '<span class="perf '+(p.rol==='conductor'?'cond':'')+'"><span class="perf-av '+(p.rol==='conductor'?'c':'a')+'">'+
+        '<span class="fl-box-r">'+_flSelloVB(ruta)+'</span></div>'+
+        (personas.length?'<div class="fl-crew">'+personas.map(p=>{
+          // De dónde salió cada nombre: lo que el coordinador tiene que revisar antes de dar el OK
+          const o=p.origen==='persona'?['se registró él mismo','var(--verde)']
+                 :p.origen==='sistema'?['entró por la placa','var(--azul)']
+                 :['lo pusiste tú','var(--amarillo)'];
+          return '<span class="perf '+(p.rol==='conductor'?'cond':'')+'"><span class="perf-av '+(p.rol==='conductor'?'c':'a')+'">'+
           _tcIniciales(p.nombre)+'</span><span class="perf-t"><b>'+_nomCorto(p.nombre,3)+'</b><em>'+
-          (p.rol==='conductor'?'Conductor':'Auxiliar')+' · C.C. '+(p.ced||'—')+'</em></span></span>').join('')+'</div>'
+          (p.rol==='conductor'?'Conductor':'Auxiliar')+' · C.C. '+(p.ced||'—')+
+          '</em><em style="color:'+o[1]+'">'+o[0]+(p.hora?' · '+hh(p.hora):'')+'</em></span></span>';}).join('')+'</div>'
           :'<div class="fl-nada">Nadie quedó registrado en esta ruta ese día</div>')+
       '</div>'+
       (hMov.length||hJor.length
@@ -7183,6 +7262,15 @@ async function flAbrir(i,ruta,ev){
             grupo(hMov,'Movimiento del vehículo')+grupo(hJor,'Jornada')+'</div>'
         : '')+
     '</div>';
+}
+/* Sello de aprobación para la ficha: deja constancia de a qué hora quedó en firme la tripulación. */
+function _flSelloVB(ruta){
+  const v=(_flotaDia.val||{})[ruta];
+  const e=_flValidada(ruta);
+  if(e==='no')return '<span style="color:var(--gris4);font-weight:700">pendiente de tu OK</span>';
+  const h=v&&v.hora?new Date(v.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+  if(e==='ok')return '<span style="color:var(--verde)">✓ aprobada '+h+'</span>';
+  return '<span style="color:var(--amarillo)">cambió después de aprobarla '+h+'</span>';
 }
 /* Desplegar el resto de rechazos sin cerrar la fila. */
 function _flVerMas(i,btn,n){
@@ -7441,9 +7529,11 @@ function _flRefrescoSuave(){
   const rutas=window._rutasAsig||[];
   const meta=document.getElementById('fl-meta');
   if(meta){
-    const conCond=rutas.filter(r=>(_tripAsignada[r]||[]).some(x=>x.rol==='conductor')).length;
+    // El mismo texto que arma renderFlota: si aquí se pone otro, la línea cambia sola al asignar
     const asign=new Set(Object.values(_asigPorRuta)).size;
-    meta.textContent=rutas.length+' rutas · '+asign+' vehículos en calle · con conductor: '+conCond;
+    const vb=rutas.filter(r=>_flValidada(r)==='ok').length;
+    meta.textContent=rutas.length+' rutas · '+asign+' vehículos en calle · '+
+      vb+' con tu visto bueno'+(vb<rutas.length?' · faltan '+(rutas.length-vb):'');
   }
   if(document.getElementById('tc-rutas'))setTimeout(()=>cargarTorreControl(true),400);
 }
