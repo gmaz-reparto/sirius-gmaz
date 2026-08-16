@@ -737,6 +737,11 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 /* ══ ASIGNAR VEHÍCULOS A RUTAS (panel coordinador) ══ */
 .veh-cargando{padding:14px;font-size:12px;color:var(--gris4);font-weight:600}
 /* ══ CONSOLA DE FLOTA ══ una tabla, una fecha, todo el día de cada ruta ══ */
+.glos{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:1px;background:var(--gris2);
+  border-top:1px solid var(--gris2)}
+.glos>div{background:#fff;padding:11px 14px}
+.glos b{display:block;font-size:12.5px;font-weight:800;color:var(--negro);margin-bottom:3px}
+.glos span{font-size:11.5px;color:var(--gris5);line-height:1.5}
 .ctx-barra{display:inline-flex;align-items:center;gap:9px;font-size:11px;color:var(--gris5);font-weight:600;
   background:var(--gris1);border-radius:20px;padding:3px 5px 3px 12px;margin-left:10px}
 .ctx-barra b{color:var(--negro)}
@@ -1034,6 +1039,10 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
 .dlogo-t b{font-size:16px;font-weight:900;letter-spacing:-.4px;display:block;line-height:1;color:#0F1117}
 .dlogo-t span{font-size:11px;color:#8A90A0;font-weight:600}
 .dside-nav{display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1}
+/* El menú sigue la jornada: primero lo que se hace en el día, después la gente y el cierre */
+.dside-sep{font-size:9.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#9AA0AE;
+  padding:14px 12px 5px;margin-top:4px}
+.dside-sep:first-child{margin-top:0;padding-top:4px}
 .dnav{display:flex;align-items:center;gap:11px;padding:10px 12px;border:none;background:none;border-radius:11px;font-family:inherit;font-size:13px;font-weight:600;color:#4A5060;cursor:pointer;text-align:left;width:100%;transition:background .15s,color .15s,box-shadow .15s}
 .dnav:hover{background:#F4F5F8}
 .dnav.on{background:var(--rojo-s);color:var(--rojo);font-weight:700}
@@ -1138,7 +1147,10 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
 .dkpi{background:#fff;border:1px solid var(--gris2);border-radius:var(--radio-lg);padding:16px 17px 15px;box-shadow:var(--sh-card);transition:box-shadow .15s}
 .dkpi:hover{box-shadow:var(--sh-card-hov)}
 .dkpi .dk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
-.dkpi .dk-l{font-size:12px;color:#4A5060;font-weight:700;line-height:1.25}
+.dkpi .dk-fu{display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;background:var(--gris2);
+  color:var(--gris4);font-size:8.5px;font-weight:800;margin-left:5px;cursor:help;vertical-align:middle}
+.dk-fu:hover{background:var(--negro);color:#fff}
+.dk-l{font-size:12px;color:#4A5060;font-weight:700;line-height:1.25}
 .dkpi .dk-ic{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--gris1);color:var(--gris4)}
 .dkpi .dk-v{font-size:26px;font-weight:800;letter-spacing:-.6px;line-height:1;color:#0F1117}
 .dkpi .dk-pbar{display:flex;align-items:center;gap:8px;margin-top:11px}
@@ -1930,18 +1942,19 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
   <aside class="dside">
     <div class="dside-logo"><div class="dlogo-ic">G</div><div class="dlogo-t"><b>GMAZ</b><span>Rutas</span></div></div>
     <nav class="dside-nav" id="dash-tabs">
+      <div class="dside-sep">La jornada</div>
       <button class="dnav on" data-mod="operacion" onclick="haptic();activarModulo('operacion')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></i>Operación</button>
-      <button class="dnav" data-mod="vehiculos" onclick="haptic();activarModulo('vehiculos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></i>Vehículos</button>
-      <button class="dnav" data-mod="clientes" onclick="haptic();activarModulo('clientes')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>Clientes</button>
-      <button class="dnav" data-mod="entregadores" onclick="haptic();activarModulo('entregadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-1.5-1.5"/></svg></i>Entregadores</button>
-      <button class="dnav" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></i>Rechazos<span class="dnav-b" id="dtab-rech">0</span></button>
-      <button class="dnav" data-mod="alertas" onclick="haptic();activarModulo('alertas')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></i>Alertas<span class="dnav-b warn" id="dtab-alert">0</span></button>
-      <div style="font-size:10px;font-weight:800;color:var(--gris4);letter-spacing:.6px;text-transform:uppercase;padding:14px 12px 6px">Herramientas</div>
-      <button class="dnav" data-mod="analisis" onclick="haptic();activarModulo('analisis')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 6"/></svg></i>Análisis</button>
       <button class="dnav" data-mod="rutina" onclick="haptic();abrirRutinaDesdeDash()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></i>Rutina diaria</button>
+      <button class="dnav" data-mod="vehiculos" onclick="haptic();activarModulo('vehiculos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></i>Ruta</button>
+      <button class="dnav" data-mod="clientes" onclick="haptic();activarModulo('clientes')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>Clientes</button>
+      <button class="dnav" data-mod="rechazos" onclick="haptic();activarModulo('rechazos')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></i>Novedades<span class="dnav-b" id="dtab-rech">0</span></button>
+      <button class="dnav" data-mod="alertas" onclick="haptic();activarModulo('alertas')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></i>Alertas<span class="dnav-b warn" id="dtab-alert">0</span></button>
+      <div class="dside-sep">Gente y cierre</div>
+      <button class="dnav" data-mod="entregadores" onclick="haptic();activarModulo('entregadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-1.5-1.5"/></svg></i>Personal</button>
       <button class="dnav" data-mod="asis" onclick="haptic();abrirAsistencia()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>Asistencia</button>
-      <button class="dnav" data-mod="audit" onclick="haptic();abrirAuditoria()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></i>Auditoría</button>
+      <button class="dnav" data-mod="audit" onclick="haptic();abrirAuditoria()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></i>Cierre del día</button>
       <button class="dnav" data-mod="obseq" onclick="haptic();abrirObsequiosSup()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M3 12v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M12 8c-1.5 0-3-1-3-2.5S10 3 12 5c0-1.5 1.5-2.5 3-2.5S18 4 18 5.5 16.5 8 15 8"/></svg></i>Obsequios</button>
+      <button class="dnav" data-mod="analisis" onclick="haptic();activarModulo('analisis')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 6"/></svg></i>Análisis</button>
     </nav>
     <div class="dside-foot"><span class="dlive"><i></i>Operación en vivo</span></div>
   </aside>
@@ -2056,8 +2069,28 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
       <div class="segtog-bar" style="margin-bottom:12px">
         <button class="segtog-b on" id="rt-tab-desp" onclick="haptic();verPestanaRuta('desp')">Despacho</button>
         <button class="segtog-b" id="rt-tab-res" onclick="haptic();verPestanaRuta('res')">Resultado del día</button>
+        <button class="segtog-b" style="margin-left:auto" onclick="haptic();var g=document.getElementById('card-glosario');g.style.display=g.style.display==='none'?'block':'none'">📖 Cómo se llama cada cosa</button>
       </div>
       <div id="rt-slot-res" style="display:none"></div>
+      <div class="dcard" id="card-glosario" style="margin-bottom:12px;display:none">
+        <div class="dcard-h"><h3><span class="h3ic">📖</span>Cómo se llama cada cosa</h3>
+          <button class="dchip" style="margin-left:auto" onclick="haptic();document.getElementById('card-glosario').style.display='none'">✕ Cerrar</button>
+        </div>
+        <div class="glos">
+          <div><b>Novedad</b><span>Lo que el entregador reporta desde la app cuando un cliente no recibe. Es el nombre único: antes se le decía rechazo, novedad o devolución según la pantalla.</span></div>
+          <div><b>Devolución</b><span>El producto que vuelve al camión por esa novedad, con sus cajas y unidades. Una novedad sin devolución cuantificada no sirve para reclamar.</span></div>
+          <div><b>Confirmada</b><span>Entrega sellada por el entregador en el celular, con su hora. Es lo único que cuenta como entregado.</span></div>
+          <div><b>Sin noticia</b><span>Cliente que no tiene entrega sellada ni novedad. Nadie sabe qué pasó: hay que llamar.</span></div>
+          <div><b>Cargue</b><span>Lo que subió al camión, según la Hoja. Es la base de todas las cuentas de cajas.</span></div>
+          <div><b>Pedido</b><span>Lo que el cliente pidió, según el Libro. Se compara con el cargue en el cuadre de la mañana.</span></div>
+          <div><b>Programado</b><span>Los clientes y cajas del PPAS del día. Sirve para saber a quién había que visitar.</span></div>
+          <div><b>Liquidado</b><span>Lo que LiquiYa dice que se facturó de verdad. Llega al día siguiente y es la prueba final.</span></div>
+          <div><b>Efectividad de entrega</b><span>Cargue menos todo lo devuelto, sobre el cargue. No depende de decisiones.</span></div>
+          <div><b>Efectividad para comisión</b><span>Descuenta solo las devoluciones que usted marcó como imputables al entregador.</span></div>
+          <div><b>Sin explicar</b><span>Cajas que salieron y no están ni entregadas ni devueltas. El hueco que hay que cerrar.</span></div>
+          <div><b>Visto bueno</b><span>Su aprobación de la tripulación. Si alguien entra o sale después, se invalida sola.</span></div>
+        </div>
+      </div>
       <div class="dcard" id="card-flota">
         <div class="dcard-h"><h3><span class="h3ic">🚚</span>Flota y despacho</h3>
           <span class="dm">placa, tripulación, km y pedido de cada ruta — de cualquier día</span>
@@ -4359,8 +4392,18 @@ async function cargarDash(){
        foot:['Cajas devueltas','<b style="color:'+(cajasRej?'#E30613':'#059669')+'">'+Math.round(cajasRej).toLocaleString('es-CO')+'</b>']},
       {i:'truck',v:String(rutasConVehiculo),l:'Rutas en calle',foot:['Con vehículo asignado','<b>'+(rutasDia||'—')+' del día</b>']},
     ];
+    // De dónde sale cada cifra, escrito debajo del número. Sin esto, cinco tarjetas con cinco
+    // porcentajes distintos no se pueden interpretar ni discutir con nadie.
+    const FUENTE={
+      'Venta entregada':'Libro menos el valor de lo devuelto',
+      'Venta rechazada':'suma del valor de cada devolución',
+      'Avance confirmado':'clientes con entrega sellada en el celular',
+      'Sin noticia':'ni entrega sellada ni novedad reportada',
+      'Con novedad':'clientes con rechazo reportado en la app',
+      'Rutas en calle':'rutas con vehículo asignado hoy'};
     document.getElementById('dash-kpis').innerHTML=K.map(k=>
-      '<div class="dkpi'+(k.drill?' drillable" onclick="haptic();'+k.drill+'"':'"')+'><div class="dk-top"><span class="dk-l">'+k.l+'</span><span class="dk-ic">'+icoSvg(k.i,16,2)+'</span></div>'+
+      '<div class="dkpi'+(k.drill?' drillable" onclick="haptic();'+k.drill+'"':'"')+'><div class="dk-top"><span class="dk-l">'+k.l+
+        (FUENTE[k.l]?'<span class="dk-fu" title="'+FUENTE[k.l]+'">?</span>':'')+'</span><span class="dk-ic">'+icoSvg(k.i,16,2)+'</span></div>'+
       '<div class="dk-v">'+k.v+'</div>'+
       (k.pct!=null?'<div class="dk-pbar"><div class="bt"><i style="width:'+Math.min(k.pct,100)+'%;background:'+k.pc+'"></i></div><span class="pv" style="color:'+k.pc+'">'+k.pct+'%</span></div>':'')+
       (k.foot?'<div class="dk-leader"><span>'+k.foot[0]+'</span><span class="fill"></span>'+k.foot[1]+'</div>':'')+
@@ -5297,7 +5340,7 @@ function refrescarModulo(m,fondo){
   else if(m==='clientes')renderClientesModulo();
   else if(m==='rechazos')renderRechazosGraf();
 }
-const _MODINFO={operacion:['Operación','Centro de control en vivo'],vehiculos:['Ruta','Despacho y resultado de cada ruta'],analisis:['Análisis','El día completo cruzado y el acumulado del mes'],clientes:['Clientes','Cumplimiento de atención'],entregadores:['Entregadores','Cumplimiento y productividad por persona'],rechazos:['Rechazos','Novedades y devoluciones'],alertas:['Alertas','Geocercas y alarmas de vehículos'],rutina:['Rutina diaria','Checklist de la operación del día'],asis:['Asistencia','Marcación mensual del personal de entrega'],audit:['Auditoría','LiquiYa vs. reportado por el entregador'],obseq:['Obsequios','Bonificaciones ZG y productos a $0 por ruta']};
+const _MODINFO={operacion:['Operación','Centro de control en vivo'],vehiculos:['Ruta','Despacho y resultado de cada ruta'],analisis:['Análisis','El día completo cruzado y el acumulado del mes'],clientes:['Clientes','Cumplimiento de atención'],entregadores:['Personal','Quién trabaja, quién asistió y cómo le fue'],rechazos:['Novedades','Rechazos y devoluciones del día'],alertas:['Alertas','Geocercas y alarmas de vehículos'],rutina:['Rutina diaria','Checklist de la operación del día'],asis:['Asistencia','Marcación mensual del personal de entrega'],audit:['Cierre del día','LiquiYa contra lo reportado: el cuadre final'],obseq:['Obsequios','Bonificaciones ZG y productos a $0 por ruta']};
 /* ══ EL DÍA QUE SE ESTÁ MIRANDO ══
    Había catorce selectores de fecha independientes —uno en Vehículos, otro en Rechazos, dos en
    Entregadores, otro en Auditoría, otro en Obsequios, otro en la Torre y los del panel del
