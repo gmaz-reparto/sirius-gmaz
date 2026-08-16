@@ -1,0 +1,710 @@
+<title>Centro de Control de Distribución</title>
+<style>
+:root{
+  --papel:#F7F7F5; --tarjeta:#FFFFFF; --tinta:#16181D; --tinta2:#3E444F; --tinta3:#767E8B;
+  --linea:#E3E2DE; --linea2:#EFEEEB;
+  --rojo:#C8102E; --rojo-s:#FCEEF0; --ambar:#A96A00; --ambar-s:#FDF5E7;
+  --verde:#0E6B4F; --verde-s:#E8F4EF; --azul:#1B4F84; --azul-s:#EAF1F8;
+  --sh:0 1px 2px rgba(22,24,29,.05),0 10px 30px rgba(22,24,29,.06);
+  /* Consola: los mockups son "pantallas", no papel — por eso su propio mundo oscuro */
+  --c-fondo:#0E1116; --c-panel:#161A21; --c-panel2:#1C222B; --c-linea:#262D38;
+  --c-txt:#E8EAED; --c-txt2:#9AA3B0; --c-txt3:#646E7C;
+  --c-ok:#2FBF87; --c-warn:#E3A33B; --c-mal:#F05A5A; --c-info:#5AA9E6;
+  --disp:"Segoe UI Semibold","Segoe UI",system-ui,sans-serif;
+  --ui:"Segoe UI",system-ui,-apple-system,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --papel:#0B0D11; --tarjeta:#13161B; --tinta:#E9EAEC; --tinta2:#B4BAC3; --tinta3:#818996;
+  --linea:#242830; --linea2:#1B1F26; --rojo:#F2707F; --rojo-s:#2A1519;
+  --ambar:#DFA455; --ambar-s:#2A2013; --verde:#5CC79B; --verde-s:#0F241C;
+  --azul:#7FB6EA; --azul-s:#111E2B; --sh:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --papel:#0B0D11; --tarjeta:#13161B; --tinta:#E9EAEC; --tinta2:#B4BAC3; --tinta3:#818996;
+  --linea:#242830; --linea2:#1B1F26; --rojo:#F2707F; --rojo-s:#2A1519;
+  --ambar:#DFA455; --ambar-s:#2A2013; --verde:#5CC79B; --verde-s:#0F241C;
+  --azul:#7FB6EA; --azul-s:#111E2B; --sh:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--ui);font-size:15px;line-height:1.6}
+.env{max-width:1220px;margin:0 auto;padding:0 24px 100px}
+@media(max-width:700px){.env{padding:0 15px 60px}}
+
+/* ── portada ── */
+.port{padding:58px 0 30px;border-bottom:2px solid var(--tinta)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--rojo);font-weight:700}
+h1{font-family:var(--disp);font-size:clamp(32px,5.6vw,58px);line-height:1.02;letter-spacing:-.028em;margin:13px 0 0;font-weight:700;text-wrap:balance}
+.sub{font-family:var(--serif);font-size:19px;line-height:1.55;color:var(--tinta2);max-width:64ch;margin:15px 0 0}
+.metas{display:flex;flex-wrap:wrap;gap:0;margin-top:28px;border-top:1px solid var(--linea);padding-top:4px}
+.meta{padding:11px 20px 11px 0;margin-right:20px;border-right:1px solid var(--linea)}
+.meta:last-child{border:none}
+.meta dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta3)}
+.meta dd{margin:3px 0 0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+
+section{padding-top:50px;scroll-margin-top:16px}
+h2{font-family:var(--disp);font-size:26px;letter-spacing:-.02em;margin:0 0 6px;font-weight:700;display:flex;align-items:baseline;gap:11px}
+h2 .n{font-family:var(--mono);font-size:12.5px;color:var(--rojo);letter-spacing:0}
+h3{font-family:var(--disp);font-size:17.5px;margin:32px 0 8px;font-weight:700;letter-spacing:-.01em}
+h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta3);margin:24px 0 8px;font-weight:700}
+p{margin:0 0 13px;max-width:74ch}
+.lead{font-family:var(--serif);font-size:17px;line-height:1.62;color:var(--tinta2);max-width:70ch}
+code{font-family:var(--mono);font-size:.87em;background:var(--linea2);padding:1px 5px;border-radius:4px}
+strong{font-weight:700;color:var(--tinta)}
+
+.aviso{border:1px solid var(--ambar);background:var(--ambar-s);padding:19px 21px;margin:22px 0}
+.aviso .t{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ambar);font-weight:700;margin-bottom:9px}
+.aviso p{margin-bottom:9px;font-size:14.5px}
+.aviso p:last-child{margin:0}
+
+.tabla-env{overflow-x:auto;border:1px solid var(--linea);background:var(--tarjeta);margin:14px 0 6px;box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+th{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta3);
+  text-align:left;padding:11px 13px;border-bottom:1px solid var(--linea);white-space:nowrap;font-weight:700}
+td{padding:11px 13px;border-bottom:1px solid var(--linea2);vertical-align:top}
+tr:last-child td{border:none}
+.mini{display:block;font-size:11.5px;color:var(--tinta3);margin-top:2px}
+.pie{font-size:12.5px;color:var(--tinta3);margin:5px 0 0}
+.chip{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
+.c-mal{background:var(--rojo-s);color:var(--rojo)} .c-warn{background:var(--ambar-s);color:var(--ambar)}
+.c-ok{background:var(--verde-s);color:var(--verde)} .c-info{background:var(--azul-s);color:var(--azul)}
+
+/* ══════ CONSOLA (mockups) ══════ */
+.demo{background:var(--c-fondo);border-radius:14px;overflow:hidden;margin:16px 0 8px;box-shadow:0 20px 50px rgba(0,0,0,.28);color:var(--c-txt)}
+.demo-bar{display:flex;align-items:center;gap:9px;padding:11px 15px;background:#0A0D11;border-bottom:1px solid var(--c-linea)}
+.dot{width:9px;height:9px;border-radius:50%;background:#2B323C}
+.demo-bar .tt{font-family:var(--mono);font-size:11px;color:var(--c-txt3);letter-spacing:.05em}
+.demo-bar .live{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--c-ok);display:flex;align-items:center;gap:6px}
+.demo-bar .live i{width:6px;height:6px;border-radius:50%;background:var(--c-ok);animation:latido 2.4s ease-in-out infinite}
+@keyframes latido{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.82)}}
+.demo-in{padding:18px}
+@media(max-width:640px){.demo-in{padding:12px}}
+.btn{border:1px solid var(--c-linea);background:var(--c-panel2);color:var(--c-txt2);font-family:var(--ui);
+  font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:7px;cursor:pointer;transition:.15s}
+.btn:hover{background:#242B36;color:var(--c-txt)}
+.btn.on{background:var(--c-txt);color:var(--c-fondo);border-color:var(--c-txt)}
+.fila-btn{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.fila-btn .et{font-family:var(--mono);font-size:10px;color:var(--c-txt3);letter-spacing:.1em;text-transform:uppercase;margin-right:3px}
+
+/* KPI vivos */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:11px}
+.k{background:var(--c-panel);border:1px solid var(--c-linea);border-radius:11px;padding:14px 15px;position:relative;overflow:hidden}
+.k::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c-txt3);opacity:.5}
+.k.ok::after{background:var(--c-ok)} .k.warn::after{background:var(--c-warn)} .k.mal::after{background:var(--c-mal)}
+.k-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-txt3)}
+.k-v{font-family:var(--disp);font-size:33px;font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:5px;font-variant-numeric:tabular-nums}
+.k-v small{font-size:15px;color:var(--c-txt3);font-weight:600;letter-spacing:0}
+.k-b{height:4px;background:#22293350;border-radius:3px;margin-top:9px;overflow:hidden}
+.k-b i{display:block;height:100%;border-radius:3px;width:0;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+.k-f{font-family:var(--mono);font-size:10px;color:var(--c-txt3);margin-top:8px;padding-top:7px;border-top:1px dashed var(--c-linea);display:flex;justify-content:space-between;gap:8px}
+.k-f b{color:var(--c-txt2)}
+.spark{display:block;width:100%;height:30px;margin-top:8px}
+.spark path{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.spark .area{stroke:none;opacity:.14}
+
+/* tabla de control */
+.tctrl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:660px}
+.tctrl th{color:var(--c-txt3);border-bottom:1px solid var(--c-linea);font-size:9px;padding:9px 10px}
+.tctrl td{border-bottom:1px solid #1D232C;padding:10px;color:var(--c-txt2);vertical-align:middle}
+.tctrl tr.r{transition:background .18s}
+.tctrl tr.r:hover{background:#191E26;cursor:pointer}
+.tctrl .ruta{font-family:var(--mono);font-weight:700;color:var(--c-txt);font-size:12px}
+.tctrl .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--c-txt);font-weight:700}
+.wrapt{overflow-x:auto}
+.est{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700}
+.est i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.est.ok i{background:var(--c-ok)} .est.warn i{background:var(--c-warn)}
+.est.mal i{background:var(--c-mal);animation:alerta 1.9s ease-in-out infinite}
+@keyframes alerta{0%,100%{box-shadow:0 0 0 0 rgba(240,90,90,.55)}70%{box-shadow:0 0 0 7px rgba(240,90,90,0)}}
+.est.ok{color:var(--c-ok)} .est.warn{color:var(--c-warn)} .est.mal{color:var(--c-mal)}
+.barra{height:5px;background:#222933;border-radius:3px;overflow:hidden;min-width:72px}
+.barra i{display:block;height:100%;border-radius:3px;transition:width .9s cubic-bezier(.22,1,.36,1)}
+.det{background:#11151B}
+.det td{padding:0;border:none}
+.det-in{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.22,1,.36,1)}
+.det.abierta .det-in{max-height:340px}
+.det-pad{padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.det-b{font-family:var(--mono);font-size:10px;color:var(--c-txt3);letter-spacing:.08em;text-transform:uppercase}
+.det-v{font-size:19px;font-weight:700;color:var(--c-txt);margin-top:3px;font-variant-numeric:tabular-nums}
+.det-s{font-size:11px;color:var(--c-txt3);margin-top:2px}
+
+/* timeline */
+.tl{position:relative;height:74px;margin:6px 0 10px;background:var(--c-panel);border:1px solid var(--c-linea);border-radius:10px;overflow:hidden}
+.tl svg{display:block;width:100%;height:100%}
+.tl-cursor{position:absolute;top:0;bottom:0;width:2px;background:var(--c-info);left:0;box-shadow:0 0 12px rgba(90,169,230,.7)}
+.tl-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--c-txt3);margin-top:-4px}
+input[type=range]{width:100%;accent-color:#5AA9E6;margin:8px 0 0}
+
+/* excepciones */
+.exc{display:flex;flex-direction:column;gap:8px}
+.ex{display:flex;align-items:center;gap:12px;background:var(--c-panel);border:1px solid var(--c-linea);
+  border-left:3px solid var(--c-txt3);border-radius:9px;padding:11px 14px;transition:.2s}
+.ex.mal{border-left-color:var(--c-mal)} .ex.warn{border-left-color:var(--c-warn)} .ex.ok{border-left-color:var(--c-ok)}
+.ex-n{font-family:var(--disp);font-size:21px;font-weight:700;min-width:38px;font-variant-numeric:tabular-nums}
+.ex.mal .ex-n{color:var(--c-mal)} .ex.warn .ex-n{color:var(--c-warn)} .ex.ok .ex-n{color:var(--c-ok)}
+.ex-t{flex:1;font-size:13px;color:var(--c-txt)}
+.ex-t small{display:block;color:var(--c-txt3);font-size:11px;margin-top:1px}
+.entra{opacity:0;transform:translateY(9px)}
+.entra.v{opacity:1;transform:none;transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+
+/* comparativa */
+.comp{display:flex;align-items:flex-end;gap:6px;height:118px;padding-top:6px}
+.comp .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.comp .b{width:100%;max-width:34px;background:var(--c-info);border-radius:4px 4px 0 0;height:0;
+  transition:height .8s cubic-bezier(.22,1,.36,1)}
+.comp .c.hoy .b{background:var(--c-ok)}
+.comp .d{font-family:var(--mono);font-size:9.5px;color:var(--c-txt3)}
+.comp .c.hoy .d{color:var(--c-ok);font-weight:700}
+
+.leyenda{font-family:var(--mono);font-size:10.5px;color:var(--c-txt3);line-height:1.65;margin-top:12px;
+  border-top:1px solid var(--c-linea);padding-top:11px}
+.leyenda b{color:var(--c-txt2)}
+.nota-mk{font-size:13px;color:var(--tinta2);margin:9px 0 0;max-width:74ch}
+.nota-mk b{color:var(--tinta)}
+
+.fases{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}
+.fase{border:1px solid var(--linea);background:var(--tarjeta);padding:15px 16px;box-shadow:var(--sh)}
+.fase .fn{font-family:var(--mono);font-size:10px;color:var(--rojo);letter-spacing:.1em}
+.fase h5{margin:4px 0 7px;font-family:var(--disp);font-size:16px;font-weight:700}
+.fase ul{margin:0;padding-left:16px;font-size:12.5px;color:var(--tinta2);line-height:1.65}
+.fase .pie2{font-family:var(--mono);font-size:10px;color:var(--tinta3);border-top:1px dashed var(--linea);padding-top:7px;margin-top:9px}
+
+.cierre{background:var(--tinta);color:var(--papel);padding:26px 28px;margin-top:26px}
+.cierre h3{margin:0 0 10px;color:var(--papel);font-size:20px}
+.cierre p{color:rgba(255,255,255,.8);font-family:var(--serif);font-size:15.5px;max-width:74ch}
+.cierre strong{color:#fff}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .entra{opacity:1;transform:none}
+}
+</style>
+
+<div class="env">
+
+<header class="port">
+  <div class="eyebrow">GMAZ Rutas · propuesta de producto · módulo coordinador</div>
+  <h1>Centro de Control de Distribución</h1>
+  <p class="sub">Auditoría del panel actual, arquitectura visual propuesta y prototipo navegable con los datos reales del 15 de agosto. Nada de esto toca la aplicación en producción.</p>
+  <div class="metas">
+    <div class="meta"><dt>Archivo auditado</dt><dd>12.126 líneas · 1 archivo</dd></div>
+    <div class="meta"><dt>Librerías externas</dt><dd>2 · Supabase y Maps</dd></div>
+    <div class="meta"><dt>Animaciones propias</dt><dd>23 keyframes</dd></div>
+    <div class="meta"><dt>Mockups</dt><dd>5 · funcionando</dd></div>
+    <div class="meta"><dt>Estado</dt><dd>Sin implementar</dd></div>
+  </div>
+</header>
+
+<!-- ═══════════ 0 ═══════════ -->
+<section id="remotion">
+  <h2><span class="n">00</span>Antes de empezar: Remotion no es lo que necesitamos aquí</h2>
+
+  <div class="aviso">
+    <div class="t">Hay que aclararlo porque cambia toda la propuesta</div>
+    <p><strong>Remotion</strong> (remotion.dev) sirve para <strong>generar videos con React</strong>: se escribe una composición, se renderiza con ffmpeg y sale un MP4. Es la que usted ya tiene instalada en <code>D:\PRODUCCION VIDEO\remotion-estudio</code> para los reels. <strong>No anima interfaces</strong> — no tiene hover, ni transiciones de estado, ni tablas que reordenan.</p>
+    <p>Lo que usted me describe —transiciones al filtrar, microinteracciones, expansión de filas, cambios de posición, motion layout— es <strong>Motion</strong> (antes Framer Motion). Otra librería, otro propósito.</p>
+    <p>Y revisé el proyecto: <strong>no hay ninguna de las dos conectada</strong>. No existe <code>package.json</code>, ni <code>node_modules</code>, ni <code>src</code>, ni React. GMAZ Rutas es un solo archivo HTML de 12.126 líneas que corre sin compilar.</p>
+  </div>
+
+  <h3>Qué implicaría meter cualquiera de las dos</h3>
+  <p>Las dos exigen React y un paso de compilación. Hoy el flujo es: usted edita, hace push y GitHub Pages sirve el archivo; los entregadores abren el enlace de siempre. Con un bundler, ese flujo se convierte en <code>npm install</code> + <code>npm run build</code> + publicar la carpeta compilada, y la app tendría que reescribirse entera en componentes. <strong>Sería empezar de cero un producto que ya opera todos los días con quince camiones.</strong></p>
+
+  <h3>La buena noticia</h3>
+  <p class="lead">Todo lo que usted pide se puede hacer <strong>sin una sola librería</strong>. La app ya tiene 23 animaciones CSS propias y dibuja sus gráficos en SVG a mano (<code>donutSvg</code>, <code>gaugeSvg</code>). El navegador de hoy trae transiciones, <em>easing</em>, Web Animations API y <code>View Transitions</code> nativos. Los cinco mockups de más abajo <strong>están animados de verdad y no cargan nada</strong>: puede tocarlos ahora mismo.</p>
+
+  <h3>Dónde sí usaría Remotion, y en serio</h3>
+  <p>Para lo que fue hecha: <strong>video</strong>. Un cierre del día renderizado automáticamente —efectividad, rutas con problema, el recorrido dibujándose sobre el mapa— en un MP4 vertical de 40 segundos que usted manda por WhatsApp al gerente cada noche. Eso hoy no existe en ningún sistema de distribución de Pasto, corre en su máquina con lo que ya tiene instalado y <strong>no toca la app</strong>. Va como fase 4.</p>
+</section>
+
+<!-- ═══════════ 1 ═══════════ -->
+<section id="tenemos">
+  <h2><span class="n">01</span>Qué tenemos hoy</h2>
+  <p class="lead">Medido sobre el archivo, no estimado.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Capa</th><th>Qué hay</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td><b>Frontend</b></td><td>1 archivo HTML · 12.126 líneas · 1.574 de CSS · 476 funciones<span class="mini">sin build, sin framework, sin dependencias de node</span></td><td><span class="chip c-ok">Sano</span></td></tr>
+        <tr><td><b>Backend</b></td><td>Supabase: PostgREST + Storage. Sin servidor propio<span class="mini">tablas: clientes_rutas, novedades, estados_entrega, asignacion_vehiculo, geocerca_eventos, maestro_vendedores</span></td><td><span class="chip c-ok">Sano</span></td></tr>
+        <tr><td><b>Archivos del día</b></td><td>PPAS · Libro · Hoja de cargue · Facturas · LiquiYa · Obsequios<span class="mini">JSON indexados por fecha en Storage</span></td><td><span class="chip c-warn">3 bases de cajas</span></td></tr>
+        <tr><td><b>GPS</b></td><td>SecuritaGPS: posición, historial, geocercas<span class="mini">14 vehículos · sin módulo de alarmas activo</span></td><td><span class="chip c-ok">Operativo</span></td></tr>
+        <tr><td><b>Mapa</b></td><td>Google Maps + Turf.js para geocercas por ruta</td><td><span class="chip c-ok">Operativo</span></td></tr>
+        <tr><td><b>Gráficos</b></td><td>SVG escritos a mano: <code>donutSvg</code>, <code>gaugeSvg</code>, sparkline del recorrido</td><td><span class="chip c-info">Base sólida</span></td></tr>
+        <tr><td><b>Animación</b></td><td>23 <code>@keyframes</code> propios: latido en vivo, pulso de novedad, aguja del velocímetro, entrada de módulo</td><td><span class="chip c-info">Desaprovechada</span></td></tr>
+        <tr><td><b>Tablas</b></td><td>11 montadas con un motor propio (<code>montarTabla</code>) con orden, búsqueda, exportación y filas expandibles</td><td><span class="chip c-ok">Mejor de lo esperado</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pie">El hallazgo importante de este inventario: <b>el motor de tablas y el de animación ya existen y son propios.</b> No hay que traer nada — hay que usarlos mejor.</p>
+</section>
+
+<!-- ═══════════ 2 ═══════════ -->
+<section id="matriz">
+  <h2><span class="n">02</span>Matriz de componentes</h2>
+  <p>Componente por componente del panel del coordinador. La columna «cómo» dice con qué se hace, sin librerías.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Componente actual</th><th>Problema</th><th>Propuesta</th><th>Cómo</th><th>Prioridad</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>3 KPI de la Torre</b><span class="mini">efectividad, avance, venta devuelta</span></td>
+          <td>Número plano. No dice si va bien o mal <b>respecto a qué</b></td>
+          <td>KPI vivo: cifra + barra + <b>sparkline de los últimos 10 días</b> + comparación contra el promedio</td>
+          <td>SVG + <code>stroke-dashoffset</code></td>
+          <td><span class="chip c-mal">Alta</span></td>
+        </tr>
+        <tr>
+          <td><b>Bandeja «esperando al coordinador»</b><span class="mini">8 casillas iguales</span></td>
+          <td>Todo pesa lo mismo. 26 devoluciones se ven igual que 0 fotos dudosas</td>
+          <td>Lista ordenada por gravedad; solo lo crítico se mueve. Lo resuelto se desvanece</td>
+          <td>CSS + orden por severidad</td>
+          <td><span class="chip c-mal">Alta</span></td>
+        </tr>
+        <tr>
+          <td><b>Tabla «Rutas de hoy»</b></td>
+          <td>8 columnas de texto. Hay que leerlas todas para hallar el problema</td>
+          <td>Tabla de control: barra de avance, estado con semáforo, reordenamiento animado por criterio</td>
+          <td>FLIP con <code>getBoundingClientRect</code></td>
+          <td><span class="chip c-mal">Alta</span></td>
+        </tr>
+        <tr>
+          <td><b>Ranking por ruta</b><span class="mini">aro + texto</span></td>
+          <td>Ordenado alfabéticamente: la peor ruta puede quedar de última</td>
+          <td>Ordenado por urgencia, con barra comparativa contra el promedio del día</td>
+          <td>CSS <code>transition</code></td>
+          <td><span class="chip c-warn">Media</span></td>
+        </tr>
+        <tr>
+          <td><b>Mapa · centro de control</b></td>
+          <td>Muestra dónde están, no <b>cómo van</b>. Sin línea de tiempo</td>
+          <td>Reproducción del día con cursor: el recorrido se dibuja y los clientes cambian de color al ser visitados</td>
+          <td>Polyline + <code>requestAnimationFrame</code></td>
+          <td><span class="chip c-warn">Media</span></td>
+        </tr>
+        <tr>
+          <td><b>Flota en vivo</b><span class="mini">lista lateral</span></td>
+          <td>Repite el mapa. Direcciones larguísimas que nadie lee</td>
+          <td>Fusionar en el mapa como fichas seleccionables</td>
+          <td>Mover nodo</td>
+          <td><span class="chip c-warn">Media</span></td>
+        </tr>
+        <tr>
+          <td><b>Ecuación de la caja</b><span class="mini">recién construida</span></td>
+          <td>Estática. No se ve la proporción</td>
+          <td>Barra apilada proporcional que se arma al abrir la fila</td>
+          <td>Flex + <code>transition</code></td>
+          <td><span class="chip c-warn">Media</span></td>
+        </tr>
+        <tr>
+          <td><b>Velocímetro / gauge</b></td>
+          <td>Ya anima la aguja, pero mide el indicador equivocado</td>
+          <td>Conservar el componente, cambiarle la fuente</td>
+          <td>Ya existe</td>
+          <td><span class="chip c-ok">Baja</span></td>
+        </tr>
+        <tr>
+          <td><b>Skeletons de carga</b></td>
+          <td>Bien resueltos</td>
+          <td>Conservar y extender a las tablas nuevas</td>
+          <td>Ya existe</td>
+          <td><span class="chip c-ok">Baja</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ 3 ═══════════ -->
+<section id="arq">
+  <h2><span class="n">03</span>Los cuatro niveles</h2>
+  <p class="lead">El coordinador debe poder ir de «¿cómo va el día?» a «¿qué cliente está generando el problema?» sin perder el contexto. Cada nivel responde una pregunta y abre el siguiente.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Nivel</th><th>Pregunta</th><th>Qué muestra</th><th>Tiempo de lectura</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 · Situación</b></td><td>¿Cómo va la operación?</td><td>Cuatro cifras vivas con su tendencia. Nada más</td><td class="num">3 segundos</td></tr>
+        <tr><td><b>2 · Excepciones</b></td><td>¿Qué requiere atención ahora?</td><td>Solo lo que está mal, ordenado por gravedad</td><td class="num">10 segundos</td></tr>
+        <tr><td><b>3 · Rutas</b></td><td>¿Qué ruta tiene el problema?</td><td>Una fila por ruta: camión, gente, avance, estado</td><td class="num">30 segundos</td></tr>
+        <tr><td><b>4 · Detalle</b></td><td>¿Por qué? ¿Qué cliente?</td><td>Ecuación de la caja, recorrido, novedades cliente por cliente</td><td class="num">el que haga falta</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pie">Hoy los cuatro niveles están mezclados en una sola pantalla larga: nueve tarjetas, una bandeja, una tabla y un mapa, todos compitiendo por la misma atención.</p>
+</section>
+
+<!-- ═══════════ 4 · MOCKUPS ═══════════ -->
+<section id="mockups">
+  <h2><span class="n">04</span>Prototipo navegable</h2>
+  <p class="lead">Cinco pantallas con los datos reales del sábado 15 de agosto. <strong>Están vivas: toque los botones.</strong> Todo lo que se mueve aquí está hecho con CSS y SVG, sin una sola dependencia — es la demostración de que no hace falta traer nada.</p>
+
+  <h3>1 · Nivel 1 — La situación del día</h3>
+  <div class="demo">
+    <div class="demo-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="tt">Centro de control · sábado 15 de agosto</span><span class="live"><i></i>EN VIVO</span></div>
+    <div class="demo-in">
+      <div class="fila-btn"><span class="et">Simular</span>
+        <button class="btn on" onclick="escena(this,'normal')">Estado actual</button>
+        <button class="btn" onclick="escena(this,'entrega')">Entra una entrega</button>
+        <button class="btn" onclick="escena(this,'rechazo')">Entra un rechazo</button>
+      </div>
+      <div class="kpis">
+        <div class="k mal" id="k1">
+          <div class="k-l">Cerrado de verdad</div>
+          <div class="k-v"><span data-num="35">0</span> <small>de 457</small></div>
+          <div class="k-b"><i style="background:var(--c-mal)" data-w="8"></i></div>
+          <svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><path class="area" fill="var(--c-mal)" d=""></path><path stroke="var(--c-mal)" d=""></path></svg>
+          <div class="k-f"><span>sellado por el entregador</span><b>8 %</b></div>
+        </div>
+        <div class="k warn" id="k2">
+          <div class="k-l">Sin noticia</div>
+          <div class="k-v"><span data-num="381">0</span></div>
+          <div class="k-b"><i style="background:var(--c-warn)" data-w="83"></i></div>
+          <svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><path class="area" fill="var(--c-warn)" d=""></path><path stroke="var(--c-warn)" d=""></path></svg>
+          <div class="k-f"><span>ni entrega ni novedad</span><b>hay que llamar</b></div>
+        </div>
+        <div class="k mal" id="k3">
+          <div class="k-l">Con novedad</div>
+          <div class="k-v"><span data-num="41">0</span></div>
+          <div class="k-b"><i style="background:var(--c-mal)" data-w="9"></i></div>
+          <svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><path class="area" fill="var(--c-mal)" d=""></path><path stroke="var(--c-mal)" d=""></path></svg>
+          <div class="k-f"><span>49 cj + 157 und</span><b>26 sin decidir</b></div>
+        </div>
+        <div class="k ok" id="k4">
+          <div class="k-l">Efectividad de entrega</div>
+          <div class="k-v"><span data-num="97">0</span><small>%</small></div>
+          <div class="k-b"><i style="background:var(--c-ok)" data-w="97"></i></div>
+          <svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><path class="area" fill="var(--c-ok)" d=""></path><path stroke="var(--c-ok)" d=""></path></svg>
+          <div class="k-f"><span>1.944 cj cargadas</span><b>+1,2 vs promedio</b></div>
+        </div>
+      </div>
+      <div class="leyenda"><b>Qué cambió:</b> la cifra ya no está sola — trae su barra, su tendencia de diez días y contra qué se compara. Al entrar un dato nuevo el número <b>cuenta hasta su valor</b> en vez de saltar: el ojo alcanza a ver qué se movió. Pruebe «entra un rechazo».</div>
+    </div>
+  </div>
+  <p class="nota-mk"><b>Por qué importa:</b> hoy «cumplimiento 91 %» no dice si eso es bueno. Con la tendencia al lado, el coordinador ve en un segundo si el día va peor que el promedio del mes.</p>
+
+  <h3>2 · Nivel 2 — Solo lo que está mal</h3>
+  <div class="demo">
+    <div class="demo-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="tt">Requiere su decisión · ordenado por gravedad</span></div>
+    <div class="demo-in">
+      <div class="exc" id="excs">
+        <div class="ex mal entra"><div class="ex-n">26</div><div class="ex-t">Devoluciones sin decidir<small>bloquean el cierre y el tramo de comisión</small></div><button class="btn">Revisar</button></div>
+        <div class="ex mal entra"><div class="ex-n">2</div><div class="ex-t">Rutas cargadas sin clientes · 237 cj<small>KA4V01 y KA4V63 salieron sin PPAS</small></div><button class="btn">Revisar</button></div>
+        <div class="ex warn entra"><div class="ex-n">21</div><div class="ex-t">Personal sin registrarse<small>sus novedades quedarían sin responsable</small></div><button class="btn">Ver</button></div>
+        <div class="ex warn entra"><div class="ex-n">4</div><div class="ex-t">Rutas que no cuadran con lo designado<small>el conductor fijo no coincide con el registrado</small></div><button class="btn">Ver</button></div>
+        <div class="ex ok entra"><div class="ex-n">✓</div><div class="ex-t">Tripulaciones aprobadas<small>8 de 8 con su visto bueno</small></div></div>
+      </div>
+      <div class="leyenda"><b>Qué cambió:</b> las ocho casillas iguales se ordenan por gravedad y <b>solo lo crítico late</b>. Lo que está resuelto baja al final en verde y deja de pedir atención. El movimiento aquí <b>significa urgencia</b>, no decoración.</div>
+    </div>
+  </div>
+
+  <h3>3 · Nivel 3 — La tabla de control</h3>
+  <div class="demo">
+    <div class="demo-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="tt">Rutas · 15 de agosto</span></div>
+    <div class="demo-in">
+      <div class="fila-btn"><span class="et">Ordenar por</span>
+        <button class="btn on" onclick="ordenar(this,'urgencia')">Urgencia</button>
+        <button class="btn" onclick="ordenar(this,'avance')">Avance</button>
+        <button class="btn" onclick="ordenar(this,'ruta')">Ruta</button>
+      </div>
+      <div class="wrapt"><table class="tctrl" id="tbl">
+        <thead><tr><th>Ruta</th><th>Camión</th><th>Tripulación</th><th>Avance</th><th class="num">Cargue</th><th class="num">Devuelto</th><th>Estado</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table></div>
+      <div class="leyenda"><b>Qué cambió:</b> al reordenar, las filas <b>se deslizan a su nueva posición</b> en vez de repintarse — el coordinador sigue con la vista la ruta que venía mirando. Toque una fila para abrir su ecuación de la caja.</div>
+    </div>
+  </div>
+  <p class="nota-mk"><b>La técnica se llama FLIP</b> y son treinta líneas de JavaScript: se mide dónde estaba cada fila, se reordena, se mide dónde quedó y se anima la diferencia. Es lo que hace Motion por dentro.</p>
+
+  <h3>4 · Nivel 4 — El día de una ruta, reproducible</h3>
+  <div class="demo">
+    <div class="demo-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="tt">KA4V13 · GIM332 · Jama Pantoja + Delgado Cadena</span></div>
+    <div class="demo-in">
+      <div class="tl"><svg viewBox="0 0 600 74" preserveAspectRatio="none" id="tlsvg"></svg><div class="tl-cursor" id="cur"></div></div>
+      <input type="range" min="0" max="100" value="100" id="rng" oninput="mover(this.value)">
+      <div class="tl-lbl"><span>05:40 salida</span><span id="hora">14:01</span><span>19:20 retorno</span></div>
+      <div class="det-pad" style="padding:14px 0 0">
+        <div><div class="det-b">Recorrido</div><div class="det-v" id="km">51,9 km</div><div class="det-s">842 puntos GPS</div></div>
+        <div><div class="det-b">Clientes visitados</div><div class="det-v" id="vis">70</div><div class="det-s">de 70 programados</div></div>
+        <div><div class="det-b">Novedades</div><div class="det-v" style="color:var(--c-mal)" id="nov">17</div><div class="det-s">27 cj + 139 und</div></div>
+        <div><div class="det-b">Sin explicar</div><div class="det-v" style="color:var(--c-warn)">132 cj</div><div class="det-s">de 159 cargadas</div></div>
+      </div>
+      <div class="leyenda"><b>Qué cambió:</b> mueva el control. La barra de velocidad es el día real del camión y las cifras <b>retroceden con él</b>. Sirve para responder «¿a qué hora se cayó la ruta?» sin abrir el GPS aparte. Los datos son los reales de KA4V13.</div>
+    </div>
+  </div>
+
+  <h3>5 · Comparación con los días anteriores</h3>
+  <div class="demo">
+    <div class="demo-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="tt">Efectividad de entrega · últimos 10 días</span></div>
+    <div class="demo-in">
+      <div class="comp" id="comp"></div>
+      <div class="leyenda"><b>Qué cambió:</b> hoy no existe ninguna pantalla que responda «¿vamos mejor o peor que ayer?». Estas barras salen de datos que <b>ya están guardados</b> — hoja de cargue y devoluciones de cada día. No hace falta capturar nada nuevo.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 5 ═══════════ -->
+<section id="sistema">
+  <h2><span class="n">05</span>El sistema visual: cuándo se permite el movimiento</h2>
+  <p class="lead">La regla que evita que esto se vuelva un videojuego: <strong>el movimiento es información, no adorno.</strong> Si algo se mueve, es porque cambió o porque necesita una decisión.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Situación</th><th>Qué hace la interfaz</th><th>Por qué</th></tr></thead>
+      <tbody>
+        <tr><td>Todo normal</td><td><b>Nada se mueve.</b> Solo el punto de «en vivo»</td><td>Una pantalla quieta es una pantalla tranquila</td></tr>
+        <tr><td>Llega una entrega</td><td>La cifra cuenta hasta el nuevo valor · 600 ms</td><td>El ojo alcanza a ver cuál cambió</td></tr>
+        <tr><td>Llega un rechazo</td><td>La fila de esa ruta se resalta 2 s y vuelve</td><td>Dice dónde pasó sin sacarlo de donde está</td></tr>
+        <tr><td>Ruta crítica</td><td>Punto rojo con latido lento</td><td>Único elemento con animación permanente</td></tr>
+        <tr><td>Se reordena o filtra</td><td>Las filas se deslizan a su lugar</td><td>Conserva el hilo de lo que venía leyendo</td></tr>
+        <tr><td>Se abre un detalle</td><td>Despliegue de 450 ms desde la propia fila</td><td>Deja claro de dónde salió</td></tr>
+        <tr><td>Se resuelve algo</td><td>Se desvanece y baja al final en verde</td><td>Premia cerrar cosas</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pie">Todo respeta <code>prefers-reduced-motion</code>: si el sistema del coordinador tiene reducidas las animaciones, se apagan solas y nada deja de funcionar.</p>
+</section>
+
+<!-- ═══════════ 6 ═══════════ -->
+<section id="faltan">
+  <h2><span class="n">06</span>Datos que harían falta para el nivel siguiente</h2>
+  <p>Separado a propósito: <strong>nada de lo anterior necesita esto</strong>. Es lo que habría que capturar para llegar más lejos.</p>
+
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Dato que falta</th><th>Qué desbloquea</th><th>Cómo se capturaría</th></tr></thead>
+      <tbody>
+        <tr><td><b>Hora planificada por cliente</b></td><td>«Ruta retrasada» de verdad. Hoy no se puede saber: no hay contra qué comparar</td><td>Ventana horaria en el PPAS, o aprenderla del histórico GPS</td></tr>
+        <tr><td><b>Retorno al CEDI</b></td><td>Cerrar la ecuación de la caja en cero</td><td>Ya quedó construido — falta que se use</td></tr>
+        <tr><td><b>Teléfono del entregador</b></td><td>Llamar desde la fila de la ruta</td><td>Una columna en el maestro de personal</td></tr>
+        <tr><td><b>Confirmación de entrega real</b></td><td>Que «entregado» deje de ser una resta</td><td>El botón existe: se usó 51 veces en 3 meses. Es adopción, no tecnología</td></tr>
+        <tr><td><b>Marca de canal por cliente</b></td><td>Separar autoventa, canal moderno y listas T de la medición de reparto</td><td>Pendiente de definir con usted — es la conversación de las rutas V03, V04 y V63</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ 7 ═══════════ -->
+<section id="roadmap">
+  <h2><span class="n">07</span>Hoja de ruta</h2>
+
+  <div class="fases">
+    <div class="fase">
+      <div class="fn">FASE 1 · impacto alto, esfuerzo bajo</div>
+      <h5>Que las cifras hablen</h5>
+      <ul>
+        <li>KPI con barra, tendencia y comparación</li>
+        <li>Bandeja ordenada por gravedad</li>
+        <li>Contador animado al cambiar un dato</li>
+        <li>Ranking por urgencia, no alfabético</li>
+      </ul>
+      <div class="pie2">2 a 3 días · sin riesgo · CSS y SVG</div>
+    </div>
+    <div class="fase">
+      <div class="fn">FASE 2 · impacto alto, esfuerzo medio</div>
+      <h5>La tabla de control</h5>
+      <ul>
+        <li>Reordenamiento animado (FLIP)</li>
+        <li>Barra de avance y semáforo por fila</li>
+        <li>Ecuación de la caja proporcional</li>
+        <li>Resaltado al entrar una novedad</li>
+      </ul>
+      <div class="pie2">4 a 5 días · riesgo bajo · toca la tabla que ya existe</div>
+    </div>
+    <div class="fase">
+      <div class="fn">FASE 3 · nivel avanzado</div>
+      <h5>El tiempo y el mapa</h5>
+      <ul>
+        <li>Reproducción del día por ruta</li>
+        <li>Recorrido dibujándose sobre el mapa</li>
+        <li>Clientes que cambian de color al visitarse</li>
+        <li>Comparación con los diez días anteriores</li>
+      </ul>
+      <div class="pie2">1 semana · riesgo medio · toca el mapa</div>
+    </div>
+    <div class="fase">
+      <div class="fn">FASE 4 · nivel élite</div>
+      <h5>El cierre en video</h5>
+      <ul>
+        <li>Remotion en su máquina, fuera de la app</li>
+        <li>MP4 vertical de 40 s con el resumen del día</li>
+        <li>Recorrido animado y rutas con problema</li>
+        <li>Listo para mandar por WhatsApp</li>
+      </ul>
+      <div class="pie2">3 a 4 días · riesgo nulo para la app · usa lo que ya tiene instalado</div>
+    </div>
+  </div>
+
+  <h4>Riesgos técnicos</h4>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Riesgo</th><th>Probabilidad</th><th>Cómo se evita</th></tr></thead>
+      <tbody>
+        <tr><td>Animar una tabla que se repinta cada 30 s produce parpadeo</td><td><span class="chip c-mal">Alta</span></td><td>Ya está resuelto: la tabla compara una firma de datos y no reconstruye si nada cambió</td></tr>
+        <tr><td>El archivo crece y se vuelve difícil de mantener</td><td><span class="chip c-warn">Media</span></td><td>Es un riesgo real hoy con 12.126 líneas. Se atiende separando el CSS a su archivo, sin build</td></tr>
+        <tr><td>Animaciones pesadas en celulares viejos</td><td><span class="chip c-warn">Media</span></td><td>Solo <code>transform</code> y <code>opacity</code>, que van por GPU. Nunca animar <code>width</code> de tablas</td></tr>
+        <tr><td>Reescribir en React para usar Motion</td><td><span class="chip c-mal">Alta si se intenta</span></td><td>No hacerlo. Es rehacer un producto que ya opera</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ 8 ═══════════ -->
+<section id="final">
+  <h2><span class="n">08</span>Lo que yo implementaría</h2>
+
+  <div class="cierre">
+    <h3>Si yo fuera el responsable de producto de GMAZ Rutas</h3>
+    <p>No traería ninguna librería. La app <strong>ya tiene</strong> motor de tablas, gráficos SVG propios y 23 animaciones; lo que le falta no es tecnología sino <strong>criterio de qué mostrar y en qué orden</strong>.</p>
+    <p>Haría las fases 1 y 2 completas —cifras con contexto, bandeja por gravedad y tabla de control— porque cambian el trabajo diario del coordinador y no tienen riesgo. La fase 3 después, cuando el retorno al CEDI ya se esté usando y la ecuación de la caja cierre.</p>
+    <p>Y usaría Remotion para lo que sirve: <strong>el cierre del día en video</strong>. Eso sí es diferenciador, corre fuera de la aplicación y no pone en riesgo la operación de quince camiones.</p>
+    <p style="margin-bottom:0"><strong>Lo que no haría</strong>: reescribir la app en React para poder animar. Sería cambiar un producto que funciona por uno que hay que volver a probar entero, para ganar lo que ya se puede hacer con el navegador.</p>
+  </div>
+
+  <p class="pie" style="margin-top:22px">Auditoría sobre el archivo en producción del 16 de agosto de 2026 · datos reales del 15 de agosto · <b>no se modificó ninguna línea del sistema</b>. Esperando su aprobación fase por fase.</p>
+</section>
+</div>
+
+<script>
+/* ── Datos reales del 15-ago ── */
+const RUTAS=[
+ {r:'KA4V13',v:'GIM332',t:'Jama + Delgado',av:76,carg:159,dev:27,est:'mal',u:3},
+ {r:'KA4V53',v:'VBP909',t:'Narváez · sin auxiliar',av:67,carg:140,dev:4,est:'mal',u:3},
+ {r:'KA4V50',v:'WLW165',t:'Narváez + 2',av:84,carg:288,dev:6,est:'warn',u:2},
+ {r:'KA4V55',v:'GIM333',t:'Escobar + 2',av:95,carg:276,dev:4,est:'warn',u:2},
+ {r:'KA4V56',v:'GIM331',t:'Barrera + Segura',av:94,carg:185,dev:2,est:'warn',u:2},
+ {r:'KA4V54',v:'GIM671',t:'Eraso + 2',av:96,carg:252,dev:6,est:'ok',u:1},
+ {r:'KA4V12',v:'LFX110',t:'De la Cruz + Rosero',av:100,carg:187,dev:0,est:'ok',u:1},
+ {r:'KA4V51',v:'VBP909',t:'Narváez + Díaz',av:100,carg:220,dev:0,est:'ok',u:1}
+];
+const TEND=[96,94,97,95,96,93,97,95,96,97];
+const col={ok:'var(--c-ok)',warn:'var(--c-warn)',mal:'var(--c-mal)'};
+const red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* contador */
+function contar(el,fin,ms){
+  const escribir=v=>el.textContent=Math.round(v).toLocaleString('es-CO');
+  if(red){escribir(fin);return;}
+  const ini=parseInt(String(el.textContent).replace(/\D/g,''))||0, t0=performance.now();
+  // Red de seguridad: en una pestaña de fondo el navegador congela requestAnimationFrame y el
+  // número se quedaría en cero. Pasado el tiempo de la animación se escribe el valor final igual.
+  const seguro=setTimeout(()=>escribir(fin),ms+60);
+  (function paso(t){
+    const p=Math.min(1,(t-t0)/ms), e=1-Math.pow(1-p,3);
+    escribir(ini+(fin-ini)*e);
+    if(p<1)requestAnimationFrame(paso); else clearTimeout(seguro);
+  })(t0);
+}
+/* sparkline */
+function sparks(){
+  document.querySelectorAll('.spark').forEach(sv=>{
+    const max=Math.max(...TEND), min=Math.min(...TEND)-2;
+    const pts=TEND.map((v,i)=>[i/(TEND.length-1)*120,28-(v-min)/(max-min)*24]);
+    const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    const ps=sv.querySelectorAll('path');
+    ps[1].setAttribute('d',d);
+    ps[0].setAttribute('d',d+' L120 30 L0 30 Z');
+    const L=ps[1].getTotalLength();
+    if(!red){ps[1].style.strokeDasharray=L;ps[1].style.strokeDashoffset=L;
+      requestAnimationFrame(()=>{ps[1].style.transition='stroke-dashoffset 1.3s ease';ps[1].style.strokeDashoffset=0;});}
+  });
+}
+/* tabla */
+let ordenActual='urgencia';
+function pintarTabla(){
+  const tb=document.getElementById('tb');
+  const orden={urgencia:(a,b)=>b.u-a.u||a.av-b.av, avance:(a,b)=>a.av-b.av, ruta:(a,b)=>a.r.localeCompare(b.r)}[ordenActual];
+  const prev={};
+  tb.querySelectorAll('tr.r').forEach(tr=>prev[tr.dataset.r]=tr.getBoundingClientRect().top);
+  tb.innerHTML=RUTAS.slice().sort(orden).map((x,i)=>
+    '<tr class="r" data-r="'+x.r+'" onclick="abrir(this)">'+
+      '<td class="ruta">'+x.r+'</td><td>'+x.v+'</td><td style="font-size:11.5px">'+x.t+'</td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px"><div class="barra" style="flex:1"><i style="width:'+x.av+'%;background:'+col[x.est]+'"></i></div><b style="color:var(--c-txt);font-size:11px">'+x.av+'%</b></div></td>'+
+      '<td class="num">'+x.carg+'</td>'+
+      '<td class="num" style="color:'+(x.dev?'var(--c-mal)':'var(--c-txt3)')+'">'+(x.dev||'—')+'</td>'+
+      '<td><span class="est '+x.est+'"><i></i>'+(x.est==='mal'?'Atención':x.est==='warn'?'Vigilar':'En orden')+'</span></td></tr>'+
+    '<tr class="det" data-d="'+x.r+'"><td colspan="7"><div class="det-in"><div class="det-pad">'+
+      '<div><div class="det-b">Cargado</div><div class="det-v">'+x.carg+'</div><div class="det-s">cajas de la Hoja</div></div>'+
+      '<div><div class="det-b">Devuelto</div><div class="det-v" style="color:var(--c-mal)">'+(x.dev||0)+'</div><div class="det-s">reportado en la app</div></div>'+
+      '<div><div class="det-b">Volvió al CEDI</div><div class="det-v" style="color:var(--c-info)">—</div><div class="det-s">sin anotar</div></div>'+
+      '<div><div class="det-b">Sin explicar</div><div class="det-v" style="color:var(--c-warn)">'+(x.carg-x.dev)+'</div><div class="det-s">ni entregado ni devuelto</div></div>'+
+    '</div></div></td></tr>').join('');
+  if(!red)tb.querySelectorAll('tr.r').forEach(tr=>{
+    const a=prev[tr.dataset.r]; if(a===undefined)return;
+    const dy=a-tr.getBoundingClientRect().top;
+    if(!dy)return;
+    tr.animate([{transform:'translateY('+dy+'px)'},{transform:'none'}],{duration:520,easing:'cubic-bezier(.22,1,.36,1)'});
+  });
+}
+function ordenar(btn,cual){
+  btn.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); ordenActual=cual; pintarTabla();
+}
+function abrir(tr){
+  const d=tr.nextElementSibling;
+  document.querySelectorAll('.det.abierta').forEach(x=>{if(x!==d)x.classList.remove('abierta')});
+  d.classList.toggle('abierta');
+}
+/* escenas */
+function escena(btn,cual){
+  btn.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const v=[35,381,41,97];
+  if(cual==='entrega'){v[0]=36;v[1]=380;}
+  if(cual==='rechazo'){v[2]=42;v[1]=380;v[3]=96;}
+  ['k1','k2','k3','k4'].forEach((id,i)=>{
+    const el=document.querySelector('#'+id+' .k-v span');
+    contar(el,v[i],650);
+    const b=document.querySelector('#'+id+' .k-b i');
+    const pct=[Math.round(v[0]/457*100),Math.round(v[1]/457*100),Math.round(v[2]/457*100),v[3]][i];
+    b.style.width=pct+'%';
+  });
+  if(cual!=='normal'){
+    const fila=document.querySelector('#tb tr.r');
+    if(fila&&!red)fila.animate([{background:'rgba(240,90,90,.18)'},{background:'transparent'}],{duration:2000});
+  }
+}
+/* timeline */
+const PTS=Array.from({length:60},(_,i)=>{
+  const h=i/59; const base=Math.sin(h*7)*0.5+0.5;
+  return h<0.06||h>0.93?0.05:base*(0.35+0.65*Math.sin(h*Math.PI));
+});
+function tl(){
+  const sv=document.getElementById('tlsvg');
+  const d=PTS.map((v,i)=>(i?'L':'M')+(i/(PTS.length-1)*600).toFixed(1)+' '+(70-v*58).toFixed(1)).join(' ');
+  sv.innerHTML='<path d="'+d+' L600 74 L0 74 Z" fill="var(--c-info)" opacity=".13"/>'+
+    '<path d="'+d+'" fill="none" stroke="var(--c-info)" stroke-width="1.6" stroke-linejoin="round"/>'+
+    '<line x1="0" y1="70" x2="600" y2="70" stroke="var(--c-linea)" stroke-width="1"/>';
+}
+function mover(p){
+  document.getElementById('cur').style.left=p+'%';
+  const t=5.66+(19.33-5.66)*(p/100);
+  const hh=String(Math.floor(t)).padStart(2,'0'), mm=String(Math.round((t%1)*60)).padStart(2,'0');
+  document.getElementById('hora').textContent=hh+':'+mm;
+  document.getElementById('km').textContent=(51.9*p/100).toFixed(1).replace('.',',')+' km';
+  document.getElementById('vis').textContent=Math.round(70*Math.min(1,p/100*1.05));
+  document.getElementById('nov').textContent=Math.round(17*Math.min(1,p/100*1.1));
+}
+/* comparativa */
+function comp(){
+  const c=document.getElementById('comp');
+  const dias=['06','07','08','09','11','12','13','14','15'];
+  const val=[94,97,95,96,93,97,96,95,97];
+  c.innerHTML=val.map((v,i)=>'<div class="c'+(i===val.length-1?' hoy':'')+'"><div class="b" data-h="'+((v-88)/12*100)+'"></div><div class="d">'+dias[i]+'</div></div>').join('');
+}
+/* arranque progresivo cuando entra en pantalla */
+function arrancar(){
+  sparks(); pintarTabla(); tl(); comp(); mover(100);
+  document.querySelectorAll('.k-v span[data-num]').forEach(el=>contar(el,+el.dataset.num,900));
+  document.querySelectorAll('.k-b i[data-w]').forEach(i=>setTimeout(()=>i.style.width=i.dataset.w+'%',120));
+  document.querySelectorAll('.comp .b').forEach((b,i)=>setTimeout(()=>b.style.height=b.dataset.h+'%',i*70));
+  document.querySelectorAll('.entra').forEach((e,i)=>setTimeout(()=>e.classList.add('v'),i*90));
+}
+if(document.readyState!=='loading')arrancar(); else document.addEventListener('DOMContentLoaded',arrancar);
+</script>
