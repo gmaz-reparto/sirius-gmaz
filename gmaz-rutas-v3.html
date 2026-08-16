@@ -824,9 +824,42 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .perf-p{opacity:1;color:var(--verde);background:#ECFDF5}
 .perf-p:hover{background:var(--verde);color:#fff}
 /* ── Hueco sin asignar: sin marco permanente ── */
+/* ── Buscador de personal ── */
+.fpk{position:absolute;z-index:900;width:286px;background:#fff;border:1px solid var(--gris2);border-radius:13px;
+  box-shadow:var(--sh-float);padding:11px;display:flex;flex-direction:column;gap:8px}
+.fpk-h{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--negro)}
+.fpk-x{margin-left:auto;width:22px;height:22px;border:none;background:transparent;color:var(--gris4);
+  font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;border-radius:6px;line-height:1}
+.fpk-x:hover{background:var(--gris1);color:var(--negro)}
+#fpk-q{height:36px;border:1px solid var(--gris3);border-radius:9px;padding:0 11px;font-family:inherit;
+  font-size:12.5px;font-weight:700;color:var(--negro);outline:none;width:100%}
+#fpk-q:focus{border-color:var(--rojo)}
+.fpk-res{max-height:236px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.fpk-r{display:flex;align-items:center;gap:8px;padding:7px 8px;border:none;background:transparent;border-radius:9px;
+  cursor:pointer;text-align:left;font-family:inherit;width:100%}
+.fpk-r:hover{background:var(--gris1)}
+.fpk-av{width:26px;height:26px;border-radius:50%;background:var(--gris2);color:var(--gris5);display:grid;
+  place-items:center;font-size:9px;font-weight:800;flex-shrink:0}
+.fpk-r:hover .fpk-av{background:var(--negro);color:#fff}
+.fpk-n{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.fpk-n b{font-size:11.5px;font-weight:800;color:var(--negro);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fpk-n em{font-style:normal;font-size:9.5px;font-weight:700;color:var(--gris4)}
+.fpk-n mark{background:#FFE9B0;color:inherit;border-radius:3px}
+.fpk-vacio{font-size:11.5px;color:var(--gris4);font-weight:600;padding:10px 4px}
+.fpk-quitar{height:32px;border:1px solid var(--gris2);border-radius:9px;background:#fff;color:var(--gris5);
+  font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.fpk-quitar:hover{background:var(--rojo-s);border-color:rgba(227,6,19,.3);color:var(--rojo)}
+/* Botón «Cambiar» de la ficha: discreto, aparece al pasar el mouse */
+.perf-c{border:none;background:transparent;color:var(--gris4);font-family:inherit;font-size:10px;font-weight:800;
+  cursor:pointer;padding:3px 7px;border-radius:6px;opacity:0;flex-shrink:0;transition:opacity .12s,background .12s,color .12s}
+.perf:hover .perf-c,.perf:focus-within .perf-c{opacity:1}
+.perf-c:hover{background:var(--negro);color:#fff}
+.perf-p{border:none;background:#ECFDF5;color:var(--verde);font-family:inherit;font-size:10px;font-weight:800;
+  cursor:pointer;padding:4px 9px;border-radius:7px;flex-shrink:0}
+.perf-p:hover{background:var(--verde);color:#fff}
 .hueco{position:relative;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:9px;
-  border:1px dashed transparent;color:var(--gris4);font-size:11px;font-weight:700;cursor:pointer;
-  transition:background .12s,border-color .12s,color .12s}
+  border:1px dashed transparent;background:transparent;color:var(--gris4);font-family:inherit;font-size:11px;
+  font-weight:700;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
 .hueco:hover{background:var(--gris1);border-color:var(--gris3);color:var(--negro)}
 .hueco svg{opacity:.75}
 .hueco select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-family:inherit}
@@ -2420,6 +2453,15 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     </div>
     <button class="ep-ok" onclick="haptic();confirmarTripulacion()">Iniciar ruta</button>
   </div>
+</div>
+
+<!-- BUSCADOR DE PERSONAL — se abre desde la tabla de flota -->
+<div id="fl-picker" class="fpk" style="display:none">
+  <div class="fpk-h"><span id="fpk-t">Elegir persona</span>
+    <button class="fpk-x" onclick="cerrarPicker()" title="Cerrar">✕</button></div>
+  <input type="search" id="fpk-q" autocomplete="off" placeholder="Escribe el nombre o la cédula…" oninput="_fpkBuscar()">
+  <div id="fpk-res" class="fpk-res"></div>
+  <button id="fpk-quitar" class="fpk-quitar" style="display:none" onclick="_fpkQuitar()">Quitar de la ruta y dejar el puesto vacío</button>
 </div>
 
 <!-- PROGRESS PANEL -->
@@ -4359,8 +4401,7 @@ async function guardarConductorFijo(sel){
     hideLoad();
     toast(p?unit+' → '+_nomCorto(p.nombre):unit+' sin conductor fijo','ok');
     renderMaestroConductores();
-    await _sincronizarConductoresDelDia(); // otras rutas con esa misma placa
-    if(document.getElementById('dash-veh-list'))await renderFlota();
+    _sincronizarConductoresDelDia(); // otras rutas con esa placa, en segundo plano
   }catch(e){hideLoad();toast('No se pudo guardar: '+e.message,'err');}
 }
 async function guardarConductorDia(sel){
@@ -6720,6 +6761,8 @@ async function renderFlota(fechaSel,forzar){
     const asignados=new Set(Object.values(_asigPorRuta));
     const sinRuta=(_vehCache||[]).filter(v=>!asignados.has(v.nombre))
       .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+    window._flIdx={};rutas.forEach((r,i)=>window._flIdx[r]=i);
+    window._flUso=usoUnit; window._flEsHoy=esHoy; window._rutasAsig=rutas;
     cont.innerHTML='<table class="fl-tabla"><thead><tr>'+
       '<th style="width:22px"></th><th>Ruta</th><th>Placa</th><th>GPS</th>'+
       '<th class="r">Clientes</th><th class="r">Cajas</th><th class="r">Km</th>'+
@@ -6986,78 +7029,191 @@ function exportarFlota(){
   toast('Exportado: flota-'+fecha+'.csv','ok');
 }
 
-/* Ficha de una persona en la ruta. El botón de quitar usa el icono `back` del set propio —la
-   flecha de devolver— y solo aparece al pasar el mouse: la fila se lee limpia y la acción no
-   compite con el nombre. */
+/* Ficha de una persona en la ruta. Un solo control: «Cambiar», que abre el buscador — y dentro
+   del buscador está la opción de quitar. Antes había dos iconos (una flecha y un visto) y no se
+   entendía cuál hacía qué. */
 function _arChip(p,ruta,rol,soloLectura){
   const esCond=rol==='conductor'||p.rol==='conductor';
   const et=p.origen==='persona'?['ok','confirmó']:p.origen==='sistema'?['sis','del vehículo']:['coord','asignado'];
   return '<span class="perf'+(esCond?' cond':'')+'" title="'+p.nombre+(p.ced?' · C.C. '+p.ced:'')+'">'+
     '<span class="perf-av '+(esCond?'c':'a')+'">'+_tcIniciales(p.nombre)+'</span>'+
     '<span class="perf-t"><b>'+_nomCorto(p.nombre,3)+'</b><em class="'+et[0]+'">'+et[1]+'</em></span>'+
-    (soloLectura?'':'<button class="perf-q" title="'+(esCond?'Quitar de la ruta · el conductor fijo de la placa no se borra':'Quitar de la ruta')+
-      '" onclick="event.stopPropagation();haptic();quitarTripulante(\''+ruta+'\',\''+p.ced+'\')">'+icoSvg('back',13,2.2)+'</button>')+'</span>';
+    (soloLectura?'':'<button class="perf-c" title="Cambiar o quitar a '+_nomCorto(p.nombre,3)+'"'+
+      ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\''+(esCond?'conductor':'auxiliar')+'\',\''+p.ced+'\')">Cambiar</button>')+
+    '</span>';
 }
-/* El conductor fijo de la placa que aún no está puesto en la ruta: la misma ficha en gris, con el
-   icono de persona para sumarlo. */
+/* El conductor fijo de la placa que aún no está puesto en la ruta: ficha en gris con un botón que
+   dice lo que hace. */
 function _arChipSugerido(f,ruta,unit){
   return '<span class="perf sugerido" title="'+f.nombre+' · conductor fijo de '+unit+'">'+
     '<span class="perf-av g">'+_tcIniciales(f.nombre)+'</span>'+
     '<span class="perf-t"><b>'+_nomCorto(f.nombre,3)+'</b><em class="sis">fijo de la placa</em></span>'+
-    '<button class="perf-p" title="Ponerlo en la ruta de hoy" onclick="event.stopPropagation();haptic();registrarConductorAutomatico(\''+ruta+'\',\''+unit+'\').then(()=>renderFlota())">'+icoSvg('check',13,2.2)+'</button></span>';
+    '<button class="perf-p" title="Ponerlo en la ruta de hoy" onclick="event.stopPropagation();haptic();_flPonerFijo(\''+ruta+'\',\''+unit+'\')">Poner</button></span>';
 }
-/* Hueco sin asignar: sin marco permanente. Se ve el icono de persona y la palabra; el marco
-   punteado y el fondo aparecen solo al pasar el mouse. El <select> va encima, transparente. */
+/* Hueco sin asignar: abre el mismo buscador. */
 function _arSelCond(ruta,unit,fijo){
-  const conductores=entregadoresDisponibles().filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
-  return '<label class="hueco cond" title="Elegir el conductor fijo de '+(unit||'la placa')+'">'+
-    icoSvg('user',13,2.1)+'<span>asignar conductor</span>'+
-    '<select data-unit="'+unit+'" data-ruta="'+ruta+'" onchange="haptic();guardarConductorFijo(this)" onclick="event.stopPropagation()">'+
-    '<option value="">— sin asignar —</option>'+
-    conductores.map(o=>'<option value="'+o.ced+'"'+(fijo&&String(fijo.ced)===String(o.ced)?' selected':'')+'>'+o.nombre+'</option>').join('')+
-    '</select></label>';
+  return '<button class="hueco cond" title="Elegir el conductor de '+(ruta||unit)+'"'+
+    ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\'conductor\',\'\',\''+unit+'\')">'+
+    icoSvg('user',13,2.1)+'<span>asignar conductor</span></button>';
 }
 function _arSelAux(ruta){
-  // Nadie puede ir en dos rutas el mismo día: quien ya está asignado no vuelve a aparecer.
-  const ocupados=new Set();
-  Object.values(_tripAsignada||{}).forEach(arr=>(arr||[]).forEach(x=>ocupados.add(String(x.ced))));
-  const lista=entregadoresDisponibles().filter(o=>!ocupados.has(String(o.ced)));
-  return '<label class="hueco" title="Agregar un auxiliar a '+ruta+'">'+
-    icoSvg('user',13,2.1)+'<span>agregar</span>'+
-    '<select data-ruta="'+ruta+'" data-rol="auxiliar" onchange="haptic();asignarTripulante(this)" onclick="event.stopPropagation()">'+
-    '<option value="">— elegir —</option>'+
-    lista.map(o=>'<option value="'+o.ced+'">'+o.nombre+'</option>').join('')+'</select></label>';
+  return '<button class="hueco" title="Agregar un auxiliar a '+ruta+'"'+
+    ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\'auxiliar\')">'+
+    icoSvg('user',13,2.1)+'<span>agregar</span></button>';
 }
 
-async function asignarTripulante(sel){
-  const ruta=sel.dataset.ruta,rol=sel.dataset.rol,ced=sel.value;
-  if(!ced)return;
+/* ══ BUSCADOR DE PERSONAL ══
+   Con 38 personas, un desplegable obliga a recorrer toda la lista. Aquí se escribe el nombre o la
+   cédula y aparecen las coincidencias. Si se abrió desde una ficha ya ocupada, arriba dice a quién
+   reemplaza y abajo queda la opción de solo quitarlo. */
+let _fpk={ruta:'',rol:'',reemplaza:'',unit:''};
+function abrirPicker(btn,ruta,rol,reemplaza,unit){
+  _fpk={ruta,rol,reemplaza:reemplaza||'',unit:unit||_asigPorRuta[ruta]||''};
+  const pk=document.getElementById('fl-picker');
+  const r=btn.getBoundingClientRect();
+  pk.style.display='block';
+  // Se ancla al control, sin salirse de la ventana
+  const ancho=286;
+  let x=r.left+window.scrollX, y=r.bottom+window.scrollY+6;
+  if(x+ancho>window.scrollX+window.innerWidth-12)x=window.scrollX+window.innerWidth-ancho-12;
+  if(y+320>window.scrollY+window.innerHeight)y=Math.max(window.scrollY+8,r.top+window.scrollY-326);
+  pk.style.left=x+'px'; pk.style.top=y+'px';
+  const per=reemplaza?(_tripAsignada[ruta]||[]).find(z=>String(z.ced)===String(reemplaza)):null;
+  document.getElementById('fpk-t').textContent=per
+    ? 'Cambiar a '+_nomCorto(per.nombre,3)
+    : (rol==='conductor'?'Conductor de '+ruta:'Auxiliar de '+ruta);
+  const bq=document.getElementById('fpk-quitar');
+  bq.style.display=per?'block':'none';
+  const q=document.getElementById('fpk-q');
+  q.value=''; _fpkBuscar(); setTimeout(()=>q.focus(),40);
+  document.addEventListener('keydown',_fpkEsc);
+  setTimeout(()=>document.addEventListener('click',_fpkFuera),0);
+}
+function cerrarPicker(){
+  const pk=document.getElementById('fl-picker');if(pk)pk.style.display='none';
+  document.removeEventListener('keydown',_fpkEsc);
+  document.removeEventListener('click',_fpkFuera);
+}
+function _fpkEsc(e){ if(e.key==='Escape')cerrarPicker(); }
+function _fpkFuera(e){ if(!e.target.closest('#fl-picker'))cerrarPicker(); }
+function _fpkBuscar(){
+  const cont=document.getElementById('fpk-res');
+  const txt=(document.getElementById('fpk-q').value||'').trim().toUpperCase();
+  // Nadie puede ir en dos rutas el mismo día
+  const ocupados=new Set();
+  Object.values(_tripAsignada||{}).forEach(arr=>(arr||[]).forEach(x=>{
+    if(String(x.ced)!==String(_fpk.reemplaza))ocupados.add(String(x.ced));}));
+  let lista=entregadoresDisponibles().filter(o=>!ocupados.has(String(o.ced)));
+  if(_fpk.rol==='conductor')lista=lista.filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
+  if(txt)lista=lista.filter(o=>o.nombre.toUpperCase().includes(txt)||String(o.ced).includes(txt));
+  lista=lista.slice(0,40);
+  if(!lista.length){
+    cont.innerHTML='<div class="fpk-vacio">'+(txt?'Nadie coincide con «'+txt+'»':'No queda nadie disponible')+'</div>';
+    return;
+  }
+  const marca=n=>{ if(!txt)return n; const i=n.toUpperCase().indexOf(txt);
+    return i<0?n:n.slice(0,i)+'<mark>'+n.slice(i,i+txt.length)+'</mark>'+n.slice(i+txt.length); };
+  cont.innerHTML=lista.map(o=>
+    '<button class="fpk-r" onclick="_fpkElegir(\''+o.ced+'\')">'+
+      '<span class="fpk-av">'+_tcIniciales(o.nombre)+'</span>'+
+      '<span class="fpk-n"><b>'+marca(o.nombre)+'</b><em>'+o.cargo+' · C.C. '+o.ced+'</em></span></button>').join('');
+}
+async function _fpkElegir(ced){
+  const {ruta,rol,reemplaza,unit}=_fpk;
+  cerrarPicker();
   const p=entregadoresDisponibles().find(x=>String(x.ced)===String(ced));
   if(!p)return;
-  showLoad('Asignando a '+_nomCorto(p.nombre)+'…');
+  const fecha=getColDate();
   try{
-    await _storageGuardar('REGISTRO/'+getColDate()+'/'+ruta+'__'+p.ced+'.json',
-      {ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol,hora:new Date().toISOString(),origen:'coordinador',ruta});
-    hideLoad();
-    toast(_nomCorto(p.nombre)+' → '+ruta+' como '+(rol==='conductor'?'conductor':'auxiliar'),'ok');
-    _tripPorFecha={};
-    await renderFlota();
-    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
-  }catch(e){hideLoad();toast('No se pudo asignar: '+e.message,'err');}
+    if(reemplaza&&String(reemplaza)!==String(ced))await _flBorrarPersona(ruta,reemplaza);
+    const persona={ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol,hora:new Date().toISOString(),origen:'coordinador',ruta};
+    await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+p.ced+'.json',persona);
+    // Estado en memoria: se repinta SOLO esta fila, sin recargar toda la tabla
+    const arr=(_tripAsignada[ruta]||[]).filter(x=>String(x.ced)!==String(reemplaza));
+    arr.push(persona); _tripAsignada[ruta]=arr;
+    // Si es conductor y la placa no tenía fijo, queda como fijo de esa placa
+    if(rol==='conductor'&&unit&&!(maestroConductores||{})[unit]){
+      maestroConductores[unit]={ced:p.ced,nombre:p.nombre,actualizado:new Date().toISOString()};
+      _storageGuardar('MAESTRO_CONDUCTORES.json',maestroConductores).catch(()=>{});
+    }
+    _flRepintarFila(ruta);
+    toast(_nomCorto(p.nombre,3)+' → '+ruta+(rol==='conductor'?' como conductor':' como auxiliar'),'ok');
+    _flRefrescoSuave();
+  }catch(e){toast('No se pudo asignar: '+e.message,'err');}
+}
+async function _fpkQuitar(){
+  const {ruta,reemplaza}=_fpk;
+  cerrarPicker();
+  if(!reemplaza)return;
+  const per=(_tripAsignada[ruta]||[]).find(x=>String(x.ced)===String(reemplaza));
+  if(per&&per.origen==='persona'&&!confirm(_nomCorto(per.nombre,3)+' se registró desde su propio celular.\n\n¿Seguro que lo quitas de '+ruta+'?'))return;
+  try{
+    await _flBorrarPersona(ruta,reemplaza);
+    _tripAsignada[ruta]=(_tripAsignada[ruta]||[]).filter(x=>String(x.ced)!==String(reemplaza));
+    _flRepintarFila(ruta);
+    toast('Quitado de '+ruta,'ok');
+    _flRefrescoSuave();
+  }catch(e){toast('No se pudo quitar: '+e.message,'err');}
+}
+async function _flBorrarPersona(ruta,ced){
+  return fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+getColDate()+'/'+ruta+'__'+ced+'.json',
+    {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+}
+/* Poner en la ruta al conductor fijo de la placa, sin recargar la tabla. */
+async function _flPonerFijo(ruta,unit){
+  const c=conductorDelVehiculo(unit);if(!c)return;
+  const emp=entregadoresDisponibles().find(x=>String(x.ced)===String(c.ced))||{};
+  const persona={ced:c.ced,nombre:c.nombre,cargo:emp.cargo||'CONDUCTOR DE ENTREGA',rol:'conductor',
+    hora:new Date().toISOString(),origen:'sistema',vehiculo:unit,reemplazo:!!c.esReemplazo,ruta};
+  try{
+    await _storageGuardar('REGISTRO/'+getColDate()+'/'+ruta+'__'+c.ced+'.json',persona);
+    (_tripAsignada[ruta]=_tripAsignada[ruta]||[]).push(persona);
+    _flRepintarFila(ruta);
+    toast(_nomCorto(c.nombre,3)+' → '+ruta,'ok');
+    _flRefrescoSuave();
+  }catch(e){toast('No se pudo poner: '+e.message,'err');}
+}
+/* Repinta UNA fila con lo que ya está en memoria: sin red y sin parpadeo. */
+function _flRepintarFila(ruta){
+  const i=(window._flIdx||{})[ruta];
+  if(i===undefined)return renderFlota();
+  const tr=document.getElementById('flf-'+i),det=document.getElementById('fld-'+i);
+  if(!tr)return;
+  const abierta=det&&det.style.display!=='none';
+  const tmp=document.createElement('tbody');
+  tmp.innerHTML=_flFila(ruta,i,window._flUso||{},window._flEsHoy!==false);
+  const nuevos=[...tmp.children];
+  if(det)det.remove();
+  tr.replaceWith(...nuevos);
+  if(abierta)flAbrir(i,ruta,{target:document.body});
+  // los km ya calculados se vuelven a pintar sin consultar de nuevo
+  const unit=_asigPorRuta[ruta];
+  if(unit){const km=((_kmPorFecha[_flotaFecha||getColDate()]||{})[unit]);
+    if(km!==undefined)document.querySelectorAll('[data-km="'+unit+'"]').forEach(el=>{
+      el.innerHTML=km==null?'—':'<b>'+km.toLocaleString('es-CO')+'</b>';});}
+}
+/* La Torre y el contador se actualizan en segundo plano, sin tocar esta tabla. */
+function _flRefrescoSuave(){
+  const rutas=window._rutasAsig||[];
+  const meta=document.getElementById('fl-meta');
+  if(meta){
+    const conCond=rutas.filter(r=>(_tripAsignada[r]||[]).some(x=>x.rol==='conductor')).length;
+    const asign=new Set(Object.values(_asigPorRuta)).size;
+    meta.textContent=rutas.length+' rutas · '+asign+' vehículos en calle · con conductor: '+conCond;
+  }
+  if(document.getElementById('tc-rutas'))setTimeout(()=>cargarTorreControl(true),400);
+}
+
+/* Compatibilidad: el flujo normal ahora pasa por el buscador (_fpkElegir). */
+async function asignarTripulante(sel){
+  const ced=sel.value;if(!ced)return;
+  _fpk={ruta:sel.dataset.ruta,rol:sel.dataset.rol,reemplaza:'',unit:_asigPorRuta[sel.dataset.ruta]||''};
+  return _fpkElegir(ced);
 }
 
 async function quitarTripulante(ruta,ced){
-  const p=(_tripAsignada[ruta]||[]).find(x=>String(x.ced)===String(ced));
-  if(p&&p.origen==='persona'&&!confirm(_nomCorto(p.nombre)+' se registró desde su propio celular.\n\n¿Seguro que lo quitas de '+ruta+'?'))return;
-  showLoad('Quitando…');
-  try{
-    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+getColDate()+'/'+ruta+'__'+ced+'.json',
-      {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
-    hideLoad();toast('Quitado de '+ruta,'ok');
-    _tripPorFecha={};
-    await renderFlota();
-    if(document.getElementById('tc-rutas'))cargarTorreControl(true);
-  }catch(e){hideLoad();toast('No se pudo quitar: '+e.message,'err');}
+  _fpk={ruta,rol:'',reemplaza:ced,unit:_asigPorRuta[ruta]||''};
+  return _fpkQuitar();
 }
 
 async function guardarAsignacionRuta(sel){
