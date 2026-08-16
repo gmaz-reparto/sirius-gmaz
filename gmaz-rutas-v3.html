@@ -825,6 +825,9 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
 .vb.cambio{background:#FFFBEB;border-color:rgba(217,119,6,.3);color:var(--amarillo)}
 .vb.cambio:hover{background:#FEF3C7}
 .vb:disabled{cursor:default;opacity:.75}
+.vb.curso{background:var(--gris1);border-color:var(--gris2);color:var(--gris5);flex-direction:row;gap:6px}
+.vb-sp{width:11px;height:11px;border:2px solid var(--gris3);border-top-color:var(--rojo);border-radius:50%;
+  animation:spin .7s linear infinite;flex-shrink:0}
 .vb-nota{font-size:8.5px;font-weight:700;color:var(--gris4);margin-top:2px}
 .fl-fila{cursor:pointer;border-left:3px solid transparent}
 .fl-fila:hover td{background:var(--gris1)}
@@ -4623,13 +4626,14 @@ async function validarTripulacion(ruta){
   if(!personas.length){toast('Esa ruta todavía no tiene a nadie registrado','err');return;}
   const cond=personas.filter(p=>p.rol==='conductor').length;
   if(cond>1){toast('Hay dos conductores en '+ruta+': deja uno solo antes de aprobar','err');return;}
-  showLoad('Aprobando la tripulación de '+ruta+'…');
+  const restaurar=enFlota?_flBotonEnCurso(ruta,'Aprobando'):null;
+  if(!enFlota)showLoad('Aprobando la tripulación de '+ruta+'…');
   try{
     const payload={ruta,fecha,ok:true,hora:new Date().toISOString(),
       personas:personas.map(p=>({ced:p.ced,nombre:p.nombre,rol:p.rol,origen:p.origen||''})),
       firma:_firmaTripulacion(personas)};
     await _storageGuardar('VALIDACION/'+fecha+'/'+ruta+'.json',payload);
-    hideLoad();
+    if(!enFlota)hideLoad();
     toast('✓ '+ruta+' aprobada · '+personas.length+' persona'+(personas.length>1?'s':''),'ok');
     if(enFlota){
       (_flotaDia.val=_flotaDia.val||{})[ruta]=payload;
@@ -4637,7 +4641,11 @@ async function validarTripulacion(ruta){
       _flRefrescoSuave();
     }
     if(document.getElementById('tc-rutas'))cargarTorreControl(true);
-  }catch(e){hideLoad();toast('No se pudo aprobar: '+e.message,'err');}
+  }catch(e){
+    if(!enFlota)hideLoad();
+    if(restaurar)restaurar();
+    toast('No se pudo aprobar: '+e.message,'err');
+  }
 }
 /* ══ CAMBIO DE ROL POR EL COORDINADOR ══
    El entregador no puede cambiarse el rol solo (si se equivocó, la app le dice que hable con el
@@ -6990,32 +6998,44 @@ function _flCelVB(ruta,personas,est,esHoy){
   const estado=_flValidada(ruta);
   const hora=v&&v.hora?new Date(v.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
   if(estado==='ok')
-    return '<button class="vb ok" title="Aprobada por ti a las '+hora+' · '+(v.personas||[]).length+
+    return '<button class="vb ok" data-vb="'+ruta+'" title="Aprobada por ti a las '+hora+' · '+(v.personas||[]).length+
       ' persona(s). Toca para quitar el visto bueno."'+
       (esHoy?' onclick="event.stopPropagation();quitarVistoBueno(\''+ruta+'\')"':' disabled')+'>'+
       icoSvg('check',12,2.4)+'<span>Aprobada</span><em>'+hora+'</em></button>';
   if(estado==='cambio')
-    return '<button class="vb cambio" title="La tripulación cambió después de que la aprobaras: revísala y vuelve a dar el OK"'+
+    return '<button class="vb cambio" data-vb="'+ruta+'" title="La tripulación cambió después de que la aprobaras: revísala y vuelve a dar el OK"'+
       (esHoy?' onclick="event.stopPropagation();validarTripulacion(\''+ruta+'\')"':' disabled')+'>'+
       '<span>Cambió · revisar</span><em>aprobada '+hora+'</em></button>';
   if(!esHoy)return '<span class="ar-est mute">Sin aprobar</span>';
   if(!personas.length)
     return '<span class="ar-est '+est[0]+'">'+est[1]+'</span><div class="vb-nota">nadie se ha registrado</div>';
-  return '<button class="vb pend" title="Confirmar que '+ruta+' salió con esta gente"'+
+  return '<button class="vb pend" data-vb="'+ruta+'" title="Confirmar que '+ruta+' salió con esta gente"'+
     ' onclick="event.stopPropagation();validarTripulacion(\''+ruta+'\')">'+
     '<span>Dar el OK</span><em>'+est[1].toLowerCase()+'</em></button>';
+}
+/* Marcar el botón como «en curso» en su propio sitio. La cortina de pantalla completa (showLoad)
+   es para el celular: en el escritorio, para una acción de una fila que tarda menos de un segundo,
+   tapaba toda la tabla con una sombra gris y parecía que algo se hubiera roto. */
+function _flBotonEnCurso(ruta,txt){
+  const b=document.querySelector('[data-vb="'+ruta+'"]');
+  if(!b)return ()=>{};
+  const antes=b.innerHTML, cls=b.className;
+  b.className='vb curso'; b.disabled=true;
+  b.innerHTML='<span class="vb-sp"></span><span>'+txt+'</span>';
+  return ()=>{ if(!document.body.contains(b))return; b.innerHTML=antes; b.className=cls; b.disabled=false; };
 }
 /* Quitar el visto bueno: se equivocó al aprobar, o cambió algo y quiere volver a revisar. */
 async function quitarVistoBueno(ruta){
   if(!confirm('¿Quitar tu visto bueno de '+ruta+'?\n\nLa ruta vuelve a quedar pendiente de aprobación.'))return;
   const fecha=_flotaFecha||getColDate();
+  const restaurar=_flBotonEnCurso(ruta,'Quitando');
   try{
     await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/VALIDACION/'+fecha+'/'+ruta+'.json',
       {method:'DELETE',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
     delete (_flotaDia.val||{})[ruta];
     _flRepintarFila(ruta);
     toast(ruta+' vuelve a quedar pendiente','ok');
-  }catch(e){toast('No se pudo quitar: '+e.message,'err');}
+  }catch(e){restaurar();toast('No se pudo quitar: '+e.message,'err');}
 }
 
 /* Ficha compacta del auxiliar: círculo de iniciales + nombre, en una sola línea. */
