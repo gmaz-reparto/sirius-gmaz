@@ -742,6 +742,8 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .glos>div{background:#fff;padding:11px 14px}
 .glos b{display:block;font-size:12.5px;font-weight:800;color:var(--negro);margin-bottom:3px}
 .glos span{font-size:11.5px;color:var(--gris5);line-height:1.5}
+.fil-et{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gris4);
+  align-self:center;margin-right:-3px}
 .ctx-barra{display:inline-flex;align-items:center;gap:9px;font-size:11px;color:var(--gris5);font-weight:600;
   background:var(--gris1);border-radius:20px;padding:3px 5px 3px 12px;margin-left:10px}
 .ctx-barra b{color:var(--negro)}
@@ -1983,6 +1985,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <div class="dpage"><div><h1 id="dpage-t">Operación</h1><div class="dpage-s" id="dpage-s">Centro de control en vivo</div></div>
       <div class="dpage-act">
         <select class="dsel" id="fil-ruta" onchange="haptic();filtrarPorRutaSel(this.value)"><option value="">Todas las rutas</option></select>
+        <span class="fil-et" id="fil-et">Mes que se ve</span>
         <select class="dsel" id="fil-mes" onchange="haptic();cambiarPeriodo()"></select>
         <select class="dsel" id="fil-anio" onchange="haptic();cambiarPeriodo()"></select>
       </div>
@@ -2416,6 +2419,9 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
        #panel-coord; en escritorio, al abrir "Rutina diaria" desde el sidebar, se traslada dentro de
        #mod-rutina (mismo nodo, mismos ids, sin duplicar nada) para que no se abra una pantalla aparte. -->
   <div id="rutina-suite" style="display:flex;flex-direction:column;flex:1;min-height:0">
+  <div id="pc-aviso-esc" style="display:none;padding:11px 15px;background:var(--gris1);font-size:11.5px;color:var(--gris5);line-height:1.55;border-bottom:1px solid var(--gris2)">
+    Los pendientes del día están en <b>Operación</b>; la tripulación y el cargue por ruta en <b>Ruta</b>; el histórico cruzado en <b>Análisis</b>.
+  </div>
   <!-- PESTAÑAS -->
   <div style="display:flex;border-bottom:2px solid var(--gris2);background:var(--blanco);flex-shrink:0">
     <button id="pctab-1" onclick="haptic();switchPcTab(1)" style="flex:1;padding:10px 4px;border:none;background:none;font-size:11px;font-weight:700;color:var(--rojo);border-bottom:2px solid var(--rojo);margin-bottom:-2px;cursor:pointer">Rutina</button>
@@ -4074,6 +4080,10 @@ function rutearVistaInicial(){
 }
 function mostrarDash(){
   document.getElementById('dash').classList.add('on');
+  // El histórico inteligente se lleva a su módulo apenas abre el tablero, no cuando alguien entra a
+  // Análisis: si no, la tarjeta «saltaba» de la pestaña Histórico al módulo según el orden en que
+  // se visitaran, y por un rato se veía en los dos sitios.
+  setTimeout(()=>{try{montarAnalisis();ajustarPestanasPanel();}catch(e){}},300);
   document.getElementById('dash-fecha').innerHTML=icoSvg('cal',12)+' '+new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
   poblarFiltros();
   cargarDash();
@@ -5473,6 +5483,14 @@ function setFechaGlobal(f,origen){
   // Los de mes se alinean al mes de esa fecha
   ['ent-mes','asis-mes','pc-hist-mes','hist-arch-mes'].forEach(id=>{
     const e=document.getElementById(id);if(e&&e.value!==f.slice(0,7))e.value=f.slice(0,7);});
+  // Y el período de la cabecera también: tener el 13 de agosto elegido y el selector en julio
+  // producía dos meses distintos en la misma pantalla.
+  const aa=+f.slice(0,4), mm=+f.slice(5,7);
+  if(aa!==_periodoAnio||mm!==_periodoMes){
+    _periodoAnio=aa; _periodoMes=mm;
+    const sm=document.getElementById('fil-mes'), sa=document.getElementById('fil-anio');
+    if(sm)sm.value=String(mm); if(sa)sa.value=String(aa);
+  }
   const chip=document.getElementById('ctx-dia');
   if(chip)chip.innerHTML=(f===hoy?'<b>Hoy</b>':'<b>'+_tcFechaLarga(f)+'</b> · viendo un día pasado');
   const btn=document.getElementById('ctx-hoy');
@@ -5493,8 +5511,28 @@ function repintarModuloConFecha(origen){
     else if(m==='obseq'&&origen!=='obseq'&&typeof cargarObsequiosSup==='function')cargarObsequiosSup();
   }catch(e){}
 }
+/* ══ QUÉ FILTRA CADA SELECTOR DE LA CABECERA ══
+   Eran tres desplegables fijos —ruta, mes y año— que aparecían en TODOS los módulos, incluida
+   «Rutina diaria», donde ninguno de los tres hace nada: la rutina es de un día, no de un mes.
+   Ahora cada uno se muestra solo donde tiene efecto:
+     · Ruta  → los módulos que muestran datos por ruta.
+     · Mes y año → solo los que tienen vista de mes (Novedades, Alertas, Personal, Análisis).
+   Los módulos con su propio calendario (Rutina, Asistencia, Cierre del día, Obsequios) no muestran
+   ninguno: su fecha es la barra de contexto de arriba. */
+const _FIL_RUTA=['operacion','vehiculos','clientes','entregadores','rechazos','alertas','analisis'];
+const _FIL_MES=['rechazos','alertas','entregadores','analisis'];
+function ajustarFiltros(m){
+  const r=document.getElementById('fil-ruta'), ms=document.getElementById('fil-mes'), an=document.getElementById('fil-anio');
+  if(r)r.style.display=_FIL_RUTA.includes(m)?'':'none';
+  const verMes=_FIL_MES.includes(m);
+  if(ms)ms.style.display=verMes?'':'none';
+  if(an)an.style.display=verMes?'':'none';
+  const et=document.getElementById('fil-et');
+  if(et){et.style.display=verMes?'':'none';}
+}
 function activarModulo(m){
   document.querySelectorAll('.dnav').forEach(t=>t.classList.toggle('on',t.dataset.mod===m));
+  ajustarFiltros(m);
   document.querySelectorAll('.mod').forEach(s=>s.classList.toggle('on',s.id==='mod-'+m));
   const info=_MODINFO[m]||['',''];
   const pt=document.getElementById('dpage-t');if(pt)pt.textContent=info[0];
@@ -9549,7 +9587,30 @@ function closeProg(){document.getElementById('prog-overlay').classList.remove('s
 async function downloadReport(){}
 
 
+/* ══ LAS PESTAÑAS DEL PANEL SON NAVEGACIÓN DEL CELULAR, NO DEL ESCRITORIO ══
+   El panel del coordinador nació para el celular: sus cuatro pestañas son su menú. Cuando se
+   empotra en «Rutina diaria» del escritorio, tres de ellas repiten pantallas que ya tienen su
+   propio módulo en el menú lateral:
+     Operación → «Requiere atención» es la bandeja de la Torre, «Tripulación de hoy» es Ruta ›
+                 Despacho y «Cargue y devolución» es Ruta › Resultado del día.
+     Histórico → el histórico inteligente ahora vive en el módulo Análisis.
+     Más       → mosaicos que abren los mismos módulos del menú.
+   Así que en escritorio se ocultan y Rutina diaria queda siendo lo que dice ser: la rutina. */
+function esPanelEnEscritorio(){
+  const suite=document.getElementById('rutina-suite');
+  return !!(suite&&suite.parentElement&&suite.parentElement.id==='mod-rutina');
+}
+function ajustarPestanasPanel(){
+  const esc=esPanelEnEscritorio();
+  [2,3,4].forEach(i=>{const b=document.getElementById('pctab-'+i);if(b)b.style.display=esc?'none':'';});
+  const b1=document.getElementById('pctab-1');
+  if(b1)b1.style.flex=esc?'0 0 auto':'1';
+  if(esc)switchPcTab(1);
+  const aviso=document.getElementById('pc-aviso-esc');
+  if(aviso)aviso.style.display=esc?'block':'none';
+}
 function switchPcTab(n){
+  if(esPanelEnEscritorio())n=1;
   [1,2,3,4].forEach(i=>{
     const btn=document.getElementById('pctab-'+i);
     const content=document.getElementById('pctab-content-'+i);
@@ -11221,6 +11282,7 @@ function _auditRutas(anom){return[...new Set(anom.map(a=>a.ruta))].sort();}
 function activarModuloRutina(){
   const suite=document.getElementById('rutina-suite'),mod=document.getElementById('mod-rutina');
   if(suite&&mod&&suite.parentElement!==mod)mod.appendChild(suite);
+  ajustarPestanasPanel();
   activarModulo('rutina');
   updateDateStrip();
   verificarEstadoPanel();
