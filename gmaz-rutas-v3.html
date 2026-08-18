@@ -154,6 +154,16 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #sv-pano{width:100%;height:100%}
 #sv-nosv{position:absolute;inset:0;background:#1C1F2A;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
 #sv-nosv p{font-size:11px;color:var(--gris4);text-align:center;line-height:1.5}
+/* Botón de Street View bajo demanda: cada pulsación es una consulta pagada, así que se ve lo que
+   cuesta — cuántas vistas quedan del día. */
+#sv-btn{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;display:flex;
+  flex-direction:column;align-items:center;gap:1px;border:none;border-radius:13px;padding:11px 22px;
+  background:rgba(15,17,23,.9);color:#fff;font-family:inherit;cursor:pointer;
+  backdrop-filter:blur(6px);box-shadow:0 6px 22px rgba(0,0,0,.3);max-width:86%}
+#sv-btn b{font-size:13.5px;font-weight:800;letter-spacing:-.2px}
+#sv-btn small{font-size:10.5px;opacity:.72;font-weight:600}
+#sv-btn:disabled{opacity:.55;cursor:default}
+#sv-btn:not(:disabled):active{transform:translateX(-50%) scale(.97)}
 #sv-status{position:absolute;top:8px;left:8px;background:rgba(15,17,23,.78);border-radius:16px;padding:3px 10px;font-size:8px;font-weight:700;color:rgba(255,255,255,.7);z-index:1}
 #sv-status.live{color:#34d399}
 .info-panel{flex:0 0 35%;background:var(--blanco);display:flex;flex-direction:column;min-height:0;padding:6px 10px;padding-bottom:max(52px,env(safe-area-inset-bottom,52px));overflow-y:auto;}
@@ -1816,6 +1826,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <div id="sv-pano"></div>
     <div id="sv-nosv"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="16" stroke="#4A5060" stroke-width="1.5"/><path d="M9 17c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" stroke="#8A90A0" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="17" r="3" fill="#8A90A0"/></svg><p>Street View no disponible<br>en esta dirección</p></div>
     <div id="sv-status">● Street View</div>
+    <button id="sv-btn" onclick="haptic();verStreetView()" style="display:none"></button>
   </div>
   <div class="info-panel">
     <div class="ip-route-badges">
@@ -8432,17 +8443,93 @@ async function openClient(i){
     document.getElementById('cl-ruta-venta').textContent=rv;
     document.getElementById('ip-rb-g').textContent=rv;
   }catch(e){document.getElementById('cl-ruta-venta').textContent='—';document.getElementById('ip-rb-g').textContent='—';}
-  // Street View
-  if(!lat||!lng){document.getElementById('sv-nosv').style.display='flex';document.getElementById('sv-status').textContent='○ Sin coordenadas';document.getElementById('sv-status').className='';return;}
-  document.getElementById('sv-nosv').style.display='none';
-  if(!gpano||!svSvc)return;
-  const tag=document.getElementById('sv-status');
-  svSvc.getPanorama({location:{lat,lng},radius:150},(d,s)=>{
-    if(s==='OK'){gpano.setPosition({lat,lng});gpano.setVisible(true);tag.textContent='● Street View activo';tag.className='live';}
-    else svSvc.getPanorama({location:{lat,lng},radius:400},(d2,s2)=>{
-      if(s2==='OK'){gpano.setPosition({lat,lng});gpano.setVisible(true);tag.textContent='● Street View activo';tag.className='live';}
-      else{document.getElementById('sv-nosv').style.display='flex';tag.textContent='○ Sin Street View';tag.className='';}
-    });
+  // Street View — ahora SOLO si el entregador lo pide (ver _svPreparar)
+  _svPreparar(lat,lng,cod);
+}
+
+/* ══ STREET VIEW BAJO DEMANDA (18-ago-2026) ══
+   Antes el panorama se abría solo con cada cliente que se tocaba: con 450 clientes al día eso son
+   entre 11.000 y 22.000 consultas al mes a la API más cara de Google, y el entregador casi nunca la
+   miraba porque ya conoce sus tiendas. Ahora aparece un botón y solo se gasta cuando de verdad hace
+   falta: una dirección nueva, un cliente que no encuentra, una fachada que hay que verificar.
+   Además se lleva un contador del día con tope, compartido por todos los celulares. */
+const SV_TOPE_DIA=200;
+let _svCoords=null, _svSinPano=null, _svConteo=null, _svFecha=null;
+
+/* Clientes que ya se sabe que no tienen panorama: no se vuelve a preguntar (ni a gastar). */
+function _svCargarSinPano(){
+  if(_svSinPano)return _svSinPano;
+  try{ _svSinPano=new Set(JSON.parse(localStorage.getItem('gmaz_sv_nopano')||'[]')); }
+  catch(e){ _svSinPano=new Set(); }
+  return _svSinPano;
+}
+function _svMarcarSinPano(cod){
+  _svCargarSinPano().add(String(cod));
+  try{ localStorage.setItem('gmaz_sv_nopano',JSON.stringify([..._svSinPano].slice(-4000))); }catch(e){}
+}
+/* Conteo del día, compartido: vive en Storage para que el tope sea de la operación y no de un celular. */
+async function _svLeerConteo(){
+  const f=getColDate();
+  if(_svConteo!==null&&_svFecha===f)return _svConteo;
+  _svFecha=f; _svConteo=0;
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/SVCONTEO/'+f+'.json?t='+Date.now());
+    if(r.ok){const d=await r.json(); _svConteo=+d.n||0;}
+  }catch(e){}
+  return _svConteo;
+}
+async function _svSumarConteo(){
+  _svConteo=(_svConteo||0)+1;
+  try{ await _storageGuardar('SVCONTEO/'+(_svFecha||getColDate())+'.json',{n:_svConteo,hora:new Date().toISOString()}); }catch(e){}
+  return _svConteo;
+}
+/* Prepara la pantalla del cliente: no consume nada hasta que se pulsa el botón. */
+async function _svPreparar(lat,lng,cod){
+  const nosv=document.getElementById('sv-nosv'), tag=document.getElementById('sv-status');
+  const btn=document.getElementById('sv-btn');
+  if(gpano)gpano.setVisible(false);
+  _svCoords=(lat&&lng)?{lat,lng,cod:String(cod||'')}:null;
+  if(!btn)return;
+  if(!_svCoords){
+    nosv.style.display='flex'; btn.style.display='none';
+    tag.textContent='○ Sin coordenadas'; tag.className=''; return;
+  }
+  if(_svCargarSinPano().has(String(cod))){
+    nosv.style.display='flex'; btn.style.display='none';
+    tag.textContent='○ Sin Street View'; tag.className=''; return;
+  }
+  nosv.style.display='none';
+  const usadas=await _svLeerConteo();
+  const quedan=Math.max(0,SV_TOPE_DIA-usadas);
+  btn.style.display='flex';
+  btn.disabled=quedan<=0;
+  btn.innerHTML=quedan>0
+    ? '<b>Ver la fachada del negocio</b><small>quedan '+quedan+' vistas hoy</small>'
+    : '<b>Sin vistas disponibles hoy</b><small>se repone mañana · '+SV_TOPE_DIA+' por día</small>';
+  tag.textContent=quedan>0?'○ Street View · toca para verlo':'○ Cupo del día agotado';
+  tag.className='';
+}
+/* Aquí sí se gasta una vista. Una sola llamada: el respaldo con radio 400 duplicaba el costo
+   justo en las direcciones donde de todas formas no hay cobertura. */
+async function verStreetView(){
+  if(!_svCoords||!gpano||!svSvc)return;
+  const {lat,lng,cod}=_svCoords;
+  const tag=document.getElementById('sv-status'), btn=document.getElementById('sv-btn'), nosv=document.getElementById('sv-nosv');
+  const usadas=await _svLeerConteo();
+  if(usadas>=SV_TOPE_DIA){ toast('Se acabaron las '+SV_TOPE_DIA+' vistas de hoy','err'); return; }
+  btn.disabled=true; btn.innerHTML='<b>Buscando la fachada…</b>';
+  svSvc.getPanorama({location:{lat,lng},radius:250},async (d,st)=>{
+    if(st==='OK'){
+      gpano.setPosition({lat,lng}); gpano.setVisible(true);
+      tag.textContent='● Street View activo'; tag.className='live';
+      btn.style.display='none';
+      const n=await _svSumarConteo();
+      if(n>=SV_TOPE_DIA-20)toast('Quedan '+Math.max(0,SV_TOPE_DIA-n)+' vistas de Street View hoy','');
+    }else{
+      _svMarcarSinPano(cod);           // no se vuelve a gastar en este cliente
+      nosv.style.display='flex'; btn.style.display='none';
+      tag.textContent='○ Sin Street View'; tag.className='';
+    }
   });
 }
 
@@ -12121,6 +12208,6 @@ window.addEventListener('popstate',()=>{
 });
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=places,geometry&callback=initMap&language=es&region=CO"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI&libraries=geometry&callback=initMap&language=es&region=CO"></script>
 </body>
 </html>
