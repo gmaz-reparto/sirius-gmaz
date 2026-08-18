@@ -2396,7 +2396,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <div id="ns-fachada" class="ns-fachada" style="display:none"></div>
   </div>
   <div id="ns-aviso-cant" style="display:none;background:#FFF8E6;border:1px solid rgba(217,119,6,.25);border-radius:10px;padding:11px 13px;margin:10px 0;font-size:12px;color:#B45309;line-height:1.5">
-    <b>Marca cuánto se devuelve.</b> Toca los <b>+</b> de cada producto para decir cuántas cajas o unidades vuelven al camión. Sin eso no se puede liquidar ni reclamar la diferencia.
+    <b>Si puede, marque cuánto vuelve.</b> Toque los <b>+</b> de cada producto para decir las cajas o unidades que regresan al camión — así el coordinador sabe qué reclamar. <b>Si va de afán, confirme igual</b> y él lo completa después.
   </div>
   <div id="ns-tabla" style="display:none"></div>
   <div class="ns-actions">
@@ -8983,12 +8983,14 @@ function retakePhoto(){
 
 /* El botón "Confirmar y avisar" necesita motivo elegido y, en CLIENTE CERRADO, la foto de fachada. */
 function _nsActualizarOk(){
-  // Sin cantidad no hay novedad: un «rechazo parcial» sin decir cuánto no se puede liquidar ni
-  // reclamar. Si el cliente no tiene pedido en el Libro no hay nada que marcar, y ahí sí se deja pasar.
+  // 18-ago-2026: la cantidad se PIDE, no se EXIGE. La versión anterior bloqueaba el botón hasta que
+  // el entregador marcara al menos un producto en el rechazo parcial, y eso lo dejaba varado en la
+  // calle con el cliente enfrente. Un dato incompleto se reclama después; una entrega frenada no se
+  // recupera. Ahora solo aparece el aviso y el coordinador ve «sin cuantificar» en su panel.
   const hayPedido=Object.keys(devSel||{}).length>0;
   const marcado=Object.values(devSel||{}).some(x=>x.devCaj>0||x.devUnd>0);
   const faltaCantidad=_motivoExigeCantidad(motivo)&&hayPedido&&!marcado;
-  const falta=!motivo||(_motivoExigeFachada(motivo)&&!_fotoFachadaOK)||faltaCantidad;
+  const falta=!motivo||(_motivoExigeFachada(motivo)&&!_fotoFachadaOK);
   const b=document.getElementById('ns-ok');
   b.disabled=falta;
   const av=document.getElementById('ns-aviso-cant');
@@ -9072,12 +9074,10 @@ function pickReason(m,el){
   // La tabla de productos/devolución aparece DESPUÉS de elegir el motivo.
   const tabla=document.getElementById('ns-tabla');
   if(!tabla||tabla.style.display==='none'||!Object.keys(devSel).length)renderTablaDevolucion();
-  // Motivo total → se marca todo el pedido solo. Motivo parcial → se limpia para que el entregador
-  // marque exactamente lo que devuelve; si venía marcado de un motivo anterior, quedaría mintiendo.
-  if(Object.keys(devSel).length){
-    if(_motivoEsTotal(m))rechazarTodoPedido();
-    else if(_motivoExigeCantidad(m))limpiarDevolucion();
-  }
+  // Motivo total → se marca todo el pedido solo. En los parciales NO se borra lo que ya venía
+  // marcado: si el entregador marcó primero y después eligió el motivo, perdía su trabajo y tenía
+  // que volver a contar caja por caja.
+  if(Object.keys(devSel).length&&_motivoEsTotal(m))rechazarTodoPedido();
   _nsActualizarOk();
 }
 
