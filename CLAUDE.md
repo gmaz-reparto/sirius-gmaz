@@ -21,7 +21,7 @@ Single-file PWA (Progressive Web App) que usan los repartidores de Coca-Cola GMA
 ```js
 SUPABASE_URL  = 'https://arcymdurfmlubtgfyawn.supabase.co'
 SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'  // anon key
-GMAPS_KEY     = 'AIzaSyDkHJi_SIHezXS2vmhDBbCtZ62ajSfv9cI'
+GMAPS_KEY     = 'AIzaSyATkFDZg7Jf6Z1pY9H_QHIoXEYOFuL9mrQ'
 ```
 
 ---
