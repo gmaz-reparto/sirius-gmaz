@@ -632,6 +632,83 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .dr-rv small{font-size:9.5px;color:var(--gris4);text-transform:uppercase;letter-spacing:.4px}
 .dr-chev{color:var(--gris3);flex-shrink:0;font-size:15px}
 .dr-vacio{text-align:center;padding:30px 16px;color:var(--gris4);font-size:12px}
+/* Auditoría en calle: se llena de pie, con una mano, con sol en la pantalla. Botones grandes,
+   nada de desplegables, y un solo campo de escribir. */
+#aud-ovl,#audtipo-ovl{display:none;position:fixed;inset:0;z-index:2600;background:rgba(15,17,23,.66);
+  backdrop-filter:blur(3px);align-items:flex-end;justify-content:center}
+#aud-card,#audtipo-card{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;
+  max-height:94vh;display:flex;flex-direction:column;box-shadow:0 -12px 44px rgba(0,0,0,.3)}
+@media (min-width:600px){#aud-ovl,#audtipo-ovl{align-items:center}
+  #aud-card,#audtipo-card{border-radius:20px;max-height:88vh}}
+.au-h{display:flex;align-items:flex-start;gap:10px;padding:18px 18px 12px;border-bottom:1px solid #EEF0F4}
+.au-t{font-size:17px;font-weight:900;letter-spacing:-.3px;color:#0F1117;line-height:1.2}
+.au-d{font-size:11px;color:var(--gris4);line-height:1.5;margin-top:4px}
+.au-x{margin-left:auto;background:transparent;border:none;font-size:18px;color:#9AA0AE;cursor:pointer;
+  padding:2px 6px;flex:0 0 auto}
+#aud-body,#audtipo-body{flex:1;overflow-y:auto;padding:14px 18px}
+.au-obj{background:#F6F7F9;border-radius:12px;padding:12px 13px;margin-bottom:14px}
+.au-oe{display:block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#9AA0AE;margin-bottom:5px}
+.au-obj b{font-size:14px;font-weight:800;color:#0F1117;line-height:1.3}
+.au-om{font-size:11px;color:var(--gris4);margin-top:3px;line-height:1.45}
+.au-sel{width:100%;height:42px;border:1px solid #D8DCE4;border-radius:10px;padding:0 10px;
+  font-family:inherit;font-size:13px;font-weight:700;color:#0F1117;background:#fff}
+.au-i{margin-bottom:15px}
+.au-l{display:block;font-size:12px;font-weight:700;color:#0F1117;margin-bottom:7px;line-height:1.35}
+.au-esc{display:flex;gap:7px}
+.au-o{flex:1;border:1.5px solid #E6E9EF;background:#fff;border-radius:11px;padding:11px 6px;
+  font-family:inherit;font-size:12.5px;font-weight:800;color:#4B5563;cursor:pointer}
+.au-o.on{background:#0F1117;border-color:#0F1117;color:#fff}
+.au-o.no.on{background:#E30613;border-color:#E30613}
+.au-n{width:100%;height:46px;border:1.5px solid #D8DCE4;border-radius:11px;padding:0 12px;
+  font-family:inherit;font-size:17px;font-weight:800;color:#0F1117;font-variant-numeric:tabular-nums}
+.au-n:focus{outline:none;border-color:#0F1117}
+.au-tx{width:100%;border:1.5px solid #D8DCE4;border-radius:11px;padding:10px 12px;font-family:inherit;
+  font-size:13px;color:#0F1117;resize:vertical}
+.au-tx:focus{outline:none;border-color:#0F1117}
+.au-mal{background:#FFF0F1;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:14px;
+  font-weight:900;color:#E30613}
+.au-mal span{display:block;font-size:10.5px;font-weight:600;color:#B91C1C;margin-top:3px;line-height:1.45}
+.au-bien{background:#F0FDF4;border-radius:10px;padding:9px 12px;margin-top:8px;font-size:11.5px;
+  font-weight:700;color:#0F766E}
+.au-fotos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.au-f{aspect-ratio:4/3;border-radius:12px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;padding:8px;text-align:center;cursor:pointer;
+  border:1.5px dashed #D8DCE4;background:#FAFBFC}
+.au-f.req{border-style:solid;border-color:#0F1117;background:#0F1117}
+.au-f.req .au-fn,.au-f.req .au-ft{color:#fff}
+.au-fn{font-size:15px;font-weight:900;color:#9AA0AE}
+.au-ft{font-size:10px;font-weight:700;color:#9AA0AE;line-height:1.3}
+.au-f.lista{background:#0F766E;border-color:#0F766E}
+.au-f.lista .au-fn,.au-f.lista .au-ft{color:#fff}
+.au-f.cargando{opacity:.6}
+.au-chk{display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:#4B5563;padding:5px 0;
+  line-height:1.4;cursor:pointer}
+.au-chk input{margin-top:1px;flex:0 0 auto;width:16px;height:16px;accent-color:#E30613}
+.au-pie{border-top:1px solid #EEF0F4;padding:12px 18px;padding-bottom:max(14px,env(safe-area-inset-bottom,14px))}
+.au-gps{font-size:10px;color:var(--gris4);margin-bottom:9px;text-align:center}
+.au-gps.ok{color:#0F766E;font-weight:700}
+.au-tipo{display:flex;align-items:center;gap:12px;border:1px solid #E6E9EF;border-radius:13px;
+  padding:13px;margin-bottom:9px;cursor:pointer;background:#fff}
+.au-tipo:hover{border-color:#0F1117}
+.au-tipo .ic{width:38px;height:38px;border-radius:10px;background:#F1F3F7;display:flex;align-items:center;
+  justify-content:center;font-size:19px;flex:0 0 auto}
+.au-tipo b{display:block;font-size:13.5px;font-weight:800;color:#0F1117}
+.au-tipo span{display:block;font-size:10.5px;color:var(--gris4);line-height:1.45;margin-top:2px}
+.au-vacio{text-align:center;padding:22px 16px;color:var(--gris4);font-size:12px}
+.au-hl{display:flex;flex-direction:column;gap:7px}
+.au-hl>div{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E6E9EF;
+  border-radius:11px;padding:10px 12px}
+.au-hl>div.mal{border-color:#F3C6C9;background:#FFF7F7}
+.au-hic{font-size:17px;flex:0 0 auto}
+.au-hd{flex:1;min-width:0}
+.au-hd b{display:block;font-size:12.5px;font-weight:800;color:#0F1117;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.au-hd span{display:block;font-size:10.5px;color:var(--gris4);margin-top:1px}
+.au-hb{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  background:#FFF0F1;color:#E30613;border-radius:5px;padding:3px 7px;flex:0 0 auto}
+.au-hb.ok{background:#F0FDF4;color:#0F766E}
+
 /* Cruce del día y cierre en la rutina */
 .cx-aviso{background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309;font-size:12.5px}
 .cx-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-bottom:16px}
@@ -1714,12 +1791,17 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <input type="date" id="audit-fecha" onchange="haptic();cambiarFechaAuditoria(this.value)" style="height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
     <span id="audit-meta" style="font-size:11px;color:#B45309;font-weight:800"></span>
     <span style="flex:1"></span>
+    <button class="asis-btn e" onclick="haptic();escogerTipoAuditoria()">＋ Auditoría en calle</button>
     <button class="asis-btn g" onclick="haptic();cargarAuditoria()">↻ Recalcular</button>
     <button class="asis-btn e" onclick="haptic();exportarAuditoria()">↓ Exportar</button>
     <button class="asis-btn c" onclick="haptic();cerrarAuditoria()">✕ Cerrar</button>
   </div>
   <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Cruza <b>Pedido (Libro)</b> + <b>PPAS</b> (snapshot histórico del día) + <b>Rechazos</b> + <b>Liquidación (LiquiYa)</b> de la <b>misma fecha</b> → detecta clientes/productos liquidados fuera del pedido y rechazos que en realidad se liquidaron. Angelita sube la liquidación de un día en la mañana siguiente, por eso arranca en <b>ayer</b> — cambia la fecha arriba para ver otro día.</div>
   <div id="audit-cruce" style="padding:16px 20px 0"></div>
+  <div style="padding:6px 20px 0">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gris4);margin:14px 0 8px">Auditorías hechas este día</div>
+    <div id="aud-hist"></div>
+  </div>
   <div class="asis-wrap" id="audit-body" style="padding:16px"></div>
 </div>
 
@@ -2733,6 +2815,31 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     </div>
     <button class="ep-ok" id="epb-pedir" onclick="haptic();solicitarPermisoRuta()">Pedir autorización</button>
     <button class="epb-otra" onclick="haptic();cerrarBloqueoRuta()">Escoger otra ruta</button>
+  </div>
+</div>
+
+<!-- AUDITORÍA EN CALLE — se llena de pie, con una mano -->
+<div id="aud-ovl">
+  <div id="aud-card">
+    <div class="au-h">
+      <div><div class="au-t" id="aud-t"></div><div class="au-d" id="aud-d"></div></div>
+      <button class="au-x" onclick="haptic();cerrarAuditoriaCalle()" title="Cerrar">✕</button>
+    </div>
+    <div id="aud-body"></div>
+    <div class="au-pie">
+      <div class="au-gps" id="aud-gps"></div>
+      <button class="ep-ok" id="aud-ok" onclick="haptic();guardarAuditoria()" disabled>Guardar y enviar por WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- ESCOGER QUÉ AUDITAR -->
+<div id="audtipo-ovl">
+  <div id="audtipo-card">
+    <div class="au-h"><div><div class="au-t">¿Qué va a auditar?</div>
+      <div class="au-d">Cinco tipos. Cada uno pide lo suyo y sale por WhatsApp al jefe.</div></div>
+      <button class="au-x" onclick="haptic();document.getElementById('audtipo-ovl').style.display='none'">✕</button></div>
+    <div id="audtipo-body"></div>
   </div>
 </div>
 
@@ -5225,6 +5332,9 @@ function pintarTorreControl(){
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
     item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
     item(conAnomalia.length?'urg':'ok',conAnomalia.length,'Rutas que no cuadran con lo designado',conAnomalia.length?"tcAbrirRuta('"+(conAnomalia[0]||{}).ruta+"')":'')+
+    item(_audHallazgos.length?'urg':'ok',_audHallazgos.length,
+      'Hallazgos de efectivo sin cerrar',
+      _audHallazgos.length?"verHallazgosEfectivo()":'')+
     item(_novFalsasPend.length?'urg':'ok',_novFalsasPend.length,
       'Novedades falsas por verificar',
       _novFalsasPend.length?"abrirAuditoria()":'')+
@@ -8870,6 +8980,470 @@ async function prellenarTripulaciones(){
 }
 
 
+
+/* ══ AUDITORÍAS EN CALLE (19-ago-2026) ══
+   Cinco tipos, definidos con el coordinador sobre checklists de auditoría a operadores de reparto en
+   logística. Cada uno pide lo suyo, dos fotos obligatorias y hasta dos opcionales, y sale por WhatsApp
+   al jefe con los enlaces —el navegador no puede adjuntar imágenes a WhatsApp, solo texto—.
+
+   Se guardan en AUDITORIAS/{fecha}/{tipo}__{ts}.json y quedan de histórico.
+
+   Dos decisiones que vienen de la operación, no del formulario:
+     · El arqueo cuenta SOLO lo que la persona lleva encima. La caja fuerte del vehículo no se abre:
+       el tope de $100.000 existe para dar devueltas, y lo que pasa de ahí va a la caja de inmediato.
+     · Conductor y auxiliar son auditorías separadas, una por persona.
+*/
+const AUD_TOPE_EFECTIVO=100000;
+const AUD_WHATSAPP='3135525684';
+
+const AUD_TIPOS={
+  A:{t:'Acompañamiento en ruta',ic:'🚚',
+     d:'Al entregador, mientras trabaja: manejo, presentación, trato al cliente y uso de la app.',
+     pide:['persona'],
+     fotos:['El vehículo en ruta','El entregador atendiendo al cliente'],
+     items:[
+      {k:'manejo',   l:'Manejo del vehículo',        tipo:'escala'},
+      {k:'presenta', l:'Presentación personal y uniforme', tipo:'escala'},
+      {k:'trato',    l:'Trato al cliente',            tipo:'escala'},
+      {k:'orden',    l:'Orden y aseo del furgón',     tipo:'escala'},
+      {k:'app',      l:'¿Usa la app en cada cliente?', tipo:'sino'},
+      {k:'secuencia',l:'¿Respeta la secuencia de entrega?', tipo:'sino'},
+      {k:'obs',      l:'Observaciones',               tipo:'texto'}
+     ]},
+  B:{t:'Arqueo de efectivo',ic:'💵',
+     d:'Solo lo que la persona lleva encima. La caja fuerte del vehículo no se abre. Tope: $100.000 para devueltas.',
+     pide:['persona'],
+     fotos:['El dinero contado','La persona con el dinero'],
+     items:[
+      {k:'efectivo',l:'Efectivo que lleva encima',    tipo:'plata'},
+      {k:'recibos', l:'¿Entrega recibo al cliente?',  tipo:'sino'},
+      {k:'caja',    l:'¿Guardó en caja fuerte lo que pasó del tope?', tipo:'sino'},
+      {k:'obs',     l:'Observaciones',                tipo:'texto'}
+     ]},
+  C:{t:'Verificación de cliente',ic:'🏪',
+     d:'Se visita al cliente y se confirma si recibió. Es la que cierra las novedades falsas.',
+     pide:['cliente'],
+     fotos:['La fachada del negocio','El cliente o su firma'],
+     items:[
+      {k:'recibio', l:'¿Le entregaron hoy?',         tipo:'sino'},
+      {k:'cuanto',  l:'¿Cuántas cajas recibió?',     tipo:'numero'},
+      {k:'factura', l:'¿Le dejaron factura o recibo?', tipo:'sino'},
+      {k:'conoce',  l:'¿Reconoce al entregador?',     tipo:'sino'},
+      {k:'obs',     l:'Qué dijo el cliente',          tipo:'texto'}
+     ]},
+  D:{t:'Inspección de vehículo',ic:'🔧',
+     d:'Documentos, seguridad y estado del furgón.',
+     pide:['placa'],
+     fotos:['El vehículo completo','El interior del furgón'],
+     items:[
+      {k:'soat',    l:'SOAT vigente',                 tipo:'sino'},
+      {k:'tecno',   l:'Tecnomecánica vigente',       tipo:'sino'},
+      {k:'llantas', l:'Estado de llantas',            tipo:'escala'},
+      {k:'extintor',l:'Extintor con carga y a la vista', tipo:'sino'},
+      {k:'botiquin',l:'Botiquín completo',           tipo:'sino'},
+      {k:'aseo',    l:'Aseo general',                 tipo:'escala'},
+      {k:'canast',  l:'Canastillas y estibas en orden', tipo:'sino'},
+      {k:'km',      l:'Kilometraje',                  tipo:'numero'},
+      {k:'obs',     l:'Observaciones',                tipo:'texto'}
+     ]},
+  E:{t:'Verificación de devolución',ic:'📦',
+     d:'Contar físicamente lo que vuelve en el camión contra lo que se reportó en la app.',
+     pide:['ruta'],
+     fotos:['La devolución en el furgón','El conteo'],
+     items:[
+      {k:'contado', l:'Cajas contadas en el camión',  tipo:'numero'},
+      {k:'reportado',l:'Cajas reportadas en la app',   tipo:'numero'},
+      {k:'estado',  l:'Producto en buen estado',      tipo:'sino'},
+      {k:'obs',     l:'Observaciones',                tipo:'texto'}
+     ]}
+};
+
+let _aud=null;   // auditoría en curso
+
+/* Marca de agua sobre la foto: fecha, hora, ruta, coordenadas y el auditor. Se quema en el pixel,
+   no es un rótulo aparte: una foto sin marca no prueba dónde ni cuándo se tomó. */
+async function _audMarcarFoto(file,datos){
+  const img=await new Promise((res,rej)=>{
+    const i=new Image(); i.onload=()=>res(i); i.onerror=rej;
+    i.src=URL.createObjectURL(file);
+  });
+  const MAX=1280;
+  const esc=Math.min(1,MAX/Math.max(img.width,img.height));
+  const w=Math.round(img.width*esc), h=Math.round(img.height*esc);
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const x=c.getContext('2d');
+  x.drawImage(img,0,0,w,h);
+  URL.revokeObjectURL(img.src);
+  const lineas=[datos.l1,datos.l2,datos.l3].filter(Boolean);
+  const fs=Math.max(13,Math.round(w*0.026));
+  const pad=Math.round(fs*0.55), alto=lineas.length*(fs+pad)+pad;
+  x.fillStyle='rgba(15,17,23,.72)';
+  x.fillRect(0,h-alto,w,alto);
+  x.font='700 '+fs+'px system-ui,-apple-system,sans-serif';
+  x.fillStyle='#fff'; x.textBaseline='top';
+  lineas.forEach((t,i)=>x.fillText(t,pad,h-alto+pad+i*(fs+pad)));
+  return new Promise(res=>c.toBlob(b=>res(b),'image/jpeg',0.82));
+}
+
+/* El selector de tipo. Se abre desde el módulo y desde el panel móvil. */
+function escogerTipoAuditoria(){
+  const c=document.getElementById('audtipo-body');
+  c.innerHTML=Object.keys(AUD_TIPOS).map(k=>{
+    const T=AUD_TIPOS[k];
+    return '<div class="au-tipo" onclick="haptic();document.getElementById(&#39;audtipo-ovl&#39;).style.display=&#39;none&#39;;abrirAuditoriaCalle(&#39;'+k+'&#39;)">'+
+      '<span class="ic">'+T.ic+'</span><div><b>'+T.t+'</b><span>'+T.d+'</span></div></div>';
+  }).join('');
+  document.getElementById('audtipo-ovl').style.display='flex';
+  // La lista de personas sale de la designación del día: se refresca al abrir.
+  cargarDesignacion(getColDate(),true).catch(()=>{});
+}
+function abrirAuditoriaCalle(tipo,ctx){
+  const T=AUD_TIPOS[tipo]; if(!T)return;
+  _aud={tipo,def:T,ctx:ctx||null,fotos:[null,null,null,null],valores:{},coords:null,
+        inicio:new Date().toISOString()};
+  // La ubicación se pide de una: sin coordenadas la marca de agua no prueba dónde fue.
+  if(navigator.geolocation)navigator.geolocation.getCurrentPosition(
+    pos=>{ _aud.coords={lat:pos.coords.latitude,lng:pos.coords.longitude}; _audPintarPie(); },
+    ()=>{ _audPintarPie(); },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+  _audPintar();
+  document.getElementById('aud-ovl').style.display='flex';
+}
+function cerrarAuditoriaCalle(){
+  if(_aud&&Object.keys(_aud.valores).length&&!confirm('¿Salir sin guardar la auditoría?'))return;
+  _aud=null;
+  document.getElementById('aud-ovl').style.display='none';
+}
+function _audNombreObjetivo(){
+  if(!_aud)return '';
+  const c=_aud.ctx||{};
+  return c.nombre||c.persona||c.placa||c.ruta||'';
+}
+
+
+/* La pantalla de la auditoría: se llena de pie, en la calle, con una mano. Por eso los ítems son
+   botones grandes de tocar y no desplegables, y el único campo de escribir es la observación. */
+function _audPintar(){
+  const T=_aud.def, c=document.getElementById('aud-body');
+  document.getElementById('aud-t').textContent=T.ic+'  '+T.t;
+  document.getElementById('aud-d').textContent=T.d;
+  let html='';
+  // A quién o a qué se le hace
+  html+='<div class="au-obj">'+_audCampoObjetivo()+'</div>';
+  html+=T.items.map(it=>{
+    const v=_aud.valores[it.k];
+    if(it.tipo==='escala')return '<div class="au-i"><span class="au-l">'+it.l+'</span>'+
+      '<div class="au-esc">'+['Bien','Regular','Mal'].map(o=>
+        '<button type="button" class="au-o'+(v===o?' on':'')+'" onclick="haptic();_audSet(&#39;'+it.k+'&#39;,&#39;'+o+'&#39;)">'+o+'</button>').join('')+'</div></div>';
+    if(it.tipo==='sino')return '<div class="au-i"><span class="au-l">'+it.l+'</span>'+
+      '<div class="au-esc">'+['Sí','No'].map(o=>
+        '<button type="button" class="au-o'+(v===o?' on':'')+(o==='No'?' no':'')+'" onclick="haptic();_audSet(&#39;'+it.k+'&#39;,&#39;'+o+'&#39;)">'+o+'</button>').join('')+'</div></div>';
+    if(it.tipo==='plata')return '<div class="au-i"><span class="au-l">'+it.l+'</span>'+
+      '<input class="au-n plata" type="number" inputmode="numeric" min="0" step="1000" value="'+(v==null?'':v)+'"'+
+      ' oninput="_audSetPlata(this.value)" placeholder="0"><div id="au-exceso"></div></div>';
+    if(it.tipo==='numero')return '<div class="au-i"><span class="au-l">'+it.l+'</span>'+
+      '<input class="au-n" type="number" inputmode="numeric" min="0" value="'+(v==null?'':v)+'"'+
+      ' oninput="_audSet(&#39;'+it.k+'&#39;,this.value===&#39;&#39;?null:+this.value)" placeholder="0"></div>';
+    return '<div class="au-i"><span class="au-l">'+it.l+'</span>'+
+      '<textarea class="au-tx" rows="2" oninput="_audSet(&#39;'+it.k+'&#39;,this.value)" placeholder="Opcional">'+(v||'')+'</textarea></div>';
+  }).join('');
+  // Fotos: dos obligatorias y dos por si hacen falta
+  html+='<div class="au-i"><span class="au-l">Fotos · las dos primeras son obligatorias</span><div class="au-fotos">'+
+    [0,1,2,3].map(i=>{
+      const req=i<2, tit=req?T.fotos[i]:'Si la requiere';
+      return '<label class="au-f'+(req?' req':'')+'" id="au-f'+i+'">'+
+        '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="_audFoto(this,'+i+')">'+
+        '<span class="au-fn">'+(i+1)+'</span><span class="au-ft">'+tit+'</span></label>';
+    }).join('')+'</div></div>';
+  c.innerHTML=html;
+  _audPintarPie();
+  _audValidar();
+}
+function _audCampoObjetivo(){
+  const pide=(_aud.def.pide||[])[0], ctx=_aud.ctx||{};
+  if(pide==='cliente'){
+    if(ctx.cod)return '<span class="au-oe">Cliente</span><b>'+(ctx.nombre||ctx.cod)+'</b>'+
+      '<div class="au-om">'+(ctx.ruta||'')+(ctx.motivo?' · '+ctx.motivo:'')+'</div>';
+    return '<span class="au-oe">Cliente</span><input class="au-tx" placeholder="Nombre del cliente" oninput="_aud.ctx={nombre:this.value};_audValidar()">';
+  }
+  if(pide==='placa'){
+    const pl=(_vehCache||[]).map(v=>v.nombre).sort();
+    return '<span class="au-oe">Vehículo</span><select class="au-sel" onchange="_aud.ctx={placa:this.value};_audValidar()">'+
+      '<option value="">— escoge la placa —</option>'+pl.map(x=>'<option'+((ctx.placa===x)?' selected':'')+'>'+x+'</option>').join('')+'</select>';
+  }
+  if(pide==='ruta'){
+    return '<span class="au-oe">Ruta</span><select class="au-sel" onchange="_aud.ctx={ruta:this.value};_audValidar()">'+
+      '<option value="">— escoge la ruta —</option>'+RUTAS_APP.map(x=>'<option'+((ctx.ruta===x)?' selected':'')+'>'+x+'</option>').join('')+'</select>';
+  }
+  // persona: la lista sale de quienes están designados hoy
+  const gente=[];
+  Object.keys(_desigDia||{}).forEach(r=>(designadosDe(r)||[]).forEach(x=>
+    gente.push({ced:x.ced,nombre:x.nombre,ruta:r,rol:x.rol})));
+  gente.sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  return '<span class="au-oe">Persona auditada</span><select class="au-sel" onchange="_audPersona(this.value)">'+
+    '<option value="">— escoge a quién —</option>'+gente.map(g=>
+      '<option value="'+g.ced+'"'+((ctx.ced===g.ced)?' selected':'')+'>'+g.nombre+' · '+g.ruta+' · '+
+      (g.rol==='conductor'?'Conductor':'Auxiliar')+'</option>').join('')+'</select>'+
+    (gente.length?'':'<div class="au-om">Nadie designado hoy. Designa la tripulación primero.</div>');
+}
+function _audPersona(ced){
+  const gente=[];
+  Object.keys(_desigDia||{}).forEach(r=>(designadosDe(r)||[]).forEach(x=>gente.push({...x,ruta:r})));
+  const g=gente.find(x=>String(x.ced)===String(ced));
+  _aud.ctx=g?{ced:g.ced,nombre:g.nombre,ruta:g.ruta,rol:g.rol}:null;
+  _audValidar();
+}
+function _audSet(k,v){ _aud.valores[k]=v; _audPintarSoloBotones(k,v); _audValidar(); }
+function _audSetPlata(v){
+  _aud.valores.efectivo=v===''?null:+v;
+  const e=document.getElementById('au-exceso'), m=+v||0;
+  if(e)e.innerHTML=(m>AUD_TOPE_EFECTIVO)
+    ? '<div class="au-mal">Excede el tope en $'+(m-AUD_TOPE_EFECTIVO).toLocaleString('es-CO')+
+      '<span>El tope son $'+AUD_TOPE_EFECTIVO.toLocaleString('es-CO')+' para devueltas. Esto queda de pendiente.</span></div>'
+    : (v===''?'':'<div class="au-bien">Dentro del tope de $'+AUD_TOPE_EFECTIVO.toLocaleString('es-CO')+'</div>');
+  _audValidar();
+}
+/* Solo repinta los botones de ese ítem: repintar todo borraría lo escrito en la observación. */
+function _audPintarSoloBotones(k,v){
+  document.querySelectorAll('#aud-body .au-i').forEach(div=>{
+    div.querySelectorAll('.au-o').forEach(b=>{
+      if(b.getAttribute('onclick').indexOf("'"+k+"'")<0&&b.getAttribute('onclick').indexOf('&#39;'+k+'&#39;')<0)return;
+      b.classList.toggle('on',b.textContent===v);
+    });
+  });
+}
+async function _audFoto(inp,i){
+  const f=inp.files&&inp.files[0]; if(!f)return;
+  const el=document.getElementById('au-f'+i);
+  el.classList.add('cargando');
+  const now=new Date();
+  const marca={
+    l1:now.toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'})+'  ·  '+
+       (_aud.def.t),
+    l2:(_audNombreObjetivo()||'')+((_aud.ctx&&_aud.ctx.ruta)?'  ·  '+_aud.ctx.ruta:''),
+    l3:(_aud.coords?_aud.coords.lat.toFixed(5)+', '+_aud.coords.lng.toFixed(5):'sin GPS')+
+       '  ·  '+(_audAuditor().nombre||'Coordinador')
+  };
+  try{
+    _aud.fotos[i]=await _audMarcarFoto(f,marca);
+    el.classList.remove('cargando'); el.classList.add('lista');
+    el.querySelector('.au-ft').textContent='Tomada ✓';
+  }catch(e){
+    el.classList.remove('cargando');
+    toast('No se pudo procesar la foto: '+e.message,'err');
+  }
+  _audValidar();
+}
+function _audAuditor(){
+  const p=personaDelDispositivo();
+  if(p&&p.ced)return p;
+  const e=EMPLEADOS_ASIS.find(x=>/COORDINADOR DE DISTRIBUCION/i.test(x[2]||''));
+  return e?{ced:e[1],nombre:e[0]}:{ced:'',nombre:'Coordinador'};
+}
+function _audPintarPie(){
+  const g=document.getElementById('aud-gps'); if(!g)return;
+  g.textContent=_aud&&_aud.coords
+    ? '● Ubicación tomada · '+_aud.coords.lat.toFixed(5)+', '+_aud.coords.lng.toFixed(5)
+    : '○ Buscando ubicación… (la foto igual se marca con fecha y hora)';
+  g.className=_aud&&_aud.coords?'au-gps ok':'au-gps';
+}
+/* Lo mínimo para guardar: a quién se auditó y las dos fotos. Los ítems sin llenar quedan en blanco
+   y se ven así en el reporte —exigirlos todos haría que nadie termine una auditoría en la calle—. */
+function _audValidar(){
+  const ok=!!(_aud&&_aud.ctx&&(_aud.ctx.ced||_aud.ctx.cod||_aud.ctx.placa||_aud.ctx.ruta||_aud.ctx.nombre))
+           &&_aud.fotos[0]&&_aud.fotos[1];
+  const b=document.getElementById('aud-ok');
+  if(b){
+    b.disabled=!ok;
+    b.textContent=ok?'Guardar y enviar por WhatsApp'
+      :(!(_aud&&_aud.ctx)?'Falta escoger a quién se audita':'Faltan las dos fotos obligatorias');
+  }
+}
+
+
+/* Guardar: las fotos van al bucket de fotos y el registro a AUDITORIAS/{fecha}/. Después se abre
+   WhatsApp con el texto y los enlaces —desde el navegador no se pueden adjuntar imágenes, solo
+   mandar el enlace, y el jefe las abre de un toque—. */
+async function guardarAuditoria(){
+  if(!_aud)return;
+  const b=document.getElementById('aud-ok');
+  b.disabled=true; b.textContent='Guardando…';
+  const fecha=getColDate(), ts=Date.now();
+  const aud=_audAuditor();
+  try{
+    const urls=[];
+    for(let i=0;i<4;i++){
+      const f=_aud.fotos[i]; if(!f)continue;
+      b.textContent='Subiendo foto '+(i+1)+'…';
+      const nom='AUDITORIAS/'+fecha+'/'+_aud.tipo+'_'+ts+'_'+(i+1)+'.jpg';
+      const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FOTOS+'/'+nom,{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,
+          'Content-Type':'image/jpeg'},body:f});
+      if(!r.ok)throw new Error(await r.text());
+      urls.push(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FOTOS+'/'+nom);
+    }
+    b.textContent='Guardando el registro…';
+    const efect=_aud.valores.efectivo;
+    const reg={
+      id:_aud.tipo+'__'+ts, tipo:_aud.tipo, tipoNombre:_aud.def.t, fecha,
+      hora:new Date().toISOString(), inicio:_aud.inicio,
+      auditor:{ced:aud.ced,nombre:aud.nombre},
+      objetivo:_aud.ctx||{}, coords:_aud.coords||null,
+      items:_aud.def.items.map(it=>({k:it.k,l:it.l,v:_aud.valores[it.k]==null?'':_aud.valores[it.k]})),
+      fotos:urls,
+      hallazgo:(_aud.tipo==='B'&&efect>AUD_TOPE_EFECTIVO)
+        ? {tipo:'EFECTIVO_SOBRE_TOPE',monto:efect,exceso:efect-AUD_TOPE_EFECTIVO,cerrado:false}
+        : null
+    };
+    await _storageGuardar('AUDITORIAS/'+fecha+'/'+reg.id+'.json',reg);
+    // Una novedad falsa se cierra con la auditoría de verificación de ese cliente.
+    if(_aud.tipo==='C'&&_aud.ctx&&_aud.ctx.cod){
+      try{ await cerrarNovedadFalsa(_aud.ctx.cod,(_cruceDia&&_cruceDia.fecha)||fecha); }catch(e){}
+    }
+    _audEnviarWhatsApp(reg);
+    document.getElementById('aud-ovl').style.display='none';
+    _aud=null;
+    toast('✓ Auditoría guardada'+(reg.hallazgo?' · el hallazgo quedó de pendiente':''),'ok');
+    if(reg.hallazgo)_audCargarHallazgos().then(()=>pintarTorreControl()).catch(()=>{});
+    renderHistorialAuditorias().catch(()=>{});
+  }catch(e){
+    b.disabled=false; b.textContent='Guardar y enviar por WhatsApp';
+    toast('No se pudo guardar: '+e.message,'err');
+  }
+}
+function _audEnviarWhatsApp(reg){
+  const L=[];
+  L.push('*AUDITORÍA EN CALLE — GMAZ*');
+  L.push('');
+  L.push('*Tipo:* '+reg.tipoNombre);
+  const o=reg.objetivo||{};
+  if(o.nombre)L.push('*'+(reg.tipo==='C'?'Cliente':'Persona')+':* '+o.nombre);
+  if(o.placa)L.push('*Vehículo:* '+o.placa);
+  if(o.ruta)L.push('*Ruta:* '+o.ruta);
+  L.push('*Fecha:* '+new Date(reg.hora).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'}));
+  L.push('*Auditor:* '+reg.auditor.nombre);
+  if(reg.coords)L.push('*Ubicación:* https://maps.google.com/?q='+reg.coords.lat+','+reg.coords.lng);
+  L.push('');
+  const llenos=reg.items.filter(i=>i.v!==''&&i.v!=null);
+  if(llenos.length){
+    L.push('*Lo revisado:*');
+    llenos.forEach(i=>L.push('• '+i.l+': '+(i.k==='efectivo'?'$'+Number(i.v).toLocaleString('es-CO'):i.v)));
+    L.push('');
+  }
+  if(reg.hallazgo&&reg.hallazgo.tipo==='EFECTIVO_SOBRE_TOPE'){
+    L.push('*HALLAZGO:* lleva $'+reg.hallazgo.monto.toLocaleString('es-CO')+
+      ' — excede el tope de $'+AUD_TOPE_EFECTIVO.toLocaleString('es-CO')+
+      ' en $'+reg.hallazgo.exceso.toLocaleString('es-CO'));
+    L.push('');
+  }
+  if(reg.fotos.length){
+    L.push('*Fotos:*');
+    reg.fotos.forEach((u,i)=>L.push((i+1)+'. '+u));
+    L.push('');
+  }
+  L.push('_Enviado desde GMAZ Rutas_');
+  const a=document.createElement('a');
+  a.href='https://wa.me/57'+AUD_WHATSAPP+'?text='+encodeURIComponent(L.join('\n'));
+  a.target='_blank'; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ══ HALLAZGOS DE EFECTIVO ══
+   Van a la bandeja porque hay medida disciplinaria de por medio. Se cierran con una lista de chequeo:
+   qué se hizo, no solo «revisado». */
+let _audHallazgos=[];
+const AUD_CHECK=[
+  'Se le llamó la atención verbalmente',
+  'Se dejó constancia escrita',
+  'Se le explicó la regla del tope de $100.000',
+  'Consignó o entregó el excedente',
+  'Se informó a Recursos Humanos'
+];
+async function _audCargarHallazgos(fecha){
+  const f=fecha||fechaCtx(); _audHallazgos=[];
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:'AUDITORIAS/'+f+'/',limit:200})});
+    if(!r.ok)return _audHallazgos;
+    const files=await r.json();
+    const regs=await Promise.all((files||[]).filter(x=>/\.json$/.test(x.name)).map(async x=>{
+      try{return await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/AUDITORIAS/'+f+'/'+encodeURIComponent(x.name)+'?t='+Date.now())).json();}
+      catch(e){return null;}
+    }));
+    _audHallazgos=regs.filter(x=>x&&x.hallazgo&&!x.hallazgo.cerrado);
+  }catch(e){}
+  return _audHallazgos;
+}
+function verHallazgosEfectivo(){
+  if(!_audHallazgos.length){toast('No hay hallazgos de efectivo sin cerrar','ok');return;}
+  const c=document.getElementById('perm-body');
+  document.querySelector('#perm-card .perm-t').firstChild.textContent='Hallazgos de efectivo ';
+  document.querySelector('#perm-card .perm-s').textContent=
+    'Hay medida disciplinaria de por medio: cada uno se cierra marcando qué se hizo.';
+  c.innerHTML=_audHallazgos.map(h=>
+    '<div class="perm-i"><div class="perm-h"><b>'+(h.objetivo.nombre||'—')+'</b>'+
+      '<span>'+new Date(h.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
+    '<div class="perm-g"><span class="perm-et">Lo que llevaba encima</span>'+
+      '<div class="au-mal" style="margin:0">$'+h.hallazgo.monto.toLocaleString('es-CO')+
+      '<span>Excede el tope en $'+h.hallazgo.exceso.toLocaleString('es-CO')+' · '+(h.objetivo.ruta||'')+'</span></div></div>'+
+    '<div class="perm-g"><span class="perm-et">Qué se hizo</span>'+
+      AUD_CHECK.map((t,i)=>'<label class="au-chk"><input type="checkbox" data-h="'+h.id+'" data-i="'+i+'"> '+t+'</label>').join('')+
+    '</div>'+
+    '<div class="perm-acc"><button class="perm-si" onclick="haptic();cerrarHallazgo(&#39;'+h.id+'&#39;,&#39;'+h.fecha+'&#39;)">Cerrar el hallazgo</button></div></div>'
+  ).join('');
+  document.getElementById('perm-ovl').style.display='flex';
+}
+async function cerrarHallazgo(id,fecha){
+  const marcadas=[...document.querySelectorAll('input[data-h="'+id+'"]:checked')].map(x=>AUD_CHECK[+x.dataset.i]);
+  if(!marcadas.length){toast('Marca al menos una acción para cerrarlo','err');return;}
+  showLoad('Cerrando el hallazgo…');
+  try{
+    const reg=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/AUDITORIAS/'+fecha+'/'+id+'.json?t='+Date.now())).json();
+    reg.hallazgo.cerrado=true;
+    reg.hallazgo.acciones=marcadas;
+    reg.hallazgo.cerradoPor=_audAuditor().nombre;
+    reg.hallazgo.cerradoHora=new Date().toISOString();
+    await _storageGuardar('AUDITORIAS/'+fecha+'/'+id+'.json',reg);
+    _audHallazgos=_audHallazgos.filter(x=>x.id!==id);
+    hideLoad(); toast('✓ Hallazgo cerrado','ok');
+    if(_audHallazgos.length)verHallazgosEfectivo(); else cerrarPermisos();
+    pintarTorreControl();
+  }catch(e){ hideLoad(); toast('No se pudo cerrar: '+e.message,'err'); }
+}
+
+/* Histórico: cuántas auditorías se hicieron, de qué tipo y a quién. */
+async function renderHistorialAuditorias(fecha){
+  const c=document.getElementById('aud-hist'); if(!c)return;
+  const f=fecha||fechaCtx();
+  c.innerHTML='<div class="cx-cargando">Buscando las auditorías del '+f+'…</div>';
+  let regs=[];
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:'AUDITORIAS/'+f+'/',limit:200})});
+    if(r.ok){
+      const files=await r.json();
+      regs=(await Promise.all((files||[]).filter(x=>/\.json$/.test(x.name)&&x.name.indexOf('CERRADAS_')<0).map(async x=>{
+        try{return await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/AUDITORIAS/'+f+'/'+encodeURIComponent(x.name)+'?t='+Date.now())).json();}
+        catch(e){return null;}
+      }))).filter(Boolean);
+    }
+  }catch(e){}
+  if(!regs.length){
+    c.innerHTML='<div class="au-vacio">Todavía no hay auditorías de este día.</div>';return;
+  }
+  regs.sort((a,b)=>String(b.hora).localeCompare(String(a.hora)));
+  c.innerHTML='<div class="au-hl">'+regs.map(r=>
+    '<div class="au-h'+(r.hallazgo&&!r.hallazgo.cerrado?' mal':'')+'">'+
+      '<span class="au-hic">'+(AUD_TIPOS[r.tipo]||{}).ic+'</span>'+
+      '<div class="au-hd"><b>'+(r.objetivo.nombre||r.objetivo.placa||r.objetivo.ruta||'—')+'</b>'+
+        '<span>'+r.tipoNombre+' · '+new Date(r.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})+
+        ' · '+r.fotos.length+' foto(s)</span></div>'+
+      (r.hallazgo?'<span class="au-hb'+(r.hallazgo.cerrado?' ok':'')+'">'+
+        (r.hallazgo.cerrado?'Cerrado':'Hallazgo')+'</span>':'')+
+    '</div>').join('')+'</div>';
+}
+
 /* ══ NOVEDADES FALSAS PENDIENTES ══
    El cruce completo tarda —son cuatro índices y el detalle de cada rechazo—, así que no se corre en
    cada refresco de la torre. Se calcula al abrir Auditoría y la bandeja lee lo que quedó.
@@ -8934,6 +9508,7 @@ async function _tcCargarPermisos(fecha){
     _rutasSinDesignar=conCargue.filter(r=>!((d[r]||d[rutaBase(r)]||{}).personas||[]).length);
   }catch(e){ _rutasSinDesignar=[]; }
   try{ await _tcCargarFalsas(f); }catch(e){ _novFalsasPend=[]; }
+  try{ await _audCargarHallazgos(f); }catch(e){ _audHallazgos=[]; }
   return _permisosPend;
 }
 function verPermisosPendientes(){
