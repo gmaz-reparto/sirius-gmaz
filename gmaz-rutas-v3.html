@@ -7086,6 +7086,23 @@ async function cargarExcesosVelocidad(fechaSel){
       cont.innerHTML='<div class="veh-cargando">Todavía no hay vehículos asignados a rutas ese día.</div>';
       return;
     }
+    /* Quién iba manejando. Un exceso de velocidad sin nombre no se le puede reclamar a nadie, y la
+       placa sola no basta: el mismo vehículo lo maneja gente distinta según el día.
+       Primero el conductor que el coordinador designó en esa ruta ESE día; si esa ruta no tiene
+       designado, el conductor fijo de la placa, que es el que responde por ella. */
+    let desigDia={};
+    try{ desigDia=await cargarDesignacion(fecha,true)||{}; }catch(e){}
+    try{ await cargarMaestroConductores(false,fecha); }catch(e){}
+    const quienManeja=(unit,rutas)=>{
+      for(const r of rutas){
+        const gente=(desigDia[r]||desigDia[rutaBase(r)]||{}).personas||[];
+        const c=gente.find(x=>x.rol==='conductor');
+        if(c)return {nombre:c.nombre,ced:c.ced,fuente:'designado'};
+      }
+      const fijo=conductorDelVehiculo(unit,fecha);
+      if(fijo&&fijo.nombre)return {nombre:fijo.nombre,ced:fijo.ced,fuente:'fijo de la placa'};
+      return null;
+    };
     let hechos=0;
     const filas=[];
     for(const u of units){
@@ -7098,7 +7115,8 @@ async function cargarExcesosVelocidad(fechaSel){
       filas.push({unit:u,rutas:porUnit[u].join(' + '),max:Math.round(max),
         eps:eps.length,graves:graves.length,
         minFuera:eps.reduce((s,e)=>s+e.min,0),
-        peor:eps.sort((a,b)=>b.max-a.max)[0]||null,pts:pts.length});
+        peor:eps.sort((a,b)=>b.max-a.max)[0]||null,pts:pts.length,
+        cond:quienManeja(u,porUnit[u])});
     }
     filas.sort((a,b)=>b.max-a.max);
     const conExceso=filas.filter(f=>f.eps>0);
@@ -7109,7 +7127,7 @@ async function cargarExcesosVelocidad(fechaSel){
     const hh=t=>new Date(t).toLocaleTimeString('es-CO',
       {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Bogota'});
     cont.innerHTML='<div style="overflow:auto"><table class="dtbl"><thead><tr>'+
-      '<th>Vehículo</th><th>Ruta</th><th style="text-align:right">Velocidad máx</th>'+
+      '<th>Vehículo</th><th>Ruta</th><th>Quién manejaba</th><th style="text-align:right">Velocidad máx</th>'+
       '<th style="text-align:right">Veces sobre 40</th><th style="text-align:right">Sobre 60</th>'+
       '<th style="text-align:right">Minutos en exceso</th><th>El peor momento</th></tr></thead><tbody>'+
       filas.map(f=>{
@@ -7117,6 +7135,11 @@ async function cargarExcesosVelocidad(fechaSel){
         const rc=rutaColor[porUnit[f.unit][0]]||'#4A5060';
         return '<tr><td style="font-weight:800">'+f.unit+'</td>'+
           '<td><span class="dtag" style="background:'+rc+'1A;color:'+rc+'">'+f.rutas+'</span></td>'+
+          '<td>'+(f.cond
+            ? '<div style="font-weight:700;font-size:11.5px;color:#0F1117">'+_nomCorto(f.cond.nombre,3)+'</div>'+
+              '<div style="font-size:9.5px;color:var(--gris4)">C.C. '+(f.cond.ced||'—')+
+              (f.cond.fuente==='fijo de la placa'?' · fijo de la placa':'')+'</div>'
+            : '<span style="color:#B45309;font-size:11px;font-weight:700">sin designar</span>')+'</td>'+
           '<td style="text-align:right;font-weight:800;color:'+col+'">'+f.max+' km/h</td>'+
           '<td style="text-align:right;font-weight:700">'+(f.eps||'<span style="color:#B5BAC6">0</span>')+'</td>'+
           '<td style="text-align:right;font-weight:800;color:'+(f.graves?'#E30613':'#B5BAC6')+'">'+f.graves+'</td>'+
