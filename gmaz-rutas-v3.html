@@ -6506,7 +6506,9 @@ async function verAlertasVehiculo(unitId,ruta){
       cont.innerHTML='<div style="font-size:12px;color:#0E9F6E;font-weight:700;padding:6px 2px">✓ Sin exceso de velocidad hoy · máx '+max+' km/h</div>';
       return;
     }
-    const hh=t=>new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+    // Hora de Pasto siempre, sin depender de la zona horaria del equipo que mire el panel.
+    const hh=t=>new Date(t).toLocaleTimeString('es-CO',
+      {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Bogota'});
     cont.innerHTML=eps.sort((a,b)=>b.max-a.max).slice(0,5).map(e=>{
       const crit=e.max>VEL_REGIONAL;
       return '<div class="vp-alerta" style="background:'+(crit?'#FFF1F2':'#FFF8E6')+'">'+
@@ -7103,7 +7105,9 @@ async function cargarExcesosVelocidad(fechaSel){
     const meta=document.getElementById('vel-meta');
     if(meta)meta.textContent=conExceso.length?conExceso.length+' de '+filas.length+' vehículos con exceso':'ningún exceso ✓';
     if(!filas.length){cont.innerHTML='<div class="veh-cargando">Sin puntos GPS guardados de ese día.</div>';return;}
-    const hh=t=>new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+    // Hora de Pasto siempre, sin depender de la zona horaria del equipo que mire el panel.
+    const hh=t=>new Date(t).toLocaleTimeString('es-CO',
+      {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Bogota'});
     cont.innerHTML='<div style="overflow:auto"><table class="dtbl"><thead><tr>'+
       '<th>Vehículo</th><th>Ruta</th><th style="text-align:right">Velocidad máx</th>'+
       '<th style="text-align:right">Veces sobre 40</th><th style="text-align:right">Sobre 60</th>'+
@@ -7931,16 +7935,51 @@ function _flActualizarEnVivo(esHoy){
   });
 }
 /* Puntos del recorrido, normalizados: {t,v} hora y velocidad. */
+/* ══ EL INSTANTE DE UN PUNTO GPS (19-ago-2026) ══
+   Las dos APIs de Securita hablan distinto y esa diferencia costó una hora falsa en Alertas:
+
+     · vehicleGetAll (tiempo real) →  ReportDate: '2026-08-19 14:30:44'
+     · historyGet   (el recorrido) →  fecha: '2026-08-19' · hora: '14:30:44' · gmt: '-5'
+
+   El mapeo de abajo ya preveía los dos formatos para la velocidad y las coordenadas, pero para el
+   tiempo caía a `fecha` —que en el historial existe, y trae SOLO el día—. Y `new Date('2026-08-19')`
+   es medianoche UTC, que en Colombia son las 19:00 del día anterior: por eso todos los excesos de
+   velocidad aparecían a las 19:00, la misma hora para todos los vehículos.
+
+   Peor que la hora equivocada: con todos los puntos en el mismo instante, los episodios no se podían
+   separar. El día entero salía como UNA infracción de un minuto, sin importar cuántas veces se
+   hubiera pasado del límite ni cuánto hubiera durado.
+
+   Se arma con el desfase que el propio punto declara en `gmt`, para no depender de la zona horaria
+   del computador que esté mirando el panel. */
+function _secInstante(pt){
+  const off=g=>{const n=parseInt(g,10);const h=isNaN(n)?5:Math.abs(n);
+    return (isNaN(n)||n<0?'-':'+')+String(h).padStart(2,'0')+':00';};
+  const f=pt.fecha||pt.Fecha||'', h=pt.hora||pt.Hora||'';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(f)&&/^\d{2}:\d{2}/.test(h))return f+'T'+h+off(pt.gmt);
+  const fr=String(pt.fecha_reporte||pt.FechaReporte||'');
+  if(/^\d{14}$/.test(fr))
+    return fr.slice(0,4)+'-'+fr.slice(4,6)+'-'+fr.slice(6,8)+'T'+
+           fr.slice(8,10)+':'+fr.slice(10,12)+':'+fr.slice(12,14)+off(pt.gmt);
+  const rd=pt.ReportDate||pt.reportdate;
+  if(rd)return String(rd).replace(' ','T');
+  return null;   // sin hora no sirve: _flPuntos lo descarta
+}
 async function _flPuntos(unitId,fecha){
   try{
     const v=(_vehCache||[]).find(x=>x.nombre===unitId);if(!v)return [];
     const pts=await obtenerHistorialVehiculo(v,fecha);
     return (pts||[]).map(pt=>({
-      t:pt.ReportDate||pt.reportdate||pt.fecha||null,
+      t:_secInstante(pt),
       v:parseFloat(pt.GpsSpeed!=null?pt.GpsSpeed:(pt.velocidad||0))||0,
       lat:parseFloat(pt.Latitude||pt.latitud||pt.lat||0)||null,
       lng:parseFloat(pt.Longitude||pt.longitud||pt.lng||0)||null
-    })).filter(x=>x.t);
+    })).filter(x=>x.t&&!isNaN(new Date(x.t).getTime()))
+       /* Securita entrega el historial del más reciente al más antiguo. Mientras todos los puntos
+          compartían el mismo instante daba igual; con la hora ya correcta, dejarlos al revés haría
+          que los episodios de velocidad y el tiempo en movimiento se calculen sobre diferencias
+          negativas. Se ordena cronológicamente aquí, una sola vez, para todo el que los consuma. */
+       .sort((a,b)=>new Date(a.t)-new Date(b.t));
   }catch(e){return [];}
 }
 /* El gráfico de velocidad se retiró del detalle: ocupaba media tarjeta y no se leía nada en él.
