@@ -632,6 +632,43 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .dr-rv small{font-size:9.5px;color:var(--gris4);text-transform:uppercase;letter-spacing:.4px}
 .dr-chev{color:var(--gris3);flex-shrink:0;font-size:15px}
 .dr-vacio{text-align:center;padding:30px 16px;color:var(--gris4);font-size:12px}
+/* Quién usa la app: se lee como una lista de nombres con seis puntos al lado. Los apagados de la
+   sección roja son el dato que el coordinador busca. */
+#uso-ovl{display:none;position:fixed;inset:0;z-index:2600;background:rgba(15,17,23,.66);
+  backdrop-filter:blur(3px);align-items:flex-end;justify-content:center}
+#uso-card{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:94vh;
+  display:flex;flex-direction:column;box-shadow:0 -12px 44px rgba(0,0,0,.3)}
+@media (min-width:600px){#uso-ovl{align-items:center}#uso-card{border-radius:20px;max-height:88vh}}
+#uso-body{flex:1;overflow-y:auto;padding:14px 18px 20px}
+.uso-res{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px}
+.uso-k{background:#F6F7F9;border-radius:11px;padding:11px 12px;text-align:center}
+.uso-k b{display:block;font-size:22px;font-weight:900;color:#0F1117;font-variant-numeric:tabular-nums}
+.uso-k span{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--gris4);margin-top:2px}
+.uso-k.mal{background:#FFF0F1}
+.uso-k.mal b{color:#E30613}
+.uso-nota{background:#FFF7ED;border-radius:10px;padding:11px 13px;font-size:11px;color:#B45309;
+  line-height:1.55;margin-bottom:13px}
+.uso-leg{display:flex;flex-wrap:wrap;gap:7px 13px;margin-bottom:14px}
+.uso-leg span{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--gris4)}
+.uso-leg i{width:15px;height:15px;border-radius:4px;background:#EDEFF3;color:#6B7385;font-style:normal;
+  font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.uso-t{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--gris4);
+  margin:14px 0 7px}
+.uso-t.mal{color:#E30613}
+.uso-l{display:flex;flex-direction:column;gap:1px;background:#EEF0F4;border-radius:11px;overflow:hidden}
+.uso-p{display:flex;align-items:center;gap:10px;background:#fff;padding:9px 12px}
+.uso-p.cero{background:#FFF7F7}
+.uso-n{flex:1;min-width:0}
+.uso-n b{display:block;font-size:12px;font-weight:700;color:#0F1117;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.uso-n span{display:block;font-size:10px;color:var(--gris4);margin-top:1px}
+.uso-s{display:flex;gap:3px;flex:0 0 auto}
+.uso-s i{width:9px;height:9px;border-radius:2px;background:#E0E3E9;display:block}
+.uso-s i.si{background:#0F766E}
+.uso-s i.no{background:#E30613}
+.uso-c{font-size:11px;font-weight:800;color:var(--gris4);flex:0 0 auto;font-variant-numeric:tabular-nums}
+
 /* Auditoría en calle: se llena de pie, con una mano, con sol en la pantalla. Botones grandes,
    nada de desplegables, y un solo campo de escribir. */
 #aud-ovl,#audtipo-ovl{display:none;position:fixed;inset:0;z-index:2600;background:rgba(15,17,23,.66);
@@ -2747,6 +2784,8 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <div style="padding:14px">
       <div style="font-size:11px;color:var(--gris4);margin-bottom:12px">Todo el panel del coordinador, también desde el celular.</div>
       <div class="pc-tile-grid">
+        <div class="pc-tile" onclick="haptic();escogerTipoAuditoria()"><div class="pc-tile-ic" style="background:#E30613">🔍</div><div class="pc-tile-t">Auditar en calle</div><div class="pc-tile-s">Los cinco tipos, con fotos y WhatsApp</div></div>
+        <div class="pc-tile" onclick="haptic();abrirUsoApp()"><div class="pc-tile-ic" style="background:#0F766E">📱</div><div class="pc-tile-t">Quién usa la app</div><div class="pc-tile-s">Y quién no aparece nunca</div></div>
         <div class="pc-tile" onclick="haptic();abrirModuloMovil('vehiculos')"><div class="pc-tile-ic" style="background:#1A56DB">🚚</div><div class="pc-tile-t">Vehículos</div><div class="pc-tile-s">Flota y GPS</div></div>
         <div class="pc-tile" onclick="haptic();abrirModuloMovil('clientes')"><div class="pc-tile-ic" style="background:#3b1f5e">🏬</div><div class="pc-tile-t">Clientes</div><div class="pc-tile-s">Cumplimiento de atención</div></div>
         <div class="pc-tile" onclick="haptic();abrirModuloMovil('entregadores')"><div class="pc-tile-ic" style="background:#0EA5E9">🧑‍🔧</div><div class="pc-tile-t">Entregadores</div><div class="pc-tile-s">Cumplimiento y productividad</div></div>
@@ -2815,6 +2854,20 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     </div>
     <button class="ep-ok" id="epb-pedir" onclick="haptic();solicitarPermisoRuta()">Pedir autorización</button>
     <button class="epb-otra" onclick="haptic();cerrarBloqueoRuta()">Escoger otra ruta</button>
+  </div>
+</div>
+
+<!-- QUIÉN USA LA APP -->
+<div id="uso-ovl">
+  <div id="uso-card">
+    <div class="au-h">
+      <div><div class="au-t">📱  Quién usa la app</div>
+        <div class="au-d">Seis señales por persona. Lo que importa no es el podio: es quién no aparece nunca.</div></div>
+      <input type="date" id="uso-fecha" onchange="haptic();renderUsoApp(this.value)"
+        style="height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+      <button class="au-x" onclick="haptic();document.getElementById('uso-ovl').style.display='none'">✕</button>
+    </div>
+    <div id="uso-body"></div>
   </div>
 </div>
 
@@ -3502,6 +3555,7 @@ function mostrarPopupObsequiosCero(){
 }
 function cerrarObsCeroOvl(){document.getElementById('obs-cero-ovl').classList.remove('open');}
 async function actualizarObsequioCliente(){
+  _usoRegistrar('obsequios');
   const box=document.getElementById('ip-obsequio');if(!box)return;
   const cl=clientes[clienteIdx];const cod=cl?String(cl.id||getF(cl,CFG.COL_CODIGO)):'';
   const ob=cod&&obsequiosClientes[cod];
@@ -3536,6 +3590,7 @@ function fotoObsequio(){
 }
 /* ══ VER PEDIDO DEL CLIENTE ══ */
 function verPedidoCliente(){
+  _usoRegistrar('pedidos');
   const cl=clientes[clienteIdx];if(!cl){toast('Selecciona un cliente','err');return;}
   const cod=String(cl.id||getF(cl,CFG.COL_CODIGO));
   const ped=pedidosClientes[cod];
@@ -3987,6 +4042,7 @@ async function verFacturaCliente(){
 }
 
 function abrirFacturas(){
+  _usoRegistrar('facturas');
   const p=document.getElementById('pantalla-facturas');
   p.classList.remove('oculto');
   const hoy=new Date();
@@ -8981,6 +9037,150 @@ async function prellenarTripulaciones(){
 
 
 
+
+/* ══ QUIÉN USA LA APP (19-ago-2026) ══
+   El coordinador pidió ver quién no la maneja y quién la usa en todas sus funciones. Seis señales
+   por persona. Cuatro salen de lo que ya se guarda:
+
+     · se registró        REGISTRO/{fecha}/{ruta}__{ced}.json con origen 'persona'
+     · confirmó entregas  estados_entrega: la columna 'motivo' lleva el nombre de quién entregó
+     · reportó novedades   RECHAZOS/{fecha}/{cod}.json → reporta.ced
+     · les puso foto      el mismo archivo, campo foto_tipo
+
+   Las otras dos —consultar facturas y registrar pedidos u obsequios— no dejaban ningún rastro:
+   son consultas, no escrituras. Para esas se lleva un contador propio, que se acumula en el celular
+   y se sube cada tanto en vez de escribir en cada toque.
+
+   Por eso el tablero avisa desde cuándo hay dato de esas dos: antes de hoy no existía y fingir que
+   sí diría que nadie consulta facturas, que es falso. */
+const USO_ACCIONES=['facturas','pedidos','obsequios'];
+let _usoBuf=null, _usoTimer=null;
+
+function _usoClave(){ return 'gmaz_uso_'+getColDate(); }
+function _usoCargar(){
+  if(_usoBuf)return _usoBuf;
+  try{ _usoBuf=JSON.parse(localStorage.getItem(_usoClave())||'null'); }catch(e){ _usoBuf=null; }
+  if(!_usoBuf)_usoBuf={};
+  return _usoBuf;
+}
+function _usoRegistrar(accion){
+  if(USO_ACCIONES.indexOf(accion)<0)return;
+  const yo=personaDelDispositivo(); if(!yo||!yo.ced)return;   // sin dueño no hay a quién atribuir
+  const b=_usoCargar();
+  b[accion]=(b[accion]||0)+1;
+  b.ced=String(yo.ced); b.nombre=yo.nombre; b.ruta=rutaActual||'';
+  try{ localStorage.setItem(_usoClave(),JSON.stringify(b)); }catch(e){}
+  // Se sube con retraso: en ruta se tocan facturas muchas veces seguidas y no vale una escritura
+  // por toque —ni la red del celular en la calle lo aguanta—.
+  if(_usoTimer)clearTimeout(_usoTimer);
+  _usoTimer=setTimeout(()=>_usoSubir().catch(()=>{}),20000);
+}
+async function _usoSubir(){
+  const b=_usoCargar();
+  if(!b||!b.ced)return;
+  await _storageGuardar('USO/'+getColDate()+'/'+b.ced+'.json',{...b,hora:new Date().toISOString()});
+}
+
+/* Arma el cuadro: una fila por persona con sus seis señales. */
+async function medirUsoApp(fecha){
+  const f=fecha||fechaCtx();
+  const H={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'};
+  const gente={};   // {ced:{nombre,ruta,señales}}
+  const nuevo=ced=>gente[ced]||(gente[ced]={ced,nombre:'',ruta:'',registro:0,entregas:0,novedades:0,fotos:0,facturas:0,pedidos:0});
+  // 1 y quienes deberían estar: el registro del día
+  let reg={};
+  try{ reg=await cargarRegistroDia(f)||{}; }catch(e){}
+  Object.keys(reg).forEach(r=>(reg[r]||[]).forEach(x=>{
+    if(!x||!x.ced)return;
+    const g=nuevo(String(x.ced));
+    g.nombre=x.nombre||g.nombre; g.ruta=g.ruta||rutaBase(r);
+    if(x.origen==='persona')g.registro=1;
+  }));
+  // 2. entregas confirmadas — el nombre viaja en 'motivo'
+  try{
+    const {data}=await sb.from('estados_entrega').select('estado,motivo').eq('fecha',f).eq('estado','entregado');
+    const porNombre={};
+    (data||[]).forEach(x=>{ const nm=(x.motivo||'').trim(); if(nm)porNombre[nm]=(porNombre[nm]||0)+1; });
+    Object.keys(gente).forEach(c=>{ const g=gente[c]; if(g.nombre&&porNombre[g.nombre])g.entregas=porNombre[g.nombre]; });
+  }catch(e){}
+  // 3 y 4. novedades y fotos — por cédula, del detalle del rechazo
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',headers:H,
+      body:JSON.stringify({prefix:'RECHAZOS/'+f+'/',limit:500})});
+    if(r.ok){
+      const files=await r.json();
+      const dets=await Promise.all((files||[]).map(async x=>{
+        try{return await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECHAZOS/'+f+'/'+encodeURIComponent(x.name)+'?t='+Date.now())).json();}
+        catch(e){return null;}
+      }));
+      dets.filter(Boolean).forEach(d=>{
+        const c=d.reporta&&d.reporta.ced; if(!c)return;
+        const g=nuevo(String(c));
+        g.nombre=g.nombre||(d.reporta.nombre||''); g.ruta=g.ruta||rutaBase(d.ruta||'');
+        g.novedades++; if(d.foto_tipo)g.fotos++;
+      });
+    }
+  }catch(e){}
+  // 5 y 6. el contador propio
+  let hayUso=false;
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{method:'POST',headers:H,
+      body:JSON.stringify({prefix:'USO/'+f+'/',limit:200})});
+    if(r.ok){
+      const files=await r.json();
+      const us=await Promise.all((files||[]).map(async x=>{
+        try{return await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/USO/'+f+'/'+encodeURIComponent(x.name)+'?t='+Date.now())).json();}
+        catch(e){return null;}
+      }));
+      us.filter(Boolean).forEach(u=>{
+        if(!u.ced)return; hayUso=true;
+        const g=nuevo(String(u.ced));
+        g.nombre=g.nombre||u.nombre||''; g.ruta=g.ruta||u.ruta||'';
+        g.facturas=+u.facturas||0;
+        g.pedidos=(+u.pedidos||0)+(+u.obsequios||0);
+      });
+    }
+  }catch(e){}
+  // Quienes debían usarla y no aparecen: el dato que de verdad busca el coordinador.
+  const deben=personalApp||new Set(entregadoresDisponibles().map(p=>String(p.ced)));
+  EMPLEADOS_ASIS.forEach(e=>{
+    const c=String(e[1]);
+    if(!deben.has(c))return;
+    if(!gente[c])gente[c]={ced:c,nombre:e[0],ruta:'',registro:0,entregas:0,novedades:0,fotos:0,facturas:0,pedidos:0};
+    else if(!gente[c].nombre)gente[c].nombre=e[0];
+  });
+  const lista=Object.values(gente).map(g=>{
+    const se=[!!g.registro,g.entregas>0,g.novedades>0,g.fotos>0,g.facturas>0,g.pedidos>0];
+    return {...g,senales:se,puntaje:se.filter(Boolean).length};
+  });
+  lista.sort((a,b)=>b.puntaje-a.puntaje||b.entregas-a.entregas||String(a.nombre).localeCompare(String(b.nombre)));
+  return {fecha:f, gente:lista, hayUso,
+    usan:lista.filter(x=>x.puntaje>0), noAparecen:lista.filter(x=>x.puntaje===0)};
+}
+
+const USO_ETIQ=['Se registró','Confirmó entregas','Reportó novedades','Les puso foto','Consultó facturas','Pedidos y obsequios'];
+
+async function renderUsoApp(fecha){
+  const c=document.getElementById('uso-body'); if(!c)return;
+  c.innerHTML='<div class="cx-cargando">Midiendo quién usó la app…</div>';
+  const r=await medirUsoApp(fecha);
+  const fila=g=>'<div class="uso-p'+(g.puntaje?'':' cero')+'">'+
+    '<div class="uso-n"><b>'+_nomCorto(g.nombre,3)+'</b><span>'+(g.ruta||'sin ruta')+'</span></div>'+
+    '<div class="uso-s">'+g.senales.map((v,i)=>
+      '<i class="'+(v?'si':(g.puntaje?'':'no'))+'" title="'+USO_ETIQ[i]+'"></i>').join('')+'</div>'+
+    '<div class="uso-c">'+g.puntaje+'/6</div></div>';
+  c.innerHTML=
+    '<div class="uso-res">'+
+      '<div class="uso-k"><b>'+r.usan.length+'</b><span>La usan</span></div>'+
+      '<div class="uso-k mal"><b>'+r.noAparecen.length+'</b><span>No aparecen nunca</span></div>'+
+      '<div class="uso-k"><b>'+r.gente.length+'</b><span>Deberían usarla</span></div>'+
+    '</div>'+
+    (r.hayUso?'':'<div class="uso-nota">Las dos últimas señales —consultar facturas y registrar pedidos u obsequios— empezaron a medirse hoy: antes no dejaban ningún rastro. En los días anteriores van a salir apagadas para todos.</div>')+
+    '<div class="uso-leg">'+USO_ETIQ.map((t,i)=>'<span><i>'+(i+1)+'</i>'+t+'</span>').join('')+'</div>'+
+    (r.usan.length?'<div class="uso-t">Quiénes la usan</div><div class="uso-l">'+r.usan.map(fila).join('')+'</div>':'')+
+    (r.noAparecen.length?'<div class="uso-t mal">No aparecen nunca</div><div class="uso-l">'+r.noAparecen.map(fila).join('')+'</div>':'');
+}
+
 /* ══ AUDITORÍAS EN CALLE (19-ago-2026) ══
    Cinco tipos, definidos con el coordinador sobre checklists de auditoría a operadores de reparto en
    logística. Cada uno pide lo suyo, dos fotos obligatorias y hasta dos opcionales, y sale por WhatsApp
@@ -9085,6 +9285,15 @@ async function _audMarcarFoto(file,datos){
   return new Promise(res=>c.toBlob(b=>res(b),'image/jpeg',0.82));
 }
 
+function abrirUsoApp(){
+  const f=document.getElementById('uso-fecha');
+  if(f){ f.max=getColDate(); f.value=fechaCtx(); }
+  document.getElementById('uso-ovl').style.display='flex';
+  renderUsoApp(fechaCtx()).catch(e=>{
+    const c=document.getElementById('uso-body');
+    if(c)c.innerHTML='<div class="au-vacio">No se pudo medir: '+e.message+'</div>';
+  });
+}
 /* El selector de tipo. Se abre desde el módulo y desde el panel móvil. */
 function escogerTipoAuditoria(){
   const c=document.getElementById('audtipo-body');
@@ -10655,7 +10864,10 @@ function openCoord(){
   }
   updateDateStrip();
   document.getElementById('panel-coord').classList.add('show');
-  switchPcTab(1);
+  /* En el celular abre en Operación, no en Rutina. La rutina se hace una vez, temprano y sentado;
+     Operación es lo que se mira todo el día desde la calle, y ahí están los pendientes que exigen
+     una decisión suya. En pantalla grande sigue abriendo en Rutina, que es donde arranca la mañana. */
+  switchPcTab(window.innerWidth<900?2:1);
   verificarEstadoPanel();
   initRutDropzones();
 }
