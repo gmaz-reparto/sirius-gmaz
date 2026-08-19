@@ -11388,16 +11388,26 @@ async function cargarHistoricoInteligente(fecha){
       fueraSec[r]={saltos,total:v.length};
     }
   }
-  const rutasArr=Object.keys(porRuta).sort();
+  /* Este módulo se quedó fuera del filtro de las doce rutas cuando se aplicó al resto de la app:
+     seguía mostrando KA4V01 y KA4V63, que no son de este reparto y ensucian los totales del día.
+     Los totales de arriba se vuelven a sumar SOLO sobre las rutas que se ven, para que la cifra
+     grande y la tabla digan lo mismo — un encabezado que no cuadra con su detalle no sirve. */
+  const rutasArr=Object.keys(porRuta).filter(rutaEntrega).sort();
+  totClientesPed=0; totCajPed=0; totBotPed=0;
+  let totFactCli=0, totRechCli=0, totRechCaj=0;
+  rutasArr.forEach(r=>{const d=porRuta[r];
+    totClientesPed+=d.pedClientes||0; totCajPed+=d.pedCaj||0; totBotPed+=d.pedBot||0;
+    totFactCli+=d.factCods||0;
+    if(d.rech){ totRechCli+=(d.rech.clientes||[]).length; totRechCaj+=d.rech.caj||0; }});
   const presentes={Libro:!!pedIdx,Hoja:!!hojasIdx,Facturas:!!factIdx,PPAS:!!ppasIdx,Liquidación:!!liqIdx,Obsequios:!!obsIdx};
   const chip=(k,ok)=>'<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:'+(ok?'#DCFCE7':'#FEE2E2')+';color:'+(ok?'#166534':'#B91C1C')+'">'+(ok?'✓':'✕')+' '+k+'</span>';
-  let totRechCli=0,totRechCaj=0;Object.values(R).forEach(r=>{totRechCli+=(r.clientes||[]).length;totRechCaj+=r.caj||0;});
+  // Los rechazos ya se contaron arriba, solo sobre las rutas que se muestran.
   let html='<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px">'+Object.keys(presentes).map(k=>chip(k,presentes[k])).join('')+'</div>';
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px">'+
     '<div class="dkpi simple"><div class="dk-v">'+rutasArr.length+'</div><div class="dk-l">Rutas</div></div>'+
     '<div class="dkpi simple"><div class="dk-v">'+totClientesPed+'</div><div class="dk-l">Clientes (Libro)</div></div>'+
     '<div class="dkpi simple"><div class="dk-v">'+totCajPed+'</div><div class="dk-l">Cajas pedidas</div></div>'+
-    '<div class="dkpi simple"><div class="dk-v">'+factCods.length+'</div><div class="dk-l">Clientes con factura</div></div>'+
+    '<div class="dkpi simple"><div class="dk-v">'+totFactCli+'</div><div class="dk-l">Clientes con factura</div></div>'+
     '<div class="dkpi simple"><div class="dk-v" style="color:'+(totRechCli?'#B91C1C':'inherit')+'">'+totRechCli+'</div><div class="dk-l">Rechazos (clientes)</div></div>'+
     '</div>';
   if(!rutasArr.length){
@@ -11406,6 +11416,23 @@ async function cargarHistoricoInteligente(fecha){
   }
   html+='<div id="tbl-hi"></div>';
   cont.innerHTML=html;
+  /* ══ LA PLACA SALE DE LA ASIGNACIÓN, NO DE LA HOJA (19-ago-2026) ══
+     La columna mostraba «— · T402483764»: el número de transporte solo, sin placa. No es un fallo
+     del panel sino de la fuente — la Hoja de cargue casi nunca trae el campo «Camión:». Revisado el
+     13, 15, 18 y 19 de agosto: de las diez rutas de entrega, la placa venía vacía en todas salvo
+     KA4V01 (que llega en otro tipo de hoja) y KA4V11/KA4V52 un solo día.
+     La app ya sabe qué vehículo lleva cada ruta: es lo que el coordinador designa cada mañana y
+     queda en asignacion_vehiculo. Esa es la fuente buena, y la hoja queda de respaldo. */
+  let placaPorRuta={};
+  try{
+    const rA=await fetch(CFG.SUPABASE_URL+'/rest/v1/asignacion_vehiculo?select=ruta,unit_id&fecha=eq.'+fecha,{headers:_h});
+    if(rA.ok)(await rA.json()||[]).forEach(a=>{
+      if(!a.unit_id)return;
+      placaPorRuta[a.ruta]=a.unit_id;
+      const b=rutaBase(a.ruta);           // los pisos prestan su placa a la ruta madre
+      if(!placaPorRuta[b])placaPorRuta[b]=a.unit_id;
+    });
+  }catch(e){}
   const vtaRuta=ventaPorRuta(P);
   const filasHI=rutasArr.map(r=>{
     const d=porRuta[r],hj=d.hoja,rech=d.rech;
@@ -11419,7 +11446,10 @@ async function cargarHistoricoInteligente(fecha){
     if(fs&&fs.saltos>Math.max(2,fs.total*0.15))alertas.push(fs.saltos+' visitas fuera de secuencia de '+fs.total);
     let vRech=0;
     if(rech)(rech.clientes||[]).forEach(c=>(c.detalle||[]).forEach(x=>{vRech+=x.valor||0;}));
-    return{ruta:r,vehiculo:hj?((hj.placa||'—')+' · T'+(hj.transporte||'—')):'—',
+    const placa=placaPorRuta[r]||placaPorRuta[rutaBase(r)]||(hj&&hj.placa)||'';
+    if(!placa)alertas.push('Sin vehículo asignado');
+    return{ruta:r,
+      vehiculo:(placa||'—')+(hj&&hj.transporte?' · T'+hj.transporte:''),
       entregasProg:hj?(hj.entregas||0):null,clientes:d.pedClientes,pedCaj:d.pedCaj,
       cargCaj:hj?hj.cargueCaj:null,facturas:d.factCods,
       ventaPed:vtaRuta[r]||0,ventaRech:vRech,
