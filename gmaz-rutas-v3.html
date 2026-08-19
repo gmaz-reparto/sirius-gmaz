@@ -154,6 +154,8 @@ html,body{height:100%;font-family:'DM Sans',system-ui,sans-serif;background:var(
 #sv-pano{width:100%;height:100%}
 #sv-nosv{position:absolute;inset:0;background:#1C1F2A;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
 #sv-nosv p{font-size:11px;color:var(--gris4);text-align:center;line-height:1.5}
+#sv-nosv p b{color:#fff;font-weight:800}
+#sv-nosv:active{opacity:.7}
 #sv-status{position:absolute;top:8px;left:8px;background:rgba(15,17,23,.78);border-radius:16px;padding:3px 10px;font-size:8px;font-weight:700;color:rgba(255,255,255,.7);z-index:1}
 #sv-status.live{color:#34d399}
 .info-panel{flex:0 0 35%;background:var(--blanco);display:flex;flex-direction:column;min-height:0;padding:6px 10px;padding-bottom:max(52px,env(safe-area-inset-bottom,52px));overflow-y:auto;}
@@ -1814,7 +1816,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
   </div>
   <div id="sv-wrap">
     <div id="sv-pano"></div>
-    <div id="sv-nosv"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="16" stroke="#4A5060" stroke-width="1.5"/><path d="M9 17c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" stroke="#8A90A0" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="17" r="3" fill="#8A90A0"/></svg><p>Street View no disponible<br>en esta dirección</p></div>
+    <div id="sv-nosv" onclick="haptic();_svReintentar()"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="16" stroke="#4A5060" stroke-width="1.5"/><path d="M9 17c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" stroke="#8A90A0" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="17" r="3" fill="#8A90A0"/></svg><p id="sv-nosv-txt">Street View no disponible<br>en esta dirección</p></div>
     <div id="sv-status">● Street View</div>
   </div>
   <div class="info-panel">
@@ -8433,16 +8435,67 @@ async function openClient(i){
     document.getElementById('ip-rb-g').textContent=rv;
   }catch(e){document.getElementById('cl-ruta-venta').textContent='—';document.getElementById('ip-rb-g').textContent='—';}
   // Street View
-  if(!lat||!lng){document.getElementById('sv-nosv').style.display='flex';document.getElementById('sv-status').textContent='○ Sin coordenadas';document.getElementById('sv-status').className='';return;}
-  document.getElementById('sv-nosv').style.display='none';
-  if(!gpano||!svSvc)return;
-  const tag=document.getElementById('sv-status');
-  svSvc.getPanorama({location:{lat,lng},radius:150},(d,s)=>{
-    if(s==='OK'){gpano.setPosition({lat,lng});gpano.setVisible(true);tag.textContent='● Street View activo';tag.className='live';}
-    else svSvc.getPanorama({location:{lat,lng},radius:400},(d2,s2)=>{
-      if(s2==='OK'){gpano.setPosition({lat,lng});gpano.setVisible(true);tag.textContent='● Street View activo';tag.className='live';}
-      else{document.getElementById('sv-nosv').style.display='flex';tag.textContent='○ Sin Street View';tag.className='';}
-    });
+  _svMostrar(lat,lng);
+}
+
+/* ══ STREET VIEW QUE AGUANTA LA CALLE (19-ago-2026) ══
+   El entregador reportaba pantalla gris en clientes que sí tienen fachada. Eran tres cosas, y las
+   tres solo se notan en un celular en ruta, nunca en el escritorio de la oficina:
+
+   1. Si Google Maps aún no había terminado de cargar, la función se rendía con un `return` seco y
+      no volvía a intentarlo jamás. Con 3G eso pasa justo en los primeros clientes de la jornada.
+   2. Cuando la consulta no llega por señal intermitente, Google responde UNKNOWN_ERROR. Se estaba
+      tratando igual que ZERO_RESULTS —es decir, como «aquí no hay fachada»— y sin reintentar.
+   3. Al fallar quedaba el panorama del cliente anterior, o un gris mudo que no decía qué pasó.
+
+   Ahora espera a que Maps cargue, reintenta lo que es red y no ausencia de fachada, dice el motivo
+   real, y deja tocar la pantalla para volver a intentar sin salirse del cliente. */
+let _svPeticion=0, _svUlt=null;
+function _svEsperarMaps(intentos,cb){
+  if(gpano&&svSvc)return cb(true);
+  if(intentos<=0)return cb(false);
+  setTimeout(()=>_svEsperarMaps(intentos-1,cb),400);
+}
+function _svReintentar(){ if(_svUlt)_svMostrar(_svUlt.lat,_svUlt.lng); }
+function _svMostrar(lat,lng){
+  const nosv=document.getElementById('sv-nosv'), tag=document.getElementById('sv-status');
+  const txt=document.getElementById('sv-nosv-txt');
+  const mio=++_svPeticion;                    // si cambia de cliente, la respuesta vieja se descarta
+  _svUlt=(lat&&lng)?{lat,lng}:null;
+  const fallo=(rotulo,detalle,tocar)=>{
+    if(mio!==_svPeticion)return;
+    if(gpano)gpano.setVisible(false);         // nunca dejar la fachada del cliente anterior
+    nosv.style.display='flex';
+    nosv.style.cursor=tocar?'pointer':'default';
+    if(txt)txt.innerHTML=detalle+(tocar?'<br><b>Toca aqu\u00ed para reintentar</b>':'');
+    tag.textContent='\u25cb '+rotulo; tag.className='';
+  };
+  if(!lat||!lng)return fallo('Sin coordenadas','Este cliente no tiene<br>ubicaci\u00f3n registrada',false);
+  nosv.style.display='none';
+  tag.textContent='\u25cb Buscando la fachada\u2026'; tag.className='';
+  _svEsperarMaps(25,ok=>{                     // hasta 10 s: con señal mala el mapa tarda en arrancar
+    if(mio!==_svPeticion)return;
+    if(!ok)return fallo('Mapa sin cargar','El mapa no alcanz\u00f3 a cargar.<br>Revisa la se\u00f1al',true);
+    const pedir=(radio,quedan)=>{
+      svSvc.getPanorama({location:{lat,lng},radius:radio},(d,st)=>{
+        if(mio!==_svPeticion)return;
+        if(st==='OK'){
+          nosv.style.display='none';
+          gpano.setPosition({lat,lng}); gpano.setVisible(true);
+          tag.textContent='\u25cf Street View activo'; tag.className='live'; return;
+        }
+        // ZERO_RESULTS es la única respuesta que de verdad significa «aquí no hay fachada».
+        // Todo lo demás es red o cuota, y eso sí vale la pena reintentarlo.
+        if(st!=='ZERO_RESULTS'&&quedan>0)
+          return setTimeout(()=>pedir(radio,quedan-1),700);
+        if(radio<400)return pedir(400,2);      // segunda pasada con radio ancho
+        if(st==='ZERO_RESULTS')  return fallo('Sin Street View','Google no tiene fachada<br>de esta direcci\u00f3n',false);
+        if(st==='OVER_QUERY_LIMIT')return fallo('Cupo agotado','Se agot\u00f3 el cupo de Google.<br>Avisa al coordinador',true);
+        if(st==='REQUEST_DENIED') return fallo('Bloqueado','Street View bloqueado.<br>Avisa al coordinador',false);
+        fallo('Sin se\u00f1al','No hubo se\u00f1al para traer<br>la fachada',true);
+      });
+    };
+    pedir(150,2);
   });
 }
 
