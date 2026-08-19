@@ -10864,10 +10864,11 @@ function openCoord(){
   }
   updateDateStrip();
   document.getElementById('panel-coord').classList.add('show');
-  /* En el celular abre en Operación, no en Rutina. La rutina se hace una vez, temprano y sentado;
-     Operación es lo que se mira todo el día desde la calle, y ahí están los pendientes que exigen
-     una decisión suya. En pantalla grande sigue abriendo en Rutina, que es donde arranca la mañana. */
-  switchPcTab(window.innerWidth<900?2:1);
+  /* Operación de primero SOLO en un celular de verdad (ES_MOVIL mira el user agent). Se intentó
+     decidirlo por el ancho de la ventana y estuvo mal: en el computador, con la ventana angosta,
+     al coordinador le abría la pestaña Operación —la vista compacta de tarjetas— en vez de Rutina,
+     y el panel de escritorio parecía la app del celular. El escritorio abre en Rutina, como siempre. */
+  switchPcTab(ES_MOVIL?2:1);
   verificarEstadoPanel();
   initRutDropzones();
 }
