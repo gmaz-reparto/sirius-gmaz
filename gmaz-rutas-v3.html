@@ -632,12 +632,57 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .dr-rv small{font-size:9.5px;color:var(--gris4);text-transform:uppercase;letter-spacing:.4px}
 .dr-chev{color:var(--gris3);flex-shrink:0;font-size:15px}
 .dr-vacio{text-align:center;padding:30px 16px;color:var(--gris4);font-size:12px}
+/* Permisos de entrada: se resuelven de pie, con el camión esperando, así que todo tiene que
+   caber sin desplazarse y los dos botones ser inconfundibles. */
+#perm-ovl{display:none;position:fixed;inset:0;z-index:2500;background:rgba(15,17,23,.62);
+  backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:18px}
+#perm-card{background:#fff;border-radius:18px;width:100%;max-width:440px;max-height:86vh;overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,.3);padding:20px}
+.perm-t{font-size:17px;font-weight:900;letter-spacing:-.3px;color:#0F1117;display:flex;align-items:center;gap:8px}
+.perm-x{margin-left:auto;background:transparent;border:none;font-size:17px;color:#9AA0AE;cursor:pointer;padding:2px 6px}
+.perm-s{font-size:11.5px;color:#6B7385;line-height:1.5;margin:6px 0 14px}
+.perm-i{border:1px solid #E6E9EF;border-radius:13px;padding:13px;margin-bottom:11px}
+.perm-h{display:flex;align-items:baseline;gap:9px;margin-bottom:10px}
+.perm-h b{font-size:15px;font-weight:900;color:#0F1117}
+.perm-h span{font-size:10.5px;color:#B45309;font-weight:700;margin-left:auto}
+.perm-g{background:#F6F7F9;border-radius:10px;padding:9px 11px;margin-bottom:8px}
+.perm-et{display:block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#9AA0AE;margin-bottom:4px}
+.perm-p{font-size:12.5px;color:#0F1117;line-height:1.5}
+.perm-p em{font-style:normal;color:#6B7385;font-size:11px}
+.perm-nadie{color:#B45309;font-weight:700}
+.perm-cargo{font-size:10.5px;color:#6B7385;margin-top:1px}
+.perm-acc{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.perm-si,.perm-no{border:none;border-radius:10px;padding:12px;font-family:inherit;font-size:13px;
+  font-weight:800;cursor:pointer}
+.perm-si{background:#E30613;color:#fff}
+.perm-no{background:#fff;color:#6B7385;border:1px solid #D8DCE4}
+.perm-si:active,.perm-no:active{transform:scale(.985)}
+
 /* Diálogo "¿quién está entregando hoy?" — bloquea el inicio de ruta hasta identificarse */
 #ent-pick-ovl{display:none;position:fixed;inset:0;z-index:2400;background:rgba(15,17,23,.62);
   backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:22px}
 #ent-pick-card{background:#fff;border-radius:20px;padding:26px 22px 22px;width:100%;max-width:380px;
   box-shadow:0 24px 60px rgba(0,0,0,.3);text-align:center}
 .ep-ic{font-size:38px;line-height:1;margin-bottom:12px}
+/* Bloqueo por no estar designado. Tiene que leerse de un vistazo a las cinco de la mañana,
+   en el patio, con el camión cargado: quién sí está designado y qué hacer. */
+#ep-bloq-card{background:#fff;border-radius:20px;padding:28px 22px 22px;width:100%;max-width:380px;
+  box-shadow:0 24px 60px rgba(0,0,0,.3);text-align:center}
+.epb-ic{width:60px;height:60px;border-radius:50%;background:#FFF0F1;display:flex;align-items:center;
+  justify-content:center;font-size:27px;margin:0 auto 14px}
+.epb-t{font-size:19px;font-weight:900;letter-spacing:-.4px;line-height:1.2;color:#0F1117;margin-bottom:12px}
+.epb-quien{background:#F6F7F9;border-radius:12px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;
+  color:#4B5563;line-height:1.5}
+.epb-quien b{color:#0F1117;font-weight:800}
+.epb-s{font-size:12px;color:#6B7385;line-height:1.5;margin-bottom:16px}
+.epb-espera{display:flex;align-items:center;justify-content:center;gap:8px;background:#FFF7ED;
+  border-radius:11px;padding:11px;margin-bottom:12px;font-size:12px;font-weight:700;color:#B45309}
+.epb-punto{width:9px;height:9px;border-radius:50%;background:#D97706;animation:epbLat 1.1s ease-in-out infinite}
+@keyframes epbLat{0%,100%{opacity:.28;transform:scale(.82)}50%{opacity:1;transform:scale(1)}}
+.epb-otra{width:100%;margin-top:9px;background:transparent;border:none;color:#6B7385;font-family:inherit;
+  font-size:12.5px;font-weight:700;padding:11px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.epb-punto{animation:none;opacity:.85}}
 .ep-t{font-size:18px;font-weight:900;letter-spacing:-.4px;margin-bottom:7px;color:#0F1117}
 .ep-s{font-size:12.5px;color:#6B7385;line-height:1.5;margin-bottom:18px}
 #ent-pick-sel{width:100%;height:46px;border:1.5px solid #E6E9EF;border-radius:12px;padding:0 12px;
@@ -2093,6 +2138,8 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
           <button class="chip" onclick="haptic();renderFlota(_flotaAyer())">Ayer</button>
           <span class="fl-modo" id="fl-modo"></span>
           <div style="flex:1"></div>
+          <button class="chip" id="fl-prellenar" onclick="haptic();prellenarTripulaciones()"
+            title="Pone los auxiliares que más salieron en cada ruta la última semana. Usted los cambia.">✦ Pre‑llenar</button>
           <button class="chip" onclick="haptic();renderFlota(null,true)">↻ Actualizar</button>
           <button class="chip" onclick="haptic();exportarFlota()">↓ Exportar</button>
         </div>
@@ -2600,11 +2647,29 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
       <input type="hidden" id="ent-pick-sel">
     </div>
     <div id="ep-abordo" class="ep-abordo"></div>
-    <div class="ep-rol">
-      <button type="button" class="ep-rol-btn on" data-rol="conductor" onclick="haptic();_epPickRol(this)">Conductor</button>
-      <button type="button" class="ep-rol-btn" data-rol="auxiliar" onclick="haptic();_epPickRol(this)">Auxiliar</button>
-    </div>
     <button class="ep-ok" onclick="haptic();confirmarTripulacion()">Iniciar ruta</button>
+  </div>
+  <!-- No estás designado en esta ruta: se pide autorización al coordinador -->
+  <div id="ep-bloq-card" style="display:none">
+    <div class="epb-ic">🔒</div>
+    <div class="epb-t">No estás designado<br>en <span id="epb-ruta">esta ruta</span></div>
+    <div class="epb-quien" id="epb-quien"></div>
+    <div class="epb-s" id="epb-s">Si hoy te cambiaron, pide autorización. Al coordinador le llega ahora mismo.</div>
+    <div id="epb-espera" class="epb-espera" style="display:none">
+      <div class="epb-punto"></div><span id="epb-espera-txt">Esperando al coordinador…</span>
+    </div>
+    <button class="ep-ok" id="epb-pedir" onclick="haptic();solicitarPermisoRuta()">Pedir autorización</button>
+    <button class="epb-otra" onclick="haptic();cerrarBloqueoRuta()">Escoger otra ruta</button>
+  </div>
+</div>
+
+<!-- PERMISOS DE ENTRADA — alguien espera junto a un camión cargado -->
+<div id="perm-ovl">
+  <div id="perm-card">
+    <div class="perm-t">Piden entrar a una ruta
+      <button class="perm-x" onclick="haptic();cerrarPermisos()" title="Cerrar">✕</button></div>
+    <div class="perm-s">El camión está cargado y esperando. Queda registrado quién pidió, quién autorizó y la hora.</div>
+    <div id="perm-body"></div>
   </div>
 </div>
 
@@ -4545,6 +4610,9 @@ async function cargarTorreControl(forzar,fechaSel){
         cargarValidaciones(fecha)
       ]);
       _tcCache={fecha,hojas:hojasDia||{},rech:rech||{},reg:reg||{},obsFoto:obsFoto||new Set(),hist,val:val||{},rechOK:!!rech};
+      // Quién pide entrar a una ruta y qué rutas quedaron sin designar. Va después del caché
+      // porque _tcCargarPermisos lee _tcDatosRutas() para saber qué rutas salieron cargadas.
+      try{ await _tcCargarPermisos(fecha); }catch(e){ _permisosPend=[]; _rutasSinDesignar=[]; }
     }catch(e){ _tcCache={fecha,hojas:Object.assign({},hojasIndex||{}),rech:{},reg:{},obsFoto:new Set(),hist:null,val:{},rechOK:false}; }
   }
   try{ await cargarPersonalApp(); }catch(e){}
@@ -5084,6 +5152,12 @@ function pintarTorreControl(){
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
     item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
     item(conAnomalia.length?'urg':'ok',conAnomalia.length,'Rutas que no cuadran con lo designado',conAnomalia.length?"tcAbrirRuta('"+(conAnomalia[0]||{}).ruta+"')":'')+
+    item(_permisosPend.length?'urg':'ok',_permisosPend.length,
+      'Piden entrar a una ruta'+(_permisosPend.length?' · el camión espera':''),
+      _permisosPend.length?"verPermisosPendientes()":'')+
+    item(_rutasSinDesignar.length?'med':'ok',_rutasSinDesignar.length,
+      'Rutas sin tripulación designada',
+      _rutasSinDesignar.length?"tcAbrirRuta('"+(_rutasSinDesignar[0]||'')+"')":'')+
     item(sinRegistrarse.length?'med':'ok',sinRegistrarse.length,'Personal sin registrarse hoy',sinRegistrarse.length?"verSinRegistrarse()":'')+
     item(hayLiq?'med':'mute',hayLiq?'✓':'—','Auditoría LiquiYa'+(hayLiq?' lista':' · falta cargar'),"abrirAuditoria()")+
     item(obsTot&&obsFoto>=obsTot?'ok':'med',obsFoto+'<span style="font-size:14px;color:var(--gris4)">/'+obsTot+'</span>','Obsequios con foto',"abrirObsequiosSup()")+
@@ -8061,18 +8135,169 @@ function _tripulacionPrincipal(ruta){
   const t=tripulacionActual(ruta);
   return t.find(p=>p.rol==='conductor')||t[0]||null;
 }
-window._epRolSel='conductor';
-function _epPickRol(btn){
-  // Si la ruta ya tiene conductor, el botón está deshabilitado: se avisa por qué en vez de
-  // dejar que el entregador crea que puede elegirlo.
-  if(btn.disabled){
-    const c=_epConductorDeRuta();
-    toast('Esta ruta ya tiene conductor'+(c?' ('+_nomCorto(c.nombre)+')':'')+'. Si debes ir tú de conductor, habla con el coordinador para que lo cambie.','err');
-    return;
-  }
-  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');window._epRolSel=btn.dataset.rol;
+/* El rol lo pone el coordinador al designar. Se conserva la variable porque medio archivo la lee,
+   pero ya nadie la escoge desde el celúlar: se llena con lo designado. */
+window._epRolSel='auxiliar';
+
+/* ══ LA DESIGNACIÓN MANDA (19-ago-2026) ══
+   Antes cada entregador escogía en su celular si salía de conductor o de auxiliar, y la app iba
+   arreglando los choques con reglas: si ya había conductor, el que llegaba después pasaba a auxiliar
+   y quedaba una marca de «reclama_conductor» que nadie miraba. El 18 de agosto eso dejó a Mejía
+   registrado como auxiliar en KA4V11_2 diciendo que el conductor era él, contra Cañizares.
+
+   Desde hoy manda una sola fuente: lo que el coordinador designó esa mañana. El entregador ya no
+   escoge rol ni ruta —solo pone su cédula, y eso sirve para dos cosas: saber quién reporta cada
+   novedad y saber quién usa la app—. Si no está designado en esa ruta, no entra; pide autorización
+   y el coordinador la resuelve de un toque, porque un camión cargado parado en el CEDI a las cinco
+   de la mañana cuesta mucho más que un dato mal atribuido.
+
+   La designación NO estrena archivo: ya vive en el registro del día, distinguida por su origen.
+   Cuando el coordinador arma una ruta en la tabla de flota, eso se guarda como
+   REGISTRO/{fecha}/{ruta}__{ced}.json con origen 'coordinador' (o 'sistema', si lo puso el
+   conductor fijo de la placa). Lo que el entregador escribe desde su celular lleva origen 'persona'.
+   Leer la designación es entonces filtrar por origen, y así no hay dos verdades que se puedan
+   desincronizar —que es exactamente el error que produjo el desajuste del maestro—.
+
+     · origen 'coordinador' / 'sistema'  → designado por él: abre la puerta
+     · origen 'persona'                  → el entregador dando fe de que ese es él
+     · PERMISOS/{fecha}/{ruta}__{ced}.json  la petición de entrada y su respuesta
+*/
+const ORIGEN_DESIGNA=['coordinador','sistema'];
+let _desigDia=null, _desigFecha=null;
+
+async function cargarDesignacion(fecha,forzar){
+  const f=fecha||getColDate();
+  if(!forzar&&_desigDia&&_desigFecha===f)return _desigDia;
+  const out={};
+  try{
+    const reg=await cargarRegistroDia(f)||{};
+    Object.keys(reg).forEach(rk=>{
+      const gente=(reg[rk]||[]).filter(x=>x&&ORIGEN_DESIGNA.indexOf(x.origen)>=0);
+      if(gente.length)out[rk]={personas:gente};
+    });
+  }catch(e){}
+  _desigDia=out; _desigFecha=f;
+  return out;
 }
+/* Quién está designado hoy en esta ruta. Los pisos heredan la designación de su ruta madre:
+   es el mismo camión y la misma gente haciendo un segundo viaje. */
+function designadosDe(ruta){
+  const d=_desigDia||{};
+  const ex=d[ruta]||d[rutaBase(ruta)];
+  return (ex&&Array.isArray(ex.personas))?ex.personas:[];
+}
+function designacionDe(ruta,ced){
+  return designadosDe(ruta).find(x=>String(x.ced)===String(ced))||null;
+}
+/* El coordinador entra a cualquier ruta con su cédula: es su llave maestra. */
+function esCoordinador(ced){
+  const e=EMPLEADOS_ASIS.find(x=>String(x[1])===String(ced));
+  return !!(e&&/COORDINADOR DE DISTRIBUCION/i.test(e[2]||''));
+}
+
+/* ══ EL PRE-LLENADO ══
+   Se mira quién salió de verdad en cada ruta los últimos siete días hábiles y se propone al más
+   repetido, con el rol en que más veces salió. Es una propuesta: el coordinador la cambia a gusto
+   y lo que él deje es lo que vale. Sin esto habría que armar trece vehículos en blanco cada mañana. */
+async function designacionSugerida(fecha){
+  const f=fecha||getColDate();
+  const dias=[];
+  for(let i=1;i<=10&&dias.length<7;i++){
+    const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()-i);
+    const s2=d.toISOString().split('T')[0];
+    if(d.getDay()!==0)dias.push(s2);   // los domingos no hay reparto
+  }
+  const cuenta={};   // {ruta:{ced:{n,nombre,roles:{}}}}
+  for(const dia of dias){
+    let reg=null;
+    try{ reg=await cargarRegistroDia(dia); }catch(e){ continue; }
+    Object.keys(reg||{}).forEach(rk=>{
+      const r=rutaBase(rk);
+      if(!rutaApp(r))return;
+      const c=cuenta[r]||(cuenta[r]={});
+      (reg[rk]||[]).forEach(pp=>{
+        if(!pp||!pp.ced)return;
+        const e=c[pp.ced]||(c[pp.ced]={n:0,nombre:pp.nombre||'',roles:{}});
+        e.n++; const rol=pp.rol||'auxiliar';
+        e.roles[rol]=(e.roles[rol]||0)+1;
+      });
+    });
+  }
+  // El conductor fijo del vehículo asignado pesa más que la costumbre: es la regla que él definió.
+  const out={};
+  Object.keys(cuenta).forEach(r=>{
+    const gente=Object.entries(cuenta[r])
+      .map(([ced,e])=>({ced,nombre:e.nombre,n:e.n,
+        rol:Object.entries(e.roles).sort((a,b)=>b[1]-a[1])[0][0]}))
+      .sort((a,b)=>b.n-a.n).slice(0,TRIP_MAX);
+    // un solo conductor: el de más apariciones se queda con el puesto
+    let hayCond=false;
+    gente.forEach(g=>{
+      if(g.rol==='conductor'){ if(hayCond)g.rol='auxiliar'; else hayCond=true; }
+    });
+    if(gente.length)out[r]={personas:gente,sugerida:true};
+  });
+  return out;
+}
+
+/* ══ PERMISOS ══
+   El entregador que no está designado pide entrar; el coordinador responde de un toque. Queda
+   guardado quién pidió, contra quién, quién autorizó y a qué hora. */
+function _permisoRuta(ruta,ced){ return 'PERMISOS/'+getColDate()+'/'+ruta+'__'+ced+'.json'; }
+async function pedirPermisoRuta(ruta,persona){
+  const desig=designadosDe(ruta);
+  const pet={ced:String(persona.ced),nombre:persona.nombre,cargo:persona.cargo||'',
+    ruta,fecha:getColDate(),hora:new Date().toISOString(),device:_deviceId(),
+    estado:'pendiente',designados:desig.map(x=>({ced:x.ced,nombre:x.nombre,rol:x.rol}))};
+  await _storageGuardar(_permisoRuta(ruta,persona.ced),pet);
+  return pet;
+}
+async function leerPermisoRuta(ruta,ced){
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+_permisoRuta(ruta,ced)+'?t='+Date.now());
+    return r.ok?await r.json():null;
+  }catch(e){ return null; }
+}
+async function listarPermisosDia(fecha){
+  const f=fecha||getColDate(), out=[];
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/list/'+CFG.BCK_PED,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:'PERMISOS/'+f+'/',limit:200})});
+    if(!r.ok)return out;
+    const files=await r.json();
+    await Promise.all((files||[]).map(async fl=>{
+      try{
+        const d=await (await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/PERMISOS/'+f+'/'+encodeURIComponent(fl.name)+'?t='+Date.now())).json();
+        if(d&&d.ced)out.push(d);
+      }catch(e){}
+    }));
+  }catch(e){}
+  return out.sort((a,b)=>String(a.hora).localeCompare(String(b.hora)));
+}
+async function responderPermiso(ruta,ced,aprueba,quien){
+  const pet=await leerPermisoRuta(ruta,ced)||{ruta,ced,fecha:getColDate()};
+  pet.estado=aprueba?'ok':'no';
+  pet.resueltoPor=quien||'Coordinador';
+  pet.resueltoHora=new Date().toISOString();
+  await _storageGuardar(_permisoRuta(ruta,ced),pet);
+  /* Autorizar ES designar. Si solo se marcara el permiso, el entregador volvería a chocar contra el
+     bloqueo en el próximo arranque. Se escribe por el mismo camino que usa la tabla de flota, con
+     origen 'coordinador', para que la ruta quede armada igual que si él la hubiera puesto a mano. */
+  if(aprueba){
+    const f=getColDate(), e=EMPLEADOS_ASIS.find(x=>String(x[1])===String(ced));
+    const hayCond=designadosDe(ruta).some(x=>x.rol==='conductor');
+    await _storageGuardar('REGISTRO/'+f+'/'+ruta+'__'+ced+'.json',{
+      ced:String(ced), nombre:pet.nombre||(e?e[0]:''), cargo:e?e[2]:'',
+      rol:hayCond?'auxiliar':'conductor', ruta,
+      hora:pet.resueltoHora, origen:'coordinador', porPermiso:true,
+      autorizoA:pet.designados&&pet.designados.length?pet.designados.map(x=>x.nombre).join(', '):''
+    });
+    await cargarDesignacion(f,true);
+  }
+  return pet;
+}
+
 /* ══ REGLAS DE TRIPULACIÓN (2026-08-15) ══
    · Hasta 5 personas por ruta. Cada una se registra en SU propio celular.
    · Solo UNA puede ser conductor: si ya hay conductor registrado, el que llegue después entra
@@ -8100,24 +8325,15 @@ function _epPintarABordo(ruta){
       '<div class="ep-ab-l">'+_epRutaActual.map(p=>
         '<span class="ep-ab"><i class="'+(p.rol==='conductor'?'cond':'aux')+'"></i>'+_nomCorto(p.nombre)+'</span>').join('')+'</div>';
   }
-  const cond=_epConductorDeRuta();
-  if(cond&&(!yo||String(cond.ced)!==String(yo.ced)))
-    html+='<div class="ep-aviso">'+ruta+' ya tiene conductor: <b>'+_nomCorto(cond.nombre)+'</b>. Vas a quedar como <b>auxiliar</b>.</div>';
+  // Lo designado por el coordinador, que es lo que de verdad manda hoy.
+  const des=designadosDe(ruta);
+  if(des.length)
+    html+='<div class="ep-ab-t">Designados por el coordinador</div><div class="ep-ab-l">'+
+      des.map(d=>'<span class="ep-ab"><i class="'+(d.rol==='conductor'?'cond':'aux')+'"></i>'+
+        _nomCorto(d.nombre)+'</span>').join('')+'</div>';
   if(_epRutaActual.length>=TRIP_MAX)
     html+='<div class="ep-aviso">Esta ruta ya tiene '+TRIP_MAX+' personas registradas. Avisa al coordinador antes de subirte.</div>';
   box.innerHTML=html;
-  // Si ya hay conductor, el botón de conductor queda deshabilitado visualmente
-  const bc=document.querySelector('.ep-rol-btn[data-rol="conductor"]');
-  if(bc){
-    const bloqueado=!!(cond&&(!yo||String(cond.ced)!==String(yo.ced)));
-    bc.disabled=bloqueado;
-    bc.style.opacity=bloqueado?'.45':'';
-    bc.style.cursor=bloqueado?'not-allowed':'';
-    if(bloqueado&&window._epRolSel==='conductor'){
-      window._epRolSel='auxiliar';
-      document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol==='auxiliar'));
-    }
-  }
 }
 
 /* Buscador: se escribe el nombre o la cédula y aparecen las coincidencias. Con 38 personas en la
@@ -8192,7 +8408,6 @@ function pedirTripulacion(ruta,cb){
   const hid=document.getElementById('ent-pick-sel');if(hid){hid.value='';hid.dataset.nombre='';}
   const inp=document.getElementById('ent-pick-buscar');if(inp)inp.value='';
   _epBuscar('');
-  document.querySelectorAll('.ep-rol-btn').forEach(b=>b.classList.toggle('on',b.dataset.rol===window._epRolSel));
   _epRenderLista();
   document.getElementById('ent-pick-ovl').style.display='flex';
   window._entPickCtx={ruta,cb};
@@ -8211,41 +8426,241 @@ async function confirmarTripulacion(){
   }
   // origen 'persona' = lo registró el propio colaborador desde su celular. El sistema también
   // registra conductores solo (origen 'sistema'); comparar los dos es lo que destapa las anomalías.
-  persona={...persona,rol:window._epRolSel||'conductor',hora:new Date().toISOString(),device:_deviceId(),origen:'persona'};
-  // Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular, se frena.
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
+  // Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular, se frena.
   const choque=await _yaRegistradaHoyEnOtroEquipo(persona.ced);
+  await cargarDesignacion(getColDate(),true);
   await _epCargarRuta(ctx.ruta); // estado fresco de la ruta antes de decidir
   if(btn){btn.disabled=false;btn.textContent='Iniciar ruta';}
   if(choque){
     toast(persona.nombre.split(' ')[0]+' ya se registró hoy desde otro celular (ruta '+choque.ruta+'). Usa tu propio equipo o avisa al coordinador.','err');
     return;
   }
+  /* La designación del coordinador es la puerta. Tres llaves la abren: estar designado, ser el
+     coordinador, o tener un permiso ya autorizado. Cualquier otro caso se frena y se ofrece pedir
+     autorización —no se deja al entregador varado sin salida—. */
+  const desig=designadosDe(ctx.ruta);
+  const mi=designacionDe(ctx.ruta,persona.ced);
+  let rol=mi?mi.rol:null, sinDesig=false;
+  if(!mi&&!esCoordinador(persona.ced)){
+    if(!desig.length){
+      /* La ruta no tiene NADIE designado. Bloquear aquí sería castigar un olvido del coordinador,
+         no hacer cumplir una decisión suya: el 19 de agosto tres de las ocho rutas estaban así.
+         Se deja pasar y se marca, para que él lo vea en su bandeja y lo corrija sin que nadie
+         se quede varado en el patio con el camión cargado. */
+      rol='auxiliar'; sinDesig=true;
+    }else{
+      const permiso=await leerPermisoRuta(ctx.ruta,persona.ced);
+      if(permiso&&permiso.estado==='ok')rol='auxiliar';
+      else{ mostrarBloqueoRuta(ctx.ruta,persona); return; }
+    }
+  }
+  if(esCoordinador(persona.ced)&&!mi)rol='coordinador';
+  persona={...persona,rol:rol||'auxiliar',hora:new Date().toISOString(),device:_deviceId(),origen:'persona',
+           designado:!!mi,sin_designacion:sinDesig||undefined};
   // Tope de personas por vehículo
   const yaEsta=_epRutaActual.some(p=>String(p.ced)===String(persona.ced));
   if(!yaEsta&&_epRutaActual.length>=TRIP_MAX){
     toast('La ruta '+ctx.ruta+' ya tiene '+TRIP_MAX+' personas registradas. Avisa al coordinador.','err');
     return;
   }
-  // Un solo conductor por ruta: el segundo pasa a auxiliar automáticamente.
-  // Si el conductor que ya estaba lo puso el SISTEMA (por el vehículo) y quien llega dice que hoy
-  // maneja él, se deja constancia: el coordinador verá la discrepancia y decidirá.
-  const cond=_epConductorDeRuta();
-  if(persona.rol==='conductor'&&cond&&String(cond.ced)!==String(persona.ced)){
-    persona.rol='auxiliar';
-    persona.rol_auto=true;                 // quedó como auxiliar por regla, no por elección
-    persona.reclama_conductor=true;        // dijo que el conductor es él
-    persona.conductor_sistema=cond.nombre; // contra quién choca
-    toast(ctx.ruta+' tiene asignado como conductor a '+_nomCorto(cond.nombre)+'. Quedas como auxiliar y el coordinador revisará el caso.','err');
-  }
   document.getElementById('ent-pick-ovl').style.display='none';
   _guardarPersonaDispositivo(persona);       // amarre permanente celular ↔ persona
   _guardarRegistroHoy(ctx.ruta,persona);     // jornada de hoy en esta ruta
-  toast('Registrado: '+persona.nombre.split(' ').slice(0,2).join(' ')+' · '+(persona.rol==='conductor'?'Conductor':'Auxiliar'),'ok');
+  toast('Registrado: '+persona.nombre.split(' ').slice(0,2).join(' ')+' · '+
+    (persona.rol==='conductor'?'Conductor':persona.rol==='coordinador'?'Coordinador':'Auxiliar'),'ok');
   _guardarRegistroRuta(getColDate(),ctx.ruta,[persona]); // en segundo plano, no bloquea el inicio de ruta
   const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent='1';
   if(ctx.cb)ctx.cb([persona]);
 }
+
+
+
+/* ══ PRE‑LLENAR LA TRIPULACIÓN ══
+   Armar trece vehículos en blanco cada mañana es trabajo que la app puede ahorrar: quién sale con
+   quién se repite casi siempre. Se mira la última semana y se proponen los auxiliares más repetidos
+   de cada ruta.
+
+   Al conductor NO lo toca: ese lo pone el conductor fijo de la placa cuando el coordinador asigna el
+   vehículo, que es la regla que él definió. Y a nadie que ya esté puesto lo mueve —esto suma, no
+   reemplaza—. Todo lo que deje queda editable: la última palabra siempre es del coordinador. */
+async function prellenarTripulaciones(){
+  const btn=document.getElementById('fl-prellenar');
+  if(btn){btn.disabled=true;btn.textContent='Buscando…';}
+  showLoad('Mirando quién salió con quién la última semana…');
+  try{
+    const fecha=getColDate();
+    const sug=await designacionSugerida(fecha);
+    const puestos=[];
+    const yaHoy=new Set();   // nadie puede quedar en dos rutas el mismo día
+    Object.values(_tripAsignada||{}).forEach(arr=>(arr||[]).forEach(x=>yaHoy.add(String(x.ced))));
+    for(const ruta of Object.keys(sug)){
+      if(!rutaApp(ruta))continue;
+      const actuales=(_tripAsignada[ruta]||[]);
+      const hayCond=actuales.some(x=>x.rol==='conductor');
+      if(actuales.length>=TRIP_MAX)continue;
+      for(const cand of sug[ruta].personas){
+        if(actuales.length+puestos.filter(x=>x.ruta===ruta).length>=TRIP_MAX)break;
+        if(yaHoy.has(String(cand.ced)))continue;   // ya está en otra ruta hoy
+        if(cand.rol==='conductor')continue;        // el conductor lo pone la placa, no la costumbre
+        const e=EMPLEADOS_ASIS.find(x=>String(x[1])===String(cand.ced));
+        const persona={ced:String(cand.ced),nombre:cand.nombre||(e?e[0]:''),cargo:e?e[2]:'',
+          rol:'auxiliar',hora:new Date().toISOString(),origen:'coordinador',sugerido:true,ruta};
+        await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+persona.ced+'.json',persona);
+        (_tripAsignada[ruta]=_tripAsignada[ruta]||[]).push(persona);
+        yaHoy.add(String(persona.ced));
+        puestos.push({ruta,nombre:persona.nombre});
+      }
+    }
+    await cargarDesignacion(fecha,true);
+    hideLoad();
+    if(!puestos.length)toast('No había auxiliares que agregar: las rutas ya están armadas','ok');
+    else toast('✓ '+puestos.length+' auxiliar(es) puestos en '+
+      new Set(puestos.map(x=>x.ruta)).size+' ruta(s). Revíselos y cambie lo que haga falta.','ok');
+    renderFlota(null,true);
+  }catch(e){ hideLoad(); toast('No se pudo pre‑llenar: '+e.message,'err'); }
+  finally{ if(btn){btn.disabled=false;btn.textContent='✦ Pre‑llenar';} }
+}
+
+/* ══ LA BANDEJA DE PERMISOS ══
+   Lo que llega acá tiene a alguien esperando de pie junto a un camión cargado, así que se refresca
+   con la torre y se resuelve de un toque. Autorizar deja a la persona designada en la ruta; rechazar
+   la manda a hablar con el coordinador. Las dos respuestas quedan firmadas con hora. */
+let _permisosPend=[], _rutasSinDesignar=[];
+
+async function _tcCargarPermisos(fecha){
+  const f=fecha||fechaCtx();
+  try{
+    const todos=await listarPermisosDia(f);
+    _permisosPend=todos.filter(x=>x.estado==='pendiente');
+  }catch(e){ _permisosPend=[]; }
+  try{
+    const d=await cargarDesignacion(f,true);
+    const conCargue=(_tcDatosRutas()||[]).filter(x=>x.cargue>0||x.totalCli>0).map(x=>x.ruta);
+    _rutasSinDesignar=conCargue.filter(r=>!((d[r]||d[rutaBase(r)]||{}).personas||[]).length);
+  }catch(e){ _rutasSinDesignar=[]; }
+  return _permisosPend;
+}
+function verPermisosPendientes(){
+  if(!_permisosPend.length){toast('No hay nadie esperando autorización','ok');return;}
+  const cont=document.getElementById('perm-body');
+  cont.innerHTML=_permisosPend.map(x=>{
+    const hora=new Date(x.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    const desde=Math.max(1,Math.round((Date.now()-new Date(x.hora).getTime())/60000));
+    return '<div class="perm-i">'+
+      '<div class="perm-h"><b>'+x.ruta+'</b><span>'+hora+' · hace '+desde+' min</span></div>'+
+      '<div class="perm-g"><span class="perm-et">Usted designó</span>'+
+        (x.designados&&x.designados.length
+          ? x.designados.map(d=>'<div class="perm-p">'+d.nombre+' <em>'+(d.rol==='conductor'?'Conductor':'Auxiliar')+'</em></div>').join('')
+          : '<div class="perm-p perm-nadie">Nadie designado en esta ruta</div>')+'</div>'+
+      '<div class="perm-g"><span class="perm-et">Está pidiendo entrar</span>'+
+        '<div class="perm-p"><b>'+x.nombre+'</b> <em>C.C. '+x.ced+'</em></div>'+
+        (x.cargo?'<div class="perm-cargo">'+x.cargo+'</div>':'')+'</div>'+
+      '<div class="perm-acc">'+
+        '<button class="perm-si" onclick="haptic();resolverPermiso(&#39;'+x.ruta+'&#39;,&#39;'+x.ced+'&#39;,true)">Autorizar y dejarlo salir</button>'+
+        '<button class="perm-no" onclick="haptic();resolverPermiso(&#39;'+x.ruta+'&#39;,&#39;'+x.ced+'&#39;,false)">Rechazar</button>'+
+      '</div></div>';
+  }).join('');
+  document.getElementById('perm-ovl').style.display='flex';
+}
+function cerrarPermisos(){document.getElementById('perm-ovl').style.display='none';}
+async function resolverPermiso(ruta,ced,aprueba){
+  const x=_permisosPend.find(y=>y.ruta===ruta&&String(y.ced)===String(ced));
+  if(!aprueba&&!confirm('¿Rechazar la entrada de '+((x||{}).nombre||ced)+' a '+ruta+'?'))return;
+  showLoad(aprueba?'Autorizando…':'Rechazando…');
+  try{
+    await responderPermiso(ruta,ced,aprueba,'Coordinador');
+    _permisosPend=_permisosPend.filter(y=>!(y.ruta===ruta&&String(y.ced)===String(ced)));
+    hideLoad();
+    toast(aprueba?'✓ Autorizado · '+((x||{}).nombre||'')+' ya puede arrancar':'Rechazado','ok');
+    if(_permisosPend.length)verPermisosPendientes(); else cerrarPermisos();
+    pintarTorreControl();
+  }catch(e){ hideLoad(); toast('No se pudo guardar: '+e.message,'err'); }
+}
+
+/* ══ EL BLOQUEO Y SU SALIDA ══
+   Frenar sin ofrecer salida es lo que deja un camión cargado parado. Acá el entregador ve quién sí
+   está designado —por si se subió al camión equivocado, que es lo más probable— y, si de verdad lo
+   cambiaron, pide autorización de un toque. La pantalla se queda esperando y arranca sola en cuanto
+   el coordinador responde: nadie tiene que volver a tocar nada. */
+let _bloqCtx=null, _bloqTimer=null;
+
+function mostrarBloqueoRuta(ruta,persona){
+  _bloqCtx={ruta,persona};
+  document.getElementById('ent-pick-card').style.display='none';
+  const card=document.getElementById('ep-bloq-card'); card.style.display='block';
+  document.getElementById('epb-ruta').textContent=ruta;
+  const des=designadosDe(ruta);
+  const q=document.getElementById('epb-quien');
+  q.innerHTML=des.length
+    ? 'Esta ruta la tienen asignada:<br>'+des.map(d=>'<b>'+d.nombre+'</b> · '+
+        (d.rol==='conductor'?'Conductor':'Auxiliar')).join('<br>')
+    : 'El coordinador todavía no ha designado a nadie en esta ruta.';
+  document.getElementById('epb-espera').style.display='none';
+  const b=document.getElementById('epb-pedir');
+  b.style.display=''; b.disabled=false; b.textContent='Pedir autorización';
+  document.getElementById('ent-pick-ovl').style.display='flex';
+  // Si ya había pedido antes y sigue esperando, se retoma la espera en vez de pedir dos veces.
+  leerPermisoRuta(ruta,persona.ced).then(pm=>{
+    if(pm&&pm.estado==='pendiente'&&_bloqCtx&&_bloqCtx.ruta===ruta)_bloqEsperar();
+  });
+}
+function cerrarBloqueoRuta(){
+  _bloqCtx=null;
+  if(_bloqTimer){clearInterval(_bloqTimer);_bloqTimer=null;}
+  document.getElementById('ep-bloq-card').style.display='none';
+  document.getElementById('ent-pick-card').style.display='';
+  document.getElementById('ent-pick-ovl').style.display='none';
+  showScr('scr-routes');
+}
+async function solicitarPermisoRuta(){
+  if(!_bloqCtx)return;
+  const b=document.getElementById('epb-pedir');
+  b.disabled=true; b.textContent='Enviando…';
+  try{
+    await pedirPermisoRuta(_bloqCtx.ruta,_bloqCtx.persona);
+    b.style.display='none';
+    _bloqEsperar();
+  }catch(e){
+    b.disabled=false; b.textContent='Pedir autorización';
+    toast('No se pudo enviar la solicitud: '+e.message,'err');
+  }
+}
+/* Espera activa: se pregunta cada ocho segundos. Es barato y evita que el entregador
+   tenga que cerrar y abrir la app para ver si ya le dieron permiso. */
+function _bloqEsperar(){
+  const caja=document.getElementById('epb-espera');
+  caja.style.display='flex';
+  document.getElementById('epb-espera-txt').textContent='Esperando al coordinador…';
+  if(_bloqTimer)clearInterval(_bloqTimer);
+  let vueltas=0;
+  _bloqTimer=setInterval(async()=>{
+    if(!_bloqCtx){clearInterval(_bloqTimer);_bloqTimer=null;return;}
+    vueltas++;
+    const pm=await leerPermisoRuta(_bloqCtx.ruta,_bloqCtx.persona.ced);
+    if(pm&&pm.estado==='ok'){
+      clearInterval(_bloqTimer); _bloqTimer=null;
+      const ctx=_bloqCtx; _bloqCtx=null;
+      document.getElementById('ep-bloq-card').style.display='none';
+      document.getElementById('ent-pick-card').style.display='';
+      toast('✓ Autorizado por el coordinador. Ya puedes arrancar.','ok');
+      await cargarDesignacion(getColDate(),true);
+      confirmarTripulacion();
+      return;
+    }
+    if(pm&&pm.estado==='no'){
+      clearInterval(_bloqTimer); _bloqTimer=null;
+      caja.style.display='none';
+      const b=document.getElementById('epb-pedir');
+      b.style.display=''; b.disabled=false; b.textContent='Volver a pedir';
+      toast('El coordinador no autorizó la entrada a esta ruta. Habla con él.','err');
+      return;
+    }
+    if(vueltas===8)  // ~1 minuto sin respuesta
+      document.getElementById('epb-espera-txt').textContent='Sigue esperando… si es urgente, llámalo';
+  },8000);
+}
+
 /* Botón 🧑‍🔧 de la barra: ver a nombre de quién está este celular y con qué rol quedó.
    El rol NO se cambia desde aquí: si alguien se equivocó al registrarse, lo corrige el coordinador
    desde su panel. Así el registro no se puede "arreglar" a conveniencia a mitad de la jornada. */
