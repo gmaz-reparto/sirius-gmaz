@@ -632,6 +632,71 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .dr-rv small{font-size:9.5px;color:var(--gris4);text-transform:uppercase;letter-spacing:.4px}
 .dr-chev{color:var(--gris3);flex-shrink:0;font-size:15px}
 .dr-vacio{text-align:center;padding:30px 16px;color:var(--gris4);font-size:12px}
+/* Cruce del día y cierre en la rutina */
+.cx-aviso{background:#FFF7ED;border-radius:12px;padding:18px;text-align:center;color:#B45309;font-size:12.5px}
+.cx-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-bottom:16px}
+.cx-k{background:#fff;border:1px solid #E6E9EF;border-radius:12px;padding:12px 14px}
+.cx-k b{display:block;font-size:23px;font-weight:900;letter-spacing:-.6px;color:#0F1117;font-variant-numeric:tabular-nums}
+.cx-k span{display:block;font-size:10px;font-weight:700;color:var(--gris4);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.cx-k.ok b{color:#0F766E} .cx-k.al b{color:#B91C1C}
+.cx-caso{background:#fff;border:1px solid #E6E9EF;border-radius:13px;margin-bottom:10px;overflow:hidden}
+.cx-caso.vacio{opacity:.55}
+.cx-h{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;cursor:pointer}
+.cx-caso.vacio .cx-h{cursor:default}
+.cx-p{flex:0 0 auto;min-width:30px;height:26px;border-radius:7px;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:900;padding:0 7px;font-variant-numeric:tabular-nums}
+.cx-ht{flex:1;min-width:0}
+.cx-ht b{display:block;font-size:13px;font-weight:800;color:#0F1117;line-height:1.3}
+.cx-ht span{display:block;font-size:10.5px;color:var(--gris4);line-height:1.45;margin-top:2px}
+.cx-ch{color:#C3C7D0;font-size:16px;transition:transform .18s;flex:0 0 auto}
+.cx-caso.abierto>.cx-h .cx-ch{transform:rotate(90deg)}
+.cx-l{display:none;border-top:1px solid #EEF0F4;max-height:460px;overflow-y:auto}
+.cx-caso.abierto .cx-l{display:block}
+.cx-c{border-bottom:1px solid #F2F4F8}
+.cx-c:last-child{border-bottom:none}
+.cx-cn{display:flex;align-items:center;gap:9px;padding:10px 14px;cursor:pointer}
+.cx-cn:hover{background:#FAFBFC}
+.cx-cn b{flex:1;min-width:0;font-size:12px;font-weight:700;color:#0F1117;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cx-r{font-size:10px;font-weight:800;color:var(--gris4);background:#F1F3F7;border-radius:5px;padding:2px 6px}
+.cx-c.abierto .cx-cn .cx-ch{transform:rotate(90deg)}
+.cx-d{display:none;padding:0 14px 13px}
+.cx-c.abierto .cx-d{display:block}
+.cx-cargando{font-size:11px;color:var(--gris4);padding:8px 0}
+.cx-dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.cx-db{background:#F8F9FB;border-radius:10px;padding:10px 11px}
+.cx-de{display:block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#9AA0AE;margin-bottom:6px}
+.cx-t{width:100%;border-collapse:collapse;font-size:11px}
+.cx-t td{padding:3px 0;border-bottom:1px solid #EDEFF3;color:#4B5563}
+.cx-t tr:last-child td{border-bottom:none}
+.cx-t td.num{text-align:right;font-weight:800;color:#0F1117;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cx-vac{font-size:11px;color:var(--gris4);line-height:1.45}
+.cx-mot{font-size:11.5px;font-weight:800;color:#B45309;margin-bottom:6px}
+.cx-cifras{display:flex;flex-wrap:wrap;gap:12px;margin-top:9px;font-size:10.5px;color:var(--gris4)}
+.cx-cifras b{color:#0F1117;font-weight:800;font-variant-numeric:tabular-nums}
+.cx-cifras .dif b{color:#B91C1C}
+.cx-cifras .cod{margin-left:auto;font-variant-numeric:tabular-nums}
+.cx-aud{margin-top:10px;width:100%;border:none;border-radius:9px;padding:10px;background:#0F1117;
+  color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.cx-aud:hover{background:#E30613}
+/* Cierre del día dentro de la rutina */
+.cr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:8px;margin-bottom:11px}
+.cr-r{background:#F8F9FB;border:1px solid #E6E9EF;border-radius:10px;padding:9px 11px}
+.cr-r.ok{background:#F0FDF4;border-color:#BBF7D0}
+.cr-n b{display:block;font-size:12.5px;font-weight:800;color:#0F1117}
+.cr-n span{display:block;font-size:10px;color:var(--gris4);margin-top:1px}
+.cr-v{margin-top:6px;font-size:13px;font-weight:900;color:#0F766E;font-variant-numeric:tabular-nums}
+.cr-b{margin-top:7px;width:100%;border:1px solid #D8DCE4;border-radius:8px;padding:7px;background:#fff;
+  font-family:inherit;font-size:11px;font-weight:800;color:#0F1117;cursor:pointer}
+.cr-b:hover{border-color:#0F1117}
+.cr-firmar{width:100%;border:none;border-radius:10px;padding:12px;background:#0F1117;color:#fff;
+  font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.cr-firmar:hover:not(:disabled){background:#E30613}
+.cr-firmar:disabled{background:#EDEFF3;color:#9AA0AE;cursor:default}
+.cr-firma{border-radius:10px;padding:11px;text-align:center;font-size:12px;font-weight:800}
+.cr-firma.ok{background:#F0FDF4;color:#0F766E}
+
 /* Permisos de entrada: se resuelven de pie, con el camión esperando, así que todo tiene que
    caber sin desplazarse y los dos botones ser inconfundibles. */
 #perm-ovl{display:none;position:fixed;inset:0;z-index:2500;background:rgba(15,17,23,.62);
@@ -1645,7 +1710,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
 <!-- ══ AUDITORÍA ANTIFRAUDE (LiquiYa vs lo reportado) ══ -->
 <div id="scr-audit" style="position:fixed;inset:0;z-index:650;background:#F4F6F9;display:none;flex-direction:column;font-family:'DM Sans',sans-serif">
   <div class="asis-top">
-    <b>🔎 Auditoría · LiquiYa vs reportado</b>
+    <b>🔎 Auditoría del día</b>
     <input type="date" id="audit-fecha" onchange="haptic();cambiarFechaAuditoria(this.value)" style="height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
     <span id="audit-meta" style="font-size:11px;color:#B45309;font-weight:800"></span>
     <span style="flex:1"></span>
@@ -1654,6 +1719,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <button class="asis-btn c" onclick="haptic();cerrarAuditoria()">✕ Cerrar</button>
   </div>
   <div style="padding:8px 20px;background:#fff;border-bottom:1px solid #EEF0F4;font-size:11px;color:#6B7385">Cruza <b>Pedido (Libro)</b> + <b>PPAS</b> (snapshot histórico del día) + <b>Rechazos</b> + <b>Liquidación (LiquiYa)</b> de la <b>misma fecha</b> → detecta clientes/productos liquidados fuera del pedido y rechazos que en realidad se liquidaron. Angelita sube la liquidación de un día en la mañana siguiente, por eso arranca en <b>ayer</b> — cambia la fecha arriba para ver otro día.</div>
+  <div id="audit-cruce" style="padding:16px 20px 0"></div>
   <div class="asis-wrap" id="audit-body" style="padding:16px"></div>
 </div>
 
@@ -2007,7 +2073,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
       <div class="dside-sep">Gente y cierre</div>
       <button class="dnav" data-mod="entregadores" onclick="haptic();activarModulo('entregadores')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-1.5-1.5"/></svg></i>Personal</button>
       <button class="dnav" data-mod="asis" onclick="haptic();abrirAsistencia()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>Asistencia</button>
-      <button class="dnav" data-mod="audit" onclick="haptic();abrirAuditoria()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></i>Cierre del día</button>
+      <button class="dnav" data-mod="audit" onclick="haptic();abrirAuditoria()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></i>Auditoría</button>
       <button class="dnav" data-mod="obseq" onclick="haptic();abrirObsequiosSup()"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M3 12v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M12 8c-1.5 0-3-1-3-2.5S10 3 12 5c0-1.5 1.5-2.5 3-2.5S18 4 18 5.5 16.5 8 15 8"/></svg></i>Obsequios</button>
       <button class="dnav" data-mod="analisis" onclick="haptic();activarModulo('analisis')"><i class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 6"/></svg></i>Análisis</button>
     </nav>
@@ -2500,6 +2566,13 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
           <div class="rut-top"><div class="rut-ic" style="background:#3b1f5e"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="rut-ti"><div class="rut-t">Maestro de clientes</div><div class="rut-detail" id="pc-det-maest">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-maest">...</span></div>
           <label class="rut-drop" data-input="inp-maestro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></label>
           <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarMaestro()">Borrar</button></div>
+        </div>
+        <!-- CIERRE DEL DÍA — se mudó desde el módulo de auditoría: es el último paso de la jornada,
+             y su sitio natural es la misma lista donde arranca la mañana. -->
+        <div class="rut-card" id="rut-card-cierre">
+          <div class="rut-top"><div class="rut-ic" style="background:#0F1117"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div class="rut-ti"><div class="rut-t">Cierre del día</div><div class="rut-detail" id="pc-det-cierre">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-cierre">...</span></div>
+          <div style="padding:0 17px 4px;font-size:10.5px;color:var(--gris4)">Cuenta lo que volvió al CEDI en cada ruta y firma el día. Mientras queden devoluciones sin decidir o rutas sin contar, el día no se puede firmar.</div>
+          <div id="cierre-rutina" style="padding:8px 17px 14px"></div>
         </div>
         <div class="rut-card">
           <div class="rut-top"><div class="rut-ic" style="background:#0F766E"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg></div><div class="rut-ti"><div class="rut-t">Canal de clientes (Trad./Moderno)</div><div class="rut-detail" id="pc-det-canal">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-canal">...</span></div>
@@ -5152,6 +5225,9 @@ function pintarTorreControl(){
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
     item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
     item(conAnomalia.length?'urg':'ok',conAnomalia.length,'Rutas que no cuadran con lo designado',conAnomalia.length?"tcAbrirRuta('"+(conAnomalia[0]||{}).ruta+"')":'')+
+    item(_novFalsasPend.length?'urg':'ok',_novFalsasPend.length,
+      'Novedades falsas por verificar',
+      _novFalsasPend.length?"abrirAuditoria()":'')+
     item(_permisosPend.length?'urg':'ok',_permisosPend.length,
       'Piden entrar a una ruta'+(_permisosPend.length?' · el camión espera':''),
       _permisosPend.length?"verPermisosPendientes()":'')+
@@ -5607,7 +5683,7 @@ function repintarModuloConFecha(origen){
    Ahora cada uno se muestra solo donde tiene efecto:
      · Ruta  → los módulos que muestran datos por ruta.
      · Mes y año → solo los que tienen vista de mes (Novedades, Alertas, Personal, Análisis).
-   Los módulos con su propio calendario (Rutina, Asistencia, Cierre del día, Obsequios) no muestran
+   Los módulos con su propio calendario (Rutina, Asistencia, Auditoría, Obsequios) no muestran
    ninguno: su fecha es la barra de contexto de arriba. */
 const _FIL_RUTA=['operacion','vehiculos','clientes','entregadores','rechazos','alertas','analisis'];
 const _FIL_MES=['rechazos','alertas','entregadores','analisis'];
@@ -8476,6 +8552,277 @@ async function confirmarTripulacion(){
 
 
 
+
+/* ══ CIERRE DEL DÍA EN LA RUTINA (19-ago-2026) ══
+   Vivía dentro del módulo de auditoría, escondido en la tabla de la torre. Es el último paso de la
+   jornada y su sitio es la misma lista donde arranca la mañana: contar lo que volvió y firmar. */
+async function renderCierreRutina(){
+  const cont=document.getElementById('cierre-rutina'); if(!cont)return;
+  const est=document.getElementById('pc-est-cierre'), det=document.getElementById('pc-det-cierre');
+  const fecha=fechaCtx();
+  await cargarCierre(fecha);
+  const R=(_tcDatosRutas()||[]).filter(x=>x.cargue>0);
+  if(!R.length){
+    cont.innerHTML='<div style="font-size:11.5px;color:var(--gris4);padding:6px 0">Aún no hay rutas con cargue este día.</div>';
+    if(est){est.textContent='—';est.className='pc-estado pc-estado-empty';}
+    if(det)det.textContent='Sin cargue todavía';
+    return;
+  }
+  const firmado=!!(_cierreDia&&_cierreDia.firmado);
+  const sinRet=R.filter(x=>!(_cierreDia&&_cierreDia.rutas[x.ruta]));
+  const pend=R.reduce((a,x)=>a+(x.pend||0),0);
+  cont.innerHTML=
+    '<div class="cr-grid">'+R.map(x=>{
+      const y=(_cierreDia&&_cierreDia.rutas[x.ruta])||null;
+      return '<div class="cr-r'+(y?' ok':'')+'">'+
+        '<div class="cr-n"><b>'+x.ruta+'</b><span>'+Math.round(x.cargue).toLocaleString('es-CO')+' cj cargadas</span></div>'+
+        (y?'<div class="cr-v">'+y.caj+' cj'+(y.und?' + '+y.und+' und':'')+'</div>'
+          :'<button class="cr-b" onclick="haptic();abrirRetorno(&#39;'+x.ruta+'&#39;)">Contar retorno</button>')+
+        '<div id="ret-form-'+x.ruta+'"></div></div>';
+    }).join('')+'</div>'+
+    (firmado
+      ? '<div class="cr-firma ok">✓ Día firmado el '+
+        new Date(_cierreDia.firmado.hora).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'})+'</div>'
+      : '<button class="cr-firmar" onclick="haptic();firmarCierreDia()"'+
+        ((sinRet.length||pend)?' disabled':'')+'>'+
+        (sinRet.length?'Faltan '+sinRet.length+' ruta(s) por contar'
+         :pend?'Quedan '+pend+' devolución(es) sin decidir'
+         :'Firmar y cerrar el día')+'</button>');
+  if(est){
+    est.textContent=firmado?'✓':(sinRet.length||pend?'⚠':'✓');
+    est.className='pc-estado '+(firmado?'pc-estado-ok':'pc-estado-empty');
+  }
+  if(det)det.textContent=firmado?'Firmado':(sinRet.length?sinRet.length+' ruta(s) sin contar el retorno'
+    :pend?pend+' devolución(es) sin decidir':'Listo para firmar');
+}
+
+/* ══ EL CRUCE DEL DÍA: LO QUE SALIÓ CONTRA LO QUE SE FACTURÓ (19-ago-2026) ══
+   Cliente por cliente, el cargue del PPAS contra la liquidación de LiquiYa, cruzado con lo que el
+   entregador reportó. De ahí salen seis situaciones, y cada una se llama por su nombre:
+
+     1. NO ENTREGADO Y NO REPORTADO   salió en el cargue, no se liquidó y nadie dijo nada. Lo peor:
+                                      el producto se movió y no hay explicación de nadie.
+     2. NO ENTREGADO Y REPORTADO      lo mismo, pero el entregador sí reportó su novedad. Normal.
+     3. NO ESTABA PARA ENTREGA HOY    se liquidó a un cliente que no iba en el cargue de ese día.
+     4. LIQUIDACIÓN DE MÁS           se liquidaron más cajas de las que se le cargaron.
+     5. LIQUIDÓ DE MENOS             se liquidaron menos. Solo se audita si NO viene marcado como
+                                      «Producto no cargado»: eso es desabasto del CEDI, no del entregador.
+     6. NOVEDAD FALSA                 el cargue y la liquidación cuadran, pero el entregador reportó
+                                      una novedad. O entregó y dijo que no, o el dato está mal.
+
+   La 6 es la que va a la bandeja de pendientes: se cierra sola cuando se le hace la auditoría de
+   verificación a ese cliente. */
+const CRUCE_CASOS=[
+  {k:'NO_REPORTADO', t:'Cliente no entregado y NO reportado', c:'#B91C1C', bg:'#FEE2E2',
+   d:'Iba en el cargue, no aparece en LiquiYa y el entregador no reportó novedad. Nadie ha explicado dónde quedó ese producto.'},
+  {k:'FALSA', t:'Novedad falsa', c:'#7C2D12', bg:'#FED7AA',
+   d:'El cargue y la liquidación cuadran, pero el entregador reportó novedad. Se cierra auditando al cliente.'},
+  {k:'DE_MAS', t:'Auditoría · cliente con liquidación de más', c:'#9A3412', bg:'#FFEDD5',
+   d:'Se liquidaron más cajas de las que se le cargaron al cliente.'},
+  {k:'DE_MENOS', t:'Auditoría · liquidó de menos', c:'#B45309', bg:'#FEF3C7',
+   d:'Se liquidaron menos cajas de las cargadas, y no viene marcado como producto no cargado —así que no es desabasto—.'},
+  {k:'NO_ESTABA', t:'Auditoría · cliente no estaba para entrega hoy', c:'#1D4ED8', bg:'#DBEAFE',
+   d:'Se le liquidó a un cliente que no iba en el cargue de ese día.'},
+  {k:'REPORTADO', t:'Cliente no entregado y reportado', c:'#4B5563', bg:'#F1F3F7',
+   d:'No se entregó y el entregador sí reportó su novedad. Es el camino normal: queda para control.'}
+];
+const MOTIVO_DESABASTO=/NO CARGADO/i;
+let _cruceDia=null;
+
+/* Los SKU 184xxx son envase retornable —canastas y botellas vacías—, no producto vendido.
+   Verificado sobre el 18 de agosto: los 183 registros con ese prefijo van los 183 en $0. Contarlos
+   como cajas liquidadas hacía ver «liquidación de más» en clientes que solo estaban devolviendo
+   canastas. */
+function _esEnvase(sku){ return String(sku).indexOf('184')===0; }
+
+async function cruceAuditoria(fecha){
+  const f=fecha||window._auditFecha||getColDate(-1);
+  const gs=async nom=>{try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+f+'/'+nom+'?t='+Date.now());
+    return r.ok?await r.json():null;}catch(e){return null;}};
+  const [ppas,liq,ped]=await Promise.all([gs('PPAS_INDEX.json'),gs('LIQUIDACION_INDEX.json'),gs('PEDIDOS_INDEX.json')]);
+  if(!ppas||!Object.keys(ppas).length)return {fecha:f,error:'sin_ppas'};
+  if(!liq||!Object.keys(liq).length)return {fecha:f,error:'sin_liquidacion'};
+  const rech=await cargarRechazosDelDia(f);
+  const nov={};   // {cod:{ruta,motivo,detalle,total_cajas}}
+  Object.values(rech||{}).forEach(r=>(r.clientes||[]).forEach(c=>nov[String(c.codigo_cliente)]=c));
+  const cajLiq=cod=>{
+    const L=liq[cod]; if(!L||!L.prods)return 0;
+    return Object.entries(L.prods).reduce((a,[sku,pr])=>a+(_esEnvase(sku)?0:(+pr.caj||0)),0);
+  };
+  /* Las cantidades NO se comparan contra el PPAS. Las tres fuentes cuentan bases distintas: para
+     DISTRIBUIDORA SS el 18 de agosto el PPAS decía 170 cajas, el Libro 510 y LiquiYa 16, y ninguna
+     cuadra con otra. Comparar el total del PPAS con el de LiquiYa levantaba 274 alertas de 904
+     clientes —un tercio de la operación—, que es justo el ruido que vuelve un tablero inservible.
+     Lo único comparable es el MISMO SKU en las dos fuentes que hablan de producto: el Libro, que es
+     lo que el cliente pidió, y LiquiYa, que es lo que se le facturó. */
+  const pedidoPorSku=cod=>{
+    const B=ped&&ped[cod]; if(!B||!B.b)return null;
+    const m={};
+    B.b.forEach(b=>(b.i||[]).forEach(it=>{
+      const sku=String(it[0]); if(_esEnvase(sku))return;
+      m[sku]=(m[sku]||0)+(+it[2]||0);
+    }));
+    return Object.keys(m).length?m:null;
+  };
+  const difPorSku=cod=>{
+    const pm=pedidoPorSku(cod); if(!pm)return null;
+    const L=liq[cod]; if(!L||!L.prods)return null;
+    let mas=[],menos=[];
+    Object.entries(L.prods).forEach(([sku,pr])=>{
+      if(_esEnvase(sku))return;
+      const pedC=pm[sku]||0, liqC=+pr.caj||0, d=liqC-pedC;
+      if(d>0.001)mas.push({sku,desc:pr.desc||sku,pedido:pedC,liquidado:liqC,dif:+d.toFixed(2)});
+    });
+    Object.entries(pm).forEach(([sku,pedC])=>{
+      const pr=L.prods[sku], liqC=pr?(+pr.caj||0):0, d=liqC-pedC;
+      if(d<-0.001)menos.push({sku,desc:(pr&&pr.desc)||sku,pedido:pedC,liquidado:liqC,dif:+d.toFixed(2)});
+    });
+    return {mas,menos};
+  };
+  const casos={}; CRUCE_CASOS.forEach(c=>casos[c.k]=[]);
+  const vistos=new Set();
+  Object.entries(ppas).forEach(([cod,c])=>{
+    const ruta=rutaBase(c.ruta||c.r||'');
+    if(!rutaEntrega(ruta))return;              // solo las diez rutas de entrega
+    vistos.add(String(cod));
+    const base={cod:String(cod),nombre:c.nombre||'',ruta,cargue:+c.caj||0,
+      novedad:nov[String(cod)]||null,liquidado:liq[cod]?cajLiq(cod):null};
+    if(!liq[cod]){
+      (base.novedad?casos.REPORTADO:casos.NO_REPORTADO).push(base);
+      return;
+    }
+    /* Novedad falsa: reportó un motivo que significa «no recibió nada» —cerrado, sin dinero, no hizo
+       pedido, pedido mal elaborado— y sin embargo se le facturó. Un rechazo parcial o un producto no
+       cargado conviven con una factura y no prueban nada. */
+    const mot=(base.novedad||{}).motivo||'';
+    if(base.novedad&&_motivoEsTotal(mot)&&base.liquidado>0){ casos.FALSA.push(base); return; }
+    const d=difPorSku(cod);
+    if(d&&d.mas.length){
+      casos.DE_MAS.push({...base,skus:d.mas,dif:+d.mas.reduce((a,x)=>a+x.dif,0).toFixed(2)});
+      return;
+    }
+    if(d&&d.menos.length&&!MOTIVO_DESABASTO.test(mot)){
+      casos.DE_MENOS.push({...base,skus:d.menos,dif:+d.menos.reduce((a,x)=>a+x.dif,0).toFixed(2)});
+    }
+  });
+  // Liquidados que no iban en el cargue de ese día
+  Object.keys(liq).forEach(cod=>{
+    if(vistos.has(String(cod)))return;
+    const L=liq[cod];
+    if(_RUTAS_SIN_LIBRO.indexOf(L.rutaVend)>=0)return;   // autoventa y mayoristas: así operan
+    casos.NO_ESTABA.push({cod:String(cod),nombre:L.nombre||'',ruta:L.rutaVend||'—',
+      cargue:0,liquidado:cajLiq(cod),novedad:null});
+  });
+  /* Los de diferencia se ordenan por el tamaño de la diferencia y los demás por cajas: lo que más
+     pesa queda arriba. En «liquidó de menos» hay 158 clientes un día cualquiera —muchos son un par
+     de cajas de merma normal—, así que sin este orden el caso grande se pierde entre los chicos. */
+  Object.keys(casos).forEach(k=>casos[k].sort((a,b)=>
+    (a.dif!=null&&b.dif!=null)?Math.abs(b.dif)-Math.abs(a.dif)
+    :(b.cargue||b.liquidado||0)-(a.cargue||a.liquidado||0)));
+  _cruceDia={fecha:f,casos,total:Object.values(casos).reduce((a,v)=>a+v.length,0),
+    clientesPPAS:Object.keys(ppas).length,clientesLiq:Object.keys(liq).length};
+  return _cruceDia;
+}
+
+
+/* ══ LA VISTA DEL CRUCE ══
+   El coordinador pidió ver «solo el cliente» y, al tocarlo, los productos con novedad y el pedido que
+   llevaba en el cargue. Una lista de nombres se recorre de un vistazo; una tabla de cientos de filas
+   con producto por producto no se lee nunca. El detalle se trae cuando se abre, no antes. */
+let _cruceAbierto=null;
+
+function renderCruce(){
+  const cont=document.getElementById('audit-body'); if(!cont)return;
+  const r=_cruceDia;
+  if(!r){cont.innerHTML='';return;}
+  if(r.error==='sin_ppas'){
+    cont.innerHTML='<div class="cx-aviso">No hay <b>PPAS</b> guardado para el '+r.fecha+'. Súbelo desde Rutina diaria o elige otra fecha.</div>';return;}
+  if(r.error==='sin_liquidacion'){
+    cont.innerHTML='<div class="cx-aviso">No hay <b>Liquidación de LiquiYa</b> del '+r.fecha+'. Angelita la envía a la mañana siguiente.</div>';return;}
+  const cuadran=r.clientesPPAS-Object.values(r.casos).reduce((a,v)=>a+v.length,0)+r.casos.NO_ESTABA.length;
+  cont.innerHTML=
+    '<div class="cx-res">'+
+      '<div class="cx-k"><b>'+r.clientesPPAS.toLocaleString('es-CO')+'</b><span>Clientes en el cargue</span></div>'+
+      '<div class="cx-k"><b>'+r.clientesLiq.toLocaleString('es-CO')+'</b><span>Clientes en LiquiYa</span></div>'+
+      '<div class="cx-k ok"><b>'+Math.max(0,cuadran).toLocaleString('es-CO')+'</b><span>Cuadran sin nada que revisar</span></div>'+
+      '<div class="cx-k'+(r.total?' al':'')+'"><b>'+r.total.toLocaleString('es-CO')+'</b><span>Por revisar</span></div>'+
+    '</div>'+
+    CRUCE_CASOS.map(c=>{
+      const l=r.casos[c.k]||[];
+      return '<div class="cx-caso'+(l.length?'':' vacio')+'">'+
+        '<div class="cx-h" onclick="haptic();this.parentElement.classList.toggle(&#39;abierto&#39;)">'+
+          '<span class="cx-p" style="background:'+c.bg+';color:'+c.c+'">'+l.length+'</span>'+
+          '<div class="cx-ht"><b>'+c.t+'</b><span>'+c.d+'</span></div>'+
+          (l.length?'<span class="cx-ch">›</span>':'')+
+        '</div>'+
+        (l.length?'<div class="cx-l">'+l.map(x=>
+          '<div class="cx-c" id="cx-'+c.k+'-'+x.cod+'">'+
+            '<div class="cx-cn" onclick="haptic();verClienteCruce(&#39;'+c.k+'&#39;,&#39;'+x.cod+'&#39;)">'+
+              '<b>'+(x.nombre||x.cod)+'</b>'+
+              '<span class="cx-r">'+x.ruta+'</span>'+
+              '<span class="cx-ch">›</span>'+
+            '</div>'+
+            '<div class="cx-d" id="cxd-'+c.k+'-'+x.cod+'"></div>'+
+          '</div>').join('')+'</div>':'')+
+      '</div>';
+    }).join('');
+}
+
+/* Al abrir un cliente se trae su detalle: lo que llevaba en el cargue y lo que reportó con novedad. */
+async function verClienteCruce(caso,cod){
+  const caja=document.getElementById('cxd-'+caso+'-'+cod);
+  const fila=document.getElementById('cx-'+caso+'-'+cod);
+  if(!caja||!fila)return;
+  if(fila.classList.contains('abierto')){fila.classList.remove('abierto');caja.innerHTML='';return;}
+  fila.classList.add('abierto');
+  caja.innerHTML='<div class="cx-cargando">Buscando el detalle…</div>';
+  const x=((_cruceDia.casos||{})[caso]||[]).find(y=>String(y.cod)===String(cod));
+  if(!x){caja.innerHTML='';return;}
+  const f=_cruceDia.fecha;
+  // El pedido por producto vive en el Libro; el PPAS solo trae el total de cajas del cliente.
+  let items=[];
+  try{
+    const rp=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+f+'/PEDIDOS_INDEX.json?t='+Date.now());
+    if(rp.ok){
+      const ped=await rp.json();
+      const P=ped&&ped[cod];
+      if(P&&P.b)P.b.forEach(b=>(b.i||[]).forEach(it=>items.push({sku:it[0],desc:it[1]||it[0],caj:it[2]||0,und:it[3]||0})));
+    }
+  }catch(e){}
+  const nov=x.novedad;
+  const det=(nov&&nov.detalle)||[];
+  caja.innerHTML=
+    '<div class="cx-dg">'+
+      '<div class="cx-db"><span class="cx-de">Lo que llevaba en el cargue</span>'+
+        (items.length
+          ? '<table class="cx-t"><tbody>'+items.map(i=>
+              '<tr><td>'+i.desc+'</td><td class="num">'+i.caj+' cj'+(i.und?' + '+i.und:'')+'</td></tr>').join('')+
+            '</tbody></table>'
+          : '<div class="cx-vac">'+(x.cargue?x.cargue+' cajas en total · sin desglose en el Libro de ese día':'No iba en el cargue')+'</div>')+
+      '</div>'+
+      '<div class="cx-db"><span class="cx-de">Lo que reportó con novedad</span>'+
+        (nov
+          ? '<div class="cx-mot">'+(nov.motivo||'—')+'</div>'+
+            (det.length
+              ? '<table class="cx-t"><tbody>'+det.map(d=>
+                  '<tr><td>'+(d.desc||d.cod)+'</td><td class="num">'+(d.caj||0)+' cj'+(d.und?' + '+d.und:'')+'</td></tr>').join('')+
+                '</tbody></table>'
+              : '<div class="cx-vac">Sin desglose de productos</div>')
+          : '<div class="cx-vac">No reportó novedad</div>')+
+      '</div>'+
+    '</div>'+
+    '<div class="cx-cifras">'+
+      '<span>Cargado <b>'+x.cargue+'</b> cj</span>'+
+      '<span>Liquidado <b>'+(x.liquidado==null?'—':x.liquidado)+'</b> cj</span>'+
+      (x.dif?'<span class="dif">Diferencia <b>'+(x.dif>0?'+':'')+x.dif+'</b> cj</span>':'')+
+      '<span class="cod">Cód. '+x.cod+'</span>'+
+    '</div>'+
+    (caso==='FALSA'
+      ? '<button class="cx-aud" onclick="haptic();auditarClienteDesdeCruce(&#39;'+cod+'&#39;)">Auditar este cliente y cerrar el pendiente</button>'
+      : '');
+}
+
 /* ══ PRE‑LLENAR LA TRIPULACIÓN ══
    Armar trece vehículos en blanco cada mañana es trabajo que la app puede ahorrar: quién sale con
    quién se repite casi siempre. Se mira la última semana y se proponen los auxiliares más repetidos
@@ -8522,6 +8869,53 @@ async function prellenarTripulaciones(){
   finally{ if(btn){btn.disabled=false;btn.textContent='✦ Pre‑llenar';} }
 }
 
+
+/* ══ NOVEDADES FALSAS PENDIENTES ══
+   El cruce completo tarda —son cuatro índices y el detalle de cada rechazo—, así que no se corre en
+   cada refresco de la torre. Se calcula al abrir Auditoría y la bandeja lee lo que quedó.
+   Una novedad falsa se cierra cuando se le hace la auditoría de verificación a ese cliente:
+   ir, preguntarle si recibió, y dejar la evidencia. */
+let _novFalsasPend=[];
+function _cerradasFalsas(){
+  try{ return new Set(JSON.parse(localStorage.getItem('gmaz_falsas_ok')||'[]')); }
+  catch(e){ return new Set(); }
+}
+async function _tcCargarFalsas(fecha){
+  const f=fecha||fechaCtx();
+  if(!_cruceDia||_cruceDia.fecha!==f){ _novFalsasPend=[]; return _novFalsasPend; }
+  let cerradas=new Set();
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/AUDITORIAS/CERRADAS_'+f+'.json?t='+Date.now());
+    if(r.ok){const d=await r.json(); (d.cods||[]).forEach(c=>cerradas.add(String(c)));}
+  }catch(e){}
+  _novFalsasPend=((_cruceDia.casos||{}).FALSA||[]).filter(x=>!cerradas.has(String(x.cod)));
+  return _novFalsasPend;
+}
+/* Marca una novedad falsa como verificada. La llama la auditoría de cliente al terminar. */
+async function cerrarNovedadFalsa(cod,fecha){
+  const f=fecha||(_cruceDia&&_cruceDia.fecha)||fechaCtx();
+  let d={cods:[]};
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/AUDITORIAS/CERRADAS_'+f+'.json?t='+Date.now());
+    if(r.ok)d=await r.json()||{cods:[]};
+  }catch(e){}
+  d.cods=d.cods||[];
+  if(d.cods.indexOf(String(cod))<0)d.cods.push(String(cod));
+  d.actualizado=new Date().toISOString();
+  await _storageGuardar('AUDITORIAS/CERRADAS_'+f+'.json',d);
+  _novFalsasPend=_novFalsasPend.filter(x=>String(x.cod)!==String(cod));
+  return d;
+}
+/* Desde el cruce: abre la auditoría de verificación con el cliente ya puesto. */
+function auditarClienteDesdeCruce(cod){
+  const x=((_cruceDia&&_cruceDia.casos&&_cruceDia.casos.FALSA)||[]).find(y=>String(y.cod)===String(cod));
+  if(!x)return;
+  if(typeof abrirAuditoriaCalle==='function')
+    return abrirAuditoriaCalle('C',{cod:x.cod,nombre:x.nombre,ruta:x.ruta,novedad:x.novedad,
+      motivo:'Reportó «'+((x.novedad||{}).motivo||'')+'» y se le facturó '+x.liquidado+' cj'});
+  toast('La auditoría en calle aún no está disponible en esta versión','err');
+}
+
 /* ══ LA BANDEJA DE PERMISOS ══
    Lo que llega acá tiene a alguien esperando de pie junto a un camión cargado, así que se refresca
    con la torre y se resuelve de un toque. Autorizar deja a la persona designada en la ruta; rechazar
@@ -8539,6 +8933,7 @@ async function _tcCargarPermisos(fecha){
     const conCargue=(_tcDatosRutas()||[]).filter(x=>x.cargue>0||x.totalCli>0).map(x=>x.ruta);
     _rutasSinDesignar=conCargue.filter(r=>!((d[r]||d[rutaBase(r)]||{}).personas||[]).length);
   }catch(e){ _rutasSinDesignar=[]; }
+  try{ await _tcCargarFalsas(f); }catch(e){ _novFalsasPend=[]; }
   return _permisosPend;
 }
 function verPermisosPendientes(){
@@ -11748,6 +12143,19 @@ async function cargarAuditoria(fecha){
   }
   window._auditAnom=anom;
   renderAuditoria(anom);
+  // El cruce del día —cargue contra LiquiYa, cliente por cliente— se pinta encima del detalle por
+  // producto que ya existía: primero quién no recibió, después en qué producto se fue la diferencia.
+  try{
+    await cruceAuditoria(fecha);
+    const host=document.getElementById('audit-cruce');
+    if(host){
+      const guardado=document.getElementById('audit-body').innerHTML;
+      host.innerHTML=''; // el render escribe en #audit-body; se traslada a su propio sitio
+      renderCruce();
+      host.innerHTML=document.getElementById('audit-body').innerHTML;
+      document.getElementById('audit-body').innerHTML=guardado;
+    }
+  }catch(e){}
 }
 const AUDIT_COL={'CLIENTE ADICIONAL':'#B91C1C','PRODUCTO ADICIONAL':'#B45309','CANTIDAD DE MÁS':'#9A3412','RECHAZO FALSO':'#7C2D12','PROMOCIÓN APLICADA':'#1D4ED8','OBSEQUIO AUTOVENTA':'#059669'};
 const AUDIT_BG={'CLIENTE ADICIONAL':'#FEE2E2','PRODUCTO ADICIONAL':'#FEF3C7','CANTIDAD DE MÁS':'#FFEDD5','RECHAZO FALSO':'#FED7AA','PROMOCIÓN APLICADA':'#DBEAFE','OBSEQUIO AUTOVENTA':'#D1FAE5'};
@@ -11772,6 +12180,7 @@ function activarModuloRutina(){
   activarModulo('rutina');
   updateDateStrip();
   verificarEstadoPanel();
+  renderCierreRutina().catch(()=>{});   // último paso de la jornada, al final de la lista
   initRutDropzones();
   switchPcTab(1);
   // El cuadre se calculaba SOLO al pulsar "Revisar", así que al abrir la Rutina se quedaba el texto
