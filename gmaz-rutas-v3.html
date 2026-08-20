@@ -1141,6 +1141,11 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
 .perf.cond{background:#FFF7F7}
 .perf.cond:hover{background:#fff;border-color:rgba(227,6,19,.2)}
 .perf.sugerido{background:transparent;border:1px dashed var(--gris3)}
+/* Aviso de que la ruta tiene más de un conductor guardado */
+.fl-dupla{margin-top:5px;font-size:9.5px;color:#B45309;line-height:1.45}
+.fl-dupx{border:none;background:#FEF3C7;color:#B45309;font-family:inherit;font-size:9.5px;
+  font-weight:800;padding:2px 7px;border-radius:6px;cursor:pointer}
+.fl-dupx:hover{background:#B45309;color:#fff}
 .perf-av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;
   color:#fff;flex-shrink:0;letter-spacing:.2px}
 .perf-av.c{background:var(--rojo)} .perf-av.a{background:var(--azul)}
@@ -7733,7 +7738,16 @@ function _flFila(ruta,i,usoUnit,esHoy){
   const unit=_asigPorRuta[ruta]||'';
   const compartido=unit&&usoUnit[unit]>1;
   const personas=(_tripAsignada[ruta]||[]).slice();
-  const cond=personas.find(x=>x.rol==='conductor')||null;
+  /* ══ UNA RUTA, UN CONDUCTOR (20-ago-2026) ══
+     KA4V13 amaneció con DOS: Mejía, que se auto-registra al asignar la placa GIM384 (origen
+     'sistema'), y Jama, que puso el coordinador. Se tomaba `find()` —el primero de la lista—, así
+     que en pantalla salía Mejía y Jama quedaba invisible... pero contaba como ocupado, y por eso no
+     se podía llevar a KA4V52: la app decía «ya está en KA4V13» señalando a alguien que no se veía.
+     Manda quien lo puso a mano sobre el automático del vehículo, y si quedan dos se avisa. */
+  const conds=personas.filter(x=>x.rol==='conductor');
+  const pesoCond=x=>x.origen==='coordinador'?0:x.origen==='persona'?1:2;
+  const cond=conds.slice().sort((a,b)=>pesoCond(a)-pesoCond(b))[0]||null;
+  const condDemas=conds.filter(x=>cond&&String(x.ced)!==String(cond.ced));
   const auxs=personas.filter(x=>x.rol!=='conductor');
   const fijo=unit?((maestroConductores||{})[unit]||null):null;
   const pr=_flotaDia.porRuta[ruta]||null;
@@ -7753,7 +7767,11 @@ function _flFila(ruta,i,usoUnit,esHoy){
   // Conductor
   let celCond;
   if(!unit)celCond='<span class="fl-nada">'+(esHoy?'asigna la placa':'—')+'</span>';
-  else if(cond)celCond=_arChip(cond,ruta,'conductor',!esHoy);
+  else if(cond)celCond=_arChip(cond,ruta,'conductor',!esHoy)+
+    (condDemas.length?'<div class="fl-dupla">También figura como conductor: '+
+      condDemas.map(x=>_nomCorto(x.nombre,2)).join(', ')+
+      (esHoy?' · <button class="fl-dupx" onclick="event.stopPropagation();haptic();quitarConductorDemas(&#39;'+ruta+'&#39;)">Dejar solo a '+_nomCorto(cond.nombre,2)+'</button>':'')+
+      '</div>':'');
   else if(fijo)celCond=esHoy?_arChipSugerido(fijo,ruta,unit):'<span class="fl-nada">no salió registrado</span>';
   else celCond=esHoy?_arSelCond(ruta,unit,null):'<span class="fl-nada">sin conductor</span>';
   // Auxiliares en fichas compactas, todas en una línea: así la fila mide igual con uno o con tres
@@ -8269,6 +8287,15 @@ async function _fpkElegir(ced){
       _tripAsignada[r]=(_tripAsignada[r]||[]).filter(x=>String(x.ced)!==String(ced));
       _flRepintarFila(r);
     }
+    /* Un conductor por ruta: al poner uno nuevo sale el anterior. Sin esto se acumulaban —el
+       automático del vehículo más el que ponía el coordinador— y el segundo quedaba invisible. */
+    if(rol==='conductor'){
+      const otros=(_tripAsignada[ruta]||[]).filter(x=>x.rol==='conductor'&&String(x.ced)!==String(ced));
+      for(const o of otros){
+        await _flBorrarPersona(ruta,o.ced);
+        _tripAsignada[ruta]=(_tripAsignada[ruta]||[]).filter(x=>String(x.ced)!==String(o.ced));
+      }
+    }
     const persona={ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol,hora:new Date().toISOString(),origen:'coordinador',ruta};
     await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+p.ced+'.json',persona);
     // Estado en memoria: se repinta SOLO esta fila, sin recargar toda la tabla
@@ -8304,6 +8331,28 @@ async function _fpkQuitar(){
     toast('Quitado de '+ruta,'ok');
     _flRefrescoSuave();
   }catch(e){toast('No se pudo quitar: '+e.message,'err');}
+}
+/* Limpia los conductores de sobra de una ruta, dejando el que manda. Para los duplicados que ya
+   quedaron guardados antes de la regla de «un conductor por ruta». */
+async function quitarConductorDemas(ruta){
+  const conds=(_tripAsignada[ruta]||[]).filter(x=>x.rol==='conductor');
+  if(conds.length<2)return;
+  const pesoCond=x=>x.origen==='coordinador'?0:x.origen==='persona'?1:2;
+  const queda=conds.slice().sort((a,b)=>pesoCond(a)-pesoCond(b))[0];
+  const sobran=conds.filter(x=>String(x.ced)!==String(queda.ced));
+  if(!confirm('En '+ruta+' quedan '+conds.length+' conductores.\n\nDejar solo a '+
+    _nomCorto(queda.nombre,3)+' y quitar a '+sobran.map(x=>_nomCorto(x.nombre,3)).join(', ')+'?'))return;
+  showLoad('Dejando un solo conductor…');
+  try{
+    for(const o of sobran){
+      await _flBorrarPersona(ruta,o.ced);
+      _tripAsignada[ruta]=(_tripAsignada[ruta]||[]).filter(x=>String(x.ced)!==String(o.ced));
+    }
+    hideLoad();
+    toast('✓ '+ruta+' queda con '+_nomCorto(queda.nombre,3),'ok');
+    _flRepintarFila(ruta);
+    _flRefrescoSuave();
+  }catch(e){ hideLoad(); toast('No se pudo: '+e.message,'err'); }
 }
 async function _flBorrarPersona(ruta,ced){
   return fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/REGISTRO/'+getColDate()+'/'+ruta+'__'+ced+'.json',
