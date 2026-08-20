@@ -1173,6 +1173,10 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
 .fpk-r{display:flex;align-items:center;gap:8px;padding:7px 8px;border:none;background:transparent;border-radius:9px;
   cursor:pointer;text-align:left;font-family:inherit;width:100%}
 .fpk-r:hover{background:var(--gris1)}
+/* Quien ya está en otra ruta, o no figura como conductor, sigue en la lista pero se ve distinto:
+   se puede escoger, y la nota dice qué va a pasar si se escoge. */
+.fpk-r.ocup .fpk-n em{color:#B45309;font-weight:700}
+.fpk-r.ocup .fpk-av{background:#FEF3C7;color:#B45309}
 .fpk-av{width:26px;height:26px;border-radius:50%;background:var(--gris2);color:var(--gris5);display:grid;
   place-items:center;font-size:9px;font-weight:800;flex-shrink:0}
 .fpk-r:hover .fpk-av{background:var(--negro);color:#fff}
@@ -3596,8 +3600,8 @@ function fotoObsequio(){
       const fn=fecha+'/'+cod+'_'+Date.now()+'.jpg';
       await sb.storage.from(CFG.BCK_FOTOS).upload('OBSEQUIOS/'+fn,blob,{contentType:'image/jpeg',upsert:false});
       const fotoUrl=CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_FOTOS+'/OBSEQUIOS/'+fn;
-      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/OBSFOTO/'+fecha+'/'+cod+'.json',{
-        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+      await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/OBSFOTO/'+fecha+'/'+cod+'.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({codigo_cliente:cod,nombre_cliente:nom,ruta:rutaActual,foto_url:fotoUrl,hora:new Date().toISOString()})});
       hideLoad();toast('✓ Foto del obsequio registrada','ok');haptic([40,30,40]);
       actualizarObsequioCliente();
@@ -5065,6 +5069,21 @@ async function _storageGuardar(ruta,obj,bucket){
     body:JSON.stringify(obj)});
   if(!r.ok)throw new Error(await r.text());
   return true;
+}
+/* ══ SOBRESCRIBIR UN ARCHIVO QUE YA EXISTE (20-ago-2026) ══
+   `x-upsert:true` NO sobrescribe con la llave anónima: el RLS responde
+   403 «new row violates row-level security policy». Funciona la PRIMERA vez —el objeto no existe
+   todavía— y falla en toda resubida, por eso el fallo estuvo escondido: los archivos del día se
+   suben una vez cada mañana. Se destapó al pedirle al coordinador volver a subir el Libro para
+   corregir los precios: 100% de progreso y «Error al subir el libro».
+   La salida es la misma que ya usaba _storageGuardar desde el 15 de agosto: borrar y crear.
+   Este envoltorio la aplica a las once subidas que seguían confiando en x-upsert. */
+async function _fetchUpsert(url,opts){
+  try{
+    await fetch(url,{method:'DELETE',
+      headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY}});
+  }catch(e){}   // si no existía, mejor: el POST lo crea
+  return fetch(url,opts);
 }
 async function _storageBorrarCarpeta(prefijo){
   const H={'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY};
@@ -6643,15 +6662,15 @@ async function respaldarRecorridosDia(){
       try{
         const puntos=await secHistorial(v.idgps,fecha+' 00:00:00',fecha+' 23:59:59',CFG.GPS_PUNTOS_DIA);
         if(puntos&&puntos.length){
-          await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/'+encodeURIComponent(v.nombre)+'.json',{
-            method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+          await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/'+encodeURIComponent(v.nombre)+'.json',{
+            method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
             body:JSON.stringify({unitId:v.nombre,fecha,puntos})});
           ok++;
         }else vacios++;
       }catch(e){fallos++;}
     }
-    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/_DONE.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+    await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/RECORRIDOS/'+fecha+'/_DONE.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({fecha,vehiculos:ok,vacios,fallos,ts:new Date().toISOString()})});
     localStorage.setItem(marcaLS,'1');
   }catch(e){/* si falla el respaldo completo, se reintenta la próxima vez que se abra la Rutina */}
@@ -8192,20 +8211,41 @@ function _fpkBuscar(){
       :'<div class="fpk-vacio">'+(txt?'Ningún vehículo coincide con «'+txt+'»':'No hay vehículos en Securita')+'</div>';
     return;
   }
-  let lista=entregadoresDisponibles().filter(o=>!ocupados.has(String(o.ced)));
-  if(_fpk.rol==='conductor')lista=lista.filter(o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo));
-  if(txt)lista=lista.filter(o=>o.nombre.toUpperCase().includes(txt)||String(o.ced).includes(txt));
-  lista=lista.slice(0,40);
+  /* ══ LA LISTA NO ESCONDE A NADIE (20-ago-2026) ══
+     Antes se filtraba de golpe a quien ya estuviera en otra ruta y a quien no tuviera cargo de
+     conductor. El coordinador quedaba mirando una lista donde simplemente NO estaba la persona que
+     buscaba, sin ninguna explicación: le pasó en KA4V52 tratando de poner al que él mismo había
+     designado. El buscador de vehículos ya hacía lo correcto —muestra la placa y dice «ya está en
+     KA4V50»—; el de personas no.
+     Ahora salen todos, con su situación escrita, y él decide. Los que están libres primero. */
+  const porRutaDe={};
+  Object.entries(_tripAsignada||{}).forEach(([r,arr])=>(arr||[]).forEach(x=>{
+    if(String(x.ced)===String(_fpk.reemplaza))return;
+    (porRutaDe[String(x.ced)]=porRutaDe[String(x.ced)]||[]).push(r);}));
+  const esCond=o=>/CONDUCTOR|SUPERNUMERARIO/.test(o.cargo);
+  let todos=entregadoresDisponibles();
+  if(txt)todos=todos.filter(o=>o.nombre.toUpperCase().includes(txt)||String(o.ced).includes(txt));
+  const nota=o=>{
+    const en=porRutaDe[String(o.ced)];
+    if(en&&en.length)return {t:'ya está en '+en.join(' + ')+' · se mueve aquí',cls:'ocup'};
+    if(_fpk.rol==='conductor'&&!esCond(o))return {t:o.cargo+' · no figura como conductor',cls:'ocup'};
+    return {t:o.cargo,cls:''};
+  };
+  // Orden: libres y del cargo correcto → libres de otro cargo → los que ya están en una ruta
+  const peso=o=>((porRutaDe[String(o.ced)]||[]).length?2:0)+((_fpk.rol==='conductor'&&!esCond(o))?1:0);
+  let lista=todos.sort((a,b)=>peso(a)-peso(b)||String(a.nombre).localeCompare(String(b.nombre))).slice(0,40);
   if(!lista.length){
-    cont.innerHTML='<div class="fpk-vacio">'+(txt?'Nadie coincide con «'+txt+'»':'No queda nadie disponible')+'</div>';
+    cont.innerHTML='<div class="fpk-vacio">'+(txt?'Nadie coincide con «'+txt+'»':'No hay personal cargado')+'</div>';
     return;
   }
   const marca=n=>{ if(!txt)return n; const i=n.toUpperCase().indexOf(txt);
     return i<0?n:n.slice(0,i)+'<mark>'+n.slice(i,i+txt.length)+'</mark>'+n.slice(i+txt.length); };
-  cont.innerHTML=lista.map(o=>
-    '<button class="fpk-r" onclick="_fpkElegir(\''+o.ced+'\')">'+
+  cont.innerHTML=lista.map(o=>{
+    const nt=nota(o);
+    return '<button class="fpk-r'+(nt.cls?' '+nt.cls:'')+'" onclick="_fpkElegir(\''+o.ced+'\')">'+
       '<span class="fpk-av">'+_tcIniciales(o.nombre)+'</span>'+
-      '<span class="fpk-n"><b>'+marca(o.nombre)+'</b><em>'+o.cargo+' · C.C. '+o.ced+'</em></span></button>').join('');
+      '<span class="fpk-n"><b>'+marca(o.nombre)+'</b><em>'+nt.t+' · C.C. '+o.ced+'</em></span></button>';
+  }).join('');
 }
 async function _fpkElegir(ced){
   const {ruta,rol,reemplaza,unit}=_fpk;
@@ -8215,6 +8255,20 @@ async function _fpkElegir(ced){
   const fecha=getColDate();
   try{
     if(reemplaza&&String(reemplaza)!==String(ced))await _flBorrarPersona(ruta,reemplaza);
+    /* Si ya estaba en otra ruta, se MUEVE: hay que sacarlo de allá o queda en dos equipos el mismo
+       día y las novedades se le atribuyen a la ruta equivocada. Antes esto no podía pasar porque a
+       los ocupados se les escondía de la lista; ahora que se pueden elegir, hay que completarles
+       el traslado. */
+    const otras=[];
+    Object.entries(_tripAsignada||{}).forEach(([r,arr])=>{
+      if(r===ruta)return;
+      if((arr||[]).some(x=>String(x.ced)===String(ced)))otras.push(r);
+    });
+    for(const r of otras){
+      await _flBorrarPersona(r,ced);
+      _tripAsignada[r]=(_tripAsignada[r]||[]).filter(x=>String(x.ced)!==String(ced));
+      _flRepintarFila(r);
+    }
     const persona={ced:p.ced,nombre:p.nombre,cargo:p.cargo,rol,hora:new Date().toISOString(),origen:'coordinador',ruta};
     await _storageGuardar('REGISTRO/'+fecha+'/'+ruta+'__'+p.ced+'.json',persona);
     // Estado en memoria: se repinta SOLO esta fila, sin recargar toda la tabla
@@ -12917,7 +12971,7 @@ function parseLiquiYaXLSX(wb){
 }
 /* ══ DETECCIÓN DE ARCHIVOS YA SUBIDOS (hash), para no volver a procesar por error ══
    Un solo índice en la raíz del bucket ('HASHES_INDEX.json'): {hash: {tipo,fecha,nombre,subidoEn}}.
-   No bloquea la subida — el índice del día se sobreescribe igual con x-upsert — solo AVISA cuando
+   No bloquea la subida — el índice del día se reemplaza igual — solo AVISA cuando
    el MISMO archivo (byte a byte, SHA-256) ya se había subido antes con OTRA fecha: el error clásico
    de arrastrar por accidente el PDF de ayer. */
 async function _hashArchivo(file){
@@ -12984,8 +13038,8 @@ async function uploadLiquidacion(ev){
     let totCli=0;
     for(const fecha of fechas){
       const acc=accPorFecha[fecha];totCli+=Object.keys(acc).length;
-      const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+fecha+'/LIQUIDACION_INDEX.json',{
-        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(acc)});
+      const res=await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+fecha+'/LIQUIDACION_INDEX.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(acc)});
       if(!res.ok)throw new Error('Fecha '+fecha+': '+(await res.text()));
       logProg('Guardado en '+fecha+' · '+Object.keys(acc).length+' clientes','ok');
     }
@@ -13441,8 +13495,8 @@ async function uploadRoutes(ev){
     // Snapshot histórico del PPAS del día — clientes_rutas se sobrescribe a diario, esto queda guardado para siempre
     try{
       const ppasMin={};clientes2.forEach(c=>{ppasMin[c.id]={ruta:c.ruta,nombre:c.nombre,direccion:c.direccion,lat:c.lat,lng:c.lng,barrio:c.barrio,caj:c.CAJA_,sec:c.secuencia};});
-      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+getColDate()+'/PPAS_INDEX.json',{
-        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+      await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+getColDate()+'/PPAS_INDEX.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
         body:JSON.stringify(ppasMin)
       });
       logProg('Snapshot histórico del PPAS guardado ('+getColDate()+')','ok');
@@ -13498,8 +13552,8 @@ async function uploadHojaCarga(ev){
     if(rehechas)logProg(rehechas+' ruta(s) ya estaban subidas y se reemplazaron con esta hoja','info');
     const conservadas=Object.keys(previo).filter(r=>!index[r]).length;
     if(conservadas)logProg(conservadas+' ruta(s) de una subida anterior se conservan','ok');
-    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'HOJAS_INDEX.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+    const res=await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'HOJAS_INDEX.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify(fundido)});
     if(!res.ok){const t=await res.text();throw new Error(t);}
     logProg(nR+' rutas · '+okCuadre+'/'+nR+' cuadran con el Sub-Total del ERP','ok');
@@ -13583,15 +13637,15 @@ async function uploadLibroPedidos(ev){
     }
     if(!nCli){endProg(false,'No se detectaron pedidos en el PDF (¿es el Reporte Detallado de Pedidos?)');ev.target.value='';return;}
     updateProg(88,'Subiendo índice de pedidos...');
-    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'PEDIDOS_INDEX.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+    const res=await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'PEDIDOS_INDEX.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify(index)
     });
     if(!res.ok){const t=await res.text();throw new Error(t);}
     // Índice de OBSEQUIOS (ZG) del libro → para foto obligatoria y validación de supervisores
     try{const obs=acc._obs||{};const nObs=Object.keys(obs).length;
-      await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'OBSEQUIOS_INDEX.json',{
-        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},body:JSON.stringify(obs)});
+      await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/'+folder+'OBSEQUIOS_INDEX.json',{
+        method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(obs)});
       if(nObs)logProg(nObs+' clientes con obsequios (ZG) indexados','ok');
     }catch(e){}
     logProg(nCli+' clientes · '+nItems+' líneas de producto indexadas','ok');
@@ -13638,8 +13692,8 @@ async function uploadInvoices(ev){
     const nl=nombreMap[file.name];
     updateProg(10+((subidos/files.length)*35),'Subiendo '+file.name+'...');
     if(nl!==file.name)logProg('Nombre: '+file.name+' → '+nl,'info');
-    const res=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+nl,{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf','x-upsert':'true'},
+    const res=await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+nl,{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/pdf'},
       body:file
     });
     if(res.ok){logProg(file.name+' subido ✓','ok');subidos++;}
@@ -13676,8 +13730,8 @@ async function uploadInvoices(ev){
   updateProg(92,'Subiendo índice...');
   const nCods=Object.keys(index).length;
   logProg(nCods+' clientes indexados en los PDFs','info');
-  await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+'FACTURAS_INDEX.json',{
-    method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+  await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_FACT+'/'+folder+'FACTURAS_INDEX.json',{
+    method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
     body:JSON.stringify(index)
   });
   logProg('Índice FACTURAS_INDEX.json subido ✓','ok');
@@ -13845,8 +13899,8 @@ async function uploadMaestroConsolidado(ev){
     logProg(nOkv+' clientes de la jefatura OKV ('+nMod+' Moderno · '+(nOkv-nMod)+' Tradicional)','ok');
     updateProg(85,'Subiendo índice...');
     const mes=_mesActualStr();
-    await fetch(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/MAESTRO_CLIENTES/'+mes+'.json',{
-      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json','x-upsert':'true'},
+    await _fetchUpsert(CFG.SUPABASE_URL+'/storage/v1/object/'+CFG.BCK_PED+'/MAESTRO_CLIENTES/'+mes+'.json',{
+      method:'POST',headers:{'apikey':CFG.SUPABASE_KEY,'Authorization':'Bearer '+CFG.SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({mes,actualizado:new Date().toISOString(),total:nOkv,clientes:idx})
     });
     _canalClientesCache=null;
