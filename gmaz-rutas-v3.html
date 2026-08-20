@@ -3046,6 +3046,13 @@ function hojaConsolidada(hojas,ruta){
    Los libros futuros traen SKU nuevos: si el COD no está aquí se usa la descripción
    del propio libro y factor 1 (se avisa al coordinador para completar). */
 const MAESTRO_PROD={
+/* 160102 es el SKU que destapó el error de los pesos: no estaba aquí, así que prodInfo() le daba
+   factor 1 y cada botella suelta se cobraba al precio de la caja entera —6 unidades a $270.000 en
+   vez de $22.500—. El factor 12 está confirmado con una factura real: 45.000 ÷ 12 × 6 = 22.500.
+   Los otros 13 SKU sin maestro NO se agregan a ojo: poner un factor adivinado deja el valor mal
+   igual, solo que más difícil de notar. Para ellos manda el importe que ahora guarda el libro, y
+   mientras no lo haya la app no inventa el valor de las sueltas. */
+"160102":["SLL 15LT",12,0],
 "056452":["SCHWEPPES SODA 400ML PET (12)",12,0],
 "056453":["SCHWEPPES GINGER 400ML PET (12)",12,0],
 "056490":["SCHWEPPES TONICA 10OZ VNR (12)",12,0],
@@ -3152,7 +3159,7 @@ const MAESTRO_PROD={
 "160297":["SPRITE 400PET",12,0],
 "160318":["COCA-COLA 400ml PET(12)",12,0]
 };
-let pedidosClientes={}; // índice de pedidos del día: {codigo:{n,r,b:[{t,v,i:[[cod,descrip,cajas,bot,precio]]}]}}
+let pedidosClientes={}; // índice de pedidos del día: {codigo:{n,r,b:[{t,v,i:[[cod,descrip,cajas,bot,precio,importe]]}]}}
 let pedidoActual=null;  // pedido del cliente abierto
 let rechazoDetalle=null; // detalle del rechazo confirmado: [{cod,desc,cajas,und}]
 
@@ -3476,7 +3483,11 @@ function parseLibroPedidos(lineas,acc){
     if(m){
       if(!cur.b.length)cur.b.push({t:curTipo||'Contado',v:curVend,i:[]});
       const cajas=parseInt(m[5],10),bot=m[6]?parseInt(m[6],10):0,importe=_moneyLibro(m[8]);
-      cur.b[cur.b.length-1].i.push([m[3],m[4].trim(),cajas,bot,m[7]]);
+      /* El importe de la línea se guarda (posición 5). Se calculaba y se botaba, y sin él el valor
+         de una devolución había que deducirlo del precio de caja dividido por las unidades que trae
+         —y ese factor solo se sabe si el SKU está en el maestro—. Con el importe, el valor sale
+         exacto de lo que el propio libro facturó, sin depender de ningún maestro. */
+      cur.b[cur.b.length-1].i.push([m[3],m[4].trim(),cajas,bot,m[7],isNaN(importe)?null:importe]);
       // Línea del pedido normal que llegó a $0 (ej. "Contado Promoción" sin cobro) = obsequio real,
       // igual que las ZG de Bonificaciones: también debe pedirle foto de entrega al repartidor.
       if(importe===0&&(cajas>0||bot>0)){
@@ -3667,7 +3678,9 @@ function renderTablaDevolucion(){
     if(/Carga Base/i.test(b.t))return;
     b.i.forEach((it,ii)=>{
       const info=prodInfo(it[0],it[1]);const key=bi+'_'+ii;
-      devSel[key]={cod:it[0],desc:info.desc,precio:_precioNum(it[4]),pedCaj:it[2],pedBot:it[3],und:info.und||1,devCaj:0,devUnd:0};
+      devSel[key]={cod:it[0],desc:info.desc,precio:_precioNum(it[4]),
+        importe:(it[5]==null?null:+it[5]),conocido:!!info.conocido,
+        pedCaj:it[2],pedBot:it[3],und:info.und||1,devCaj:0,devUnd:0};
       filas+=_filaDevHTML(key);
     });
   });
@@ -3683,12 +3696,50 @@ function renderTablaDevolucion(){
 function _consUnits(s){return s.pedCaj*(s.und||1)+s.pedBot;}
 function _devUnits(s){return s.devCaj*(s.und||1)+s.devUnd;}
 function _normQty(units,und){units=Math.max(0,units);const c=Math.floor(units/(und||1)),u=units%(und||1);return (c?c+' cj':'')+(c&&u?' + ':'')+(u?u+' u':'')||'0';}
-function _valUnits(units,s){return Math.round(Math.max(0,units)*(s.precio/(s.und||1)));}
+
+/* ══ CUÁNTO VALE LO QUE SE DEVUELVE (20-ago-2026) ══
+   Un entregador reportó que los pesos de la pantalla no cuadraban con su factura: el libro decía
+   $316.700 y la app mostraba $549.800. En TIENDA BLANQUITA la línea culpable era
+
+       160102 SLL 15LT · 0 cajas + 6 unidades · precio $45.000  →  la app cobraba $270.000
+
+   Ese SKU no está en el maestro de productos. Cuando un SKU falta, prodInfo() devuelve factor 1
+   —una caja = una unidad—, y entonces cada botella suelta se cobra al precio de la CAJA COMPLETA.
+   Seis botellas a $45.000 en vez de seis a $3.750: $270.000 contra $22.500, que es justo la cifra
+   que el entregador vio en el otro pedido. Sumando: 564.200 − 270.000 + 22.500 = 316.700, exacto
+   a su factura. Revisado sobre tres días: 133 líneas afectadas, 14 SKU sin maestro.
+
+   Ahora manda el importe real del libro cuando está disponible: precio por unidad = importe de la
+   línea ÷ unidades de la línea. Eso es exacto siempre, venga o no el SKU en el maestro.
+   Y si no hay importe (libros subidos antes de este cambio) NO se inventa un valor para las
+   unidades sueltas de un SKU desconocido: se cuentan solo las cajas completas y la fila se marca.
+   Un total inflado es peor que un total incompleto, porque nadie lo cuestiona. */
+function _precioUnidad(s){
+  const uTot=_consUnits(s);
+  if(s.importe!=null&&uTot>0)return s.importe/uTot;   // lo que el libro facturó de verdad
+  if(s.und>1||s.conocido)return s.precio/(s.und||1);  // factor confiable del maestro
+  return null;                                        // SKU sin maestro y sin importe: no se adivina
+}
+function _valUnits(units,s){
+  const pu=_precioUnidad(s);
+  if(pu!=null)return Math.round(Math.max(0,units)*pu);
+  /* Sin factor confiable no se pueden separar cajas de sueltas dentro de `units` —con factor 1 las
+     seis botellas parecen seis cajas, que es el error original—. Lo único afirmable es que el
+     precio del libro es POR CAJA, así que se valoran solo las cajas declaradas y se prorratea según
+     qué parte de la línea representa `units`. Las sueltas quedan en cero y la fila lo avisa. */
+  const cons=_consUnits(s);
+  if(cons<=0)return 0;
+  const valorCajas=(s.pedCaj||0)*s.precio;
+  return Math.round(valorCajas*Math.min(1,Math.max(0,units)/cons));
+}
+/* ¿Esta línea tiene el valor incompleto? Sirve para avisarlo en pantalla en vez de callarlo. */
+function _valDudoso(s){ return _precioUnidad(s)==null&&(s.pedBot>0||s.devUnd>0); }
 function _filaDevHTML(key){
   const s=devSel[key];
   const fu=_consUnits(s)-_devUnits(s);
   return '<tr id="drow_'+key+'" class="'+((s.devCaj||s.devUnd)?'on':'')+'">'+
-    '<td class="dt-nm"><b>'+s.desc+'</b><span>'+s.cod+' · '+_pesos(s.precio)+'</span></td>'+
+    '<td class="dt-nm"><b>'+s.desc+'</b><span>'+s.cod+' · '+_pesos(s.precio)+
+      (_valDudoso(s)?' · <b style="color:#B45309">sin precio por unidad</b>':'')+'</span></td>'+
     '<td class="dt-c">'+_qtyTxt(s.pedCaj,s.pedBot)+'</td>'+
     '<td class="dt-dev"><div class="dv-mini"><button type="button" onclick="devStep(\''+key+'\',\'caj\',-1)">−</button><b id="dv_'+key+'_caj">'+s.devCaj+'</b><button type="button" onclick="devStep(\''+key+'\',\'caj\',1)">+</button><small>cj</small></div>'+
       '<div class="dv-mini"><button type="button" onclick="devStep(\''+key+'\',\'und\',-1)">−</button><b id="dv_'+key+'_und">'+s.devUnd+'</b><button type="button" onclick="devStep(\''+key+'\',\'und\',1)">+</button><small>u</small></div></td>'+
