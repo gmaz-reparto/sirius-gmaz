@@ -1192,6 +1192,12 @@ button.fl-placa:hover{background:var(--gris1);border-color:var(--gris2)}
 .perf-p{border:none;background:#ECFDF5;color:var(--verde);font-family:inherit;font-size:10px;font-weight:800;
   cursor:pointer;padding:4px 9px;border-radius:7px;flex-shrink:0}
 .perf-p:hover{background:var(--verde);color:#fff}
+/* En la ficha sugerida el «⋯» va siempre a la vista: es la única salida para decir «hoy va otro»,
+   y escondido tras el mouse parecía que el nombre no se podía cambiar. */
+.perf.sugerido .perf-c{opacity:1;background:var(--gris1)}
+/* En pantalla táctil no hay mouse que pasar por encima: sin esto, en el celular los botones de
+   cambiar y quitar eran invisibles y la tripulación no se podía editar desde ahí. */
+@media (hover:none){.perf-c,.perf-q{opacity:1}}
 .hueco{position:relative;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:9px;
   border:1px dashed transparent;background:transparent;color:var(--gris4);font-family:inherit;font-size:11px;
   font-weight:700;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
@@ -8050,13 +8056,22 @@ function _arChip(p,ruta,rol,soloLectura){
       ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\''+(esCond?'conductor':'auxiliar')+'\',\''+p.ced+'\')">⋯</button>')+
     '</span>';
 }
-/* El conductor fijo de la placa que aún no está puesto en la ruta: ficha en gris con un botón que
-   dice lo que hace. */
+/* El conductor fijo de la placa que aún no está puesto en la ruta: ficha en gris, con las DOS
+   salidas que hacen falta.
+
+   Antes solo tenía «Poner», y eso dejaba al coordinador sin manera de decir «hoy va otro»: el
+   nombre se veía como si estuviera asignado, pero al intentar cambiarlo o quitarlo no pasaba nada,
+   porque esta persona no está registrada en la ruta —es una propuesta, no una asignación—. El 20 de
+   agosto se quedó atascado en KA4V52 tratando de sacar a Segura Jaimes de GIM383.
+
+   Ahora el «⋯» abre el mismo buscador que un hueco vacío: se elige a otro, o se deja sin conductor. */
 function _arChipSugerido(f,ruta,unit){
-  return '<span class="perf sugerido" title="'+f.nombre+' · conductor fijo de '+unit+'">'+
+  return '<span class="perf sugerido" title="'+f.nombre+' · conductor fijo de '+unit+' — todavía no está puesto en la ruta">'+
     '<span class="perf-av g">'+_tcIniciales(f.nombre)+'</span>'+
-    '<span class="perf-t"><b>'+_nomCorto(f.nombre,3)+'</b><em class="sis">fijo de la placa</em></span>'+
-    '<button class="perf-p" title="Ponerlo en la ruta de hoy" onclick="event.stopPropagation();haptic();_flPonerFijo(\''+ruta+'\',\''+unit+'\')">Poner</button></span>';
+    '<span class="perf-t"><b>'+_nomCorto(f.nombre,3)+'</b><em class="sis">fijo de la placa · sin poner</em></span>'+
+    '<button class="perf-p" title="Confirmar a '+_nomCorto(f.nombre,3)+' como conductor de hoy" onclick="event.stopPropagation();haptic();_flPonerFijo(\''+ruta+'\',\''+unit+'\')">Poner</button>'+
+    '<button class="perf-c" title="Hoy maneja otro: elegir conductor para '+(ruta||unit)+'"'+
+      ' onclick="event.stopPropagation();abrirPicker(this,\''+ruta+'\',\'conductor\',\'\',\''+unit+'\')">⋯</button></span>';
 }
 /* Hueco sin asignar: abre el mismo buscador. */
 function _arSelCond(ruta,unit,fijo){

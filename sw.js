@@ -1,5 +1,5 @@
 // GMAZ Rutas — Service Worker (PWA instalable + caché de librerías)
-const CACHE = 'gmaz-rutas-v67';
+const CACHE = 'gmaz-rutas-v68';
 const LIBS = 'gmaz-libs-v2';
 const ESENCIALES = [
   './gmaz-rutas-v3.html',
