@@ -2715,6 +2715,14 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
           <label class="rut-drop" data-input="inp-maestro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Arrastra o haz clic para seleccionar</span><input type="file" id="inp-maestro" accept=".xlsx,.xls" style="display:none" onchange="uploadMaster(event)"></label>
           <div class="rut-actions"><button class="rut-link danger" onclick="haptic();borrarMaestro()">Borrar</button></div>
         </div>
+        <!-- RECORRIDO DEL DÍA — se calcula una sola vez, después de subir el PPAS -->
+        <div class="rut-card" id="rut-card-recorrido">
+          <div class="rut-top"><div class="rut-ic" style="background:#1A56DB"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 11 9 11 9 3"/><path d="M3 11a9 9 0 1 0 9-9"/></svg></div><div class="rut-ti"><div class="rut-t">Recorrido de cada ruta</div><div class="rut-detail" id="pc-det-recorrido">Sin calcular</div></div><span class="pc-estado pc-estado-empty" id="pc-est-recorrido">—</span></div>
+          <div style="padding:0 17px 4px;font-size:10.5px;color:var(--gris4)">Ordena los clientes de cada ruta por calles reales, empezando por los más cercanos al CEDI. Se calcula <b>una vez al día</b>, después de subir el PPAS — los celulares leen el resultado sin gastar consultas.</div>
+          <div style="padding:8px 17px 14px">
+            <button class="cr-firmar" id="btn-recorridos" onclick="haptic();calcularRecorridosDelDia()">Calcular el recorrido de hoy</button>
+          </div>
+        </div>
         <!-- CIERRE DEL DÍA — se mudó desde el módulo de auditoría: es el último paso de la jornada,
              y su sitio natural es la misma lista donde arranca la mañana. -->
         <div class="rut-card" id="rut-card-cierre">
@@ -7592,12 +7600,19 @@ async function loadRoutes(){
       rutas[r].clientes.push({...c,_st:'pendiente'});
       rutas[r].totalCajas+=parseFloat(String(c['CAJA_']||c.CAJA_||0).replace(',','.')||0);
     });
-    // Recorrido de verdad, desde el CEDI hacia afuera. Ver ordenarRecorrido().
-    Object.values(rutas).forEach(r=>{
+    /* Recorrido de verdad, desde el CEDI hacia afuera. Manda el que calculó el coordinador con
+       calles reales; si ese día no se calculó, se ordena por cercanía en el propio celular. */
+    const _fechaRec=getColDate();
+    await Promise.all(Object.values(rutas).map(async r=>{
       r.kmPPAS=_kmRecorrido(r.clientes.slice().sort((a,b)=>(+a.secuencia||999)-(+b.secuencia||999)));
-      r.clientes=ordenarRecorrido(r.clientes);
-      r.km=_kmRecorrido(r.clientes);
-    });
+      let usado=null;
+      try{
+        const guardado=await leerRecorrido(_fechaRec,r.code);
+        usado=aplicarRecorridoGuardado(r.clientes,guardado);
+        if(usado){r.clientes=usado;r.fuenteOrden=guardado.fuente;r.km=guardado.km||_kmRecorrido(usado);}
+      }catch(e){}
+      if(!usado){ r.clientes=ordenarRecorrido(r.clientes); r.fuenteOrden='cercania'; r.km=_kmRecorrido(r.clientes); }
+    }));
     const grid=document.getElementById('routes-grid');
     grid.innerHTML='';
     const codes=Object.keys(rutas).sort();
@@ -9961,6 +9976,148 @@ async function renderHistorialAuditorias(fecha){
     '</div>').join('')+'</div>';
 }
 
+
+
+/* ══ RECORRIDO POR CALLES REALES (20-ago-2026) ══
+   El orden por cercanía mide en línea recta, así que puede poner seguidos dos clientes que están a
+   200 metros pero separados por el río o por una vía sin paso. Esto lo resuelve con el ruteo real de
+   Google: calles, sentidos y tiempos de verdad.
+
+   CÓMO SE USA SIN QUE CUESTE UNA FORTUNA
+   Google cobra por petición, y una ruta de 93 clientes no cabe en una sola —el límite es 25 paradas—.
+   Si esto se calculara cada vez que un entregador abre la app, serían cientos de llamadas diarias.
+   Por eso se calcula UNA sola vez, cuando el coordinador sube el PPAS, y el resultado se guarda en
+   RECORRIDO/{fecha}/{ruta}.json. Los celulares leen ese archivo: cero llamadas a Google desde la calle.
+
+   Cuentas para doce rutas: 4 bloques por ruta × 12 rutas = 48 peticiones al día, unas 1.440 al mes.
+   A la tarifa de ruteo optimizado son unos 14 dólares mensuales.
+
+   EL ORDEN DE LOS BLOQUES
+   Primero se agrupa por cercanía —eso deja cada bloque en una zona compacta— y después Google
+   optimiza dentro de cada bloque con calles reales. Partir a ciegas mezclaría barrios distintos en
+   un mismo bloque y el ruteo real no tendría nada que arreglar.
+
+   Si Google no responde —no está habilitada la API, se acabó el cupo, no hay señal— queda el orden
+   por cercanía, que es el que ya funcionaba. Nunca se queda sin recorrido. */
+const RUTEO_MAX_PARADAS=23;   // Google admite 25 con origen y destino; se dejan dos de margen
+
+function _dirService(){
+  if(typeof google==='undefined'||!google.maps||!google.maps.DirectionsService)return null;
+  if(!window._dsvc)window._dsvc=new google.maps.DirectionsService();
+  return window._dsvc;
+}
+/* Optimiza UN bloque con Google. Devuelve el bloque reordenado, sus km y minutos reales. */
+function _rutearBloque(bloque,desde,hasta){
+  return new Promise(res=>{
+    const ds=_dirService();
+    if(!ds||!bloque.length)return res(null);
+    ds.route({
+      origin:{lat:+desde.lat,lng:+desde.lng},
+      destination:{lat:+hasta.lat,lng:+hasta.lng},
+      waypoints:bloque.map(c=>({location:{lat:+c.lat,lng:+c.lng},stopover:true})),
+      optimizeWaypoints:true,
+      travelMode:google.maps.TravelMode.DRIVING
+    },(r,st)=>{
+      if(st!=='OK'||!r.routes||!r.routes.length)return res({error:String(st)});
+      const ruta=r.routes[0];
+      const orden=(ruta.waypoint_order||bloque.map((_,i)=>i)).map(i=>bloque[i]);
+      let m=0,seg=0;
+      (ruta.legs||[]).forEach(l=>{m+=(l.distance&&l.distance.value)||0;seg+=(l.duration&&l.duration.value)||0;});
+      res({orden,km:m/1000,min:seg/60});
+    });
+  });
+}
+/* Recorrido completo de una ruta. `avisar` recibe el progreso para pintarlo. */
+async function calcularRecorridoGoogle(clientes,avisar){
+  const CEDI=CFG.PLANTA||{lat:1.205398,lng:-77.295223};
+  const base=ordenarRecorrido(clientes);          // agrupa por zona antes de trocear
+  const conCoord=base.filter(c=>c.lat&&c.lng);
+  if(!conCoord.length)return {fuente:'cercania',orden:base,km:_kmRecorrido(base),error:'sin coordenadas'};
+  const bloques=[];
+  for(let i=0;i<conCoord.length;i+=RUTEO_MAX_PARADAS)bloques.push(conCoord.slice(i,i+RUTEO_MAX_PARADAS));
+  const final=[]; let km=0,min=0,fallo=null;
+  let cur={lat:CEDI.lat,lng:CEDI.lng};
+  for(let b=0;b<bloques.length;b++){
+    if(avisar)avisar(b+1,bloques.length);
+    const bl=bloques[b];
+    // El destino del bloque es el primer cliente del siguiente, para que empalmen sin devolverse.
+    const sig=bloques[b+1];
+    const hasta=sig?sig[0]:{lat:CEDI.lat,lng:CEDI.lng};
+    const r=await _rutearBloque(bl,cur,hasta);
+    if(!r||r.error){ fallo=(r&&r.error)||'sin servicio'; final.push(...bl); }
+    else { final.push(...r.orden); km+=r.km; min+=r.min; }
+    const ult=final[final.length-1];
+    if(ult&&ult.lat)cur={lat:+ult.lat,lng:+ult.lng};
+    await new Promise(r2=>setTimeout(r2,220));   // no atropellar la cuota de Google
+  }
+  const sinCoord=base.filter(c=>!c.lat||!c.lng);
+  const orden=final.concat(sinCoord);
+  if(fallo)return {fuente:'cercania',orden:base,km:_kmRecorrido(base),error:fallo};
+  return {fuente:'google',orden,km:+km.toFixed(2),min:Math.round(min),bloques:bloques.length};
+}
+/* Guardado y lectura del recorrido del día. */
+async function guardarRecorrido(fecha,ruta,res){
+  await _storageGuardar('RECORRIDO/'+fecha+'/'+ruta+'.json',{
+    ruta,fecha,fuente:res.fuente,km:res.km,min:res.min||null,
+    orden:res.orden.map(c=>String(c.id||c.cod||'')),
+    calculado:new Date().toISOString()});
+}
+let _recorridoCache={};
+async function leerRecorrido(fecha,ruta){
+  const k=fecha+'|'+ruta;
+  if(_recorridoCache[k]!==undefined)return _recorridoCache[k];
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/RECORRIDO/'+fecha+'/'+ruta+'.json?t='+Date.now());
+    _recorridoCache[k]=r.ok?await r.json():null;
+  }catch(e){ _recorridoCache[k]=null; }
+  return _recorridoCache[k];
+}
+/* Aplica a la lista el orden guardado. Los que no estén en él —clientes nuevos del día— van al final. */
+function aplicarRecorridoGuardado(lista,guardado){
+  if(!guardado||!guardado.orden||!guardado.orden.length)return null;
+  const pos={}; guardado.orden.forEach((id,i)=>pos[String(id)]=i);
+  const dentro=[],fuera=[];
+  (lista||[]).forEach(c=>{ (pos[String(c.id)]!==undefined?dentro:fuera).push(c); });
+  if(!dentro.length)return null;
+  dentro.sort((a,b)=>pos[String(a.id)]-pos[String(b.id)]);
+  return dentro.concat(fuera);
+}
+
+/* El botón de la Rutina: calcula el recorrido de todas las rutas del día, una sola vez. */
+async function calcularRecorridosDelDia(){
+  const btn=document.getElementById('btn-recorridos');
+  const est=document.getElementById('pc-est-recorrido'), det=document.getElementById('pc-det-recorrido');
+  if(!_dirService()){
+    toast('Google Maps todavía no ha cargado. Espera unos segundos y vuelve a intentar.','err');return;
+  }
+  if(btn){btn.disabled=true;}
+  const fecha=getColDate();
+  const {data}=await sb.from(CFG.TBL).select('id,nombre,ruta,lat,lng,CAJA_,secuencia');
+  const porRuta={};
+  (data||[]).forEach(c=>{const r=c.ruta||'';if(!rutaEntrega(r))return;(porRuta[r]=porRuta[r]||[]).push(c);});
+  const rutas=Object.keys(porRuta).sort();
+  if(!rutas.length){toast('No hay rutas cargadas. Sube primero el PPAS.','err');if(btn)btn.disabled=false;return;}
+  let ok=0,conCercania=0,kmTot=0,primerError=null;
+  for(let i=0;i<rutas.length;i++){
+    const r=rutas[i];
+    if(det)det.textContent='Calculando '+r+' ('+(i+1)+' de '+rutas.length+')…';
+    const res=await calcularRecorridoGoogle(porRuta[r],(b,t)=>{
+      if(det)det.textContent=r+' — tramo '+b+' de '+t+' ('+(i+1)+'/'+rutas.length+')';
+    });
+    try{ await guardarRecorrido(fecha,r,res); }catch(e){}
+    if(res.fuente==='google'){ok++;kmTot+=res.km;}
+    else{conCercania++;primerError=primerError||res.error;}
+  }
+  _recorridoCache={};
+  if(btn)btn.disabled=false;
+  if(est){est.textContent=ok?'✓':'⚠';est.className='pc-estado '+(ok?'pc-estado-ok':'pc-estado-empty');}
+  if(det)det.textContent=ok+' ruta(s) con calles reales'+(conCercania?' · '+conCercania+' quedaron por cercanía':'')+
+    (kmTot?' · '+Math.round(kmTot)+' km en total':'');
+  if(conCercania&&primerError==='REQUEST_DENIED')
+    toast('Google rechazó la petición: falta habilitar Directions API en tu proyecto. Las rutas quedaron con el orden por cercanía.','err');
+  else if(ok)toast('✓ '+ok+' recorrido(s) calculados con calles reales','ok');
+  else toast('No se pudo calcular con Google. Quedó el orden por cercanía.','err');
+}
 
 /* ══ SEMÁFORO DE ATRASO (20-ago-2026) ══
    El 20 de agosto KA4V51 terminó a las 20:46 y el coordinador se enteró esa noche, cuando seis
