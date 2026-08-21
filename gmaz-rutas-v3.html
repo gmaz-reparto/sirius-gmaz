@@ -7240,6 +7240,50 @@ function _hm(min){
   const h=Math.floor(min/60),m=min%60;
   return h?h+'h '+String(m).padStart(2,'0')+'m':m+'m';
 }
+/* ══ LOS CLIENTES DEL DÍA QUE SE ESTÁ MIRANDO (21-ago-2026) ══
+   `_clientesCache` sale de la tabla `clientes_rutas`, que se borra y se recarga cada mañana con el
+   PPAS del día: SIEMPRE tiene los de hoy. Al abrir el recorrido de ayer, las paradas se cruzaban
+   contra los clientes de hoy y casi todas salían como «Zona sin cliente» —la V51 del 20 mostraba
+   39 paradas y solo una reconocida—. El GPS era el correcto; la lista contra la que se comparaba,
+   no. Y el resultado se lee como si el camión hubiera pasado el día parado en la nada.
+
+   Para cualquier fecha que no sea hoy se lee el PPAS de ESE día, que sí quedó guardado en
+   {fecha}/PPAS_INDEX.json. Igual con las novedades: las de hoy no dicen nada de ayer. */
+const _ppasDiaCache={};
+async function clientesDeFecha(fecha){
+  if(fecha===getColDate())return (_clientesCache||[]).map(c=>{
+    const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+    return {...c,lat,lng};
+  });
+  if(_ppasDiaCache[fecha])return _ppasDiaCache[fecha];
+  let out=[];
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/PPAS_INDEX.json?t='+Date.now());
+    if(r.ok){
+      const ppas=await r.json()||{};
+      out=Object.entries(ppas).map(([cod,c])=>({
+        id:String(cod), nombre:c.nombre||'',
+        lat:+c.lat, lng:+c.lng,
+        direccion:c.direccion||'', barrio:c.barrio||'',
+        ruta:rutaBase(c.ruta||c.r||''), CAJA_:+c.caj||0
+      })).filter(c=>c.lat&&c.lng);
+    }
+  }catch(e){}
+  _ppasDiaCache[fecha]=out;
+  return out;
+}
+const _novDiaCache={};
+async function novedadesDeFecha(fecha){
+  if(fecha===getColDate())return _novSetCache;
+  if(_novDiaCache[fecha])return _novDiaCache[fecha];
+  const set=new Set();
+  try{
+    const r=await sb.from(CFG.TBL_NOV).select('codigo_cliente').eq('fecha',fecha);
+    (r.data||[]).forEach(x=>set.add(String(x.codigo_cliente)));
+  }catch(e){}
+  _novDiaCache[fecha]=set;
+  return set;
+}
 async function toggleRecorrido(unitId,ruta,fechaSel){
   const fecha=fechaSel||getColDate();
   if(recorridoCapa&&recorridoCapa.unitId===unitId&&recorridoCapa.fecha===fecha){limpiarRecorrido();return;}
@@ -7263,11 +7307,16 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     overlays.push(new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.72,strokeWeight:4,zIndex:1400}));
     overlays.push(new google.maps.Marker({position:path[0],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Inicio '+((ord[0].hora||'').slice(0,5))}));
     overlays.push(new google.maps.Marker({position:path[path.length-1],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Fin '+((ord[ord.length-1].hora||'').slice(0,5))}));
-    // Clientes del día de esa ruta (para ver si debía estar en esa zona)
-    const clientesRuta=(_clientesCache||[]).map(c=>{const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));return(c.ruta===ruta&&lat&&lng)?{...c,lat,lng}:null;}).filter(Boolean);
+    /* Clientes de esa ruta EL DÍA QUE SE MIRA — son la vara contra la que se decide si cada parada
+       fue en un cliente o «en la nada». Con la lista equivocada, esa decisión también lo está. */
+    const todos=await clientesDeFecha(fecha);
+    const novSet=await novedadesDeFecha(fecha);
+    const clientesRuta=todos.filter(c=>rutaBase(c.ruta)===rutaBase(ruta)&&c.lat&&c.lng);
+    if(!clientesRuta.length&&fecha!==getColDate())
+      toast('No hay PPAS guardado del '+fecha+': las paradas no se pueden cruzar con clientes','err');
     const iw=new google.maps.InfoWindow();
     clientesRuta.forEach(c=>{
-      const esNov=_novSetCache.has(String(c.id));
+      const esNov=novSet.has(String(c.id));
       const estado=esNov?'novedad':'entregado';
       const mk=new google.maps.Marker({position:{lat:c.lat,lng:c.lng},map:dashMap,zIndex:1200,icon:{path:google.maps.SymbolPath.CIRCLE,scale:esNov?6.5:5,fillColor:col,fillOpacity:.9,strokeColor:esNov?'#E30613':'#fff',strokeWeight:esNov?2.5:1.3}});
       mk.addListener('click',()=>{iw.setContent(iwClienteHTML(c,estado));iw.open(dashMap,mk);});
