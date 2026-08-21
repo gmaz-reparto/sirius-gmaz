@@ -10254,21 +10254,37 @@ function _sumarHora(hhmm,min){
    el tiempo de cada grupo. Eso es una parada de verdad; lo otro era una parada de la aplicación. */
 const _RADIO_PARADA=0.06;   // km — por debajo de eso el GPS se mueve solo, con el camión apagado
 const _MIN_PARADA=20;       // minutos — menos que eso es una entrega, no una parada
-function _paradasGPS(pts,hh){
+const _RADIO_CEDI=0.15;     // km — dentro de esto el camión está en la planta, no en la calle
+/* Las paradas se recortan a la jornada, y ahí está el detalle que hay que cuidar: el GPS reporta
+   las veinticuatro horas del día. Sin recortar, la parada más larga de la V51 eran 437 minutos
+   entre las 00:26 y las 07:43 —el camión dormido en la planta— y el total daba 15 h 27 de
+   «detenido» dentro de una jornada de 12 h 32. Un número imposible, y de los que no se notan si
+   uno no los mira: suena mal, que es justo lo que se esperaba ver.
+   También se marca cuáles fueron en la planta: parar en el CEDI a cargar no es lo mismo que parar
+   hora y media en una esquina, y el informe no puede cobrarlas igual. */
+function _paradasGPS(pts,hh,desde,hasta){
+  const ini=desde||-Infinity, fin=hasta||Infinity;
+  const P=CFG.PLANTA||{lat:1.205398,lng:-77.295223};
   const out=[]; let total=0, i=0;
   while(i<pts.length){
     let j=i+1;
     while(j<pts.length&&_distKmCoord(pts[i].lat,pts[i].lng,pts[j].lat,pts[j].lng)<_RADIO_PARADA)j++;
-    const t0=new Date(pts[i].t).getTime(), t1=new Date(pts[j-1].t).getTime();
+    const t0=Math.max(new Date(pts[i].t).getTime(),ini);
+    const t1=Math.min(new Date(pts[j-1].t).getTime(),fin);
     const min=(t1-t0)/60000;
     if(min>=_MIN_PARADA){
+      const enPlanta=_distKmCoord(pts[i].lat,pts[i].lng,P.lat,P.lng)<_RADIO_CEDI;
       total+=min;
-      out.push({min:Math.round(min),desde:hh(t0),hasta:hh(t1),lat:pts[i].lat,lng:pts[i].lng});
+      out.push({min:Math.round(min),desde:hh(t0),hasta:hh(t1),
+        lat:pts[i].lat,lng:pts[i].lng,planta:enPlanta});
     }
     i=(j>i)?j:i+1;
   }
   out.sort((a,b)=>b.min-a.min);
-  return {total:Math.round(total),paradas:out};
+  const enCalle=out.filter(x=>!x.planta);
+  return {total:Math.round(total),paradas:out,
+    // Lo que importó de verdad: el tiempo quieto fuera de la planta
+    calle:Math.round(enCalle.reduce((a,x)=>a+x.min,0)), nCalle:enCalle.length};
 }
 /* Suma de los huecos de 45 minutos o más entre dos sellos seguidos. NO es tiempo detenido: es
    tiempo sin registrar. Se usa solo para señalar dónde mirar, nunca como cifra de un informe. */
@@ -10483,7 +10499,7 @@ async function recolectarInforme(ruta,fecha,avisar){
         let k=0,pv=null;
         pts.forEach(pt=>{ if(pv){const d=_distKmCoord(pv.lat,pv.lng,pt.lat,pt.lng); if(d<5)k+=d;} pv=pt; });
         kmGPS=+k.toFixed(1);
-        quieto=_paradasGPS(pts.filter(x=>x.lat&&x.lng),hh);
+        quieto=_paradasGPS(pts.filter(x=>x.lat&&x.lng),hh,ini,fin);
       }
     }
   }catch(e){}
@@ -10693,10 +10709,10 @@ async function construirInformeHTML(D,avisar){
 
     /* Solo entra si lo dice el GPS. El hueco entre sellos NO sirve para esta fila: con la mitad
        de los clientes sin sellar mide tiempo sin registrar, no cami\u00f3n quieto. */
-    (D.quieto&&D.quieto.total?fila('Detenido m\u00e1s de 20 minutos',
-      hm(D.quieto.total)+' <small style="color:#6B7385">en '+D.quieto.paradas.length+' paradas, seg\u00fan el GPS</small>',
+    (D.quieto&&D.quieto.calle?fila('Quieto en la calle m\u00e1s de 20 min',
+      hm(D.quieto.calle)+' <small style="color:#6B7385">en '+D.quieto.nCalle+' paradas, seg\u00fan el GPS</small>',
       hm(D.almuerzoMin)+' <small style="color:#6B7385">de almuerzo</small>',
-      gana(D.quieto.total-D.almuerzoMin,hm(D.quieto.total-D.almuerzoMin))):'')+
+      gana(D.quieto.calle-D.almuerzoMin,hm(D.quieto.calle-D.almuerzoMin))):'')+
 
     (J?'<tr style="background:#FAFBFC"><td><b>Jornada</b></td>'+
       '<td class="n"><b>'+(D.jornadaMin?hm(D.jornadaMin):'\u2014')+'</b></td>'+
@@ -10875,8 +10891,8 @@ async function construirInformeHTML(D,avisar){
     '<tr><td>Recorrido ordenado</td><td class="n">'+D.kmDebio+' km en recta</td></tr>'+
     (D.kmGPS!=null?'<tr><td>Lo que marc\u00f3 el GPS del veh\u00edculo</td><td class="n">'+D.kmGPS+' km reales</td></tr>':'')+
     (D.jornadaMin?'<tr><td>Jornada de este d\u00eda</td><td class="n">'+hm(D.jornadaMin)+'</td></tr>':'')+
-    (D.quieto&&D.quieto.total?'<tr><td>Detenido m\u00e1s de 20 minutos <small style="color:#6B7385">(GPS)</small></td>'+
-      '<td class="n" style="color:#E30613">'+hm(D.quieto.total)+'</td></tr>':'')+
+    (D.quieto&&D.quieto.calle?'<tr><td>Quieto en la calle m\u00e1s de 20 min <small style="color:#6B7385">(GPS)</small></td>'+
+      '<td class="n" style="color:#E30613">'+hm(D.quieto.calle)+'</td></tr>':'')+
     (refMin?'<tr><td>Al ritmo de las rutas comparables ('+D.refMinCli+' min por cliente)</td>'+
       '<td class="n">'+hm(refMin)+'</td></tr>':'')+
     (finEstimado?'<tr><td><b>Habr\u00eda terminado a las</b></td>'+
@@ -10898,10 +10914,11 @@ async function construirInformeHTML(D,avisar){
   '<div class="nota">Con '+D.sinRegistro+' de '+D.clientes+' clientes sin registrar en la app, estos huecos '+
   'pueden contener clientes atendidos que nunca se sellaron. <b>No prueban que el cami\u00f3n estuviera quieto</b>: '+
   'son tiempo sin registrar, y sirven para saber d\u00f3nde mirar, no para acusar.'+
-  (D.quieto?' Lo que s\u00ed estuvo quieto lo dice el GPS: <b>'+hm(D.quieto.total)+'</b> en '+
-    D.quieto.paradas.length+' paradas de m\u00e1s de veinte minutos'+
-    (D.quieto.paradas[0]?', la mayor de '+D.quieto.paradas[0].min+' min entre las '+
-      D.quieto.paradas[0].desde+' y las '+D.quieto.paradas[0].hasta:'')+'.':'')+
+  (D.quieto&&D.quieto.calle?(()=>{const c=D.quieto.paradas.filter(x=>!x.planta);
+    return ' Lo que s\u00ed estuvo quieto lo dice el GPS: <b>'+hm(D.quieto.calle)+'</b> fuera de la planta, '+
+    'en '+D.quieto.nCalle+' paradas de m\u00e1s de veinte minutos'+
+    (c[0]?', la mayor de '+c[0].min+' min entre las '+c[0].desde+' y las '+c[0].hasta:'')+
+    '. Las paradas en el CEDI no entran en esa cuenta.';})():'')+
   '</div></div>':'')+
 
   (filasEspejo?'<div class="card"><h2>Rutas de carga parecida</h2>'+
@@ -11089,7 +11106,7 @@ function _mostrarInformeListo(D){
           ?hm(D.jornadaMin-D.jorBueno.total)+' más de lo que debía · '
           :'')+
         D.atendidos+' de '+D.clientes+' clientes sellados'+
-        (D.quieto&&D.quieto.total?' · '+hm(D.quieto.total)+' detenido':'')+
+        (D.quieto&&D.quieto.calle?' · '+hm(D.quieto.calle)+' quieto en calle':'')+
         (D.saltosAtras?' · '+D.saltosAtras+' devueltas':'')+'</div></div>'+
     '<div class="perm-acc">'+
       '<button class="perm-si" onclick="haptic();_infCompartir()">Mandarlo por WhatsApp</button>'+
