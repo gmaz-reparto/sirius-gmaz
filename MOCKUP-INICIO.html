@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMAZ — 3 conceptos de inicio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#0c1018;color:#fff;min-height:100vh;padding:30px 16px 60px}
+h1{text-align:center;font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.sub{text-align:center;font-size:13px;color:#8a90a0;margin-bottom:34px}
+.row{display:flex;gap:34px;justify-content:center;flex-wrap:wrap}
+.opt{display:flex;flex-direction:column;align-items:center;gap:14px}
+.phone{width:290px;height:600px;background:#000;border-radius:40px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.screen{width:100%;height:100%;border-radius:30px;overflow:hidden;position:relative}
+.tag{font-size:13px;font-weight:800;color:#fff}
+.tag span{display:block;font-size:11px;font-weight:600;color:#8a90a0;margin-top:2px;text-align:center;max-width:260px}
+.pick{margin-top:4px;font-size:11px;font-weight:700;color:#E30613;letter-spacing:1px}
+
+/* ═══ A · AURORA DARK ═══ */
+.a{background:#0B1020;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.a .glow1{position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(227,6,19,.55),transparent 65%);top:-60px;left:-80px;filter:blur(20px);animation:floaty 7s ease-in-out infinite}
+.a .glow2{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.4),transparent 65%);bottom:-40px;right:-70px;filter:blur(20px);animation:floaty 9s ease-in-out infinite reverse}
+.a .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:26px 26px;mask:radial-gradient(circle at 50% 45%,#000 30%,transparent 75%)}
+.a .core{position:relative;z-index:2;text-align:center}
+.a .badge{width:74px;height:74px;border-radius:22px;background:linear-gradient(135deg,#F0263A,#B5000F);display:grid;place-items:center;margin:0 auto 22px;box-shadow:0 12px 34px rgba(227,6,19,.5);animation:pop .8s cubic-bezier(.34,1.56,.64,1)}
+.a .badge svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.a .g{font-size:38px;font-weight:900;letter-spacing:-1.5px;background:linear-gradient(180deg,#fff,#c8ccd8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.a .r{font-size:12px;font-weight:800;letter-spacing:6px;color:#E30613;margin-top:2px}
+.a .loc{font-size:11px;color:#6b7385;font-weight:600;margin-top:14px}
+.a .bar{width:130px;height:3px;border-radius:3px;background:rgba(255,255,255,.1);margin:26px auto 0;overflow:hidden}
+.a .bar i{display:block;height:100%;width:40%;border-radius:3px;background:linear-gradient(90deg,#E30613,#F0263A);animation:load 1.6s ease-in-out infinite}
+
+/* ═══ B · RUTA VIVA ═══ */
+.b{background:linear-gradient(160deg,#141b2e,#0a0e18);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.b svg.route{position:absolute;inset:0;width:100%;height:100%}
+.b .dashln{stroke:#E30613;stroke-width:2.5;fill:none;stroke-dasharray:8 8;opacity:.5;animation:dash 1s linear infinite}
+.b .pin{position:absolute;width:12px;height:12px;border-radius:50%;background:#E30613;box-shadow:0 0 0 4px rgba(227,6,19,.25)}
+.b .core{position:relative;z-index:3;text-align:center}
+.b .truck{width:64px;height:64px;border-radius:20px;background:#fff;display:grid;place-items:center;margin:0 auto 20px;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:drive 2.4s ease-in-out infinite}
+.b .g{font-size:34px;font-weight:900;letter-spacing:-1px;color:#fff}
+.b .r{font-size:11px;font-weight:800;letter-spacing:5px;color:#E30613;margin-top:2px}
+.b .chip{display:inline-flex;align-items:center;gap:6px;margin-top:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:6px 13px;font-size:10.5px;font-weight:700;color:#9fb4c9}
+.b .chip i{width:6px;height:6px;border-radius:50%;background:#0E9F6E;animation:blink 1.3s infinite}
+
+/* ═══ C · ROJO PROFUNDO GLASS ═══ */
+.c{background:radial-gradient(120% 100% at 50% 0%,#F0263A 0%,#B5000F 55%,#7a0009 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.c .orb{position:absolute;border-radius:50%;background:rgba(255,255,255,.08);filter:blur(1px)}
+.c .o1{width:220px;height:220px;top:-70px;right:-60px}
+.c .o2{width:150px;height:150px;bottom:-30px;left:-50px;background:rgba(255,255,255,.06)}
+.c .shine{position:absolute;top:0;left:-60%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transform:skewX(-20deg);animation:sweep 3.5s ease-in-out infinite}
+.c .card{position:relative;z-index:2;width:210px;padding:30px 24px;border-radius:26px;background:rgba(255,255,255,.1);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.22);text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:pop .8s cubic-bezier(.34,1.56,.64,1)}
+.c .bar-side{display:flex;align-items:center;gap:11px;justify-content:center}
+.c .accent{width:5px;height:48px;border-radius:3px;background:#fff}
+.c .g{font-size:40px;font-weight:900;letter-spacing:-1.5px;color:#fff;line-height:1}
+.c .r{font-size:11px;font-weight:800;letter-spacing:5px;color:rgba(255,255,255,.75)}
+.c .loc{font-size:11px;color:rgba(255,255,255,.8);font-weight:600;margin-top:16px}
+.c .dots{display:flex;gap:6px;justify-content:center;margin-top:16px}
+.c .dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);animation:pulse 1.2s infinite}
+.c .dots span:nth-child(2){animation-delay:.2s}.c .dots span:nth-child(3){animation-delay:.4s}
+
+@keyframes floaty{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,25px)}}
+@keyframes pop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes load{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
+@keyframes dash{to{stroke-dashoffset:-16}}
+@keyframes drive{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<h1>GMAZ Rutas — 3 conceptos de inicio</h1>
+<div class="sub">Elige el que más te guste. Todos animados, calidad de app premium.</div>
+<div class="row">
+
+  <div class="opt">
+    <div class="phone"><div class="screen a">
+      <div class="glow1"></div><div class="glow2"></div><div class="grid"></div>
+      <div class="core">
+        <div class="badge"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div class="g">GMAZ</div><div class="r">R U T A S</div>
+        <div class="loc">Coca-Cola · Pasto, Nariño</div>
+        <div class="bar"><i></i></div>
+      </div>
+    </div></div>
+    <div class="tag">Opción A · Aurora Dark<span>Fondo oscuro premium con luces animadas y grilla sutil. Estilo Linear / Uber.</span></div>
+    <div class="pick">ESCRIBE "A"</div>
+  </div>
+
+  <div class="opt">
+    <div class="phone"><div class="screen b">
+      <svg class="route" viewBox="0 0 290 600" preserveAspectRatio="none"><path class="dashln" d="M-10 420 C 80 360, 120 300, 200 250 S 300 150, 300 90"/></svg>
+      <div class="pin" style="top:250px;left:196px"></div>
+      <div class="pin" style="top:90px;left:288px;background:#0E9F6E;box-shadow:0 0 0 4px rgba(14,159,110,.25)"></div>
+      <div class="core">
+        <div class="truck"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+        <div class="g">GMAZ</div><div class="r">R U T A S</div>
+        <div class="chip"><i></i>PREPARANDO TU RUTA</div>
+      </div>
+    </div></div>
+    <div class="tag">Opción B · Ruta Viva<span>Línea de ruta punteada animándose hacia el destino + camión. Nativo de logística.</span></div>
+    <div class="pick">ESCRIBE "B"</div>
+  </div>
+
+  <div class="opt">
+    <div class="phone"><div class="screen c">
+      <div class="orb o1"></div><div class="orb o2"></div><div class="shine"></div>
+      <div class="card">
+        <div class="bar-side"><div class="accent"></div><div><div class="g">GMAZ</div><div class="r">R U T A S</div></div></div>
+        <div class="loc">Coca-Cola · Pasto, Nariño</div>
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+    </div></div>
+    <div class="tag">Opción C · Rojo Glass<span>Rojo Coca-Cola con profundidad, tarjeta de vidrio y brillo que recorre. Marca fuerte.</span></div>
+    <div class="pick">ESCRIBE "C"</div>
+  </div>
+
+</div>
+</body>
+</html>
