@@ -5657,7 +5657,7 @@ function _tcEcuacion(x){
       b('VOLVIÓ AL CEDI',ret?ret.caj:'—',(ret?(ret.und?ret.und+' und · contado':'contado por usted'):'sin anotar'),'var(--azul)','var(--azul-s)')+
       b('SIN EXPLICAR',resto,(resto?'nadie las reportó':'todo cuadra'),resto?'var(--amarillo)':'var(--verde)',resto?'#FFFBEB':'var(--verde-s)')+
     '</div>'+
-    ('<button class="fl-btn" style="margin:0 9px 9px 0" onclick="event.stopPropagation();generarInformeRuta(&#39;'+x.ruta+'&#39;)">\u2197 Informe para el jefe</button>'+
+    ('<button class="fl-btn" style="margin:0 9px 9px 0" onclick="event.stopPropagation();generarInformeRuta(&#39;'+x.ruta+'&#39;)">\u2197 Informe de la ruta</button>'+
      '<button class="fl-btn" style="margin:0 0 9px" onclick="event.stopPropagation();abrirRetorno(&#39;'+x.ruta+'&#39;)">'+
       (ret?'Corregir el retorno de '+x.ruta:'Anotar lo que volvió de '+x.ruta)+'</button>'+
      '<div id="ret-form-'+x.ruta+'"></div>')+
