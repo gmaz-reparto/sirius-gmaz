@@ -2472,6 +2472,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
         <div class="dcard">
           <div class="dcard-h"><h3><span class="h3ic">⚠️</span>Novedades por día</h3><span class="dm" id="dash-nov-meta">—</span>
             <input type="date" id="nov-fecha" max="" onchange="haptic();verRechazosFecha(this.value)" style="margin-left:auto;height:32px;border:1px solid #E6E9EF;border-radius:8px;padding:0 8px;font-family:inherit;font-size:12px;font-weight:700;color:#0F1117">
+            <button onclick="haptic();descargarNovedadesVistas()" style="height:32px;border:1px solid #E6E9EF;background:#fff;border-radius:8px;padding:0 12px;font-family:inherit;font-size:11.5px;font-weight:800;color:#0F1117;cursor:pointer;white-space:nowrap">↓ Excel</button>
           </div>
           <div class="nov-grid" id="dash-nov" style="max-height:460px;overflow:auto"></div>
         </div>
@@ -2707,7 +2708,14 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
       <div class="rut-grid">
         <div class="rut-card">
           <div class="rut-top"><div class="rut-ic" style="background:#1A56DB"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="rut-ti"><div class="rut-t">Excel de novedades</div><div class="rut-detail" id="pc-det-nov">Verificando...</div></div><span class="pc-estado pc-estado-empty" id="pc-est-nov">...</span></div>
-          <div class="rut-actions" style="justify-content:flex-start"><button class="rut-link" onclick="haptic();switchPcTab(3)">Ver histórico →</button></div>
+          <!-- Este botón decía «Ver histórico» y llevaba a la pestaña 3. Cuando «Novedades por día»
+               se movió de ahí a Rechazos, la descarga se fue con ella y este botón quedó llevando a
+               una pantalla que solo dice dónde buscar. El paso 1 de la rutina es «descargar el Excel
+               de ayer»: que lo descargue. -->
+          <div class="rut-actions" style="justify-content:flex-start">
+            <button class="rut-link" onclick="haptic();descargarNovedadesAyer()">↓ Descargar Excel de ayer</button>
+            <button class="rut-link" onclick="haptic();irARechazos()">Ver otro día →</button>
+          </div>
         </div>
         <div class="rut-card">
           <div class="rut-top"><div class="rut-ic" style="background:#8A90A0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="rut-ti"><div class="rut-t">Limpiar fotos antiguas</div><div class="rut-detail" id="pc-det-fotos">+2 meses</div></div><span class="pc-estado pc-estado-empty" id="pc-est-fotos">...</span></div>
@@ -14472,6 +14480,27 @@ async function cargarMetricasFlota(){
   }finally{
     if(btn){btn.disabled=false;btn.textContent='Recalcular del GPS';}
   }
+}
+/* ══ LOS DOS BOTONES QUE LE FALTABAN A LA DESCARGA (21-ago-2026) ══
+   `descargarNovedasFecha` estaba escrita y completa, pero no la llamaba nadie: al mover «Novedades
+   por día» de la pestaña Histórico al módulo Rechazos, el botón que la invocaba se fue con la
+   pantalla vieja y no se repuso en la nueva. La función quedó huérfana y el coordinador quedaba
+   pulsando «Ver histórico» para llegar a un cartel que le decía dónde buscar. */
+function descargarNovedadesAyer(){ return descargarNovedasFecha(getColDate(-1)); }
+/* Descarga el día que esté puesto en el selector de Rechazos. Si no hay ninguno —recién abierto—
+   es porque se está viendo hoy en vivo. */
+function descargarNovedadesVistas(){
+  const sel=document.getElementById('nov-fecha');
+  return descargarNovedasFecha((sel&&sel.value)||_rechazosFechaVista||getColDate());
+}
+/* Lleva a Rechazos con el selector ya puesto en ayer, que es el caso de la rutina de la mañana.
+   Celular y computador abren el módulo por caminos distintos —esa regla no se toca—. */
+function irARechazos(){
+  const ayer=getColDate(-1);
+  if(ES_MOVIL)abrirModuloMovil('rechazos'); else activarModulo('rechazos');
+  const sel=document.getElementById('nov-fecha');
+  if(sel)sel.value=ayer;
+  verRechazosFecha(ayer);
 }
 async function descargarNovedasFecha(fecha){
   showLoad('Generando Excel de '+fecha+'...');
