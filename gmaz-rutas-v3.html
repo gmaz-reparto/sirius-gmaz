@@ -10151,33 +10151,48 @@ function _merY(lat,z){
   const r=lat*Math.PI/180;
   return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z)*TESELA;
 }
-/* Escoge el zoom más cercano que quepa en el lienzo pedido. */
-function _zoomQueQuepa(laMin,laMax,lnMin,lnMax,anchoPx,altoPx){
-  for(let z=17;z>=10;z--){
-    const w=Math.abs(_merX(lnMax,z)-_merX(lnMin,z));
-    const h=Math.abs(_merY(laMin,z)-_merY(laMax,z));
-    if(w<=anchoPx&&h<=altoPx)return z;
+/* ¿Qué zoom y cuánto hay que encoger para que el recorrido LLENE el lienzo?
+
+   El zoom de un mapa de teselas va de uno en uno, y entre un nivel y el siguiente todo mide el
+   doble. Si solo se escogiera el nivel que cabe, casi siempre el recorrido quedaría ocupando media
+   hoja con aire alrededor —justo lo que hace que un mapa no se pueda leer—. Así que se baja el
+   nivel de más detalle y se encoge lo que haga falta: las teselas se ven bien reducidas, y lo que
+   se gana es que el recorrido ocupe la hoja entera.
+
+   El tope de teselas está para que un recorrido muy extendido no se vuelva una descarga eterna en
+   el celular de un entregador con datos. Al pasarse, se baja un nivel: menos detalle, pero abre. */
+const _MAX_TESELAS=48;
+function _encuadre(laMin,laMax,lnMin,lnMax,anchoUtil,altoUtil,anchoPx,altoPx){
+  for(let z=18;z>=10;z--){
+    const w=Math.abs(_merX(lnMax,z)-_merX(lnMin,z))||1;
+    const h=Math.abs(_merY(laMin,z)-_merY(laMax,z))||1;
+    const esc=Math.min(anchoUtil/w,altoUtil/h);
+    if(esc<0.6)continue;                       // a este nivel habría que encoger demasiado
+    const teselas=(Math.ceil((anchoPx/esc)/TESELA)+1)*(Math.ceil((altoPx/esc)/TESELA)+1);
+    if(teselas>_MAX_TESELAS)continue;          // pesa más de lo que aporta
+    return {z,esc};
   }
-  return 11;
+  return {z:12,esc:1};
 }
-/* Baja las teselas de la zona y devuelve UNA imagen con todas pegadas, más los datos para
-   convertir coordenadas a píxeles de esa imagen. */
+/* Baja las teselas de la zona y devuelve UNA imagen con todas pegadas, más las dos funciones que
+   convierten una coordenada en un píxel de esa imagen. */
 async function armarFondoMapa(laMin,laMax,lnMin,lnMax,anchoPx,altoPx,avisar){
-  /* Se busca el zoom para un lienzo más chico que el real: ese aire es el que impide que un pin
-     del borde —que mide 44 px hacia arriba— quede cortado por el marco. */
-  const z=_zoomQueQuepa(laMin,laMax,lnMin,lnMax,anchoPx-150,altoPx-130);
-  const x0=_merX(lnMin,z), x1=_merX(lnMax,z), y0=_merY(laMax,z), y1=_merY(laMin,z);
-  // Un respiro alrededor para que ningún pin quede pegado al borde
-  const margen=40;
-  const cx=(x0+x1)/2, cy=(y0+y1)/2;
-  const iniX=cx-anchoPx/2, iniY=cy-altoPx/2;
-  const tx0=Math.floor((iniX-margen)/TESELA), tx1=Math.floor((iniX+anchoPx+margen)/TESELA);
-  const ty0=Math.floor((iniY-margen)/TESELA), ty1=Math.floor((iniY+altoPx+margen)/TESELA);
+  /* El encuadre se calcula contra un lienzo más chico que el real: ese aire es el que impide que
+     un pin del borde —que mide 44 px hacia arriba— quede cortado por el marco. */
+  const {z,esc}=_encuadre(laMin,laMax,lnMin,lnMax,anchoPx-150,altoPx-130,anchoPx,altoPx);
+  const cx=(_merX(lnMin,z)+_merX(lnMax,z))/2, cy=(_merY(laMin,z)+_merY(laMax,z))/2;
+  const aX=lon=>(_merX(lon,z)-cx)*esc+anchoPx/2;
+  const aY=lat=>(_merY(lat,z)-cy)*esc+altoPx/2;
+  // Teselas que hacen falta para tapar el lienzo entero, contadas ya con la escala aplicada
+  const mitadX=(anchoPx/2)/esc, mitadY=(altoPx/2)/esc;
+  const tx0=Math.floor((cx-mitadX)/TESELA), tx1=Math.floor((cx+mitadX)/TESELA);
+  const ty0=Math.floor((cy-mitadY)/TESELA), ty1=Math.floor((cy+mitadY)/TESELA);
   const c=document.createElement('canvas'); c.width=anchoPx; c.height=altoPx;
   const g=c.getContext('2d');
   g.fillStyle='#EDEFF2'; g.fillRect(0,0,anchoPx,altoPx);
   const total=(tx1-tx0+1)*(ty1-ty0+1);
   let hechas=0, fallos=0;
+  const lado=TESELA*esc+1;   // el píxel de más tapa la costura entre teselas vecinas
   for(let tx=tx0;tx<=tx1;tx++){
     for(let ty=ty0;ty<=ty1;ty++){
       if(avisar)avisar(++hechas,total);
@@ -10189,17 +10204,14 @@ async function armarFondoMapa(laMin,laMax,lnMin,lnMax,anchoPx,altoPx,avisar){
           setTimeout(()=>rej(new Error('lenta')),9000);
           i.src=url;
         });
-        g.drawImage(img,tx*TESELA-iniX,ty*TESELA-iniY);
+        g.drawImage(img,(tx*TESELA-cx)*esc+anchoPx/2,(ty*TESELA-cy)*esc+altoPx/2,lado,lado);
       }catch(e){ fallos++; }
     }
   }
-  return {
-    z, iniX, iniY, ancho:anchoPx, alto:altoPx, fallos,
-    imagen:c.toDataURL('image/jpeg',0.8),
-    // Con esto el informe convierte cualquier coordenada a un píxel del dibujo
-    aX:function(lon){ return _merX(lon,z)-iniX; },
-    aY:function(lat){ return _merY(lat,z)-iniY; }
-  };
+  // Si no bajó ni la mitad no hay mapa: mejor el fondo liso de siempre que un mapa a retazos.
+  if(fallos>total/2)return null;
+  return {z,esc,ancho:anchoPx,alto:altoPx,teselas:total,fallos,
+    imagen:c.toDataURL('image/jpeg',0.82), aX, aY};
 }
 
 /* ══ INFORME DE RUTA — el recorrido que se le manda al jefe (20-ago-2026) ══
