@@ -10237,9 +10237,22 @@ const INF_FACTOR_CALLE=1.35;
 function _sumarHora(hhmm,min){
   if(!hhmm)return null;
   const q=String(hhmm).split(':'); const t=(+q[0])*60+(+q[1])+Math.round(min||0);
-  return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(((t%60)+60)%60).padStart(2,'0');
+  /* Si la cuenta se pasa de la medianoche, el %24 devolvería una hora de la madrugada como si
+     fuera del mismo día —vimos salir un «habría terminado a las 05:20»—. Eso no es una hora de
+     llegada, es la señal de que el cálculo que la produjo no sirve. Mejor no dar nada. */
+  if(t>=24*60)return null;
+  return String(Math.floor(t/60)).padStart(2,'0')+':'+String(((t%60)+60)%60).padStart(2,'0');
 }
 
+/* Suma de los huecos de 45 minutos o más entre dos sellos seguidos. */
+function huecosMin(real){
+  let t=0;
+  for(let i=1;i<real.length;i++){
+    const m=Math.round((real[i].t-real[i-1].t)/60000);
+    if(m>=45)t+=m;
+  }
+  return t;
+}
 async function recolectarInforme(ruta,fecha,avisar){
   const F=fecha||getColDate();
   const paso=t=>{try{if(avisar)avisar(t);}catch(e){}};
@@ -10381,18 +10394,46 @@ async function recolectarInforme(ruta,fecha,avisar){
     if(v.length>=5){ v.sort((a,b)=>a-b); minEnCliente=+v[Math.floor(v.length/2)].toFixed(1); muestraRitmo=v.length; }
   }
 
+  /* ══ CUÁNDO SE PUEDE FIAR UNO DE ESE RITMO ══
+     Medirlo aquí solo vale si este día quedó bien registrado. Si de 93 clientes solo se sellaron 24,
+     los huecos entre sellos no son el tiempo de un cliente: son el tiempo de los cuatro que no se
+     sellaron. Sale un ritmo inflado que no es de nadie, y con él una hora de llegada inventada.
+     Cuando no alcanza, se va al ritmo de las rutas de carga parecida de otros días: es un dato de
+     afuera, pero es un dato. */
+  const cobertura=cli.length?real.length/cli.length:0;
+  const ritmoFiable=(cobertura>=0.6&&muestraRitmo>=8);
+  if(!ritmoFiable)minEnCliente=null;
+
   /* ══ A QUÉ HORA SE HABRÍA TERMINADO ══
-     Manejo + tiempo en los clientes + una hora de almuerzo. Cada sumando por separado para que
-     quien lo lea pueda discutir el que no le cuadre en vez de discutir el total. */
+     Dos caminos, y el informe dice cuál usó:
+     · MEDIDO — el día quedó bien registrado: manejo real de Google + tiempo medido en cada cliente
+       + una hora de almuerzo puesta aparte.
+     · ESPEJO — no alcanzó: el ritmo de las rutas comparables de otros días. Ese ritmo se midió del
+       primer al último sello de días completos, así que YA TRAE DENTRO el almuerzo de esos días.
+       Sumarle otra hora sería cobrar el almuerzo dos veces. */
   const armarJornada=tr=>{
-    if(!tr||!minEnCliente)return null;
-    const manejo=Math.round(tr.min);
-    const enClientes=Math.round(minEnCliente*cli.length);
-    const trabajo=manejo+enClientes;
-    return {manejo,enClientes,almuerzo:INF_ALMUERZO_MIN,total:trabajo+INF_ALMUERZO_MIN,
-      fin:_sumarHora(ini?hh(ini):null,trabajo+INF_ALMUERZO_MIN)};
+    const desde=ini?hh(ini):null;
+    if(tr&&minEnCliente){
+      const manejo=Math.round(tr.min);
+      const enClientes=Math.round(minEnCliente*cli.length);
+      const total=manejo+enClientes+INF_ALMUERZO_MIN;
+      return {fuente:'medido',manejo,enClientes,almuerzo:INF_ALMUERZO_MIN,almuerzoDentro:false,
+        total,fin:_sumarHora(desde,total)};
+    }
+    if(refMinCli){
+      const total=Math.round(refMinCli*cli.length);
+      return {fuente:'espejo',minCli:refMinCli,almuerzo:INF_ALMUERZO_MIN,almuerzoDentro:true,
+        total,fin:_sumarHora(desde,total),
+        dias:espejo.slice(0,3).map(e=>e.ruta+' del '+e.dia).join(', ')};
+    }
+    return null;
   };
   const jorBueno=armarJornada(trBueno), jorApp=armarJornada(trApp);
+
+  /* Cuánto estuvo el camión detenido en paradas largas. Con la mitad de los clientes sin sellar
+     estos huecos pueden traer trabajo adentro, y así se dice en el informe; pero la suma es el
+     orden de magnitud de lo que se fue del día sin quedar registrado. */
+  const detenido=huecosMin(real);
 
   /* ¿Almorzaron? Un hueco de media hora o más entre las 11 y las 15 es, casi seguro, el almuerzo.
      Se dice en el informe para que la hora de almuerzo que se suma no parezca inventada. */
@@ -10455,7 +10496,10 @@ async function recolectarInforme(ruta,fecha,avisar){
     callesBueno:trBueno?{km:trBueno.km,min:trBueno.min}:null,
     callesApp:trApp?{km:trApp.km,min:trApp.min}:null,
     callesReal:trReal?{km:trReal.km,min:trReal.min,clientes:real.length}:null,
-    minEnCliente, muestraRitmo, jorBueno, jorApp, almuerzoReal, almuerzoMin:INF_ALMUERZO_MIN,
+    minEnCliente, muestraRitmo, cobertura:+cobertura.toFixed(2), ritmoFiable,
+    jorBueno, jorApp, almuerzoReal, almuerzoMin:INF_ALMUERZO_MIN, detenido,
+    // Sobra de kilómetros: lo que el GPS marcó de más sobre el recorrido correcto por calles.
+    kmSobrante:(kmGPS!=null&&trBueno)?+(kmGPS-trBueno.km).toFixed(1):null,
     supuestos:{kmGalon:INF_KM_GALON,precioGalon:INF_PRECIO_GALON,almuerzo:INF_ALMUERZO_MIN}
   };
 }
@@ -10571,60 +10615,96 @@ async function construirInformeHTML(D,avisar){
   })();
 
   /* ══ EL VERSUS ══
-     Las dos columnas son el MISMO día, los MISMOS clientes y las MISMAS calles. Lo único que cambia
-     entre ellas es el orden en que se visitan; por eso la diferencia se puede leer como ahorro y no
-     como una comparación entre cosas distintas —que es el error fácil de cometer aquí, y el que
-     convierte un informe en un problema—.
-     La hora de almuerzo se suma igual a las dos, así que no mueve la diferencia: está para que la
-     hora de llegada sea una hora que alguien pueda cumplir. */
+     Este bloque se reescribió después de correrlo contra la V51 del 20 de agosto, porque la primera
+     versión iba derecho a un informe falso.
+
+     Comparaba el orden que traía el archivo del ERP —205 km por calle, porque va en orden alfabético
+     al revés y cruza Pasto entera noventa y tres veces— contra el recorrido correcto, 38,6 km, y
+     cantaba «se ahorran 166 km y $107.000 de gasolina». Pero el GPS del camión marcó 35,8 km ese día.
+     Nadie manejó 205 km. Nadie desperdició 166. Ese ahorro no existe: es la diferencia contra un
+     recorrido que jamás ocurrió, y llevárselo a gerencia como plata ahorrada es inventar.
+
+     Lo que los datos SÍ dicen de ese día: en kilómetros estuvieron bien —35,8 contra 38,6 del óptimo,
+     prácticamente igual—. Lo que se perdió fue tiempo: 12 h 32 min para 93 clientes, cuando la misma
+     ruta ocho días antes hizo 108 en 9 h 39 min. Por eso la tabla compara TIEMPOS, y de los kilómetros
+     dice lo que corresponde, que es que no fueron el problema.
+
+     El orden del ERP no desaparece del informe: pasa a ser lo que de verdad es. No un desperdicio
+     que ocurrió, sino la prueba de que el archivo no trae recorrido y que ordenarlo lo tienen que
+     improvisar ellos en la calle, cada mañana. */
   const gana=(v,txt)=>'<td class="n" style="color:'+(v>0.05?'#0F766E':'#6B7385')+'">'+
     (v>0.05?'\u2212'+txt:'igual')+'</td>';
   const fila=(t,a,b,d)=>'<tr><td>'+t+'</td><td class="n">'+a+'</td><td class="n">'+b+'</td>'+d+'</tr>';
-  const igual='<td class="n" style="color:#6B7385">igual</td>';
+  const nd='<td class="n" style="color:#6B7385">\u2014</td>';
+  const J=D.jorBueno;
   let vsCard='';
-  if(D.callesApp&&D.callesBueno){
-    const kmA=+D.callesApp.km.toFixed(1), kmB=+D.callesBueno.km.toFixed(1);
-    const dkm=+(kmA-kmB).toFixed(1);
-    const dmin=Math.round(D.callesApp.min-D.callesBueno.min);
-    const plataA=(kmA/D.supuestos.kmGalon)*D.supuestos.precioGalon;
-    const plataB=(kmB/D.supuestos.kmGalon)*D.supuestos.precioGalon;
+  if(D.callesBueno){
+    const kmB=+D.callesBueno.km.toFixed(1);
+    const dJor=(D.jornadaMin&&J)?D.jornadaMin-J.total:0;
     vsCard='<div class="card"><h2>El versus</h2>'+
-    '<p class="d">Los mismos '+D.clientes+' clientes, el mismo d\u00eda y las mismas calles de Pasto, '+
-    'medidas con el ruteo real de Google. Lo \u00fanico que cambia entre las dos columnas es el orden.</p>'+
-    '<table><thead><tr><th>&nbsp;</th><th style="text-align:right">Orden que entregaba la app</th>'+
-    '<th style="text-align:right">Recorrido correcto</th>'+
-    '<th style="text-align:right">Se ahorra</th></tr></thead><tbody>'+
-    fila('Kil\u00f3metros por calle',kmA+' km',kmB+' km',gana(dkm,dkm+' km'))+
-    fila('Tiempo al volante',hm(D.callesApp.min),hm(D.callesBueno.min),gana(dmin,hm(dmin)))+
-    (D.jorApp&&D.jorBueno?
-      fila('Tiempo dentro de los clientes',hm(D.jorApp.enClientes),hm(D.jorBueno.enClientes),igual)+
-      fila('Almuerzo',hm(D.almuerzoMin),hm(D.almuerzoMin),igual)+
-      '<tr style="background:#FAFBFC"><td><b>Jornada completa</b></td>'+
-        '<td class="n"><b>'+hm(D.jorApp.total)+'</b></td><td class="n"><b>'+hm(D.jorBueno.total)+'</b></td>'+
-        gana(D.jorApp.total-D.jorBueno.total,hm(D.jorApp.total-D.jorBueno.total))+'</tr>'+
-      '<tr style="background:#FAFBFC"><td><b>Habr\u00eda terminado a las</b></td>'+
-        '<td class="n"><b>'+(D.jorApp.fin||'\u2014')+'</b></td>'+
-        '<td class="n" style="color:#0F766E"><b>'+(D.jorBueno.fin||'\u2014')+'</b></td>'+
-        '<td class="n" style="color:#6B7385">saliendo '+(D.inicio||'\u2014')+'</td></tr>'
-      :'')+
-    fila('Combustible',pesos(plataA),pesos(plataB),gana(plataA-plataB,pesos(plataA-plataB)))+
+    '<p class="d">Lo que dio el d\u00eda contra lo que deb\u00eda dar, sobre los mismos '+D.clientes+' clientes '+
+    'y las calles reales de Pasto.</p>'+
+    '<table><thead><tr><th>&nbsp;</th><th style="text-align:right">Este d\u00eda</th>'+
+    '<th style="text-align:right">Como deb\u00eda ir</th>'+
+    '<th style="text-align:right">Diferencia</th></tr></thead><tbody>'+
+
+    fila('Clientes sellados en la app',D.atendidos+' de '+D.clientes,D.clientes,
+      '<td class="n" style="color:#E30613">faltan '+D.sinRegistro+'</td>')+
+
+    (D.kmGPS!=null?
+      fila('Kil\u00f3metros recorridos',D.kmGPS+' km <small style="color:#6B7385">(GPS)</small>',
+        kmB+' km <small style="color:#6B7385">(por calle)</small>',
+        (Math.abs(D.kmSobrante)<=kmB*0.2
+          ?'<td class="n" style="color:#0F766E">bien</td>'
+          :'<td class="n" style="color:#E30613">'+(D.kmSobrante>0?'+':'')+D.kmSobrante+' km</td>'))
+      :fila('Kil\u00f3metros por calle','\u2014',kmB+' km',nd))+
+
+    fila('Tiempo al volante','\u2014',hm(D.callesBueno.min),nd)+
+
+    (D.detenido?fila('Detenido en paradas largas',hm(D.detenido)+
+      ' <small style="color:#6B7385">en '+D.huecos.length+' huecos</small>',
+      hm(D.almuerzoMin)+' <small style="color:#6B7385">de almuerzo</small>',
+      gana(D.detenido-D.almuerzoMin,hm(D.detenido-D.almuerzoMin))):'')+
+
+    (J?'<tr style="background:#FAFBFC"><td><b>Jornada</b></td>'+
+      '<td class="n"><b>'+(D.jornadaMin?hm(D.jornadaMin):'\u2014')+'</b></td>'+
+      '<td class="n"><b>'+hm(J.total)+'</b></td>'+
+      gana(dJor,hm(dJor))+'</tr>'+
+     '<tr style="background:#FAFBFC"><td><b>Hora de terminar</b></td>'+
+      '<td class="n" style="color:#E30613"><b>'+(D.fin||'\u2014')+'</b></td>'+
+      '<td class="n" style="color:#0F766E"><b>'+(J.fin||'\u2014')+'</b></td>'+
+      '<td class="n" style="color:#6B7385">saliendo '+(D.inicio||'\u2014')+'</td></tr>':'')+
     '</tbody></table>'+
-    '<div class="nota">De d\u00f3nde sale cada cifra. Los <b>kil\u00f3metros</b> y el <b>tiempo al volante</b> los '+
-    'da Google recorriendo las calles reales de los dos \u00f3rdenes. El <b>tiempo dentro de cada cliente</b> '+
-    (D.minEnCliente?'se midi\u00f3 en esta misma ruta \u2014'+D.minEnCliente+' min de mediana sobre '+D.muestraRitmo+
-      ' tramos\u2014 y se aplic\u00f3 igual a las dos columnas':'no se pudo medir con los registros de este d\u00eda')+
-    '. El <b>almuerzo</b> es una hora puesta a mano, igual para las dos: no es una medici\u00f3n'+
-    (D.almuerzoReal?', aunque este d\u00eda s\u00ed hubo una parada de '+D.almuerzoReal.min+' minutos entre las '+
-      D.almuerzoReal.desde+' y las '+D.almuerzoReal.hasta:'')+'. El <b>combustible</b> es una estimaci\u00f3n con '+
-    D.supuestos.kmGalon+' km por gal\u00f3n a '+pesos(D.supuestos.precioGalon)+' el gal\u00f3n.</div>'+
-    (D.callesReal?'<div class="nota">El recorrido que se hizo de verdad no entra en esta tabla porque solo '+
-      'quedaron registrados <b>'+D.callesReal.clientes+' de '+D.clientes+' clientes</b>: sus '+
-      (+D.callesReal.km.toFixed(1))+' km son de un recorrido incompleto, y compararlos con los de arriba '+
-      'ser\u00eda comparar dos cosas distintas. S\u00ed se ve dibujado en el mapa.</div>':'')+
-    (D.saltosAtras?'<div class="dest">En el recorrido que se hizo hubo <b>'+D.saltosAtras+' devueltas</b>: '+
-      'veces en que se fue a un cliente que en el recorrido correcto quedaba antes del que se acababa de atender.'+
-      (D.saltoMayor?' La mayor fue a las '+D.saltoMayor.hora+', retrocediendo <b>'+D.saltoMayor.puestos+
-        ' puestos</b>.':'')+'</div>':'')+
+
+    (D.kmGPS!=null&&Math.abs(D.kmSobrante)<=kmB*0.2?
+      '<div class="dest">En kil\u00f3metros no se perdi\u00f3 nada. El GPS marca <b>'+D.kmGPS+' km</b> y el '+
+      'recorrido correcto por calles son <b>'+kmB+' km</b>: por d\u00f3nde se fueron estuvo bien. '+
+      'Lo que se fue de este d\u00eda fue <b>tiempo</b>.</div>':'')+
+
+    (J?'<div class="nota">De d\u00f3nde sale la hora de llegada. '+
+      (J.fuente==='medido'
+        ?'Se arm\u00f3 sumando lo medido: <b>'+hm(J.manejo)+'</b> al volante que da Google por las calles '+
+         'reales, <b>'+hm(J.enClientes)+'</b> dentro de los clientes \u2014'+D.minEnCliente+' min cada uno, '+
+         'medidos en esta misma ruta\u2014 y <b>'+hm(J.almuerzo)+' de almuerzo</b> sumada aparte.'
+        :'En este d\u00eda solo se sellaron '+D.atendidos+' de '+D.clientes+' clientes, y con esa mitad en '+
+         'blanco el tiempo por cliente no se puede medir aqu\u00ed: los huecos entre sellos son el tiempo '+
+         'de los que no se sellaron, no el de uno. As\u00ed que se us\u00f3 el ritmo de las rutas de carga '+
+         'parecida de otros d\u00edas \u2014<b>'+J.minCli+' min por cliente</b>, de '+(J.dias||'')+'\u2014. '+
+         'Ese ritmo se midi\u00f3 del primer al \u00faltimo sello de d\u00edas completos, as\u00ed que <b>ya trae dentro '+
+         'el almuerzo de esos d\u00edas</b>: sumarle otra hora ser\u00eda cobrarlo dos veces.')+
+      '</div>':'')+
+
+    (D.callesApp?'<div class="nota">El archivo del ERP no trae recorrido. Su secuencia va en orden '+
+      'alfab\u00e9tico al rev\u00e9s, y seguirla al pie de la letra dar\u00eda <b>'+(+D.callesApp.km.toFixed(1))+' km</b> '+
+      'y <b>'+hm(D.callesApp.min)+'</b> al volante, contra los '+kmB+' km y '+hm(D.callesBueno.min)+' del '+
+      'recorrido ordenado. Nadie la sigue \u2014el GPS lo confirma\u2014 y hacen bien; pero eso significa que '+
+      'ordenar la ruta lo est\u00e1n improvisando ellos en la calle, cada ma\u00f1ana, sin un mapa que los gu\u00ede. '+
+      'Ese es el trabajo que hace el recorrido azul de arriba.</div>':'')+
+
+    (D.saltosAtras?'<div class="dest">Entre los clientes que s\u00ed quedaron sellados hubo <b>'+D.saltosAtras+
+      ' devueltas</b>: veces en que se fue a uno que en el recorrido correcto quedaba antes del que se '+
+      'acababa de atender.'+(D.saltoMayor?' La mayor fue a las '+D.saltoMayor.hora+', retrocediendo <b>'+
+      D.saltoMayor.puestos+' puestos</b>.':'')+'</div>':'')+
     '</div>';
   }
 
@@ -10751,27 +10831,32 @@ async function construirInformeHTML(D,avisar){
 
   /* Si Google no contestó no se deja al jefe sin cifras: queda la comparación de siempre, hecha
      sobre líneas rectas, y dicho en el propio informe que son líneas rectas. */
-  (vsCard?'':'<div class="card"><h2>Kil\u00f3metros</h2>'+
-  '<p class="d">Comparaci\u00f3n sobre los mismos '+D.clientes+' clientes, medida en l\u00ednea recta: '+
-  'esta vez no se pudo consultar el ruteo por calles.</p>'+
+  /* Si Google no contestó, la tabla de arriba no existe. Lo que queda son las líneas rectas —que
+     sirven para comparar dos órdenes entre sí, no para decir kilómetros de verdad— y el tiempo, que
+     no depende de Google. Va con las mismas advertencias que la tabla buena: la secuencia del ERP
+     es un recorrido que nadie hace, y por eso su diferencia no se cobra como ahorro. */
+  (vsCard?'':'<div class="card"><h2>El versus</h2>'+
+  '<p class="d">Esta vez no se pudo consultar el ruteo por calles, as\u00ed que los kil\u00f3metros van medidos '+
+  'en l\u00ednea recta: sirven para comparar un orden con otro, no como distancia real.</p>'+
   '<table><tbody>'+
-    '<tr><td>Orden que entregaba la app (secuencia del PPAS)</td><td class="n">'+D.kmPPAS+' km</td></tr>'+
-    '<tr><td>Recorrido ordenado</td><td class="n">'+D.kmDebio+' km</td></tr>'+
-    '<tr><td><b>Diferencia</b></td><td class="n" style="color:#E30613">'+D.kmAhorro+' km</td></tr>'+
-    (D.kmGPS!=null?'<tr><td>Recorrido real del veh\u00edculo (GPS)</td><td class="n">'+D.kmGPS+' km</td></tr>':'')+
-    '<tr><td>Combustible de esa diferencia</td>'+
-      '<td class="n">'+D.galones+' gal \u00b7 '+pesos(D.plata)+'</td></tr>'+
+    '<tr><td>Secuencia que trae el archivo del ERP</td><td class="n">'+D.kmPPAS+' km en recta</td></tr>'+
+    '<tr><td>Recorrido ordenado</td><td class="n">'+D.kmDebio+' km en recta</td></tr>'+
+    (D.kmGPS!=null?'<tr><td>Lo que marc\u00f3 el GPS del veh\u00edculo</td><td class="n">'+D.kmGPS+' km reales</td></tr>':'')+
+    (D.jornadaMin?'<tr><td>Jornada de este d\u00eda</td><td class="n">'+hm(D.jornadaMin)+'</td></tr>':'')+
+    (D.detenido?'<tr><td>Detenido en paradas largas</td><td class="n" style="color:#E30613">'+hm(D.detenido)+'</td></tr>':'')+
+    (refMin?'<tr><td>Al ritmo de las rutas comparables ('+D.refMinCli+' min por cliente)</td>'+
+      '<td class="n">'+hm(refMin)+'</td></tr>':'')+
+    (finEstimado?'<tr><td><b>Habr\u00eda terminado a las</b></td>'+
+      '<td class="n" style="color:#0F766E"><b>'+finEstimado+'</b></td></tr>':'')+
+    (D.fin?'<tr><td>Termin\u00f3 a las</td><td class="n" style="color:#E30613">'+D.fin+'</td></tr>':'')+
   '</tbody></table>'+
-  (D.saltosAtras?'<div class="dest">En el recorrido real hubo <b>'+D.saltosAtras+' devueltas</b>.</div>':'')+
-  '</div>'+
-  (refMin?'<div class="card"><h2>A qu\u00e9 hora habr\u00eda terminado</h2>'+
-  '<p class="d">Al ritmo de las rutas de carga parecida de los d\u00edas anteriores.</p>'+
-  '<table><tbody>'+
-    '<tr><td>Ritmo de referencia</td><td class="n">'+D.refMinCli+' min por cliente</td></tr>'+
-    '<tr><td>Duraci\u00f3n a ese ritmo</td><td class="n">'+hm(refMin)+'</td></tr>'+
-    '<tr><td><b>Habr\u00eda terminado a las</b></td><td class="n" style="color:#0F766E">'+(finEstimado||'\u2014')+'</td></tr>'+
-    '<tr><td>Termin\u00f3 a las</td><td class="n" style="color:#E30613">'+(D.fin||'\u2014')+'</td></tr>'+
-  '</tbody></table></div>':''))+
+  '<div class="nota">La diferencia entre las dos primeras filas <b>no es un ahorro</b>: la secuencia '+
+  'del ERP va en orden alfab\u00e9tico al rev\u00e9s y nadie la sigue. Es la medida de que ese archivo no trae '+
+  'recorrido, y de que ordenarlo lo est\u00e1n improvisando en la calle.'+
+  (refMin?' El ritmo de referencia se midi\u00f3 del primer al \u00faltimo sello de d\u00edas completos, as\u00ed que '+
+    'ya trae dentro el almuerzo de esos d\u00edas.':'')+'</div>'+
+  (D.saltosAtras?'<div class="dest">Entre los clientes sellados hubo <b>'+D.saltosAtras+' devueltas</b>.</div>':'')+
+  '</div>')+
 
   (filasHueco?'<div class="card"><h2>D\u00f3nde se demoraron</h2>'+
   '<p class="d">Huecos de 45 minutos o m\u00e1s entre un cliente registrado y el siguiente.</p>'+
@@ -10957,8 +11042,16 @@ function _mostrarInformeListo(D){
     '<div class="perm-g"><span class="perm-et">Lo que va en el informe</span>'+
       '<div class="perm-p">'+D.clientes+' clientes · '+D.cajas+' cajas · jornada de '+
         (D.jornadaMin?hm(D.jornadaMin):'—')+'</div>'+
-      '<div class="perm-cargo">'+D.kmAhorro+' km entre el orden viejo y el correcto · '+
-        pesos(D.plata)+' de combustible'+(D.saltosAtras?' · '+D.saltosAtras+' devueltas':'')+'</div></div>'+
+      /* El resumen dice lo mismo que el informe. Antes cantaba aquí unos kilómetros y unos pesos
+         de ahorro contra un recorrido que nadie hizo; ese número se fue del informe y también
+         tiene que irse de aquí, o el coordinador manda el archivo repitiendo la cifra vieja. */
+      '<div class="perm-cargo">'+
+        (D.jorBueno&&D.jornadaMin&&D.jornadaMin>D.jorBueno.total
+          ?hm(D.jornadaMin-D.jorBueno.total)+' más de lo que debía · '
+          :'')+
+        D.atendidos+' de '+D.clientes+' clientes sellados'+
+        (D.detenido?' · '+hm(D.detenido)+' detenido':'')+
+        (D.saltosAtras?' · '+D.saltosAtras+' devueltas':'')+'</div></div>'+
     '<div class="perm-acc">'+
       '<button class="perm-si" onclick="haptic();_infCompartir()">Mandarlo por WhatsApp</button>'+
       '<button class="perm-no" onclick="haptic();_infVer()">Abrirlo yo primero</button>'+
