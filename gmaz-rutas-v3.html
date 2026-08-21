@@ -10244,7 +10244,34 @@ function _sumarHora(hhmm,min){
   return String(Math.floor(t/60)).padStart(2,'0')+':'+String(((t%60)+60)%60).padStart(2,'0');
 }
 
-/* Suma de los huecos de 45 minutos o más entre dos sellos seguidos. */
+/* ══ CUÁNTO ESTUVO EL CAMIÓN QUIETO — medido en el GPS, no en la app (21-ago-2026) ══
+   El primer intento sumaba los huecos entre sellos de la aplicación y los llamaba «detenido». Con
+   69 de 93 clientes sin sellar, casi cualquier intervalo pasa de 45 minutos: salían diez horas de
+   «camión quieto» en una jornada de doce, cuando lo más probable es que estuvieran entregando sin
+   sellar. Un número así, en un informe para gerencia, es una acusación armada con un vacío de datos.
+
+   El GPS sí lo sabe. Se agrupan los puntos que no se movieron de un radio de 60 metros y se cuenta
+   el tiempo de cada grupo. Eso es una parada de verdad; lo otro era una parada de la aplicación. */
+const _RADIO_PARADA=0.06;   // km — por debajo de eso el GPS se mueve solo, con el camión apagado
+const _MIN_PARADA=20;       // minutos — menos que eso es una entrega, no una parada
+function _paradasGPS(pts,hh){
+  const out=[]; let total=0, i=0;
+  while(i<pts.length){
+    let j=i+1;
+    while(j<pts.length&&_distKmCoord(pts[i].lat,pts[i].lng,pts[j].lat,pts[j].lng)<_RADIO_PARADA)j++;
+    const t0=new Date(pts[i].t).getTime(), t1=new Date(pts[j-1].t).getTime();
+    const min=(t1-t0)/60000;
+    if(min>=_MIN_PARADA){
+      total+=min;
+      out.push({min:Math.round(min),desde:hh(t0),hasta:hh(t1),lat:pts[i].lat,lng:pts[i].lng});
+    }
+    i=(j>i)?j:i+1;
+  }
+  out.sort((a,b)=>b.min-a.min);
+  return {total:Math.round(total),paradas:out};
+}
+/* Suma de los huecos de 45 minutos o más entre dos sellos seguidos. NO es tiempo detenido: es
+   tiempo sin registrar. Se usa solo para señalar dónde mirar, nunca como cifra de un informe. */
 function huecosMin(real){
   let t=0;
   for(let i=1;i<real.length;i++){
@@ -10447,7 +10474,7 @@ async function recolectarInforme(ruta,fecha,avisar){
   }
 
   // Si hay recorrido GPS del vehículo, ese sí son los kilómetros de verdad.
-  let kmGPS=null;
+  let kmGPS=null, quieto=null;
   try{
     const unit=(_asigPorRuta||{})[ruta];
     if(unit){
@@ -10456,6 +10483,7 @@ async function recolectarInforme(ruta,fecha,avisar){
         let k=0,pv=null;
         pts.forEach(pt=>{ if(pv){const d=_distKmCoord(pv.lat,pv.lng,pt.lat,pt.lng); if(d<5)k+=d;} pv=pt; });
         kmGPS=+k.toFixed(1);
+        quieto=_paradasGPS(pts.filter(x=>x.lat&&x.lng),hh);
       }
     }
   }catch(e){}
@@ -10497,7 +10525,9 @@ async function recolectarInforme(ruta,fecha,avisar){
     callesApp:trApp?{km:trApp.km,min:trApp.min}:null,
     callesReal:trReal?{km:trReal.km,min:trReal.min,clientes:real.length}:null,
     minEnCliente, muestraRitmo, cobertura:+cobertura.toFixed(2), ritmoFiable,
-    jorBueno, jorApp, almuerzoReal, almuerzoMin:INF_ALMUERZO_MIN, detenido,
+    jorBueno, jorApp, almuerzoReal, almuerzoMin:INF_ALMUERZO_MIN,
+    sinSellar:detenido,        // tiempo SIN REGISTRAR entre sellos — no es tiempo detenido
+    quieto,                    // tiempo detenido de verdad, medido en el GPS
     // Sobra de kilómetros: lo que el GPS marcó de más sobre el recorrido correcto por calles.
     kmSobrante:(kmGPS!=null&&trBueno)?+(kmGPS-trBueno.km).toFixed(1):null,
     supuestos:{kmGalon:INF_KM_GALON,precioGalon:INF_PRECIO_GALON,almuerzo:INF_ALMUERZO_MIN}
@@ -10661,10 +10691,12 @@ async function construirInformeHTML(D,avisar){
 
     fila('Tiempo al volante','\u2014',hm(D.callesBueno.min),nd)+
 
-    (D.detenido?fila('Detenido en paradas largas',hm(D.detenido)+
-      ' <small style="color:#6B7385">en '+D.huecos.length+' huecos</small>',
+    /* Solo entra si lo dice el GPS. El hueco entre sellos NO sirve para esta fila: con la mitad
+       de los clientes sin sellar mide tiempo sin registrar, no cami\u00f3n quieto. */
+    (D.quieto&&D.quieto.total?fila('Detenido m\u00e1s de 20 minutos',
+      hm(D.quieto.total)+' <small style="color:#6B7385">en '+D.quieto.paradas.length+' paradas, seg\u00fan el GPS</small>',
       hm(D.almuerzoMin)+' <small style="color:#6B7385">de almuerzo</small>',
-      gana(D.detenido-D.almuerzoMin,hm(D.detenido-D.almuerzoMin))):'')+
+      gana(D.quieto.total-D.almuerzoMin,hm(D.quieto.total-D.almuerzoMin))):'')+
 
     (J?'<tr style="background:#FAFBFC"><td><b>Jornada</b></td>'+
       '<td class="n"><b>'+(D.jornadaMin?hm(D.jornadaMin):'\u2014')+'</b></td>'+
@@ -10843,7 +10875,8 @@ async function construirInformeHTML(D,avisar){
     '<tr><td>Recorrido ordenado</td><td class="n">'+D.kmDebio+' km en recta</td></tr>'+
     (D.kmGPS!=null?'<tr><td>Lo que marc\u00f3 el GPS del veh\u00edculo</td><td class="n">'+D.kmGPS+' km reales</td></tr>':'')+
     (D.jornadaMin?'<tr><td>Jornada de este d\u00eda</td><td class="n">'+hm(D.jornadaMin)+'</td></tr>':'')+
-    (D.detenido?'<tr><td>Detenido en paradas largas</td><td class="n" style="color:#E30613">'+hm(D.detenido)+'</td></tr>':'')+
+    (D.quieto&&D.quieto.total?'<tr><td>Detenido m\u00e1s de 20 minutos <small style="color:#6B7385">(GPS)</small></td>'+
+      '<td class="n" style="color:#E30613">'+hm(D.quieto.total)+'</td></tr>':'')+
     (refMin?'<tr><td>Al ritmo de las rutas comparables ('+D.refMinCli+' min por cliente)</td>'+
       '<td class="n">'+hm(refMin)+'</td></tr>':'')+
     (finEstimado?'<tr><td><b>Habr\u00eda terminado a las</b></td>'+
@@ -10863,7 +10896,13 @@ async function construirInformeHTML(D,avisar){
   '<table><thead><tr><th>Franja</th><th style="text-align:right">Dur\u00f3</th><th>Desde</th><th>Hasta</th></tr></thead>'+
   '<tbody>'+filasHueco+'</tbody></table>'+
   '<div class="nota">Con '+D.sinRegistro+' de '+D.clientes+' clientes sin registrar en la app, estos huecos '+
-  'pueden contener clientes atendidos que nunca se sellaron. No prueban que el cami\u00f3n estuviera quieto.</div></div>':'')+
+  'pueden contener clientes atendidos que nunca se sellaron. <b>No prueban que el cami\u00f3n estuviera quieto</b>: '+
+  'son tiempo sin registrar, y sirven para saber d\u00f3nde mirar, no para acusar.'+
+  (D.quieto?' Lo que s\u00ed estuvo quieto lo dice el GPS: <b>'+hm(D.quieto.total)+'</b> en '+
+    D.quieto.paradas.length+' paradas de m\u00e1s de veinte minutos'+
+    (D.quieto.paradas[0]?', la mayor de '+D.quieto.paradas[0].min+' min entre las '+
+      D.quieto.paradas[0].desde+' y las '+D.quieto.paradas[0].hasta:'')+'.':'')+
+  '</div></div>':'')+
 
   (filasEspejo?'<div class="card"><h2>Rutas de carga parecida</h2>'+
   '<p class="d">Para saber si el problema fue el volumen o el recorrido.</p>'+
@@ -11050,7 +11089,7 @@ function _mostrarInformeListo(D){
           ?hm(D.jornadaMin-D.jorBueno.total)+' más de lo que debía · '
           :'')+
         D.atendidos+' de '+D.clientes+' clientes sellados'+
-        (D.detenido?' · '+hm(D.detenido)+' detenido':'')+
+        (D.quieto&&D.quieto.total?' · '+hm(D.quieto.total)+' detenido':'')+
         (D.saltosAtras?' · '+D.saltosAtras+' devueltas':'')+'</div></div>'+
     '<div class="perm-acc">'+
       '<button class="perm-si" onclick="haptic();_infCompartir()">Mandarlo por WhatsApp</button>'+
