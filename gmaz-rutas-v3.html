@@ -10489,11 +10489,25 @@ async function recolectarInforme(ruta,fecha,avisar){
       almuerzoReal={min,desde:real[i-1].hora,hasta:real[i].hora};
   }
 
-  // Si hay recorrido GPS del vehículo, ese sí son los kilómetros de verdad.
-  let kmGPS=null, quieto=null;
+  /* ══ EL GPS DEL VEHÍCULO — la mitad de las cifras del informe salen de aquí ══
+     Los kilómetros reales y el tiempo quieto los da Securita, no la app. Sin esto el informe pierde
+     las dos filas que sostienen su conclusión, y lo hace en silencio: sale igual de completo,
+     solo que sin la prueba.
+
+     La asignación se lee para LA FECHA DEL INFORME, no la que tenga cargada en pantalla el panel
+     de flota. Antes se tomaba `_asigPorRuta`, que es lo último que el coordinador miró: si abría
+     la flota de hoy y pedía el informe del martes pasado, salía con el vehículo de hoy y el
+     recorrido dibujado era el de otro camión. Y si no había pasado por esa pantalla, no salía
+     nada. */
+  let kmGPS=null, quieto=null, unidad=null;
   try{
-    const unit=(_asigPorRuta||{})[ruta];
+    paso('Buscando el recorrido del veh\u00edculo\u2026');
+    let unit=null;
+    try{ const fl=await _flotaDatosDia(F); unit=fl&&fl.asig&&fl.asig[ruta]; }catch(e){}
+    if(!unit)unit=(_asigPorRuta||{})[ruta];
     if(unit){
+      unidad=unit;
+      if(!_vehCache)_vehCache=await secVehiculos()||[];
       const pts=await _flPuntos(unit,F);
       if(pts.length>2){
         let k=0,pv=null;
@@ -10527,7 +10541,7 @@ async function recolectarInforme(ruta,fecha,avisar){
     sinRegistro:cli.length-eventos.length,
     inicio:ini?hh(ini):null, fin:fin?hh(fin):null, jornadaMin, minPorCliente,
     kmEntreRegistrados:+kmReal.toFixed(1),   // parcial: solo los clientes con hora
-    kmGPS,                                    // el real del vehículo, si Securita lo tiene
+    kmGPS, unidad,                            // el real del vehículo, si Securita lo tiene
     kmDebio:+kmDebio.toFixed(1), kmPPAS:+kmPPAS.toFixed(1),
     kmAhorro, fuenteOrden:fuente, saltosAtras, saltoMayor,
     galones:+(kmAhorro/INF_KM_GALON).toFixed(1),
@@ -10816,6 +10830,7 @@ async function construirInformeHTML(D,avisar){
 
   '<header><h1>'+D.ruta+' \u00b7 An\u00e1lisis del recorrido</h1>'+
   '<div class="sub">'+fLarga+' \u00b7 '+D.clientes+' clientes \u00b7 '+D.cajas+' cajas'+
+  (D.unidad?' \u00b7 '+D.unidad:'')+
   (trip?'<br>'+trip:'')+'</div></header>'+
 
   '<div class="kpis">'+
