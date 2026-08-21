@@ -4541,7 +4541,12 @@ function mostrarDash(){
   poblarFiltros();
   cargarDash();
   if(dashInterval)clearInterval(dashInterval);
-  dashInterval=setInterval(()=>{if(document.getElementById('dash').classList.contains('on')&&!_recorridoAbierto)cargarDash();},30000);
+  /* El refresco de treinta segundos es para la operación en vivo. Mirando un día cerrado no hay
+     nada que refrescar —esos datos ya no cambian— y volver a pedirlos solo sirve para borrarle la
+     pantalla al coordinador a mitad de un análisis. */
+  dashInterval=setInterval(()=>{
+    if(document.getElementById('dash').classList.contains('on')&&!_recorridoAbierto&&fechaCtx()===getColDate())cargarDash();
+  },30000);
 }
 /* ══ LOGIN POR ROL (entregador / coordinador / preventa) ══ */
 function mostrarLogin(){document.getElementById('scr-login').classList.remove('hidden');}
@@ -4777,7 +4782,17 @@ async function verRechazosFecha(fecha){
    MISMA fecha elegida, así nunca queda un dato de hoy mezclado con tarjetas de otro día. */
 /* cargarRechazosFechaMovil() se eliminó con su tarjeta: era la segunda implementación de las
    novedades por día, que ya vive en el módulo Rechazos. */
-async function cargarDash(){
+/* ══ EL TABLERO ENTERO SIGUE LA FECHA ELEGIDA (21-ago-2026) ══
+   Se fue arreglando por partes —primero la tabla de paradas, luego los puntos del mapa— y con cada
+   parche quedaba más clara la forma real del problema: no era el mapa, era que `cargarDash()` lee
+   hoy y punto, mientras el resto de la pantalla ya se había movido al día elegido. Así que los KPI,
+   el ranking por ruta, la venta y la tabla de novedades seguían siendo de hoy encima de un
+   recorrido del 20. Media pantalla de un día y media de otro, sin nada que lo indique.
+
+   Ahora la fecha entra por arriba y baja por todo: clientes, novedades, entregas, cajas, venta y
+   mapa. Los clientes de un día pasado salen del PPAS que se subió ESE día; los de hoy, de la tabla
+   viva, que es la única que se refresca sola. */
+async function cargarDash(fechaSel){
   try{
     // Skeleton solo la primera carga (los refrescos cada 30s no deben parpadear)
     if(!_dashCargadoUnaVez){
@@ -4785,20 +4800,33 @@ async function cargarDash(){
       const rk=document.getElementById('dash-ranking');if(rk)rk.innerHTML=skeleton(6,52);
       const vl=document.getElementById('dash-veh-list');if(vl)vl.innerHTML=skeleton(5,44);
     }
-    const fecha=getColDate();
-    const[{data:todos},{data:novs},{data:est},{data:maest}]=await Promise.all([
-      sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia'),
+    const fecha=fechaSel||fechaCtx();
+    const esHoy=(fecha===getColDate());
+    /* La tabla `clientes_rutas` se borra y se recarga cada mañana: solo sirve para hoy. Para
+       cualquier otro día, el único registro de quiénes había es el PPAS que se subió ese día. */
+    const[todos,{data:novs},{data:est},{data:maest}]=await Promise.all([
+      esHoy ? sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia').then(r=>r.data||[])
+            : clientesDeFecha(fecha),
       sb.from(CFG.TBL_NOV).select('ruta,codigo_cliente,nombre_cliente,motivo,created_at,foto_url,conductor').eq('fecha',fecha),
       sb.from('estados_entrega').select('ruta,estado,codigo_cliente,created_at').eq('fecha',fecha),
       sb.from(CFG.TBL_VEND).select('codigo,ruta_vendedor')
     ]);
+    if(!esHoy&&!(todos||[]).length){
+      const meta=document.getElementById('dash-map-meta');
+      if(meta)meta.textContent='Sin PPAS guardado del '+fecha;
+      toast('No hay PPAS guardado del '+fecha+': ese día no se puede reconstruir','err');
+      return;
+    }
     // Solo las diez rutas de entrega: lo demás que venga en la tabla no es de esta operación.
     const clientes_=(todos||[]).filter(c=>rutaEntrega(c.ruta)),
           novedades_=(novs||[]).filter(x=>rutaEntrega(x.ruta)),
           estados_=(est||[]).filter(x=>rutaEntrega(x.ruta));
     const rutaVend={};(maest||[]).forEach(m=>rutaVend[String(m.codigo)]=m.ruta_vendedor||'—');
-    // Respaldo del vendedor desde el Libro de pedidos (ruta del vendedor por cliente)
-    try{await cargarIndicePedidos();}catch(e){}
+    /* Respaldo del vendedor y base de la venta, desde el Libro de pedidos.
+       Para hoy se llama sin fecha a propósito: así cae a ayer si el Libro de hoy todavía no se ha
+       subido, que es lo normal a primera hora. Para un día pasado se pide ESE día y ninguno más;
+       caer a otro haría que la venta del 19 se calculara con los pedidos del 18. */
+    try{await cargarIndicePedidos(esHoy?undefined:fecha);}catch(e){}
     const vendPed={};for(const cd of Object.keys(pedidosClientes||{})){const b=pedidosClientes[cd].b||[];const v=(b.find(x=>x.v)||{}).v;if(v)vendPed[cd]=v;}
     const vendCli=cod=>{const c=String(cod);const rv=rutaVend[c];return (rv&&rv!=='—')?rv:(vendPed[c]||'—');};
     const cajasCod={};clientes_.forEach(c=>cajasCod[String(c.id)]=parseFloat(String(c['CAJA_']||0).replace(',','.')||0));
@@ -6002,8 +6030,10 @@ function repintarModuloConFecha(origen){
   const f=fechaCtx();
   try{
     if(m==='operacion'&&origen!=='tc')cargarTorreControl(true,f);
-    // El mapa vive en Operación pero también se mira desde Vehículos: se repinta en los dos.
-    if(m==='operacion'||m==='vehiculos')pintarMapaDeFecha(f).catch(()=>{});
+    /* En Operación se recarga el tablero completo: KPI, ranking, novedades, venta y mapa quedan
+       del mismo día. En Vehículos basta repintar los puntos —ahí lo que se mira es el recorrido—. */
+    if(m==='operacion')cargarDash(f).catch(()=>{});
+    else if(m==='vehiculos')pintarMapaDeFecha(f).catch(()=>{});
     else if(m==='vehiculos'){ if(_rtPestana==='res'&&origen!=='tc')cargarTorreControl(true,f);
                               else if(origen!=='fl')renderFlota(f,true); }
     else if(m==='rechazos'&&origen!=='nov'&&typeof cargarNovedadesFecha==='function')cargarNovedadesFecha();
@@ -6639,9 +6669,10 @@ async function pintarMapaDeFecha(f){
   const hoy=getColDate();
   const meta=document.getElementById('dash-map-meta');
   if(fecha===hoy){
-    // En vivo: los datos ya los tiene el tablero, no hay que volver a pedirlos.
+    /* En vivo: si el tablero ya tiene los datos de hoy se reutilizan; si trae otro día —porque se
+       estuvo mirando el 20— hay que recargarlo, no repintar lo que haya quedado. */
+    if(!_dashData||_dashData.fecha!==hoy){ await cargarDash(hoy); return; }
     const D=_dashData;
-    if(!D)return;
     _mapaFechaPintada=null;
     pintarDashMap(D.clientes_,D.entSet,D.novSet);
     if(meta)meta.textContent=D.totCli+' puntos · '+Object.keys(D.porRuta).length+' rutas';
@@ -7308,16 +7339,27 @@ function _hm(min){
    {fecha}/PPAS_INDEX.json. Igual con las novedades: las de hoy no dicen nada de ayer. */
 const _ppasDiaCache={};
 async function clientesDeFecha(fecha){
-  if(fecha===getColDate()){
+  if(fecha===getColDate()&&_dashData&&_dashData.fecha===fecha){
     /* Para HOY se usa `_dashData.clientes_`, no `_clientesCache`. Los dos parecen lo mismo pero no
        lo son: `_clientesCache` lo sobrescribe `pintarDashMap` con lo último que se pintó, y desde
        que el mapa puede mostrar un día pasado, eso puede ser el 20 de agosto. `_dashData` lo llena
        `cargarDash()`, que siempre lee hoy. */
-    const base=(_dashData&&_dashData.clientes_)||_clientesCache||[];
-    return base.map(c=>{
+    return (_dashData.clientes_||[]).map(c=>{
       const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
       return {...c,lat,lng};
     });
+  }
+  /* Hoy pero sin tablero cargado —o cargado con otro día—: se pide la tabla viva directamente.
+     Antes se echaba mano de `_clientesCache`, que es lo último que se pintó en el mapa y desde que
+     el mapa muestra días pasados puede ser cualquier fecha. */
+  if(fecha===getColDate()){
+    try{
+      const r=await sb.from(CFG.TBL).select('ruta,id,CAJA_,lat,lng,nombre,direccion,secuencia');
+      return (r.data||[]).map(c=>{
+        const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+        return {...c,lat,lng};
+      });
+    }catch(e){ return []; }
   }
   if(_ppasDiaCache[fecha])return _ppasDiaCache[fecha];
   let out=[];
@@ -7325,11 +7367,13 @@ async function clientesDeFecha(fecha){
     const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+fecha+'/PPAS_INDEX.json?t='+Date.now());
     if(r.ok){
       const ppas=await r.json()||{};
+      /* Los mismos campos que devuelve la tabla viva, con los mismos nombres: el resto del tablero
+         no tiene por qué saber de dónde salieron y así no hay dos formas del mismo cliente. */
       out=Object.entries(ppas).map(([cod,c])=>({
         id:String(cod), nombre:c.nombre||'',
         lat:+c.lat, lng:+c.lng,
         direccion:c.direccion||'', barrio:c.barrio||'',
-        ruta:rutaBase(c.ruta||c.r||''), CAJA_:+c.caj||0
+        ruta:rutaBase(c.ruta||c.r||''), CAJA_:+c.caj||0, secuencia:+c.sec||0
       })).filter(c=>c.lat&&c.lng);
     }
   }catch(e){}
@@ -7338,8 +7382,8 @@ async function clientesDeFecha(fecha){
 }
 const _novDiaCache={};
 async function novedadesDeFecha(fecha){
-  // Mismo motivo que arriba: `_novSetCache` puede traer las novedades del día que se esté mirando.
-  if(fecha===getColDate())return (_dashData&&_dashData.novSet)||_novSetCache;
+  // Mismo motivo que arriba: la caché puede traer las novedades del día que se esté mirando.
+  if(_dashData&&_dashData.fecha===fecha)return _dashData.novSet;
   if(_novDiaCache[fecha])return _novDiaCache[fecha];
   const set=new Set();
   try{
