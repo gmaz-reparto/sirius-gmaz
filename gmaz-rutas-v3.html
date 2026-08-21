@@ -10649,6 +10649,8 @@ async function construirInformeHTML(D,avisar){
   const fLarga=(()=>{try{return new Date(D.fecha+'T12:00:00').toLocaleDateString('es-CO',
     {weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch(e){return D.fecha;}})();
   const pesos=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
+  // «35.8 km» es como se escribe en inglés. Este informe lo lee gerencia en Pasto: 35,8 km.
+  const num=v=>(v==null||isNaN(v))?'\u2014':Number(v).toLocaleString('es-CO',{maximumFractionDigits:1});
   const hm=m=>{m=Math.max(0,Math.round(m||0));const h=Math.floor(m/60);return h?h+' h '+String(m%60).padStart(2,'0')+' min':m+' min';};
 
   // Cuánto habría durado al ritmo de referencia
@@ -10698,12 +10700,12 @@ async function construirInformeHTML(D,avisar){
       '<td class="n" style="color:#E30613">faltan '+D.sinRegistro+'</td>')+
 
     (D.kmGPS!=null?
-      fila('Kil\u00f3metros recorridos',D.kmGPS+' km <small style="color:#6B7385">(GPS)</small>',
-        kmB+' km <small style="color:#6B7385">(por calle)</small>',
+      fila('Kil\u00f3metros recorridos',num(D.kmGPS)+' km <small style="color:#6B7385">(GPS)</small>',
+        num(kmB)+' km <small style="color:#6B7385">(por calle)</small>',
         (Math.abs(D.kmSobrante)<=kmB*0.2
           ?'<td class="n" style="color:#0F766E">bien</td>'
-          :'<td class="n" style="color:#E30613">'+(D.kmSobrante>0?'+':'')+D.kmSobrante+' km</td>'))
-      :fila('Kil\u00f3metros por calle','\u2014',kmB+' km',nd))+
+          :'<td class="n" style="color:#E30613">'+(D.kmSobrante>0?'+':'')+num(D.kmSobrante)+' km</td>'))
+      :fila('Kil\u00f3metros por calle','\u2014',num(kmB)+' km',nd))+
 
     fila('Tiempo al volante','\u2014',hm(D.callesBueno.min),nd)+
 
@@ -10725,26 +10727,26 @@ async function construirInformeHTML(D,avisar){
     '</tbody></table>'+
 
     (D.kmGPS!=null&&Math.abs(D.kmSobrante)<=kmB*0.2?
-      '<div class="dest">En kil\u00f3metros no se perdi\u00f3 nada. El GPS marca <b>'+D.kmGPS+' km</b> y el '+
-      'recorrido correcto por calles son <b>'+kmB+' km</b>: por d\u00f3nde se fueron estuvo bien. '+
+      '<div class="dest">En kil\u00f3metros no se perdi\u00f3 nada. El GPS marca <b>'+num(D.kmGPS)+' km</b> y el '+
+      'recorrido correcto por calles son <b>'+num(kmB)+' km</b>: por d\u00f3nde se fueron estuvo bien. '+
       'Lo que se fue de este d\u00eda fue <b>tiempo</b>.</div>':'')+
 
     (J?'<div class="nota">De d\u00f3nde sale la hora de llegada. '+
       (J.fuente==='medido'
         ?'Se arm\u00f3 sumando lo medido: <b>'+hm(J.manejo)+'</b> al volante que da Google por las calles '+
-         'reales, <b>'+hm(J.enClientes)+'</b> dentro de los clientes \u2014'+D.minEnCliente+' min cada uno, '+
+         'reales, <b>'+hm(J.enClientes)+'</b> dentro de los clientes \u2014'+num(D.minEnCliente)+' min cada uno, '+
          'medidos en esta misma ruta\u2014 y <b>'+hm(J.almuerzo)+' de almuerzo</b> sumada aparte.'
         :'En este d\u00eda solo se sellaron '+D.atendidos+' de '+D.clientes+' clientes, y con esa mitad en '+
          'blanco el tiempo por cliente no se puede medir aqu\u00ed: los huecos entre sellos son el tiempo '+
          'de los que no se sellaron, no el de uno. As\u00ed que se us\u00f3 el ritmo de las rutas de carga '+
-         'parecida de otros d\u00edas \u2014<b>'+J.minCli+' min por cliente</b>, de '+(J.dias||'')+'\u2014. '+
+         'parecida de otros d\u00edas \u2014<b>'+num(J.minCli)+' min por cliente</b>, de '+(J.dias||'')+'\u2014. '+
          'Ese ritmo se midi\u00f3 del primer al \u00faltimo sello de d\u00edas completos, as\u00ed que <b>ya trae dentro '+
          'el almuerzo de esos d\u00edas</b>: sumarle otra hora ser\u00eda cobrarlo dos veces.')+
       '</div>':'')+
 
     (D.callesApp?'<div class="nota">El archivo del ERP no trae recorrido. Su secuencia va en orden '+
-      'alfab\u00e9tico al rev\u00e9s, y seguirla al pie de la letra dar\u00eda <b>'+(+D.callesApp.km.toFixed(1))+' km</b> '+
-      'y <b>'+hm(D.callesApp.min)+'</b> al volante, contra los '+kmB+' km y '+hm(D.callesBueno.min)+' del '+
+      'alfab\u00e9tico al rev\u00e9s, y seguirla al pie de la letra dar\u00eda <b>'+num(D.callesApp.km)+' km</b> '+
+      'y <b>'+hm(D.callesApp.min)+'</b> al volante, contra los '+num(kmB)+' km y '+hm(D.callesBueno.min)+' del '+
       'recorrido ordenado. Nadie la sigue \u2014el GPS lo confirma\u2014 y hacen bien; pero eso significa que '+
       'ordenar la ruta lo est\u00e1n improvisando ellos en la calle, cada ma\u00f1ana, sin un mapa que los gu\u00ede. '+
       'Ese es el trabajo que hace el recorrido azul de arriba.</div>':'')+
@@ -10820,7 +10822,7 @@ async function construirInformeHTML(D,avisar){
     '<div class="k'+(D.jornadaMin>600?' mal':'')+'"><b>'+(D.jornadaMin?hm(D.jornadaMin):'\u2014')+'</b><span>Jornada</span></div>'+
     '<div class="k"><b>'+(D.inicio||'\u2014')+' \u2013 '+(D.fin||'\u2014')+'</b><span>De / a</span></div>'+
     '<div class="k'+(D.minPorCliente&&D.refMinCli&&D.minPorCliente>D.refMinCli*1.2?' mal':'')+'"><b>'+
-      (D.minPorCliente||'\u2014')+'</b><span>Min por cliente</span></div>'+
+      num(D.minPorCliente)+'</b><span>Min por cliente</span></div>'+
     '<div class="k'+(D.novedades?' med':'')+'"><b>'+D.novedades+'</b><span>Novedades</span></div>'+
     '<div class="k'+(D.sinRegistro>D.clientes/2?' mal':'')+'"><b>'+D.sinRegistro+'</b><span>Sin registro</span></div>'+
   '</div>'+
@@ -10887,13 +10889,13 @@ async function construirInformeHTML(D,avisar){
   '<p class="d">Esta vez no se pudo consultar el ruteo por calles, as\u00ed que los kil\u00f3metros van medidos '+
   'en l\u00ednea recta: sirven para comparar un orden con otro, no como distancia real.</p>'+
   '<table><tbody>'+
-    '<tr><td>Secuencia que trae el archivo del ERP</td><td class="n">'+D.kmPPAS+' km en recta</td></tr>'+
-    '<tr><td>Recorrido ordenado</td><td class="n">'+D.kmDebio+' km en recta</td></tr>'+
-    (D.kmGPS!=null?'<tr><td>Lo que marc\u00f3 el GPS del veh\u00edculo</td><td class="n">'+D.kmGPS+' km reales</td></tr>':'')+
+    '<tr><td>Secuencia que trae el archivo del ERP</td><td class="n">'+num(D.kmPPAS)+' km en recta</td></tr>'+
+    '<tr><td>Recorrido ordenado</td><td class="n">'+num(D.kmDebio)+' km en recta</td></tr>'+
+    (D.kmGPS!=null?'<tr><td>Lo que marc\u00f3 el GPS del veh\u00edculo</td><td class="n">'+num(D.kmGPS)+' km reales</td></tr>':'')+
     (D.jornadaMin?'<tr><td>Jornada de este d\u00eda</td><td class="n">'+hm(D.jornadaMin)+'</td></tr>':'')+
     (D.quieto&&D.quieto.calle?'<tr><td>Quieto en la calle m\u00e1s de 20 min <small style="color:#6B7385">(GPS)</small></td>'+
       '<td class="n" style="color:#E30613">'+hm(D.quieto.calle)+'</td></tr>':'')+
-    (refMin?'<tr><td>Al ritmo de las rutas comparables ('+D.refMinCli+' min por cliente)</td>'+
+    (refMin?'<tr><td>Al ritmo de las rutas comparables ('+num(D.refMinCli)+' min por cliente)</td>'+
       '<td class="n">'+hm(refMin)+'</td></tr>':'')+
     (finEstimado?'<tr><td><b>Habr\u00eda terminado a las</b></td>'+
       '<td class="n" style="color:#0F766E"><b>'+finEstimado+'</b></td></tr>':'')+
