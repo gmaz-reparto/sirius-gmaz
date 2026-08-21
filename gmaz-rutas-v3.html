@@ -939,6 +939,12 @@ body.modo-lote .ci-acts{display:none}
 .ep-r b{font-size:13px;font-weight:800;color:#0F1117}
 .ep-r span{font-size:10.5px;font-weight:700;color:#8A90A0;text-transform:uppercase;letter-spacing:.3px}
 .ep-r em{font-style:normal;background:#FFE9B0;border-radius:3px}
+/* El mando sale en otro color y con etiqueta. No está en la lista general —solo aparece si se lo
+   busca— justo para que un entregador no lo toque de paso y registre la ruta a nombre ajeno. */
+.ep-r.ep-mando{background:#EEF2FF;border-color:#C7D2FE}
+.ep-r.ep-mando:hover,.ep-r.ep-mando:active{background:#E0E7FF;border-color:#4F46E5}
+.ep-tag{font-style:normal;font-size:9.5px;font-weight:900;background:#4F46E5;color:#fff;
+  border-radius:5px;padding:2px 6px;margin-left:6px;vertical-align:1px;letter-spacing:.4px}
 .ep-vacio2{font-size:11.5px;color:#8A90A0;padding:9px 2px;font-weight:600}
 .ep-abordo{margin:11px 0 2px;display:flex;flex-direction:column;gap:5px}
 .ep-ab-t{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A90A0}
@@ -8758,6 +8764,43 @@ function entregadoresDisponibles(){
     .map(e=>({nombre:e[0],ced:e[1],cargo:_normCargo(e[2])}))
     .sort((a,b)=>a.nombre.localeCompare(b.nombre));
 }
+/* ══ EL MANDO TAMBIÉN ENTRA A LA RUTA (21-ago-2026) ══
+   La lista del selector sale de los seis cargos de entrega más supernumerario. El coordinador no
+   es ninguno de esos, así que al buscarse no aparecía y no tenía qué seleccionar: se quedaba en la
+   puerta de su propia aplicación. El bypass por designación —`esCoordinador`— ya existía más
+   abajo, pero nunca se llegaba a él.
+
+   Coordinador y supervisores entran a CUALQUIER ruta, cualquier día, sin designación. Es su
+   trabajo: subirse a acompañar a un entregador, verificar una entrega, cubrir un rato.
+
+   No se meten en la lista general. Aparecen solo si se los busca por nombre o por cédula, y salen
+   marcados: si el coordinador estuviera en el desplegable de los ochenta empleados, cualquier
+   entregador lo toca por error y la ruta queda registrada a nombre de quien no la hizo. */
+const _ROLES_MANDO=[/COORDINADOR DE DISTRIBUCION/i,/^SUPERVISOR/i];
+function esCargoDeMando(c){
+  const x=_normCargo(c);
+  return _ROLES_MANDO.some(r=>r.test(x));
+}
+function mandoDisponible(){
+  return EMPLEADOS_ASIS.filter(e=>esCargoDeMando(e[2]))
+    .map(e=>({nombre:e[0],ced:e[1],cargo:_normCargo(e[2]),mando:true}))
+    .sort((a,b)=>a.nombre.localeCompare(b.nombre));
+}
+/* Todo el que puede registrarse en una ruta. Se usa para BUSCAR y para resolver una cédula ya
+   elegida; la lista que se muestra por defecto sigue siendo solo la de entrega. */
+function personasQuePuedenEntrar(){
+  return entregadoresDisponibles().concat(mandoDisponible());
+}
+/* ¿Esta persona manda? Con la cédula, contra el maestro. */
+function esMando(ced){
+  const e=EMPLEADOS_ASIS.find(x=>String(x[1])===String(ced));
+  return !!(e&&esCargoDeMando(e[2]));
+}
+/* El rol con el que queda registrado: el coordinador es uno solo; los demás del mando, supervisores. */
+function rolDeMando(ced){
+  if(esCoordinador(ced))return 'coordinador';
+  return esMando(ced)?'supervisor':null;
+}
 /* Registro central del día: un archivo POR PERSONA (REGISTRO/{fecha}/{ruta}__{ced}.json), no un
    único JSON compartido entre todas las rutas. Se probó directamente contra Supabase (crear un
    objeto: 200 · sobrescribirlo después, misma sesión, mismo dato o distinto: 400 SIEMPRE) — con la
@@ -8916,6 +8959,13 @@ function designacionDe(ruta,ced){
   return designadosDe(ruta).find(x=>String(x.ced)===String(ced))||null;
 }
 /* El coordinador entra a cualquier ruta con su cédula: es su llave maestra. */
+/* Cómo se llama cada rol en pantalla. Antes estaba escrito a mano en el aviso del registro y
+   cualquier rol nuevo salía como «Auxiliar», que para un supervisor es sencillamente falso. */
+function _etiquetaRol(r){
+  return r==='conductor'?'Conductor'
+    :r==='coordinador'?'Coordinador'
+    :r==='supervisor'?'Supervisor':'Auxiliar';
+}
 function esCoordinador(ced){
   const e=EMPLEADOS_ASIS.find(x=>String(x[1])===String(ced));
   return !!(e&&/COORDINADOR DE DISTRIBUCION/i.test(e[2]||''));
@@ -9071,25 +9121,52 @@ function _epBuscar(q){
   const hid=document.getElementById('ent-pick-sel');
   if(hid&&hid.value&&txt!==(hid.dataset.nombre||''))hid.value=''; // cambió el texto: se deselecciona
   if(txt.length<2){
-    cont.innerHTML='<div class="ep-vacio2">Escribe al menos 2 letras de tu nombre o los primeros números de tu cédula.</div>';
+    cont.innerHTML='<div class="ep-vacio2">Escribe al menos 2 letras de tu nombre o los primeros números de tu cédula. '+
+      'El coordinador y los supervisores también se buscan así.</div>';
     return;
   }
-  const res=entregadoresDisponibles().filter(p=>
-    p.nombre.toUpperCase().includes(txt)||String(p.ced).includes(txt)).slice(0,8);
+  /* El maestro guarda los nombres con los apellidos primero —TORRES NARANJO CHRISTIAN CAMILO— y
+     la gente se escribe al derecho: «Christian Camilo Torres». Buscando la frase entera no encuentra
+     nada y parece que la persona no existiera. Se parte en palabras y se piden todas, en cualquier
+     orden; y se ignoran las tildes, que en el maestro no siempre están como uno las escribe. */
+  const sinTilde=t=>String(t||'').toUpperCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/Ñ/g,'N');
+  const palabras=sinTilde(txt).split(/\s+/).filter(Boolean);
+  const res=personasQuePuedenEntrar().filter(p=>{
+    const nom=sinTilde(p.nombre), ced=String(p.ced);
+    return palabras.every(w=>nom.includes(w)||ced.includes(w));
+  }).slice(0,8);
   if(!res.length){
-    cont.innerHTML='<div class="ep-vacio2">Nadie coincide con «'+q+'». Revisa cómo se escribe o avisa al coordinador.</div>';
+    cont.innerHTML='<div class="ep-vacio2">Nadie coincide con «'+q+'». Prueba con un apellido, '+
+      'o con tu cédula completa. Si sigue sin aparecer, avisa al coordinador.</div>';
     return;
   }
-  const marcar=n=>{
-    const i=n.toUpperCase().indexOf(txt);
-    return i<0?n:n.slice(0,i)+'<em>'+n.slice(i,i+txt.length)+'</em>'+n.slice(i+txt.length);
+  /* Se resalta cada palabra buscada por separado, sobre el nombre sin tildes pero recortando del
+     original: así «MUÑOZ» sigue viéndose con su Ñ aunque se haya buscado «MUNOZ». */
+  const marcar=nom=>{
+    const plano=sinTilde(nom);
+    const tramos=[];
+    palabras.forEach(w=>{
+      let i=plano.indexOf(w);
+      while(i>=0){ tramos.push([i,i+w.length]); i=plano.indexOf(w,i+w.length); }
+    });
+    if(!tramos.length)return nom;
+    tramos.sort((a,b)=>a[0]-b[0]);
+    let out='',fin=0;
+    tramos.forEach(t=>{
+      if(t[0]<fin){ if(t[1]>fin){ out+='' ; } return; }   // solapados: se conserva el primero
+      out+=nom.slice(fin,t[0])+'<em>'+nom.slice(t[0],t[1])+'</em>';
+      fin=t[1];
+    });
+    return out+nom.slice(fin);
   };
   cont.innerHTML=res.map(p=>
-    '<button type="button" class="ep-r" onclick="haptic();_epElegir(\''+p.ced+'\')">'+
-      '<b>'+marcar(p.nombre)+'</b><span>'+p.cargo+' · C.C. '+p.ced+'</span></button>').join('');
+    '<button type="button" class="ep-r'+(p.mando?' ep-mando':'')+'" onclick="haptic();_epElegir(\''+p.ced+'\')">'+
+      '<b>'+marcar(p.nombre)+(p.mando?' <i class="ep-tag">Mando</i>':'')+'</b>'+
+      '<span>'+p.cargo+' · C.C. '+p.ced+(p.mando?' · entra a cualquier ruta':'')+'</span></button>').join('');
 }
 function _epElegir(ced){
-  const p=entregadoresDisponibles().find(x=>String(x.ced)===String(ced)); if(!p)return;
+  const p=personasQuePuedenEntrar().find(x=>String(x.ced)===String(ced)); if(!p)return;
   const hid=document.getElementById('ent-pick-sel');
   if(hid){hid.value=p.ced;hid.dataset.nombre=p.nombre.toUpperCase();}
   const inp=document.getElementById('ent-pick-buscar'); if(inp)inp.value=p.nombre;
@@ -9146,15 +9223,19 @@ async function confirmarTripulacion(){
   if(!persona){
     const ced=(document.getElementById('ent-pick-sel')||{}).value;
     if(!ced){toast('Selecciona tu nombre para continuar','err');return;}
-    const p=entregadoresDisponibles().find(x=>x.ced===ced);
+    const p=personasQuePuedenEntrar().find(x=>String(x.ced)===String(ced));
     if(!p)return;
     persona={ced:p.ced,nombre:p.nombre,cargo:p.cargo};
   }
   // origen 'persona' = lo registró el propio colaborador desde su celular. El sistema también
   // registra conductores solo (origen 'sistema'); comparar los dos es lo que destapa las anomalías.
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
-  // Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular, se frena.
-  const choque=await _yaRegistradaHoyEnOtroEquipo(persona.ced);
+  /* Nadie puede estar en dos equipos el mismo día: si su cédula ya se registró desde otro celular,
+     se frena. Ese control es para el entregador, que hace UNA ruta: si aparece en dos, o alguien
+     usó su nombre o él usó el celular ajeno, y las dos cosas hay que verlas.
+     El mando es al revés: su trabajo es pasar por varias rutas el mismo día. Aplicarle la misma
+     regla lo dejaría entrar a una sola y bloqueado el resto de la jornada. */
+  const choque=esMando(persona.ced)?null:await _yaRegistradaHoyEnOtroEquipo(persona.ced);
   await cargarDesignacion(getColDate(),true);
   await _epCargarRuta(ctx.ruta); // estado fresco de la ruta antes de decidir
   if(btn){btn.disabled=false;btn.textContent='Iniciar ruta';}
@@ -9162,13 +9243,13 @@ async function confirmarTripulacion(){
     toast(persona.nombre.split(' ')[0]+' ya se registró hoy desde otro celular (ruta '+choque.ruta+'). Usa tu propio equipo o avisa al coordinador.','err');
     return;
   }
-  /* La designación del coordinador es la puerta. Tres llaves la abren: estar designado, ser el
-     coordinador, o tener un permiso ya autorizado. Cualquier otro caso se frena y se ofrece pedir
-     autorización —no se deja al entregador varado sin salida—. */
+  /* La designación del coordinador es la puerta. Tres llaves la abren: estar designado, ser del
+     mando —coordinador o supervisor—, o tener un permiso ya autorizado. Cualquier otro caso se
+     frena y se ofrece pedir autorización —no se deja al entregador varado sin salida—. */
   const desig=designadosDe(ctx.ruta);
   const mi=designacionDe(ctx.ruta,persona.ced);
   let rol=mi?mi.rol:null, sinDesig=false;
-  if(!mi&&!esCoordinador(persona.ced)){
+  if(!mi&&!esMando(persona.ced)){
     if(!desig.length){
       /* La ruta no tiene NADIE designado. Bloquear aquí sería castigar un olvido del coordinador,
          no hacer cumplir una decisión suya: el 19 de agosto tres de las ocho rutas estaban así.
@@ -9181,12 +9262,13 @@ async function confirmarTripulacion(){
       else{ mostrarBloqueoRuta(ctx.ruta,persona); return; }
     }
   }
-  if(esCoordinador(persona.ced)&&!mi)rol='coordinador';
+  if(esMando(persona.ced)&&!mi)rol=rolDeMando(persona.ced);
   persona={...persona,rol:rol||'auxiliar',hora:new Date().toISOString(),device:_deviceId(),origen:'persona',
            designado:!!mi,sin_designacion:sinDesig||undefined};
-  // Tope de personas por vehículo
+  /* Tope de personas por vehículo. El mando no cuenta contra él: va de acompañante, no de
+     tripulante, y si la ruta ya va llena es justo cuando más falta hace que pueda subirse. */
   const yaEsta=_epRutaActual.some(p=>String(p.ced)===String(persona.ced));
-  if(!yaEsta&&_epRutaActual.length>=TRIP_MAX){
+  if(!yaEsta&&!esMando(persona.ced)&&_epRutaActual.length>=TRIP_MAX){
     toast('La ruta '+ctx.ruta+' ya tiene '+TRIP_MAX+' personas registradas. Avisa al coordinador.','err');
     return;
   }
@@ -9194,7 +9276,7 @@ async function confirmarTripulacion(){
   _guardarPersonaDispositivo(persona);       // amarre permanente celular ↔ persona
   _guardarRegistroHoy(ctx.ruta,persona);     // jornada de hoy en esta ruta
   toast('Registrado: '+persona.nombre.split(' ').slice(0,2).join(' ')+' · '+
-    (persona.rol==='conductor'?'Conductor':persona.rol==='coordinador'?'Coordinador':'Auxiliar'),'ok');
+    _etiquetaRol(persona.rol),'ok');
   _guardarRegistroRuta(getColDate(),ctx.ruta,[persona]); // en segundo plano, no bloquea el inicio de ruta
   const badge=document.getElementById('btn-tripulacion-n');if(badge)badge.textContent='1';
   if(ctx.cb)ctx.cb([persona]);
