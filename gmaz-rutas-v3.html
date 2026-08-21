@@ -7308,10 +7308,17 @@ function _hm(min){
    {fecha}/PPAS_INDEX.json. Igual con las novedades: las de hoy no dicen nada de ayer. */
 const _ppasDiaCache={};
 async function clientesDeFecha(fecha){
-  if(fecha===getColDate())return (_clientesCache||[]).map(c=>{
-    const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
-    return {...c,lat,lng};
-  });
+  if(fecha===getColDate()){
+    /* Para HOY se usa `_dashData.clientes_`, no `_clientesCache`. Los dos parecen lo mismo pero no
+       lo son: `_clientesCache` lo sobrescribe `pintarDashMap` con lo último que se pintó, y desde
+       que el mapa puede mostrar un día pasado, eso puede ser el 20 de agosto. `_dashData` lo llena
+       `cargarDash()`, que siempre lee hoy. */
+    const base=(_dashData&&_dashData.clientes_)||_clientesCache||[];
+    return base.map(c=>{
+      const lat=parseFloat(String(c.lat||'').replace(',','.')),lng=parseFloat(String(c.lng||'').replace(',','.'));
+      return {...c,lat,lng};
+    });
+  }
   if(_ppasDiaCache[fecha])return _ppasDiaCache[fecha];
   let out=[];
   try{
@@ -7331,7 +7338,8 @@ async function clientesDeFecha(fecha){
 }
 const _novDiaCache={};
 async function novedadesDeFecha(fecha){
-  if(fecha===getColDate())return _novSetCache;
+  // Mismo motivo que arriba: `_novSetCache` puede traer las novedades del día que se esté mirando.
+  if(fecha===getColDate())return (_dashData&&_dashData.novSet)||_novSetCache;
   if(_novDiaCache[fecha])return _novDiaCache[fecha];
   const set=new Set();
   try{
