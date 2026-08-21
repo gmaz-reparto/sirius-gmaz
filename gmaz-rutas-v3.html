@@ -838,6 +838,19 @@ table.tg tbody tr.tg-exp>td{background:#FBFBFD;padding:13px 15px;border-bottom:1
 .perm-no{background:#fff;color:#6B7385;border:1px solid #D8DCE4}
 .perm-si:active,.perm-no:active{transform:scale(.985)}
 
+/* Confirmar varias entregas de una vez */
+#lote-bar{position:fixed;left:12px;right:12px;bottom:max(14px,env(safe-area-inset-bottom,14px));
+  z-index:2200;background:#0F1117;color:#fff;border-radius:14px;padding:12px 14px;display:flex;
+  align-items:center;gap:11px;box-shadow:0 10px 30px rgba(0,0,0,.32);font-size:12.5px;font-weight:700}
+#lote-bar span{flex:1;line-height:1.35}
+.lote-ok{border:none;border-radius:10px;padding:10px 16px;background:#0F766E;color:#fff;
+  font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;flex-shrink:0}
+.lote-ok:disabled{background:#3A3F4A;color:#8A90A0;cursor:default}
+body.modo-lote .ci{cursor:pointer;border-left:3px solid transparent}
+.ci.lote-on{background:#E8F4EC!important;border-left-color:#0F766E!important}
+/* En modo lote el deslizar estorba: se apagan las acciones laterales */
+body.modo-lote .ci-acts{display:none}
+
 /* Diálogo "¿quién está entregando hoy?" — bloquea el inicio de ruta hasta identificarse */
 #ent-pick-ovl{display:none;position:fixed;inset:0;z-index:2400;background:rgba(15,17,23,.62);
   backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:22px}
@@ -2032,6 +2045,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
     <!-- La tarjeta "cliente más cercano" se quitó: el más cercano ya aparece como #1 en el listado. -->
     <div class="cp-header">
       <div><div class="cp-title" id="cp-title">Clientes de ruta</div><div class="cp-count" id="cp-count">0 puntos</div></div>
+      <button id="btn-lote" onclick="haptic();toggleModoLote()" title="Marcar varios clientes como entregados de una sola vez" style="margin-left:auto;background:#0F766E;color:#fff;border:none;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:800;cursor:pointer">✓ Varios</button>
       <button id="btn-tripulacion" onclick="haptic();agregarTripulanteTarde()" title="Agregar o ver quién va hoy en la ruta" style="margin-left:auto;background:#fff;color:#0F1117;border:1.5px solid #E6E9EF;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px">🧑‍🔧 <span id="btn-tripulacion-n">0</span></button>
       <button id="btn-finruta" onclick="haptic();finalizarRuta()" style="margin-left:auto;background:#0F1117;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Finalizar ruta</button>
     </div>
@@ -5469,6 +5483,13 @@ function pintarTorreControl(){
     item(sinReg.length?'med':'ok',sinReg.length,'Rutas sin nadie registrado',sinReg.length?"tcAbrirRuta('"+(sinReg[0]||{}).ruta+"')":'')+
     item(porValidar.length?'urg':'ok',porValidar.length,'Tripulaciones sin su visto bueno',porValidar.length?"tcAbrirRuta('"+(porValidar[0]||{}).ruta+"')":'')+
     item(conAnomalia.length?'urg':'ok',conAnomalia.length,'Rutas que no cuadran con lo designado',conAnomalia.length?"tcAbrirRuta('"+(conAnomalia[0]||{}).ruta+"')":'')+
+    (function(){
+      const at=_calcularAtrasos();
+      const urg=at.filter(x=>x.estado==='urg').length;
+      return item(at.length?(urg?'urg':'med'):'ok',at.length,
+        'Rutas que van a terminar tarde'+(at.length?' · '+at[0].ruta+' ≈ '+at[0].finTxt:''),
+        at.length?"verRutasAtrasadas()":'');
+    })()+
     item(_audHallazgos.length?'urg':'ok',_audHallazgos.length,
       'Hallazgos de efectivo sin cerrar',
       _audHallazgos.length?"verHallazgosEfectivo()":'')+
@@ -6009,6 +6030,62 @@ async function _tripulacionDeFecha(fecha){
 }
 /* Km del día por vehículo, del mismo historial GPS que usa "Ver recorrido". */
 let _kmPorFecha={}; // {fecha:{unitId:km}}
+/* ══ EL ORDEN DE ENTREGA (20-ago-2026) ══
+   La app ordenaba por la columna `secuencia` del PPAS creyendo que era un recorrido planeado. No lo
+   es: verificado sobre KA4V51 del 20 de agosto, esa secuencia sale en ORDEN ALFABÉTICO INVERSO
+   —sec 1 = WOK PAISA, sec 93 = 488 REBAJA PLUS—. El entregador abría su ruta y veía una lista de
+   nombres numerada del 1 al 93, con toda la pinta de ser una ruta armada, que en realidad manda a
+   cruzar la ciudad de un lado a otro.
+
+   Lo que eso costó ese día, medido: seguir esa secuencia son 127 km contra 16,3 km ordenando por
+   cercanía —los 93 clientes caben en una zona de 3 km por 2,6 km—. La jornada duró 12 h 32 min
+   contra las 9 h 39 min que esa misma ruta había tomado dos días antes con MÁS carga. Y seis
+   clientes que estaban a menos de 1,1 km del CEDI —puestos 8, 9, 10, 19, 25 y 26 en un recorrido
+   ordenado— se dejaron para las ocho de la noche, cuando ya no recibieron.
+
+   Ahora se arma el recorrido de verdad: se parte del CEDI y se va al cliente más cercano, y desde
+   ese al siguiente más cercano. Es la regla del vecino más próximo; no da el óptimo matemático
+   perfecto, pero sobre esta operación rinde ocho veces mejor que lo que había y es instantánea.
+   Quien no tenga coordenadas queda al final, con su orden de siempre: no se pierde nadie. */
+function _distKmCoord(la1,lo1,la2,lo2){
+  const R=6371,rad=x=>x*Math.PI/180;
+  const dLa=rad(la2-la1),dLo=rad(lo2-lo1);
+  const a=Math.sin(dLa/2)**2+Math.cos(rad(la1))*Math.cos(rad(la2))*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function ordenarRecorrido(lista,desde){
+  const ini=desde||CFG.PLANTA||{lat:1.205398,lng:-77.295223};
+  const conCoord=[],sinCoord=[];
+  (lista||[]).forEach(c=>{
+    const la=parseFloat(c.lat),lo=parseFloat(c.lng);
+    (isNaN(la)||isNaN(lo)||(!la&&!lo)?sinCoord:conCoord).push(c);
+  });
+  const orden=[]; let cur={lat:ini.lat,lng:ini.lng};
+  const pend=conCoord.slice();
+  while(pend.length){
+    let mejor=0,md=Infinity;
+    for(let i=0;i<pend.length;i++){
+      const d=_distKmCoord(cur.lat,cur.lng,+pend[i].lat,+pend[i].lng);
+      if(d<md){md=d;mejor=i;}
+    }
+    const c=pend.splice(mejor,1)[0];
+    orden.push(c); cur={lat:+c.lat,lng:+c.lng};
+  }
+  // Los sin coordenada conservan el orden que traían, al final de la lista.
+  sinCoord.sort((a,b)=>(+a.secuencia||999)-(+b.secuencia||999));
+  return orden.concat(sinCoord);
+}
+/* Cuántos kilómetros mide un recorrido —sirve para mostrarle al entregador lo que va a andar. */
+function _kmRecorrido(lista,desde){
+  const ini=desde||CFG.PLANTA||{lat:1.205398,lng:-77.295223};
+  let km=0,cur={lat:ini.lat,lng:ini.lng};
+  (lista||[]).forEach(c=>{
+    const la=parseFloat(c.lat),lo=parseFloat(c.lng);
+    if(isNaN(la)||isNaN(lo))return;
+    km+=_distKmCoord(cur.lat,cur.lng,la,lo); cur={lat:la,lng:lo};
+  });
+  return km;
+}
 function _distKm(la1,lo1,la2,lo2){
   const R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
   const a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
@@ -7515,12 +7592,12 @@ async function loadRoutes(){
       rutas[r].clientes.push({...c,_st:'pendiente'});
       rutas[r].totalCajas+=parseFloat(String(c['CAJA_']||c.CAJA_||0).replace(',','.')||0);
     });
-    // Orden planificado del PPAS: si la secuencia está poblada, el entregador ve los clientes en
-    // el orden en que se planearon (antes llegaban en el orden arbitrario que devolviera la base).
-    Object.values(rutas).forEach(r=>r.clientes.sort((a,b)=>{
-      const sa=+a.secuencia||999,sb=+b.secuencia||999;
-      return sa!==sb?sa-sb:String(a.nombre||'').localeCompare(String(b.nombre||''));
-    }));
+    // Recorrido de verdad, desde el CEDI hacia afuera. Ver ordenarRecorrido().
+    Object.values(rutas).forEach(r=>{
+      r.kmPPAS=_kmRecorrido(r.clientes.slice().sort((a,b)=>(+a.secuencia||999)-(+b.secuencia||999)));
+      r.clientes=ordenarRecorrido(r.clientes);
+      r.km=_kmRecorrido(r.clientes);
+    });
     const grid=document.getElementById('routes-grid');
     grid.innerHTML='';
     const codes=Object.keys(rutas).sort();
@@ -9884,6 +9961,77 @@ async function renderHistorialAuditorias(fecha){
     '</div>').join('')+'</div>';
 }
 
+
+/* ══ SEMÁFORO DE ATRASO (20-ago-2026) ══
+   El 20 de agosto KA4V51 terminó a las 20:46 y el coordinador se enteró esa noche, cuando seis
+   clientes ya habían rechazado la mercancía por la hora. A las diez de la mañana el dato ya estaba
+   ahí: iba en el cliente 22 de 93 después de dos horas de jornada.
+
+   El cálculo es una regla de tres sobre lo que la ruta lleva hecho: si en X horas atendió N
+   clientes, los que faltan toman (faltan / N) × X. No pretende ser exacto —pretende avisar a tiempo,
+   que es lo que no existía—.
+
+   Solo se proyecta con al menos 5 clientes atendidos y una hora de jornada: antes de eso el ritmo
+   todavía no dice nada y una alarma temprana falsa hace que nadie vuelva a mirar el semáforo. */
+const ATRASO_HORA_LIMITE=18;   // a partir de esta hora ya no se entrega bien
+const ATRASO_MIN_EVENTOS=5;
+
+function _proyectarCierre(ruta){
+  const D=_dashData; if(!D)return null;
+  const total=(D.porRuta&&D.porRuta[ruta])?D.porRuta[ruta].tot:0;
+  if(!total)return null;
+  // Eventos con hora de esa ruta, en orden
+  const ts=[];
+  (D.estados_||[]).forEach(e=>{ if(rutaBase(e.ruta||'')!==rutaBase(ruta))return;
+    const t=new Date(e.created_at).getTime(); if(!isNaN(t))ts.push(t); });
+  if(ts.length<ATRASO_MIN_EVENTOS)return {ruta,total,hechos:ts.length,estado:'sin dato'};
+  ts.sort((a,b)=>a-b);
+  const ini=ts[0], ult=ts[ts.length-1], ahora=Date.now();
+  const horas=(ahora-ini)/3600000;
+  if(horas<1)return {ruta,total,hechos:ts.length,estado:'sin dato'};
+  const hechos=ts.length, faltan=Math.max(0,total-hechos);
+  const minPorCliente=(horas*60)/hechos;
+  const finMs=ahora+faltan*minPorCliente*60000;
+  const fin=new Date(finMs);
+  const hFin=fin.getHours()+fin.getMinutes()/60;
+  return {ruta,total,hechos,faltan,
+    minPorCliente:+minPorCliente.toFixed(1),
+    inicio:ini, fin:finMs,
+    finTxt:fin.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Bogota'}),
+    estado: hFin>=ATRASO_HORA_LIMITE+1?'urg' : hFin>=ATRASO_HORA_LIMITE?'med' : 'ok'};
+}
+let _atrasoRutas=[];
+function _calcularAtrasos(){
+  _atrasoRutas=[];
+  const D=_dashData; if(!D||!D.porRuta)return _atrasoRutas;
+  // Solo el día de hoy: proyectar un día cerrado no tiene sentido.
+  if(fechaCtx()!==getColDate())return _atrasoRutas;
+  Object.keys(D.porRuta).forEach(r=>{
+    if(!rutaEntrega(r))return;
+    const p=_proyectarCierre(r);
+    if(p&&p.estado!=='ok'&&p.estado!=='sin dato')_atrasoRutas.push(p);
+  });
+  _atrasoRutas.sort((a,b)=>b.fin-a.fin);
+  return _atrasoRutas;
+}
+function verRutasAtrasadas(){
+  const l=_calcularAtrasos();
+  if(!l.length){toast('Ninguna ruta proyecta terminar tarde','ok');return;}
+  const c=document.getElementById('perm-body');
+  document.querySelector('#perm-card .perm-t').firstChild.textContent='Rutas que van a terminar tarde ';
+  document.querySelector('#perm-card .perm-s').textContent=
+    'Proyección con el ritmo que lleva cada ruta hoy. A esta hora todavía se puede mandar apoyo o repartir clientes.';
+  c.innerHTML=l.map(p=>
+    '<div class="perm-i"><div class="perm-h"><b>'+p.ruta+'</b>'+
+      '<span style="color:'+(p.estado==='urg'?'#E30613':'#B45309')+'">termina ≈ '+p.finTxt+'</span></div>'+
+    '<div class="perm-g"><span class="perm-et">Cómo va</span>'+
+      '<div class="perm-p"><b>'+p.hechos+'</b> de '+p.total+' clientes · faltan <b>'+p.faltan+'</b></div>'+
+      '<div class="perm-cargo">'+p.minPorCliente+' min por cliente · el estándar de la operación está entre 5 y 7</div></div>'+
+    '<div class="perm-acc"><button class="perm-no" onclick="haptic();tcAbrirRuta(&#39;'+p.ruta+'&#39;)">Ver la ruta</button></div></div>'
+  ).join('');
+  document.getElementById('perm-ovl').style.display='flex';
+}
+
 /* ══ NOVEDADES FALSAS PENDIENTES ══
    El cruce completo tarda —son cuatro índices y el detalle de cada rechazo—, así que no se corre en
    cada refresco de la torre. Se calcula al abrir Auditoría y la bandeja lee lo que quedó.
@@ -10171,7 +10319,9 @@ function renderClientList(filtro=''){
         `<div class="cact cact-nav" onclick="accionFila(${i},'nav',event)"><span class="cbtn">${SW_ICON.nav}</span>Navegar</div>`+
         `<div class="cact cact-tel" onclick="accionFila(${i},'tel',event)"><span class="cbtn">${SW_ICON.tel}</span>Llamar</div>`+
       `</div>`+
-      `<div class="ci${i===clienteIdx?' activo':''}" id="ci-${i}" data-idx="${i}">${ciInnerHTML(c,i)}</div>`;
+      `<div class="ci${i===clienteIdx?' activo':''}${_modoLote&&_loteSel.has(i)?' lote-on':''}" id="ci-${i}" data-idx="${i}"`+
+        (_modoLote&&c._st==='pendiente'?` onclick="toggleLoteCliente(${i},event)"`:'')+
+      `>${ciInnerHTML(c,i)}</div>`;
     ul.appendChild(wrap);
   });
   if(q&&!mostrados)ul.innerHTML=estadoVacio('search','Sin resultados','Ningún cliente coincide con "'+q+'". Revisa el código o el nombre.','gris');
@@ -10186,6 +10336,68 @@ function cerrarSwipes(){
   document.querySelectorAll('#client-list .ci').forEach(el=>el.style.transform='');
   swAbierto=null;
 }
+
+/* ══ CONFIRMAR VARIOS DE UNA VEZ (20-ago-2026) ══
+   El botón de confirmar entrega casi no se usaba: el 20 de agosto, de 93 clientes de KA4V51 solo 5
+   quedaron sellados, y en toda la operación de ese día hubo 107 novedades contra UNA entrega
+   confirmada. No es desidia —es que hay que entrar cliente por cliente, y en la calle, cargando
+   canastas, eso no pasa—. Sin ese sello no hay hora de llegada de nadie, y sin hora de llegada no se
+   puede probar a qué hora estuvo el camión en cada punto ni proyectar si la ruta va a alcanzar.
+
+   Acá se marcan varios a la vez: se toca «Varios», se seleccionan los que ya se entregaron y se
+   confirman todos juntos. Solo aparecen los pendientes: los que tienen novedad no se tocan. */
+let _modoLote=false, _loteSel=new Set();
+
+function toggleModoLote(){
+  _modoLote=!_modoLote;
+  _loteSel.clear();
+  const b=document.getElementById('btn-lote');
+  if(b){
+    b.textContent=_modoLote?'✕ Salir':'✓ Varios';
+    b.style.background=_modoLote?'#E30613':'#0F766E';
+  }
+  document.body.classList.toggle('modo-lote',_modoLote);
+  renderClientList((document.getElementById('cp-buscar')||{}).value||'');
+  _pintarBarraLote();
+}
+function _pintarBarraLote(){
+  let bar=document.getElementById('lote-bar');
+  if(!_modoLote){ if(bar)bar.remove(); return; }
+  if(!bar){
+    bar=document.createElement('div'); bar.id='lote-bar';
+    document.body.appendChild(bar);
+  }
+  const n=_loteSel.size;
+  bar.innerHTML='<span>'+(n?n+' seleccionado'+(n===1?'':'s'):'Toca los clientes que ya entregaste')+'</span>'+
+    '<button class="lote-ok"'+(n?'':' disabled')+' onclick="haptic();confirmarLote()">Confirmar '+(n||'')+'</button>';
+}
+function toggleLoteCliente(i,ev){
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  if(!_modoLote)return;
+  const c=clientes[i]; if(!c||c._st!=='pendiente')return;
+  haptic(14);
+  if(_loteSel.has(i))_loteSel.delete(i); else _loteSel.add(i);
+  const el=document.getElementById('ci-'+i);
+  if(el)el.classList.toggle('lote-on',_loteSel.has(i));
+  _pintarBarraLote();
+}
+async function confirmarLote(){
+  if(!_loteSel.size)return;
+  const ids=[..._loteSel];
+  showLoad('Confirmando '+ids.length+' entrega(s)…');
+  try{
+    for(const i of ids)setClientSt(i,'entregado');
+    hideLoad();
+    toast('✓ '+ids.length+' entrega(s) confirmadas','ok');
+    _modoLote=false; _loteSel.clear();
+    const b=document.getElementById('btn-lote');
+    if(b){b.textContent='✓ Varios';b.style.background='#0F766E';}
+    document.body.classList.remove('modo-lote');
+    const bar=document.getElementById('lote-bar'); if(bar)bar.remove();
+    renderClientList((document.getElementById('cp-buscar')||{}).value||'');
+  }catch(e){ hideLoad(); toast('No se pudo: '+e.message,'err'); }
+}
+
 function accionFila(i,tipo,ev){
   if(ev)ev.stopPropagation();
   haptic(25);
