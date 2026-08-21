@@ -5657,7 +5657,8 @@ function _tcEcuacion(x){
       b('VOLVIÓ AL CEDI',ret?ret.caj:'—',(ret?(ret.und?ret.und+' und · contado':'contado por usted'):'sin anotar'),'var(--azul)','var(--azul-s)')+
       b('SIN EXPLICAR',resto,(resto?'nadie las reportó':'todo cuadra'),resto?'var(--amarillo)':'var(--verde)',resto?'#FFFBEB':'var(--verde-s)')+
     '</div>'+
-    ('<button class="fl-btn" style="margin:0 0 9px" onclick="event.stopPropagation();abrirRetorno(&#39;'+x.ruta+'&#39;)">'+
+    ('<button class="fl-btn" style="margin:0 9px 9px 0" onclick="event.stopPropagation();generarInformeRuta(&#39;'+x.ruta+'&#39;)">\u2197 Informe para el jefe</button>'+
+     '<button class="fl-btn" style="margin:0 0 9px" onclick="event.stopPropagation();abrirRetorno(&#39;'+x.ruta+'&#39;)">'+
       (ret?'Corregir el retorno de '+x.ruta:'Anotar lo que volvió de '+x.ruta)+'</button>'+
      '<div id="ret-form-'+x.ruta+'"></div>')+
     '<div class="ec-nota">'+(resto
@@ -9977,6 +9978,522 @@ async function renderHistorialAuditorias(fecha){
 }
 
 
+
+
+/* ══ INFORME DE RUTA — el recorrido que se le manda al jefe (20-ago-2026) ══
+   Recoge todo lo que la app sabe de una ruta en un día y arma con eso una página que se abre en
+   cualquier celular: el recorrido animado, el trayecto que debió hacerse, y el informe con los
+   kilómetros, las horas y el combustible de más.
+
+   El mapa se dibuja aquí mismo en SVG, no con Google Maps. Dos razones: el archivo abre sin internet
+   y —más importante— no lleva la clave de Google adentro, que es lo que pasaría si se incrustara el
+   mapa y ese archivo empezara a circular por WhatsApp. */
+
+/* Rendimiento típico de un camión de reparto urbano, para traducir kilómetros a plata.
+   Son supuestos declarados, no medidos: el informe los muestra para que se puedan discutir. */
+const INF_KM_GALON=25;        // km por galón en ciudad, con paradas
+const INF_PRECIO_GALON=16000; // pesos
+
+async function recolectarInforme(ruta,fecha){
+  const F=fecha||getColDate();
+  const CEDI=CFG.PLANTA||{lat:1.205398,lng:-77.295223};
+  const hh=t=>new Date(t).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Bogota'});
+  const gs=async f=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+F+'/'+f+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
+
+  // ── Clientes del día en esa ruta
+  const ppas=await gs('PPAS_INDEX.json')||{};
+  const cli=[];
+  Object.entries(ppas).forEach(([cod,c])=>{
+    if(rutaBase(c.ruta||c.r||'')!==rutaBase(ruta))return;
+    const la=+c.lat,lo=+c.lng;
+    cli.push({cod:String(cod),nombre:c.nombre||'',lat:la,lng:lo,caj:+c.caj||0,sec:+c.sec||0,
+      barrio:c.barrio||'',dir:c.direccion||''});
+  });
+  if(!cli.length)return {error:'La ruta '+ruta+' no tiene clientes en el PPAS del '+F};
+
+  // ── Lo que pasó: eventos con hora
+  let est=[],nov=[];
+  try{ const r=await sb.from('estados_entrega').select('codigo_cliente,nombre_cliente,estado,created_at')
+    .eq('fecha',F).eq('ruta',ruta); est=r.data||[]; }catch(e){}
+  try{ const r=await sb.from(CFG.TBL_NOV).select('codigo_cliente,nombre_cliente,motivo,created_at')
+    .eq('fecha',F).eq('ruta',ruta); nov=r.data||[]; }catch(e){}
+  const porCod={}; cli.forEach(c=>porCod[c.cod]=c);
+  const eventos=est.map(e=>({cod:String(e.codigo_cliente),nombre:e.nombre_cliente||'',
+      estado:e.estado,t:new Date(e.created_at).getTime()}))
+    .filter(e=>!isNaN(e.t)).sort((a,b)=>a.t-b.t);
+  const motivos={}; nov.forEach(x=>motivos[x.motivo||'—']=(motivos[x.motivo||'—']||0)+1);
+
+  // ── El recorrido REAL, reconstruido con los clientes que sí tienen hora
+  const real=[]; let kmReal=0; let prev={lat:CEDI.lat,lng:CEDI.lng};
+  eventos.forEach(e=>{
+    const c=porCod[e.cod]; if(!c||!c.lat||!c.lng)return;
+    const d=_distKmCoord(prev.lat,prev.lng,c.lat,c.lng);
+    kmReal+=d;
+    real.push({...c,hora:hh(e.t),t:e.t,estado:e.estado,salto:+d.toFixed(2)});
+    prev={lat:c.lat,lng:c.lng};
+  });
+
+  // ── El recorrido que DEBIÓ hacerse: el de Google si se calculó, si no el de cercanía
+  let guardado=null;
+  try{ guardado=await leerRecorrido(F,rutaBase(ruta)); }catch(e){}
+  let debio=aplicarRecorridoGuardado(cli.map(c=>({...c,id:c.cod})),guardado);
+  let fuente=guardado&&debio?guardado.fuente:'cercania';
+  if(!debio)debio=ordenarRecorrido(cli);
+  const kmDebio=(guardado&&guardado.km&&fuente==='google')?guardado.km:_kmRecorrido(debio);
+  const posOptima={}; debio.forEach((c,i)=>posOptima[c.cod]=i+1);
+
+  // ── Y el que la app entregaba antes: la secuencia del PPAS
+  const kmPPAS=_kmRecorrido(cli.slice().sort((a,b)=>a.sec-b.sec));
+
+  // ── Tiempos
+  const ini=eventos.length?eventos[0].t:null, fin=eventos.length?eventos[eventos.length-1].t:null;
+  const jornadaMin=(ini&&fin)?Math.round((fin-ini)/60000):null;
+  const minPorCliente=(jornadaMin&&cli.length)?+(jornadaMin/cli.length).toFixed(1):null;
+
+  // ── El estándar: rutas de carga parecida en los últimos días
+  const espejo=[];
+  for(const dia of [getColDate(-1),getColDate(-2),getColDate(-3),getColDate(-4)]){
+    if(dia===F)continue;
+    const pp=await (async()=>{try{const r=await fetch(CFG.SUPABASE_URL+'/storage/v1/object/public/'+CFG.BCK_PED+'/'+dia+'/PPAS_INDEX.json?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}})();
+    if(!pp)continue;
+    const carga={};
+    Object.values(pp).forEach(c=>{const r=rutaBase(c.ruta||c.r||'');if(!rutaEntrega(r))return;
+      const o=carga[r]||(carga[r]={cli:0,caj:0});o.cli++;o.caj+=+c.caj||0;});
+    let ev=[];
+    try{ const r=await sb.from('estados_entrega').select('ruta,created_at').eq('fecha',dia); ev=r.data||[]; }catch(e){}
+    const porR={};
+    ev.forEach(x=>{const r=rutaBase(x.ruta||'');if(!carga[r])return;
+      (porR[r]=porR[r]||[]).push(new Date(x.created_at).getTime());});
+    Object.keys(carga).forEach(r=>{
+      const ts=(porR[r]||[]).sort((a,b)=>a-b);
+      if(ts.length<4)return;                       // con menos registros el tiempo no es medible
+      const dur=(ts[ts.length-1]-ts[0])/60000;
+      if(dur<60)return;
+      const parecida=Math.abs(carga[r].cli-cli.length)<=25;
+      if(!parecida)return;
+      espejo.push({dia,ruta:r,cli:carga[r].cli,caj:carga[r].caj,
+        min:Math.round(dur), minCli:+(dur/carga[r].cli).toFixed(1),
+        ini:hh(ts[0]), fin:hh(ts[ts.length-1]), eventos:ts.length});
+    });
+  }
+  espejo.sort((a,b)=>b.eventos-a.eventos);
+
+  // ── El ritmo de referencia: la mediana de las rutas espejo
+  let refMinCli=null;
+  if(espejo.length){
+    const v=espejo.map(e=>e.minCli).sort((a,b)=>a-b);
+    refMinCli=v[Math.floor(v.length/2)];
+  }
+  const cajas=cli.reduce((a,c)=>a+c.caj,0);
+
+  /* ══ QUÉ SE PUEDE COMPARAR CONTRA QUÉ ══
+     `kmReal` recorre solo los clientes que quedaron registrados —24 de 93 este día—, así que
+     restarle los 15,5 km del recorrido completo daría un «ahorro» de 1,1 km que no significa nada:
+     son dos cosas distintas medidas sobre distinto número de paradas. Un informe para la gerencia
+     con una cifra así es peor que no tener informe.
+     Lo que SÍ compara peras con peras es el orden que la app entregaba —la secuencia del PPAS, sobre
+     los 93— contra el recorrido ordenado, también sobre los 93. Esa es la cifra del ahorro.
+     Y el desorden del recorrido real se mide sin necesidad de GPS: cuántas veces se fue a un cliente
+     que en el recorrido bueno quedaba ANTES del que acababa de atender. Cada uno de esos es un
+     devolverse. */
+  const kmAhorro=+(kmPPAS-kmDebio).toFixed(1);
+  let saltosAtras=0, saltoMayor=null;
+  for(let i=1;i<real.length;i++){
+    const a=posOptima[real[i-1].cod], b=posOptima[real[i].cod];
+    if(a==null||b==null)continue;
+    if(b<a){ saltosAtras++;
+      const d=a-b; if(!saltoMayor||d>saltoMayor.puestos)
+        saltoMayor={puestos:d,de:real[i-1].nombre,a:real[i].nombre,hora:real[i].hora}; }
+  }
+  // Si hay recorrido GPS del vehículo, ese sí son los kilómetros de verdad.
+  let kmGPS=null;
+  try{
+    const unit=(_asigPorRuta||{})[ruta];
+    if(unit){
+      const pts=await _flPuntos(unit,F);
+      if(pts.length>2){
+        let k=0,pv=null;
+        pts.forEach(pt=>{ if(pv){const d=_distKmCoord(pv.lat,pv.lng,pt.lat,pt.lng); if(d<5)k+=d;} pv=pt; });
+        kmGPS=+k.toFixed(1);
+      }
+    }
+  }catch(e){}
+
+  // ── Tripulación
+  let trip=[];
+  try{ const reg=await cargarRegistroDia(F);
+    trip=(reg[ruta]||[]).map(x=>({nombre:x.nombre,rol:x.rol,origen:x.origen,
+      hora:x.hora?hh(x.hora):''})); }catch(e){}
+
+  // ── Dónde se demoraron: huecos largos entre eventos
+  const huecos=[];
+  for(let i=1;i<real.length;i++){
+    const min=Math.round((real[i].t-real[i-1].t)/60000);
+    if(min>=45)huecos.push({desde:real[i-1].hora,hasta:real[i].hora,min,
+      entre:real[i-1].nombre,y:real[i].nombre,km:real[i].salto});
+  }
+  huecos.sort((a,b)=>b.min-a.min);
+
+  return {
+    ruta,fecha:F,generado:new Date().toISOString(),
+    clientes:cli.length, cajas,
+    atendidos:eventos.length, entregas:est.filter(e=>e.estado==='entregado').length,
+    novedades:nov.length, motivos,
+    sinRegistro:cli.length-eventos.length,
+    inicio:ini?hh(ini):null, fin:fin?hh(fin):null, jornadaMin, minPorCliente,
+    kmEntreRegistrados:+kmReal.toFixed(1),   // parcial: solo los clientes con hora
+    kmGPS,                                    // el real del vehículo, si Securita lo tiene
+    kmDebio:+kmDebio.toFixed(1), kmPPAS:+kmPPAS.toFixed(1),
+    kmAhorro, fuenteOrden:fuente, saltosAtras, saltoMayor,
+    galones:+(kmAhorro/INF_KM_GALON).toFixed(1),
+    plata:Math.round((kmAhorro/INF_KM_GALON)*INF_PRECIO_GALON),
+    refMinCli, espejo:espejo.slice(0,5), huecos:huecos.slice(0,5),
+    trip, real, debio:debio.map((c,i)=>({...c,pos:i+1})), posOptima,
+    cedi:{lat:CEDI.lat,lng:CEDI.lng},
+    supuestos:{kmGalon:INF_KM_GALON,precioGalon:INF_PRECIO_GALON}
+  };
+}
+
+
+/* La página que se le manda al jefe. Todo va dentro del archivo —estilos, datos y el dibujo—
+   para que abra en cualquier celular sin internet y sin la clave de Google adentro.
+   Los colores y los pines son los MISMOS de la app: rojo pendiente, verde entregado, amarillo
+   novedad, con su ✓ y su «!», para que el jefe vea lo mismo que ve el coordinador en pantalla. */
+const INF_COL={pendiente:'#EA4335',entregado:'#34A853',novedad:'#F9AB00'};
+
+function _infPin(st,num,x,y,esc){
+  const col=INF_COL[st]||INF_COL.pendiente;
+  const txt=st==='entregado'?'\u2713':st==='novedad'?'!':(num>0?String(num):'');
+  const tc=st==='novedad'?'#7A5200':col;
+  const k=esc||1;
+  return '<g transform="translate('+(x-15*k)+','+(y-44*k)+') scale('+k+')">'+
+    '<ellipse cx="15" cy="40" rx="6" ry="2.4" fill="rgba(0,0,0,.25)"/>'+
+    '<path d="M15 2C8.4 2 3 7.4 3 14c0 8.8 10.2 23 11.5 24.7a.65.65 0 0 0 1 0C16.8 37 27 22.8 27 14 27 7.4 21.6 2 15 2z" fill="'+col+'"/>'+
+    '<circle cx="15" cy="14" r="8.5" fill="#fff"/>'+
+    '<text x="15" y="18" text-anchor="middle" font-size="10" font-weight="800" fill="'+tc+'" font-family="system-ui,sans-serif">'+txt+'</text>'+
+    '</g>';
+}
+
+function construirInformeHTML(D){
+  const W=1000,H=680,M=64;
+  const pts=D.debio.filter(c=>c.lat&&c.lng);
+  const las=pts.map(c=>c.lat).concat([D.cedi.lat]), lns=pts.map(c=>c.lng).concat([D.cedi.lng]);
+  const laMin=Math.min.apply(null,las),laMax=Math.max.apply(null,las);
+  const lnMin=Math.min.apply(null,lns),lnMax=Math.max.apply(null,lns);
+  const dLa=(laMax-laMin)||0.001, dLn=(lnMax-lnMin)||0.001;
+  // La latitud crece hacia arriba, la Y de la pantalla hacia abajo: por eso se invierte.
+  const X=lo=>M+((lo-lnMin)/dLn)*(W-2*M);
+  const Y=la=>H-M-((la-laMin)/dLa)*(H-2*M);
+  const cedi={x:X(D.cedi.lng),y:Y(D.cedi.lat)};
+
+  const estadoDe={};
+  D.real.forEach(r=>estadoDe[r.cod]=r.estado==='entregado'?'entregado':'novedad');
+
+  // Trazado del recorrido que DEBIÓ hacerse
+  let lineaDebio='M '+cedi.x+' '+cedi.y;
+  pts.forEach(c=>{lineaDebio+=' L '+X(c.lng).toFixed(1)+' '+Y(c.lat).toFixed(1);});
+  lineaDebio+=' L '+cedi.x+' '+cedi.y;
+
+  // Trazado de lo que REALMENTE se hizo, en el orden de las horas
+  const realPts=D.real.filter(c=>c.lat&&c.lng);
+  let lineaReal='M '+cedi.x+' '+cedi.y;
+  realPts.forEach(c=>{lineaReal+=' L '+X(c.lng).toFixed(1)+' '+Y(c.lat).toFixed(1);});
+
+  const pinsDebio=pts.map((c,i)=>_infPin(estadoDe[c.cod]||'pendiente',i+1,X(c.lng),Y(c.lat),0.62)).join('');
+  const puntosReal=JSON.stringify(realPts.map(c=>({x:+X(c.lng).toFixed(1),y:+Y(c.lat).toFixed(1),
+    n:c.nombre,h:c.hora,st:c.estado,caj:c.caj,pos:D.posOptima[c.cod]||null})));
+  const puntosDebio=JSON.stringify(pts.map((c,i)=>({x:+X(c.lng).toFixed(1),y:+Y(c.lat).toFixed(1),
+    n:c.nombre,pos:i+1,caj:c.caj})));
+
+  const fLarga=(()=>{try{return new Date(D.fecha+'T12:00:00').toLocaleDateString('es-CO',
+    {weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch(e){return D.fecha;}})();
+  const pesos=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
+  const hm=m=>{m=Math.max(0,Math.round(m||0));const h=Math.floor(m/60);return h?h+' h '+String(m%60).padStart(2,'0')+' min':m+' min';};
+
+  // Cuánto habría durado al ritmo de referencia
+  const refMin=D.refMinCli?Math.round(D.refMinCli*D.clientes):null;
+  const finEstimado=(()=>{
+    if(!refMin||!D.inicio)return null;
+    const [hh0,mm0]=D.inicio.split(':').map(Number);
+    const t=hh0*60+mm0+refMin;
+    return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+  })();
+
+  const filasHueco=D.huecos.map(h=>'<tr><td>'+h.desde+' \u2192 '+h.hasta+'</td><td class="n">'+h.min+' min</td>'+
+    '<td>'+h.entre+'</td><td>'+h.y+'</td></tr>').join('');
+  const filasEspejo=D.espejo.map(e=>'<tr><td>'+e.dia+'</td><td><b>'+e.ruta+'</b></td><td class="n">'+e.cli+'</td>'+
+    '<td class="n">'+e.caj+'</td><td class="n">'+hm(e.min)+'</td><td class="n">'+e.minCli+'</td></tr>').join('');
+  const filasMotivo=Object.keys(D.motivos).map(m=>'<tr><td>'+m+'</td><td class="n">'+D.motivos[m]+'</td></tr>').join('');
+  const trip=D.trip.map(t=>t.nombre+' <em>'+(t.rol==='conductor'?'Conductor':'Auxiliar')+'</em>').join(' \u00b7 ');
+
+  return '<!doctype html><html lang="es"><head><meta charset="utf-8">'+
+  '<meta name="viewport" content="width=device-width,initial-scale=1">'+
+  '<title>'+D.ruta+' \u00b7 '+D.fecha+' \u00b7 GMAZ</title><style>'+
+  ':root{--rojo:#E30613;--verde:#0F766E;--amb:#B45309;--tinta:#16181D;--gris:#6B7385;--linea:#E6E9EF;--fondo:#F4F5F9}'+
+  '*{box-sizing:border-box}body{margin:0;background:var(--fondo);color:var(--tinta);'+
+  'font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}'+
+  '.env{max-width:1060px;margin:0 auto;padding:16px}'+
+  'header{background:var(--rojo);color:#fff;padding:20px 18px;border-radius:16px;margin-bottom:14px}'+
+  'header h1{margin:0;font-size:23px;font-weight:900;letter-spacing:-.4px}'+
+  'header .sub{opacity:.9;font-size:12.5px;margin-top:4px}'+
+  '.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}'+
+  '.k{background:#fff;border-radius:13px;padding:13px 15px;border:1px solid var(--linea)}'+
+  '.k b{display:block;font-size:24px;font-weight:900;letter-spacing:-.6px;font-variant-numeric:tabular-nums}'+
+  '.k span{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);margin-top:2px}'+
+  '.k.mal b{color:var(--rojo)}.k.ok b{color:var(--verde)}.k.med b{color:var(--amb)}'+
+  '.card{background:#fff;border-radius:16px;border:1px solid var(--linea);margin-bottom:14px;overflow:hidden}'+
+  '.card h2{margin:0;padding:15px 18px 0;font-size:16px;font-weight:900;letter-spacing:-.3px}'+
+  '.card p.d{margin:4px 18px 12px;font-size:12px;color:var(--gris)}'+
+  '.mapa{position:relative;background:#fff}'+
+  '.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--linea);background:#FAFBFC}'+
+  '.ctrl button{border:1px solid var(--linea);background:#fff;border-radius:9px;padding:8px 13px;'+
+  'font-family:inherit;font-size:12px;font-weight:800;color:var(--tinta);cursor:pointer}'+
+  '.ctrl button.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}'+
+  '.ctrl button.play{background:var(--rojo);color:#fff;border-color:var(--rojo);min-width:104px}'+
+  '.ctrl .sep{flex:1}'+
+  '.ctrl label{font-size:11px;color:var(--gris);font-weight:700}'+
+  'input[type=range]{width:100%;accent-color:var(--rojo)}'+
+  '.barra{padding:10px 18px 14px;border-top:1px solid var(--linea)}'+
+  '.reloj{font-size:13px;font-weight:900;font-variant-numeric:tabular-nums;margin-bottom:6px}'+
+  '.reloj small{font-weight:600;color:var(--gris);font-size:11px;margin-left:8px}'+
+  '.leg{display:flex;flex-wrap:wrap;gap:14px;padding:0 18px 14px;font-size:11px;color:var(--gris)}'+
+  '.leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}'+
+  'table{width:100%;border-collapse:collapse;font-size:12.5px}'+
+  'th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);'+
+  'padding:9px 18px;border-bottom:1px solid var(--linea)}'+
+  'td{padding:9px 18px;border-bottom:1px solid #F2F4F8}'+
+  'td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}'+
+  'tr:last-child td{border-bottom:none}'+
+  '.nota{background:#FFF7ED;border-left:3px solid var(--amb);padding:12px 15px;margin:0 18px 15px;'+
+  'border-radius:0 10px 10px 0;font-size:12px;color:#7A4A08;line-height:1.6}'+
+  '.dest{background:#FFF0F1;border-left:3px solid var(--rojo);padding:13px 16px;margin:0 18px 15px;'+
+  'border-radius:0 10px 10px 0;font-size:13px;line-height:1.6}'+
+  '.dest b{color:var(--rojo)}'+
+  'footer{font-size:11px;color:var(--gris);padding:14px 4px 30px;line-height:1.6}'+
+  '#tip{position:absolute;pointer-events:none;background:rgba(15,17,23,.93);color:#fff;'+
+  'border-radius:9px;padding:7px 10px;font-size:11px;display:none;z-index:9;max-width:220px;line-height:1.4}'+
+  '@media(max-width:640px){header h1{font-size:19px}.k b{font-size:20px}}'+
+  '</style></head><body><div class="env">'+
+
+  '<header><h1>'+D.ruta+' \u00b7 An\u00e1lisis del recorrido</h1>'+
+  '<div class="sub">'+fLarga+' \u00b7 '+D.clientes+' clientes \u00b7 '+D.cajas+' cajas'+
+  (trip?'<br>'+trip:'')+'</div></header>'+
+
+  '<div class="kpis">'+
+    '<div class="k'+(D.jornadaMin>600?' mal':'')+'"><b>'+(D.jornadaMin?hm(D.jornadaMin):'\u2014')+'</b><span>Jornada</span></div>'+
+    '<div class="k"><b>'+(D.inicio||'\u2014')+' \u2013 '+(D.fin||'\u2014')+'</b><span>De / a</span></div>'+
+    '<div class="k'+(D.minPorCliente&&D.refMinCli&&D.minPorCliente>D.refMinCli*1.2?' mal':'')+'"><b>'+
+      (D.minPorCliente||'\u2014')+'</b><span>Min por cliente</span></div>'+
+    '<div class="k'+(D.novedades?' med':'')+'"><b>'+D.novedades+'</b><span>Novedades</span></div>'+
+    '<div class="k'+(D.sinRegistro>D.clientes/2?' mal':'')+'"><b>'+D.sinRegistro+'</b><span>Sin registro</span></div>'+
+  '</div>'+
+
+  '<div class="card"><h2>El recorrido</h2>'+
+  '<p class="d">Los pines son los mismos de GMAZ Rutas: <b>rojo</b> pendiente, <b>verde</b> entregado, '+
+  '<b>amarillo</b> novedad. La l\u00ednea azul es el recorrido que deb\u00eda hacerse; la roja, el que se hizo.</p>'+
+  '<div class="mapa"><div id="tip"></div>'+
+  '<svg id="mapa" viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block">'+
+    '<rect width="'+W+'" height="'+H+'" fill="#F8F9FB"/>'+
+    '<path id="pDebio" d="'+lineaDebio+'" fill="none" stroke="#1A56DB" stroke-width="2.4" '+
+      'stroke-opacity=".55" stroke-linejoin="round" stroke-dasharray="7 5"/>'+
+    '<path id="pReal" d="'+lineaReal+'" fill="none" stroke="'+ '#E30613' +'" stroke-width="3" '+
+      'stroke-opacity=".85" stroke-linejoin="round"/>'+
+    '<g id="gPins">'+pinsDebio+'</g>'+
+    '<g id="gCedi"><circle cx="'+cedi.x+'" cy="'+cedi.y+'" r="13" fill="#0F1117"/>'+
+      '<text x="'+cedi.x+'" y="'+(cedi.y+4)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">C</text>'+
+      '<text x="'+cedi.x+'" y="'+(cedi.y+27)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#0F1117">CEDI</text></g>'+
+    '<g id="gCam" style="display:none">'+
+      '<circle id="camHalo" r="17" fill="#E30613" opacity=".18"/>'+
+      '<circle id="camPto" r="9" fill="#E30613" stroke="#fff" stroke-width="3"/></g>'+
+  '</svg></div>'+
+  '<div class="ctrl">'+
+    '<button class="play" id="bPlay">\u25b6 Reproducir</button>'+
+    '<label>Velocidad</label>'+
+    '<button data-v="0.25" id="v025">Muy lento</button>'+
+    '<button data-v="0.5" class="on" id="v05">Lento</button>'+
+    '<button data-v="1" id="v1">Normal</button>'+
+    '<button data-v="2" id="v2">R\u00e1pido</button>'+
+    '<span class="sep"></span>'+
+    '<button id="bDebio" class="on">Ver el recorrido correcto</button>'+
+    '<button id="bReal" class="on">Ver el que se hizo</button>'+
+  '</div>'+
+  '<div class="barra"><div class="reloj" id="reloj">'+(D.inicio||'\u2014')+'<small id="quien">Toca reproducir para ver el recorrido</small></div>'+
+  '<input type="range" id="barra" min="0" max="'+Math.max(0,realPts.length-1)+'" value="0"></div>'+
+  '<div class="leg"><span><i style="background:'+INF_COL.pendiente+'"></i>Pendiente</span>'+
+    '<span><i style="background:'+INF_COL.entregado+'"></i>Entregado</span>'+
+    '<span><i style="background:'+INF_COL.novedad+'"></i>Novedad</span>'+
+    '<span><i style="background:#1A56DB"></i>Recorrido correcto</span>'+
+    '<span><i style="background:#E30613"></i>Lo que se hizo</span></div></div>'+
+
+  '<div class="card"><h2>Kil\u00f3metros</h2>'+
+  '<p class="d">Comparaci\u00f3n sobre los mismos '+D.clientes+' clientes.</p>'+
+  '<table><tbody>'+
+    '<tr><td>Orden que entregaba la app (secuencia del PPAS)</td><td class="n">'+D.kmPPAS+' km</td></tr>'+
+    '<tr><td>Recorrido ordenado'+(D.fuenteOrden==='google'?' (calles reales de Google)':' (por cercan\u00eda)')+'</td><td class="n">'+D.kmDebio+' km</td></tr>'+
+    '<tr><td><b>Diferencia</b></td><td class="n" style="color:#E30613">'+D.kmAhorro+' km</td></tr>'+
+    (D.kmGPS!=null?'<tr><td>Recorrido real del veh\u00edculo (GPS)</td><td class="n">'+D.kmGPS+' km</td></tr>':'')+
+    '<tr><td>Combustible de esa diferencia <small style="color:#6B7385">('+D.supuestos.kmGalon+' km/gal\u00f3n \u00b7 '+pesos(D.supuestos.precioGalon)+' el gal\u00f3n)</small></td>'+
+      '<td class="n">'+D.galones+' gal \u00b7 '+pesos(D.plata)+'</td></tr>'+
+  '</tbody></table>'+
+  (D.saltosAtras?'<div class="dest">En el recorrido real hubo <b>'+D.saltosAtras+' devueltas</b>: veces en que se fue a un cliente que en el recorrido correcto quedaba antes del que se acababa de atender.'+
+    (D.saltoMayor?' La mayor fue a las '+D.saltoMayor.hora+', retrocediendo <b>'+D.saltoMayor.puestos+' puestos</b>.':'')+'</div>':'')+
+  '</div>'+
+
+  (refMin?'<div class="card"><h2>A qu\u00e9 hora habr\u00eda terminado</h2>'+
+  '<p class="d">Aplicando a esta carga el ritmo de las rutas de carga parecida en los d\u00edas anteriores.</p>'+
+  '<table><tbody>'+
+    '<tr><td>Ritmo de referencia</td><td class="n">'+D.refMinCli+' min por cliente</td></tr>'+
+    '<tr><td>Ritmo de este d\u00eda</td><td class="n"'+(D.minPorCliente>D.refMinCli?' style="color:#E30613"':'')+'>'+(D.minPorCliente||'\u2014')+' min por cliente</td></tr>'+
+    '<tr><td>Duraci\u00f3n al ritmo de referencia</td><td class="n">'+hm(refMin)+'</td></tr>'+
+    '<tr><td><b>Habr\u00eda terminado a las</b></td><td class="n" style="color:#0F766E">'+(finEstimado||'\u2014')+'</td></tr>'+
+    '<tr><td>Termin\u00f3 a las</td><td class="n" style="color:#E30613">'+(D.fin||'\u2014')+'</td></tr>'+
+  '</tbody></table></div>':'')+
+
+  (filasHueco?'<div class="card"><h2>D\u00f3nde se demoraron</h2>'+
+  '<p class="d">Huecos de 45 minutos o m\u00e1s entre un cliente registrado y el siguiente.</p>'+
+  '<table><thead><tr><th>Franja</th><th style="text-align:right">Dur\u00f3</th><th>Desde</th><th>Hasta</th></tr></thead>'+
+  '<tbody>'+filasHueco+'</tbody></table>'+
+  '<div class="nota">Con '+D.sinRegistro+' de '+D.clientes+' clientes sin registrar en la app, estos huecos '+
+  'pueden contener clientes atendidos que nunca se sellaron. No prueban que el cami\u00f3n estuviera quieto.</div></div>':'')+
+
+  (filasEspejo?'<div class="card"><h2>Rutas de carga parecida</h2>'+
+  '<p class="d">Para saber si el problema fue el volumen o el recorrido.</p>'+
+  '<table><thead><tr><th>D\u00eda</th><th>Ruta</th><th style="text-align:right">Clientes</th>'+
+  '<th style="text-align:right">Cajas</th><th style="text-align:right">Dur\u00f3</th><th style="text-align:right">Min/cli</th></tr></thead>'+
+  '<tbody>'+filasEspejo+'</tbody></table></div>':'')+
+
+  (filasMotivo?'<div class="card"><h2>Motivos de las novedades</h2>'+
+  '<table><tbody>'+filasMotivo+'</tbody></table></div>':'')+
+
+  '<footer>Generado por GMAZ Rutas el '+new Date(D.generado).toLocaleString('es-CO')+
+  '.<br>Los datos de clientes, cajas y horas salen de la propia aplicaci\u00f3n. '+
+  'La jornada se mide entre el primer y el \u00faltimo registro del d\u00eda: con '+D.sinRegistro+' clientes sin sellar, '+
+  'puede estar subestimada. El consumo de combustible es una estimaci\u00f3n con los supuestos indicados, no una medici\u00f3n.'+
+  '</footer></div>'+
+
+  '<script>'+
+  'var REAL='+puntosReal+',DEBIO='+puntosDebio+',CEDI={x:'+cedi.x+',y:'+cedi.y+'};'+
+  'var vel=0.5,tocando=false,idx=0,t0=0,anim=null;'+
+  'var svg=document.getElementById("mapa"),gCam=document.getElementById("gCam");'+
+  'var halo=document.getElementById("camHalo"),pto=document.getElementById("camPto");'+
+  'var reloj=document.getElementById("reloj"),quien=document.getElementById("quien");'+
+  'var barra=document.getElementById("barra"),bPlay=document.getElementById("bPlay");'+
+  'function pos(i){return i<0?CEDI:(REAL[i]||CEDI);}'+
+  'function pintar(i,frac){'+
+  ' if(!REAL.length)return;'+
+  ' var a=pos(i-1),b=pos(i),f=frac||0;'+
+  ' var x=a.x+(b.x-a.x)*f,y=a.y+(b.y-a.y)*f;'+
+  ' gCam.style.display="";halo.setAttribute("cx",x);halo.setAttribute("cy",y);'+
+  ' pto.setAttribute("cx",x);pto.setAttribute("cy",y);'+
+  ' var c=REAL[i];if(c){reloj.childNodes[0].nodeValue=c.h+"  ";'+
+  '  quien.textContent=c.n+(c.pos?"  \u00b7  puesto "+c.pos+" en el recorrido correcto":"");}'+
+  '}'+
+  'function paso(ts){'+
+  ' if(!tocando)return;'+
+  ' if(!t0)t0=ts;'+
+  ' var dur=1400/vel;'+                     /* ms por cliente */
+  ' var f=(ts-t0)/dur;'+
+  ' if(f>=1){idx++;t0=ts;f=0;'+
+  '  if(idx>=REAL.length){parar();barra.value=REAL.length-1;pintar(REAL.length-1,1);return;}'+
+  '  barra.value=idx;}'+
+  ' pintar(idx,f);anim=requestAnimationFrame(paso);'+
+  '}'+
+  'function jugar(){if(!REAL.length)return;tocando=true;t0=0;bPlay.textContent="\u23f8 Pausa";anim=requestAnimationFrame(paso);}'+
+  'function parar(){tocando=false;if(anim)cancelAnimationFrame(anim);bPlay.textContent="\u25b6 Reproducir";}'+
+  'bPlay.onclick=function(){if(tocando)parar();else{if(idx>=REAL.length-1){idx=0;barra.value=0;}jugar();}};'+
+  'barra.oninput=function(){parar();idx=+this.value;pintar(idx,1);};'+
+  '["v025","v05","v1","v2"].forEach(function(id){var b=document.getElementById(id);'+
+  ' b.onclick=function(){vel=+b.dataset.v;t0=0;'+
+  '  ["v025","v05","v1","v2"].forEach(function(o){document.getElementById(o).classList.remove("on");});'+
+  '  b.classList.add("on");};});'+
+  'document.getElementById("bDebio").onclick=function(){var p=document.getElementById("pDebio");'+
+  ' var v=p.style.display==="none";p.style.display=v?"":"none";this.classList.toggle("on",v);};'+
+  'document.getElementById("bReal").onclick=function(){var p=document.getElementById("pReal");'+
+  ' var v=p.style.display==="none";p.style.display=v?"":"none";this.classList.toggle("on",v);};'+
+  'var tip=document.getElementById("tip");'+
+  'svg.addEventListener("mousemove",function(e){'+
+  ' var r=svg.getBoundingClientRect(),k='+W+'/r.width;'+
+  ' var mx=(e.clientX-r.left)*k,my=(e.clientY-r.top)*k,mejor=null,md=1e9;'+
+  ' DEBIO.forEach(function(c){var d=(c.x-mx)*(c.x-mx)+(c.y-my)*(c.y-my);if(d<md){md=d;mejor=c;}});'+
+  ' if(mejor&&md<900){tip.style.display="block";tip.style.left=(e.clientX-r.left+12)+"px";'+
+  '  tip.style.top=(e.clientY-r.top+12)+"px";'+
+  '  tip.innerHTML="<b>"+mejor.pos+". "+mejor.n+"</b><br>"+mejor.caj+" cajas";}'+
+  ' else tip.style.display="none";});'+
+  'svg.addEventListener("mouseleave",function(){tip.style.display="none";});'+
+  'if(REAL.length)pintar(0,1);'+
+  '<'+'/script></body></html>';
+}
+
+
+/* Genera el informe y lo entrega como ARCHIVO.
+   Se intentó primero subirlo al Storage para dar un enlace, pero Supabase sirve todo HTML como
+   text/plain y con `Content-Security-Policy: sandbox`: es una defensa deliberada suya para que
+   nadie aloje páginas ejecutables en el bucket, y el informe llegaba en blanco. Así que el archivo
+   se descarga y se manda por WhatsApp como documento adjunto —el jefe lo toca y se abre en su
+   navegador, con la animación y todo, sin instalar nada y sin necesitar señal—. */
+let _infUltimo=null;
+async function generarInformeRuta(ruta,fecha){
+  const F=fecha||fechaCtx();
+  showLoad('Armando el informe de '+ruta+'…');
+  try{
+    const D=await recolectarInforme(ruta,F);
+    if(D.error){ hideLoad(); toast(D.error,'err'); return null; }
+    const html=construirInformeHTML(D);
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    if(_infUltimo&&_infUltimo.url)URL.revokeObjectURL(_infUltimo.url);
+    _infUltimo={D,html,blob,url:URL.createObjectURL(blob),
+      nombre:'Recorrido-'+rutaBase(ruta)+'-'+F+'.html'};
+    hideLoad();
+    _mostrarInformeListo(D);
+    return _infUltimo;
+  }catch(e){ hideLoad(); toast('No se pudo generar: '+e.message,'err'); return null; }
+}
+function _infDescargar(){
+  if(!_infUltimo)return;
+  const a=document.createElement('a');
+  a.href=_infUltimo.url; a.download=_infUltimo.nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('Descargado: '+_infUltimo.nombre,'ok');
+}
+function _infVer(){
+  if(!_infUltimo)return;
+  window.open(_infUltimo.url,'_blank','noopener');
+}
+/* En el celular, compartir directo el archivo: WhatsApp lo recibe como documento. */
+async function _infCompartir(){
+  if(!_infUltimo)return;
+  const f=new File([_infUltimo.blob],_infUltimo.nombre,{type:'text/html'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    try{
+      await navigator.share({files:[f],title:'Recorrido '+_infUltimo.D.ruta,
+        text:'Análisis del recorrido de '+_infUltimo.D.ruta+' — '+_infUltimo.D.fecha});
+      return;
+    }catch(e){ if(e&&e.name==='AbortError')return; }
+  }
+  // En computador no existe compartir archivos: se descarga y se adjunta a mano.
+  _infDescargar();
+  toast('Se descargó el archivo. Adjúntalo en WhatsApp como documento.','ok');
+}
+function _mostrarInformeListo(D){
+  const c=document.getElementById('perm-body');
+  document.querySelector('#perm-card .perm-t').firstChild.textContent='Informe de '+D.ruta+' ';
+  document.querySelector('#perm-card .perm-s').textContent=
+    'Un archivo que se abre en cualquier celular. Se manda por WhatsApp como documento.';
+  const hm=m=>{m=Math.round(m||0);const h=Math.floor(m/60);return h?h+' h '+String(m%60).padStart(2,'0')+' min':m+' min';};
+  const pesos=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
+  c.innerHTML='<div class="perm-i">'+
+    '<div class="perm-g"><span class="perm-et">Lo que va en el informe</span>'+
+      '<div class="perm-p">'+D.clientes+' clientes · '+D.cajas+' cajas · jornada de '+
+        (D.jornadaMin?hm(D.jornadaMin):'—')+'</div>'+
+      '<div class="perm-cargo">'+D.kmAhorro+' km entre el orden viejo y el correcto · '+
+        pesos(D.plata)+' de combustible'+(D.saltosAtras?' · '+D.saltosAtras+' devueltas':'')+'</div></div>'+
+    '<div class="perm-acc">'+
+      '<button class="perm-si" onclick="haptic();_infCompartir()">Mandarlo por WhatsApp</button>'+
+      '<button class="perm-no" onclick="haptic();_infVer()">Abrirlo yo primero</button>'+
+      '<button class="perm-no" onclick="haptic();_infDescargar()">Guardarlo en el computador</button>'+
+    '</div></div>';
+  document.getElementById('perm-ovl').style.display='flex';
+}
 
 /* ══ RECORRIDO POR CALLES REALES (20-ago-2026) ══
    El orden por cercanía mide en línea recta, así que puede poner seguidos dos clientes que están a
