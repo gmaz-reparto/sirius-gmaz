@@ -4924,7 +4924,10 @@ async function cargarDash(){
     // Mapa
     document.getElementById('dash-map-meta').textContent=totCli+' puntos · '+Object.keys(porRuta).length+' rutas';
     await actualizarGeocercas(clientes_); // geocercas listas antes de pintar la flota (no bloquea si ya estaban calculadas)
-    pintarDashMap(clientes_,entSet,novSet);
+    /* El tablero se refresca solo cada treinta segundos con los datos de HOY. Si el coordinador
+       está mirando un día pasado, ese refresco le borraría los puntos de ese día y le devolvería
+       los de hoy sin avisar —a mitad de un análisis, sin haber tocado nada—. */
+    if(fechaCtx()===fecha)pintarDashMap(clientes_,entSet,novSet);
     cargarEventosGeocerca();
     // Cache para que los módulos (Vehículos/Clientes/Rechazos) reutilicen sin nuevas llamadas
     _dashData={clientes_,novedades_,estados_,porRuta,cajasCod,rechCod,entSet,novSet,rutaVend,vendPed,totCli,totEnt,totNov,sinNoticia,cajasProg,cajasEnt,cajasRej,tiempos,
@@ -5999,6 +6002,8 @@ function repintarModuloConFecha(origen){
   const f=fechaCtx();
   try{
     if(m==='operacion'&&origen!=='tc')cargarTorreControl(true,f);
+    // El mapa vive en Operación pero también se mira desde Vehículos: se repinta en los dos.
+    if(m==='operacion'||m==='vehiculos')pintarMapaDeFecha(f).catch(()=>{});
     else if(m==='vehiculos'){ if(_rtPestana==='res'&&origen!=='tc')cargarTorreControl(true,f);
                               else if(origen!=='fl')renderFlota(f,true); }
     else if(m==='rechazos'&&origen!=='nov'&&typeof cargarNovedadesFecha==='function')cargarNovedadesFecha();
@@ -6620,6 +6625,48 @@ function pintarDashMap(clientes_,entSet,novSet){
   aplicarFiltroRutas();
   pintarFlotaEnVivo();
 }
+/* ══ EL MAPA SIGUE LA FECHA ELEGIDA (21-ago-2026) ══
+   `cargarDash()` es la vista en vivo y siempre lee hoy: para eso está. Pero al elegir otro día en
+   el calendario, la tabla, la torre y el recorrido cambiaban y los puntos del mapa se quedaban en
+   los de hoy. Quedaban dos verdades en la misma pantalla —un recorrido del 20 sobre los clientes
+   del 21— y no hay forma de saber, mirándolo, cuál es cuál.
+
+   Los clientes de un día pasado salen del PPAS guardado de ese día; los de hoy, de la tabla viva,
+   que es la única que se actualiza sola cada treinta segundos. */
+let _mapaFechaPintada=null;
+async function pintarMapaDeFecha(f){
+  const fecha=f||fechaCtx();
+  const hoy=getColDate();
+  const meta=document.getElementById('dash-map-meta');
+  if(fecha===hoy){
+    // En vivo: los datos ya los tiene el tablero, no hay que volver a pedirlos.
+    const D=_dashData;
+    if(!D)return;
+    _mapaFechaPintada=null;
+    pintarDashMap(D.clientes_,D.entSet,D.novSet);
+    if(meta)meta.textContent=D.totCli+' puntos · '+Object.keys(D.porRuta).length+' rutas';
+    return;
+  }
+  if(_mapaFechaPintada===fecha)return;      // ya está pintado ese día
+  if(meta)meta.textContent='Cargando los clientes del '+fecha+'…';
+  const cli=(await clientesDeFecha(fecha)).filter(c=>rutaEntrega(c.ruta));
+  const nov=await novedadesDeFecha(fecha);
+  if(!cli.length){
+    if(meta)meta.textContent='Sin PPAS guardado del '+fecha;
+    toast('No hay PPAS guardado del '+fecha+': el mapa no puede mostrar sus clientes','err');
+    return;
+  }
+  const ent=new Set();
+  try{
+    const r=await sb.from('estados_entrega').select('codigo_cliente,estado').eq('fecha',fecha);
+    (r.data||[]).forEach(x=>{if(x.estado==='entregado')ent.add(String(x.codigo_cliente));});
+  }catch(e){}
+  _mapaFechaPintada=fecha;
+  pintarDashMap(cli,ent,nov);
+  const rutas=new Set(cli.map(c=>rutaBase(c.ruta)));
+  if(meta)meta.textContent=cli.length+' puntos · '+rutas.size+' rutas · '+_tcFechaLarga(fecha);
+}
+
 /* ══ Filtro de rutas (mostrar solo las rutas seleccionadas en el mapa) ══ */
 function renderRutasFiltro(rutas){
   const cont=document.getElementById('rutas-filtro');
@@ -7019,6 +7066,16 @@ function dashTruckIcon(ruta,encendido,tipo){
 }
 async function pintarFlotaEnVivo(){
   if(!dashMap)return;
+  /* Los vehículos «en vivo» son dónde está el camión AHORA. Encima de un mapa del 20 de agosto eso
+     no es información, es una trampa: el camión dibujado en una esquina no estuvo ahí ese día, está
+     ahí en este momento. Mirando un día pasado se quitan, y para ver por dónde anduvo ese día está
+     el recorrido, que es lo que corresponde. */
+  if(fechaCtx()!==getColDate()){
+    flotaMarkers.forEach(m=>m.setMap(null)); flotaMarkers=[];
+    const meta=document.getElementById('dash-flota-meta');
+    if(meta)meta.textContent='viendo el '+_tcFechaLarga(fechaCtx())+' · sin posición en vivo';
+    return;
+  }
   try{
     const fecha=getColDate();
     // Asignación vehículo↔ruta de hoy (la elige el conductor en la mañana)
