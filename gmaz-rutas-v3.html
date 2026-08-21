@@ -10294,10 +10294,10 @@ function construirInformeHTML(D){
   '<div class="mapa"><div id="tip"></div>'+
   '<svg id="mapa" viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block">'+
     '<rect width="'+W+'" height="'+H+'" fill="#F8F9FB"/>'+
-    '<path id="pDebio" d="'+lineaDebio+'" fill="none" stroke="#1A56DB" stroke-width="2.4" '+
-      'stroke-opacity=".55" stroke-linejoin="round" stroke-dasharray="7 5"/>'+
-    '<path id="pReal" d="'+lineaReal+'" fill="none" stroke="'+ '#E30613' +'" stroke-width="3" '+
-      'stroke-opacity=".85" stroke-linejoin="round"/>'+
+    '<path id="pDebio" d="'+lineaDebio+'" fill="none" stroke="#1A56DB" stroke-width="3.4" '+
+      'stroke-opacity=".9" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<path id="pReal" d="'+lineaReal+'" fill="none" stroke="#E30613" stroke-width="3.4" '+
+      'stroke-opacity=".9" stroke-linejoin="round" stroke-linecap="round"/>'+
     '<g id="gPins">'+pinsDebio+'</g>'+
     '<g id="gCedi"><circle cx="'+cedi.x+'" cy="'+cedi.y+'" r="13" fill="#0F1117"/>'+
       '<text x="'+cedi.x+'" y="'+(cedi.y+4)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">C</text>'+
@@ -10314,8 +10314,10 @@ function construirInformeHTML(D){
     '<button data-v="1" id="v1">Normal</button>'+
     '<button data-v="2" id="v2">R\u00e1pido</button>'+
     '<span class="sep"></span>'+
-    '<button id="bDebio" class="on">Ver el recorrido correcto</button>'+
-    '<button id="bReal" class="on">Ver el que se hizo</button>'+
+    '<label>Qu\u00e9 ver</label>'+
+    '<button id="vHizo" class="on">Lo que se hizo</button>'+
+    '<button id="vDebia">Lo que deb\u00eda</button>'+
+    '<button id="vAmbos">Los dos</button>'+
   '</div>'+
   '<div class="barra"><div class="reloj" id="reloj">'+(D.inicio||'\u2014')+'<small id="quien">Toca reproducir para ver el recorrido</small></div>'+
   '<input type="range" id="barra" min="0" max="'+Math.max(0,realPts.length-1)+'" value="0"></div>'+
@@ -10323,7 +10325,8 @@ function construirInformeHTML(D){
     '<span><i style="background:'+INF_COL.entregado+'"></i>Entregado</span>'+
     '<span><i style="background:'+INF_COL.novedad+'"></i>Novedad</span>'+
     '<span><i style="background:#1A56DB"></i>Recorrido correcto</span>'+
-    '<span><i style="background:#E30613"></i>Lo que se hizo</span></div></div>'+
+    '<span><i style="background:#E30613"></i>Lo que se hizo</span>'+
+    '<span id="legNota" style="color:#B45309;font-weight:700"></span></div></div>'+
 
   '<div class="card"><h2>Kil\u00f3metros</h2>'+
   '<p class="d">Comparaci\u00f3n sobre los mismos '+D.clientes+' clientes.</p>'+
@@ -10373,19 +10376,28 @@ function construirInformeHTML(D){
 
   '<script>'+
   'var REAL='+puntosReal+',DEBIO='+puntosDebio+',CEDI={x:'+cedi.x+',y:'+cedi.y+'};'+
+  /* La animacion recorre la lista de la vista activa: asi "Lo que debia" no es un dibujo
+     estatico sino el mismo recorrido reproducido en el orden bueno, que es lo que se quiere ver. */
+  'var VISTA="hizo";'+
+  'function lista(){return VISTA==="debia"?DEBIO:REAL;}'+
   'var vel=0.5,tocando=false,idx=0,t0=0,anim=null;'+
   'var svg=document.getElementById("mapa"),gCam=document.getElementById("gCam");'+
   'var halo=document.getElementById("camHalo"),pto=document.getElementById("camPto");'+
   'var reloj=document.getElementById("reloj"),quien=document.getElementById("quien");'+
   'var barra=document.getElementById("barra"),bPlay=document.getElementById("bPlay");'+
-  'function pos(i){return i<0?CEDI:(REAL[i]||CEDI);}'+
+  'function pos(i){var L=lista();return i<0?CEDI:(L[i]||CEDI);}'+
   'function pintar(i,frac){'+
-  ' if(!REAL.length)return;'+
+  ' var L=lista(); if(!L.length)return;'+
   ' var a=pos(i-1),b=pos(i),f=frac||0;'+
   ' var x=a.x+(b.x-a.x)*f,y=a.y+(b.y-a.y)*f;'+
+  ' var col=VISTA==="debia"?"#1A56DB":"#E30613";'+
   ' gCam.style.display="";halo.setAttribute("cx",x);halo.setAttribute("cy",y);'+
+  ' halo.setAttribute("fill",col);pto.setAttribute("fill",col);'+
   ' pto.setAttribute("cx",x);pto.setAttribute("cy",y);'+
-  ' var c=REAL[i];if(c){reloj.childNodes[0].nodeValue=c.h+"  ";'+
+  ' var c=L[i];if(!c)return;'+
+  ' if(VISTA==="debia"){reloj.childNodes[0].nodeValue="Parada "+c.pos+" de "+L.length+"  ";'+
+  '  quien.textContent=c.n+"  \u00b7  "+c.caj+" cajas";}'+
+  ' else{reloj.childNodes[0].nodeValue=(c.h||"")+"  ";'+
   '  quien.textContent=c.n+(c.pos?"  \u00b7  puesto "+c.pos+" en el recorrido correcto":"");}'+
   '}'+
   'function paso(ts){'+
@@ -10393,23 +10405,39 @@ function construirInformeHTML(D){
   ' if(!t0)t0=ts;'+
   ' var dur=1400/vel;'+                     /* ms por cliente */
   ' var f=(ts-t0)/dur;'+
+  ' var L=lista();'+
   ' if(f>=1){idx++;t0=ts;f=0;'+
-  '  if(idx>=REAL.length){parar();barra.value=REAL.length-1;pintar(REAL.length-1,1);return;}'+
+  '  if(idx>=L.length){parar();barra.value=L.length-1;pintar(L.length-1,1);return;}'+
   '  barra.value=idx;}'+
   ' pintar(idx,f);anim=requestAnimationFrame(paso);'+
   '}'+
-  'function jugar(){if(!REAL.length)return;tocando=true;t0=0;bPlay.textContent="\u23f8 Pausa";anim=requestAnimationFrame(paso);}'+
+  'function jugar(){if(!lista().length)return;tocando=true;t0=0;bPlay.textContent="\u23f8 Pausa";anim=requestAnimationFrame(paso);}'+
   'function parar(){tocando=false;if(anim)cancelAnimationFrame(anim);bPlay.textContent="\u25b6 Reproducir";}'+
-  'bPlay.onclick=function(){if(tocando)parar();else{if(idx>=REAL.length-1){idx=0;barra.value=0;}jugar();}};'+
+  'bPlay.onclick=function(){if(tocando)parar();else{if(idx>=lista().length-1){idx=0;barra.value=0;}jugar();}};'+
   'barra.oninput=function(){parar();idx=+this.value;pintar(idx,1);};'+
   '["v025","v05","v1","v2"].forEach(function(id){var b=document.getElementById(id);'+
   ' b.onclick=function(){vel=+b.dataset.v;t0=0;'+
   '  ["v025","v05","v1","v2"].forEach(function(o){document.getElementById(o).classList.remove("on");});'+
   '  b.classList.add("on");};});'+
-  'document.getElementById("bDebio").onclick=function(){var p=document.getElementById("pDebio");'+
-  ' var v=p.style.display==="none";p.style.display=v?"":"none";this.classList.toggle("on",v);};'+
-  'document.getElementById("bReal").onclick=function(){var p=document.getElementById("pReal");'+
-  ' var v=p.style.display==="none";p.style.display=v?"":"none";this.classList.toggle("on",v);};'+
+  'function verVista(v){'+
+  ' parar(); idx=0; t0=0;'+
+  ' VISTA=(v==="ambos")?"hizo":v;'+
+  ' var pD=document.getElementById("pDebio"),pR=document.getElementById("pReal");'+
+  ' pD.style.display=(v==="hizo")?"none":"";'+
+  ' pR.style.display=(v==="debia")?"none":"";'+
+  ' pD.setAttribute("stroke-dasharray",v==="ambos"?"8 6":"none");'+
+  ' ["vHizo","vDebia","vAmbos"].forEach(function(id){document.getElementById(id).classList.remove("on");});'+
+  ' document.getElementById(v==="hizo"?"vHizo":v==="debia"?"vDebia":"vAmbos").classList.add("on");'+
+  ' var L=lista(); barra.max=Math.max(0,L.length-1); barra.value=0;'+
+  ' var nota=document.getElementById("legNota");'+
+  ' nota.textContent=(v==="debia")?("Reproduce el recorrido correcto \u00b7 "+DEBIO.length+" paradas"):'+
+  '   (v==="hizo")?("Reproduce lo que se hizo \u00b7 "+REAL.length+" clientes con hora"):'+
+  '   "Los dos encima \u00b7 se reproduce lo que se hizo";'+
+  ' pintar(0,1);'+
+  '}'+
+  'document.getElementById("vHizo").onclick=function(){verVista("hizo");};'+
+  'document.getElementById("vDebia").onclick=function(){verVista("debia");};'+
+  'document.getElementById("vAmbos").onclick=function(){verVista("ambos");};'+
   'var tip=document.getElementById("tip");'+
   'svg.addEventListener("mousemove",function(e){'+
   ' var r=svg.getBoundingClientRect(),k='+W+'/r.width;'+
@@ -10420,7 +10448,7 @@ function construirInformeHTML(D){
   '  tip.innerHTML="<b>"+mejor.pos+". "+mejor.n+"</b><br>"+mejor.caj+" cajas";}'+
   ' else tip.style.display="none";});'+
   'svg.addEventListener("mouseleave",function(){tip.style.display="none";});'+
-  'if(REAL.length)pintar(0,1);'+
+  'verVista("hizo");'+
   '<'+'/script></body></html>';
 }
 
