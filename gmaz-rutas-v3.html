@@ -5672,14 +5672,18 @@ function _tcFila(x,i){
   const resp=orden.length
     ? '<div class="tc-crew">'+orden.map((pp,j)=>{
         const esCond=pp.rol==='conductor';
+        /* El mando —coordinador y supervisores— no es tripulación: sube a supervisar, no a repartir.
+           Ofrecerle el botón de «pasar a conductor» no tiene sentido, y peor aún, pintarlo como
+           auxiliar dice que va de apoyo del entregador, que es exactamente lo contrario. */
+        const esMandoP=_filaEsMando(pp.rol,pp.ced);
         const otro=esCond?'auxiliar':'conductor';
         return '<span class="tc-cm" title="'+pp.nombre+(pp.ced?' · C.C. '+pp.ced:'')+(pp.hora?' · registrado '+new Date(pp.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):'')+'">'+
           '<span class="tc-av mini" style="background:'+_tcAvatarCol[(i+j)%_tcAvatarCol.length]+'">'+_tcIniciales(pp.nombre)+'</span>'+
-          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em>'+(esCond?'Conductor':'Auxiliar')+
+          '<span class="tc-cn"><b>'+_nomCorto(pp.nombre)+'</b><em'+(esMandoP?' style="color:#4F46E5;font-weight:800"':'')+'>'+_etiquetaRol(pp.rol,pp.ced)+
             (pp.origen==='sistema'?' · <span style="color:#1A56DB">del vehículo</span>':'')+
             (pp.reemplazo?' · <span style="color:#B45309">reemplazo</span>':'')+'</em></span>'+
-          '<button class="tc-rol" onclick="event.stopPropagation();cambiarRolTripulante(\''+x.ruta+'\',\''+pp.ced+'\',\''+otro+'\')" '+
-            'title="Pasar a '+(esCond?'auxiliar':'conductor')+'">'+(esCond?'→ aux':'→ cond')+'</button>'+
+          (esMandoP?'':'<button class="tc-rol" onclick="event.stopPropagation();cambiarRolTripulante(\''+x.ruta+'\',\''+pp.ced+'\',\''+otro+'\')" '+
+            'title="Pasar a '+(esCond?'auxiliar':'conductor')+'">'+(esCond?'→ aux':'→ cond')+'</button>')+
         '</span>';
       }).join('')+
       '</div>'
@@ -8425,7 +8429,7 @@ async function flAbrir(i,ruta,ev){
                  :['lo pusiste tú','var(--amarillo)'];
           return '<span class="perf '+(p.rol==='conductor'?'cond':'')+'"><span class="perf-av '+(p.rol==='conductor'?'c':'a')+'">'+
           _tcIniciales(p.nombre)+'</span><span class="perf-t"><b>'+_nomCorto(p.nombre,3)+'</b><em>'+
-          (p.rol==='conductor'?'Conductor':'Auxiliar')+' · C.C. '+(p.ced||'—')+
+          _etiquetaRol(p.rol,p.ced)+' · C.C. '+(p.ced||'—')+
           '</em><em style="color:'+o[1]+'">'+o[0]+(p.hora?' · '+hh(p.hora):'')+'</em></span></span>';}).join('')+'</div>'
           :'<div class="fl-nada">Nadie quedó registrado en esta ruta ese día</div>')+
       '</div>'+
@@ -9117,12 +9121,25 @@ function designacionDe(ruta,ced){
   return designadosDe(ruta).find(x=>String(x.ced)===String(ced))||null;
 }
 /* El coordinador entra a cualquier ruta con su cédula: es su llave maestra. */
-/* Cómo se llama cada rol en pantalla. Antes estaba escrito a mano en el aviso del registro y
-   cualquier rol nuevo salía como «Auxiliar», que para un supervisor es sencillamente falso. */
-function _etiquetaRol(r){
-  return r==='conductor'?'Conductor'
-    :r==='coordinador'?'Coordinador'
+/* ══ CÓMO SE LLAMA CADA ROL EN PANTALLA ══
+   Estaba escrito a mano en trece sitios como «si no es conductor, auxiliar», así que el coordinador
+   salía en el tablero de la operación como AUXILIAR de las rutas que iba a supervisar —justo lo
+   contrario de lo que hacía ahí—.
+
+   La cédula manda sobre lo que se guardó ese día. Y no es solo para arreglar los registros viejos
+   sin migrar archivos: el cargo de una persona es un dato del maestro, no algo que se decida al
+   sellar una ruta. Lo único que gana al rol guardado es «conductor», porque eso sí es del día: un
+   supervisor puede tener que manejar un camión una mañana, y ese día fue el conductor. */
+function _etiquetaRol(r,ced){
+  if(r==='conductor')return 'Conductor';
+  if(ced&&esMando(ced))return esCoordinador(ced)?'Coordinador':'Supervisor';
+  return r==='coordinador'?'Coordinador'
     :r==='supervisor'?'Supervisor':'Auxiliar';
+}
+/* ¿Hay que tratar a esta fila como mando? Por cédula si se tiene, si no por el rol guardado. */
+function _filaEsMando(rol,ced){
+  if(rol==='conductor')return false;
+  return ced?esMando(ced):(rol==='coordinador'||rol==='supervisor');
 }
 function esCoordinador(ced){
   const e=EMPLEADOS_ASIS.find(x=>String(x[1])===String(ced));
@@ -10115,7 +10132,7 @@ function _audCampoObjetivo(){
   return '<span class="au-oe">Persona auditada</span><select class="au-sel" onchange="_audPersona(this.value)">'+
     '<option value="">— escoge a quién —</option>'+gente.map(g=>
       '<option value="'+g.ced+'"'+((ctx.ced===g.ced)?' selected':'')+'>'+g.nombre+' · '+g.ruta+' · '+
-      (g.rol==='conductor'?'Conductor':'Auxiliar')+'</option>').join('')+'</select>'+
+      _etiquetaRol(g.rol,g.ced)+'</option>').join('')+'</select>'+
     (gente.length?'':'<div class="au-om">Nadie designado hoy. Designa la tripulación primero.</div>');
 }
 function _audPersona(ced){
@@ -11025,7 +11042,7 @@ async function construirInformeHTML(D,avisar){
   const filasEspejo=D.espejo.map(e=>'<tr><td>'+e.dia+'</td><td><b>'+e.ruta+'</b></td><td class="n">'+e.cli+'</td>'+
     '<td class="n">'+e.caj+'</td><td class="n">'+hm(e.min)+'</td><td class="n">'+e.minCli+'</td></tr>').join('');
   const filasMotivo=Object.keys(D.motivos).map(m=>'<tr><td>'+m+'</td><td class="n">'+D.motivos[m]+'</td></tr>').join('');
-  const trip=D.trip.map(t=>t.nombre+' <em>'+(t.rol==='conductor'?'Conductor':'Auxiliar')+'</em>').join(' \u00b7 ');
+  const trip=D.trip.map(t=>t.nombre+' <em>'+_etiquetaRol(t.rol,t.ced)+'</em>').join(' \u00b7 ');
 
   return '<!doctype html><html lang="es"><head><meta charset="utf-8">'+
   '<meta name="viewport" content="width=device-width,initial-scale=1">'+
@@ -11722,7 +11739,7 @@ function verPermisosPendientes(){
       '<div class="perm-h"><b>'+x.ruta+'</b><span>'+hora+' · hace '+desde+' min</span></div>'+
       '<div class="perm-g"><span class="perm-et">Usted designó</span>'+
         (x.designados&&x.designados.length
-          ? x.designados.map(d=>'<div class="perm-p">'+d.nombre+' <em>'+(d.rol==='conductor'?'Conductor':'Auxiliar')+'</em></div>').join('')
+          ? x.designados.map(d=>'<div class="perm-p">'+d.nombre+' <em>'+_etiquetaRol(d.rol,d.ced)+'</em></div>').join('')
           : '<div class="perm-p perm-nadie">Nadie designado en esta ruta</div>')+'</div>'+
       '<div class="perm-g"><span class="perm-et">Está pidiendo entrar</span>'+
         '<div class="perm-p"><b>'+x.nombre+'</b> <em>C.C. '+x.ced+'</em></div>'+
@@ -11765,7 +11782,7 @@ function mostrarBloqueoRuta(ruta,persona){
   const q=document.getElementById('epb-quien');
   q.innerHTML=des.length
     ? 'Esta ruta la tienen asignada:<br>'+des.map(d=>'<b>'+d.nombre+'</b> · '+
-        (d.rol==='conductor'?'Conductor':'Auxiliar')).join('<br>')
+        _etiquetaRol(d.rol,d.ced)).join('<br>')
     : 'El coordinador todavía no ha designado a nadie en esta ruta.';
   document.getElementById('epb-espera').style.display='none';
   const b=document.getElementById('epb-pedir');
@@ -11841,7 +11858,7 @@ function agregarTripulanteTarde(){
   if(!due){pedirTripulacion(rutaActual,()=>{});return;}
   const reg=_registroHoy(rutaActual);
   if(!reg){pedirTripulacion(rutaActual,()=>{});return;}
-  const rolTxt=(reg.rol==='conductor'?'Conductor':'Auxiliar');
+  const rolTxt=_etiquetaRol(reg.rol,reg.ced);
   alert('Registrado hoy en '+rutaActual+'\n\n'+
         reg.nombre+'\nC.C. '+(reg.ced||'—')+'\nRol: '+rolTxt+'\n\n'+
         'Si el rol quedó mal, NO se cambia desde el celular: comunícate con el coordinador para que lo corrija en su panel.');
@@ -12677,7 +12694,7 @@ function startNovedad(){
     if(_novReportero){
       wrapRep.style.display='';
       document.getElementById('ns-reportero-chips').innerHTML=
-        '<div class="ep-chip ep-chip-yo"><b>'+_novReportero.nombre+'</b><span>'+(_novReportero.rol==='conductor'?'Conductor':'Auxiliar')+' · esta novedad queda a tu nombre</span></div>';
+        '<div class="ep-chip ep-chip-yo"><b>'+_novReportero.nombre+'</b><span>'+_etiquetaRol(_novReportero.rol,_novReportero.ced)+' · esta novedad queda a tu nombre</span></div>';
     }else{
       wrapRep.style.display='none';
     }
@@ -12854,7 +12871,7 @@ async function submitNovedad(){
     // 4. Construir mensaje WhatsApp — con quién reporta (nombre + cédula), acordado con el
     // coordinador el 2026-08-04: antes el mensaje no decía quién de la tripulación lo enviaba.
     const reportero=_novReportero||_tripulacionPrincipal(rutaActual);
-    const rolTxt=reportero&&reportero.rol==='conductor'?'Conductor':'Auxiliar';
+    const rolTxt=_etiquetaRol(reportero&&reportero.rol,reportero&&reportero.ced);
     const fechaFmt=new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
     const horaFmt=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:true});
     const div='━━━━━━━━━━━━━━━━━━';
@@ -14077,7 +14094,12 @@ async function cargarEntregadores(mesSel,fondo){
       const p=get(nom);
       if(r.ced)p.ced=r.ced;
       if(r.cargo)p.cargo=r.cargo;
-      if(r.rol==='conductor')p.rol='Conductor'; else if(!p.rol)p.rol='Auxiliar';
+      /* El coordinador aparece en muchas rutas porque las supervisa. Contarlo como auxiliar lo
+         mete en el ranking de productividad de los entregadores, compitiendo con gente que sí
+         repartió —y encabezándolo, por salir en todas—. Su rol real manda sobre el de la fila. */
+      if(r.rol==='conductor')p.rol='Conductor';
+      else if(_filaEsMando(r.rol,r.ced))p.rol=_etiquetaRol(r.rol,r.ced);
+      else if(!p.rol)p.rol='Auxiliar';
       p.dias.add(r.fecha); p.rutas.add(r.ruta);
       const k=r.fecha+'|'+r.ruta;
       if(p.rd.has(k))return;                 // la misma ruta el mismo día no se cuenta dos veces
@@ -14340,7 +14362,7 @@ async function cargarTripulacionHoy(){
       const personas=reg[r]||[];
       if(!personas.length){filas.push({ruta:r,nombre:null,cargo:'',rol:'',hora:''});return;}
       personas.forEach(p=>filas.push({ruta:r,nombre:p.nombre,cargo:p.cargo,
-        rol:p.rol==='conductor'?'Conductor':'Auxiliar',
+        rol:_etiquetaRol(p.rol,p.ced),
         hora:p.hora?new Date(p.hora).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false}):''}));
     });
     if(!filas.length){
