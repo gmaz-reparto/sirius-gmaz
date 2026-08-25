@@ -8848,11 +8848,17 @@ function _flRepintarFila(ruta){
   if(!tr)return;
   const abierta=det&&det.style.display!=='none';
   const tmp=document.createElement('tbody');
-  tmp.innerHTML=_flFila(ruta,i,window._flUso||{},window._flEsHoy!==false);
+  /* La clave puede ser una ruta o una placa —los vehículos sin ruta se registran contra su placa—,
+     y cada una se arma con su propio constructor. Con el de ruta, una placa produce una fila con
+     «sin placa» y sin cifras: la asignación sí se guarda, pero en pantalla parece que no pasó nada. */
+  const veh=(_vehCache||[]).find(v=>v.nombre===ruta);
+  tmp.innerHTML=veh
+    ? _flFilaSinRuta(veh,window._flEsHoy!==false,i)
+    : _flFila(ruta,i,window._flUso||{},window._flEsHoy!==false);
   const nuevos=[...tmp.children];
   if(det)det.remove();
   tr.replaceWith(...nuevos);
-  if(abierta)flAbrir(i,ruta,{target:document.body});
+  if(abierta&&!veh)flAbrir(i,ruta,{target:document.body});
   // los km ya calculados se vuelven a pintar sin consultar de nuevo
   const unit=_asigPorRuta[ruta];
   if(unit){const km=((_kmPorFecha[_flotaFecha||getColDate()]||{})[unit]);
