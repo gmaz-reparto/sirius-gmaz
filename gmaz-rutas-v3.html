@@ -8994,6 +8994,17 @@ async function quitarTripulante(ruta,ced){
 async function guardarAsignacionRuta(sel){
   const ruta=sel.dataset.ruta,unitId=sel.value;
   haptic();
+  /* ══ UNA PLACA NO PUEDE SER UNA RUTA (25-ago-2026) ══
+     El 25 de agosto quedaron en la base «GIM382 → GIM382» y «GIM386 → GIM386». Se veía inofensivo
+     —salía una fila de más— pero rompía el filtro del mapa sin decir nada: el marcador del camión
+     quedaba etiquetado con la ruta «GIM382», que no tiene chip, así que al filtrar KA4V03
+     desaparecía y solo reaparecía con «Todas». Un dato mal puesto que se manifiesta tres pantallas
+     más allá y no se parece a su causa.
+     Aquí se corta: la ruta tiene que ser una ruta de la operación, no el nombre de un vehículo. */
+  if(ruta&&(_vehCache||[]).some(v=>v.nombre===ruta)){
+    toast('«'+ruta+'» es una placa, no una ruta. Asigna el vehículo desde la fila de su ruta.','err');
+    return;
+  }
   if(!unitId){
     // Quitar asignación
     try{
