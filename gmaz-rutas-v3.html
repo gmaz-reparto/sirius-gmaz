@@ -6463,7 +6463,7 @@ function pasaFiltroRuta(r){const f=rutaFiltrada();return !f||String(r||'')===f;}
 function filtrarPorRutaSel(ruta){
   rutasVisibles=ruta?new Set([ruta]):null;
   try{localStorage.setItem('gmaz_filRuta',ruta||'');}catch(e){}
-  if(typeof renderRutasFiltro==='function')renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort());
+  if(typeof renderRutasFiltro==='function')renderRutasFiltro();
   if(typeof aplicarFiltroRutas==='function')aplicarFiltroRutas();
   // Refrescar el módulo abierto para que respete el filtro, sin sacar al usuario de donde está
   const act=document.querySelector('.dnav.on');
@@ -6675,13 +6675,7 @@ function pintarDashMap(clientes_,entSet,novSet){
     dashMarkers.push(mk);
     (dashMarkersPorRuta[c.ruta]=dashMarkersPorRuta[c.ruta]||[]).push(mk);
   });
-  /* Los chips del filtro salían solo de las rutas CON CLIENTES en el mapa. Una ruta de autoventa
-     no tiene clientes —vende sobre el camión—, así que no tenía chip y no había forma de aislarla
-     para ver por dónde anduvo. Se suman las que tienen vehículo asignado y las de autoventa. */
-  const conVehiculo=Object.keys(_asigPorRuta||{}).filter(r=>rutaApp(r));
-  renderRutasFiltro([...new Set([
-    ...Object.keys(dashMarkersPorRuta), ...conVehiculo, ...RUTAS_AUTOVENTA
-  ])].sort());
+  renderRutasFiltro();
   aplicarFiltroRutas();
   pintarFlotaEnVivo();
 }
@@ -6731,7 +6725,24 @@ async function pintarMapaDeFecha(f){
 }
 
 /* ══ Filtro de rutas (mostrar solo las rutas seleccionadas en el mapa) ══ */
+/* ══ QUÉ RUTAS SALEN EN EL FILTRO DEL MAPA (25-ago-2026) ══
+   Esta lista estaba escrita cuatro veces —en `pintarDashMap`, en `filtrarPorRutaSel`, en
+   `filtroTodas` y en `toggleRutaFiltro`— y tres de las cuatro decían `Object.keys(dashMarkersPorRuta)`,
+   que son las rutas CON CLIENTES en el mapa. Se arregló una sola y las otras tres la volvían a
+   pisar: los chips de KA4V03 y KA4V04 aparecían un instante y al primer toque desaparecían, aunque
+   sus camiones se estuvieran viendo.
+
+   Una ruta merece chip si tiene clientes, o vehículo asignado, o es de autoventa —que no lleva
+   clientes por definición: vende sobre el camión—. Ahora se calcula aquí y los cuatro preguntan. */
+function rutasDelMapa(){
+  return [...new Set([
+    ...Object.keys(dashMarkersPorRuta||{}),
+    ...Object.keys(_asigPorRuta||{}).filter(r=>rutaApp(r)),
+    ...RUTAS_AUTOVENTA
+  ])].sort();
+}
 function renderRutasFiltro(rutas){
+  rutas=rutas||rutasDelMapa();
   const cont=document.getElementById('rutas-filtro');
   if(!cont)return;
   const todasOn=!rutasVisibles||rutasVisibles.size===rutas.length;
@@ -6744,21 +6755,21 @@ function renderRutasFiltro(rutas){
   cont.innerHTML=h;
 }
 function filtroTodas(){
-  const todas=Object.keys(dashMarkersPorRuta);
+  const todas=rutasDelMapa();
   const todasOn=!rutasVisibles||rutasVisibles.size===todas.length;
   rutasVisibles=todasOn?new Set():null; // si están todas → apagar todas; si no → encender todas
-  renderRutasFiltro(todas.sort());
+  renderRutasFiltro(todas);
   aplicarFiltroRutas();
 }
 function toggleRutaFiltro(r){
-  const todas=Object.keys(dashMarkersPorRuta);
+  const todas=rutasDelMapa();
   if(!rutasVisibles){
     rutasVisibles=new Set([r]); // estaban todas → aislar SOLO la ruta tocada
   }else{
     if(rutasVisibles.has(r))rutasVisibles.delete(r);else rutasVisibles.add(r); // agregar/quitar de la selección
     if(rutasVisibles.size===todas.length)rutasVisibles=null; // si quedaron todas → volver a "todas"
   }
-  renderRutasFiltro(todas.sort());
+  renderRutasFiltro(todas);
   aplicarFiltroRutas();
 }
 function rutaVisible(r){ return !rutasVisibles||rutasVisibles.has(r); }
@@ -8122,15 +8133,22 @@ async function renderFlota(fechaSel,forzar,silencioso){
     /* Las de autoventa van SIEMPRE, tengan o no movimiento ese día. No traen cargue ni lista de
        clientes —por eso no aparecían por ninguna de las tres vías de arriba—, pero son rutas de la
        operación: llevan placa, tripulación y GPS como cualquier otra. Sin esto, sus vehículos
-       caían al cajón de «sin ruta» y no había dónde asignarles la ruta que sí tienen. */
+       caían al cajón de «sin ruta» y no había dónde asignarles la ruta que sí tienen.
+
+       Y una PLACA no es una ruta. Al dejar que los vehículos sin ruta se registraran contra su
+       placa quedó en la base la asignación «GIM382 → GIM382», que aquí se leía como una ruta
+       llamada GIM382: salía una fila fantasma con la placa de badge, y el vehículo desaparecía de
+       la lista de «sin ruta» porque figuraba como asignado. Se descartan; la tripulación que se
+       haya guardado contra la placa la sigue mostrando su propia fila. */
+    const esPlaca=r=>(_vehCache||[]).some(v=>v.nombre===r);
     const rutas=[...new Set([
       ...(Object.keys(_flotaDia.porRuta).length
         ? [...Object.keys(_flotaDia.porRuta),...Object.keys(_asigPorRuta)]
         : [...Object.keys(_asigPorRuta),...Object.keys(_flotaDia.hojas)]),
       ...RUTAS_AUTOVENTA
-    ])].sort();
-    const usoUnit={};Object.values(_asigPorRuta).forEach(u=>usoUnit[u]=(usoUnit[u]||0)+1);
-    const asignados=new Set(Object.values(_asigPorRuta));
+    ])].filter(r=>!esPlaca(r)).sort();
+    const usoUnit={};Object.entries(_asigPorRuta).forEach(([r,u])=>{if(!esPlaca(r))usoUnit[u]=(usoUnit[u]||0)+1;});
+    const asignados=new Set(Object.entries(_asigPorRuta).filter(([r])=>!esPlaca(r)).map(([,u])=>u));
     const sinRuta=(_vehCache||[]).filter(v=>!asignados.has(v.nombre))
       .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
     /* Las placas sin ruta entran al mismo índice: sin esto, `_flRepintarFila(placa)` no encuentra
