@@ -4463,7 +4463,26 @@ async function restaurarEstadosDia(){
 }
 
 /* ══ PALETA POR RUTA + HELPERS VISUALES ══ */
-const PALETA=['#E30613','#2563EB','#0E9F6E','#D97706','#7C3AED','#0891B2','#DB2777','#65A30D','#EA580C','#475569'];
+/* Doce colores para doce rutas. Con diez, KA4V03 y KA4V04 —las de autoventa, que son las dos
+   últimas de la lista— daban la vuelta y repetían el rojo de KA4V11 y el azul de KA4V12: en el mapa
+   quedaban indistinguibles justo de las dos rutas más cargadas. Los dos últimos son tonos oscuros
+   a propósito, para que autoventa se lea distinta de un vistazo. */
+const PALETA=['#E30613','#2563EB','#0E9F6E','#D97706','#7C3AED','#0891B2','#DB2777','#65A30D','#EA580C','#475569',
+  '#7C2D12','#1E3A8A'];
+/* ══ EL COLOR DE UNA RUTA NO PUEDE CAMBIAR DE UN DÍa A OTRO (25-ago-2026) ══
+   Se repartía la paleta sobre las rutas QUE TENÍAN CLIENTES ese día, por orden. Así que el día que
+   una ruta no salía, todas las siguientes corrían un color: la V51 era azul el lunes y verde el
+   martes. En un mapa donde el color es lo único que distingue una ruta de otra, eso obliga a leer
+   la leyenda cada vez.
+   Ahora el color sale de la posición fija de la ruta en RUTAS_APP, salga o no salga ese día. Y las
+   de autoventa —KA4V03 y KA4V04— entran en el mismo reparto: son rutas de la operación aunque no
+   lleven cargue ni lista de clientes. */
+function colorDeRuta(r){
+  const b=rutaBase(r);
+  const i=RUTAS_APP.indexOf(b);
+  if(i>=0)return PALETA[i%PALETA.length];
+  return rutaColor[b]||'#4A5060';
+}
 let rutaColor={};
 let DASH_RUTAS=null;
 const ICONS={
@@ -6650,13 +6669,19 @@ function pintarDashMap(clientes_,entSet,novSet){
     const estado=esNov?'novedad':'entregado';
     // Punto del color de su RUTA (igual que el camión); rechazos con anillo rojo para que resalten
     const mk=new google.maps.Marker({position:{lat,lng},
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:esNov?7:5.5,fillColor:rutaColor[c.ruta]||'#E30613',fillOpacity:.95,strokeColor:esNov?'#E30613':'#fff',strokeWeight:esNov?3:1.5}});
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:esNov?7:5.5,fillColor:colorDeRuta(c.ruta),fillOpacity:.95,strokeColor:esNov?'#E30613':'#fff',strokeWeight:esNov?3:1.5}});
     mk._ruta=c.ruta;
     mk.addListener('click',()=>{dashIW.setContent(iwClienteHTML(c,estado));dashIW.open(dashMap,mk);});
     dashMarkers.push(mk);
     (dashMarkersPorRuta[c.ruta]=dashMarkersPorRuta[c.ruta]||[]).push(mk);
   });
-  renderRutasFiltro(Object.keys(dashMarkersPorRuta).sort());
+  /* Los chips del filtro salían solo de las rutas CON CLIENTES en el mapa. Una ruta de autoventa
+     no tiene clientes —vende sobre el camión—, así que no tenía chip y no había forma de aislarla
+     para ver por dónde anduvo. Se suman las que tienen vehículo asignado y las de autoventa. */
+  const conVehiculo=Object.keys(_asigPorRuta||{}).filter(r=>rutaApp(r));
+  renderRutasFiltro([...new Set([
+    ...Object.keys(dashMarkersPorRuta), ...conVehiculo, ...RUTAS_AUTOVENTA
+  ])].sort());
   aplicarFiltroRutas();
   pintarFlotaEnVivo();
 }
@@ -6712,7 +6737,7 @@ function renderRutasFiltro(rutas){
   const todasOn=!rutasVisibles||rutasVisibles.size===rutas.length;
   let h='<span class="rfil-chip all'+(todasOn?'':' off')+'" onclick="haptic();filtroTodas()">'+(todasOn?'✓ ':'')+'Todas</span>';
   rutas.forEach(r=>{
-    const col=rutaColor[r]||'#E30613';
+    const col=colorDeRuta(r);
     const on=!rutasVisibles||rutasVisibles.has(r);
     h+='<span class="rfil-chip'+(on?'':' off')+'" onclick="haptic();toggleRutaFiltro(\''+r+'\')"><span class="rfdot" style="background:'+col+'"></span>'+r+'</span>';
   });
@@ -7153,7 +7178,7 @@ async function pintarFlotaEnVivo(){
     // Marcadores + filas de lista, en el orden de las rutas asignadas
     Object.keys(rutasPorUnit).sort((a,b)=>rutasPorUnit[a][0].localeCompare(rutasPorUnit[b][0])).forEach(unitId=>{
       const rutas=rutasPorUnit[unitId], ruta=rutas[0], label=rutas.join(' + '), u=posPorUnit[unitId];
-      const col=rutaColor[ruta]||'#E30613';
+      const col=colorDeRuta(ruta);
       const veh=_vehCache.find(v=>v.nombre===unitId);
       const conductor=veh?(_driverCache.find(d=>String(d.idvehiculo)===String(veh.id))||null):null;
       const nombreCond=conductor?(conductor.nombre+' '+(conductor.apellido||'')).trim():'';
@@ -7424,7 +7449,7 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     if(descartados>0)toast('⚠ '+descartados+' punto(s) GPS erróneo(s) omitido(s) (equipo reportó fuera de zona)','ok');
     const path=ord.map(p=>({lat:parseFloat(p.latitud),lng:parseFloat(p.longitud)})).filter(p=>p.lat&&p.lng);
     if(!path.length){toast('Recorrido sin coordenadas válidas','err');_recorridoAbierto=false;return;}
-    const col=rutaColor[ruta]||'#1A56DB';
+    const col=colorDeRuta(ruta);
     const overlays=[];
     overlays.push(new google.maps.Polyline({path,map:dashMap,strokeColor:col,strokeOpacity:.72,strokeWeight:4,zIndex:1400}));
     overlays.push(new google.maps.Marker({position:path[0],map:dashMap,zIndex:1900,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},title:'Inicio '+((ord[0].hora||'').slice(0,5))}));
@@ -7483,7 +7508,7 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
 }
 function mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord,met){
   const p=document.getElementById('rec-panel');if(!p)return;
-  const col=rutaColor[ruta]||'#1A56DB';
+  const col=colorDeRuta(ruta);
   /* Sin ruta el título salía como « · GIM382», con el punto colgando de la nada. */
   document.getElementById('rp-titulo').innerHTML='<span style="color:'+col+'">'+
     (ruta?ruta+' · '+unitId:unitId+' <small style="font-weight:600;color:#8A90A0">sin ruta</small>')+'</span>';
@@ -7998,7 +8023,10 @@ async function loadRoutes(){
     const grid=document.getElementById('routes-grid');
     grid.innerHTML='';
     const codes=Object.keys(rutas).sort();
-    codes.forEach((code,ix)=>{rutaColor[code]=PALETA[ix%PALETA.length];});
+    // Las de la operación llevan su color fijo; una ruta rara que aparezca toma el que le toque.
+    RUTAS_APP.forEach(r=>{rutaColor[r]=colorDeRuta(r);});
+    codes.filter(c=>RUTAS_APP.indexOf(c)<0)
+      .forEach((code,ix)=>{rutaColor[code]=PALETA[(RUTAS_APP.length+ix)%PALETA.length];});
     DASH_RUTAS=rutas;
     // Hero: stats del día
     const totCli=data.length, totCajas=Math.round(Object.values(rutas).reduce((s,r)=>s+r.totalCajas,0));
@@ -8091,9 +8119,16 @@ async function renderFlota(fechaSel,forzar,silencioso){
     _flotaDia=await _flotaDatosDia(fecha);
     _asigPorRuta=_flotaDia.asig;
     _tripAsignada=_flotaDia.reg;
-    const rutas=Object.keys(_flotaDia.porRuta).length
-      ? [...new Set([...Object.keys(_flotaDia.porRuta),...Object.keys(_asigPorRuta)])].sort()
-      : [...new Set([...Object.keys(_asigPorRuta),...Object.keys(_flotaDia.hojas)])].sort();
+    /* Las de autoventa van SIEMPRE, tengan o no movimiento ese día. No traen cargue ni lista de
+       clientes —por eso no aparecían por ninguna de las tres vías de arriba—, pero son rutas de la
+       operación: llevan placa, tripulación y GPS como cualquier otra. Sin esto, sus vehículos
+       caían al cajón de «sin ruta» y no había dónde asignarles la ruta que sí tienen. */
+    const rutas=[...new Set([
+      ...(Object.keys(_flotaDia.porRuta).length
+        ? [...Object.keys(_flotaDia.porRuta),...Object.keys(_asigPorRuta)]
+        : [...Object.keys(_asigPorRuta),...Object.keys(_flotaDia.hojas)]),
+      ...RUTAS_AUTOVENTA
+    ])].sort();
     const usoUnit={};Object.values(_asigPorRuta).forEach(u=>usoUnit[u]=(usoUnit[u]||0)+1);
     const asignados=new Set(Object.values(_asigPorRuta));
     const sinRuta=(_vehCache||[]).filter(v=>!asignados.has(v.nombre))
@@ -8214,7 +8249,7 @@ async function _flotaDatosDia(fecha){
 }
 
 function _flFila(ruta,i,usoUnit,esHoy){
-  const col=rutaColor[ruta]||'#4A5060';
+  const col=colorDeRuta(ruta);
   const unit=_asigPorRuta[ruta]||'';
   const compartido=unit&&usoUnit[unit]>1;
   const personas=(_tripAsignada[ruta]||[]).slice();
