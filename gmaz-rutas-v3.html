@@ -7405,7 +7405,7 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
   if(!_vehCache)_vehCache=await secVehiculos()||[];
   const v=_vehCache.find(x=>x.nombre===unitId);
   if(!v){toast('Vehículo no encontrado','err');_recorridoAbierto=false;return;}
-  toast('Cargando recorrido de '+unitId+' ('+fecha+')…','ok');
+  toast('Cargando recorrido de '+unitId+(ruta?' · '+ruta:' · sin ruta')+' ('+fecha+')…','ok');
   try{
     const puntos=await obtenerHistorialVehiculo(v,fecha);
     if(!puntos||!puntos.length){toast('Sin recorrido para '+unitId+' el '+fecha,'err');_recorridoAbierto=false;return;}
@@ -7424,8 +7424,11 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
        fue en un cliente o «en la nada». Con la lista equivocada, esa decisión también lo está. */
     const todos=await clientesDeFecha(fecha);
     const novSet=await novedadesDeFecha(fecha);
-    const clientesRuta=todos.filter(c=>rutaBase(c.ruta)===rutaBase(ruta)&&c.lat&&c.lng);
-    if(!clientesRuta.length&&fecha!==getColDate())
+    /* Un vehículo sin ruta —neveras, refrigeración, un supernumerario— no tiene clientes que
+       cruzar, y eso no es una falla: sus paradas saldrán sin cliente porque no iba a repartir.
+       El aviso solo tiene sentido cuando SÍ hay una ruta y aun así no aparecen sus clientes. */
+    const clientesRuta=ruta?todos.filter(c=>rutaBase(c.ruta)===rutaBase(ruta)&&c.lat&&c.lng):[];
+    if(ruta&&!clientesRuta.length&&fecha!==getColDate())
       toast('No hay PPAS guardado del '+fecha+': las paradas no se pueden cruzar con clientes','err');
     const iw=new google.maps.InfoWindow();
     clientesRuta.forEach(c=>{
@@ -7465,13 +7468,16 @@ async function toggleRecorrido(unitId,ruta,fechaSel){
     },70);
     recorridoCapa.timer=_truckTimer;
     mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord,met);
-    toast('Recorrido '+unitId+' ('+fecha+'): '+paradas.length+' paradas · ~'+km.toFixed(1)+' km','ok');
+    toast('Recorrido '+unitId+' ('+fecha+'): '+paradas.length+' paradas · ~'+km.toFixed(1)+' km'+
+    (ruta?'':' · sin ruta asignada, por eso las paradas salen sin cliente'),'ok');
   }catch(e){toast('Error cargando recorrido: '+e.message,'err');_recorridoAbierto=false;}
 }
 function mostrarRecorridoPanel(unitId,ruta,fecha,paradas,km,ord,met){
   const p=document.getElementById('rec-panel');if(!p)return;
   const col=rutaColor[ruta]||'#1A56DB';
-  document.getElementById('rp-titulo').innerHTML='<span style="color:'+col+'">'+ruta+' · '+unitId+'</span>';
+  /* Sin ruta el título salía como « · GIM382», con el punto colgando de la nada. */
+  document.getElementById('rp-titulo').innerHTML='<span style="color:'+col+'">'+
+    (ruta?ruta+' · '+unitId:unitId+' <small style="font-weight:600;color:#8A90A0">sin ruta</small>')+'</span>';
   // Jornada real (primer y último movimiento), no el primer/último punto del día: el vehículo
   // sigue reportando parqueado de noche y eso hacía ver rangos como "00:36–23:36".
   const ini=((met&&met.horaIni)||(ord[0]&&ord[0].hora)||'').slice(0,5)||'—';
@@ -8045,14 +8051,19 @@ async function renderFlota(fechaSel,forzar,silencioso){
     const asignados=new Set(Object.values(_asigPorRuta));
     const sinRuta=(_vehCache||[]).filter(v=>!asignados.has(v.nombre))
       .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
-    window._flIdx={};rutas.forEach((r,i)=>window._flIdx[r]=i);
+    /* Las placas sin ruta entran al mismo índice: sin esto, `_flRepintarFila(placa)` no encuentra
+       la fila y recarga la tabla entera, que es lo que hacía parecer que «Poner» no servía. */
+    window._flIdx={};
+    rutas.forEach((r,i)=>window._flIdx[r]=i);
+    sinRuta.forEach((v,i)=>window._flIdx[v.nombre]=rutas.length+i);
     window._flUso=usoUnit; window._flEsHoy=esHoy; window._rutasAsig=rutas;
     // Firma de lo que de verdad cambia la tabla: rutas, placas, tripulación y cifras del día.
     // El GPS y los km quedan FUERA a propósito: se refrescan solos cada 25-30 s y si entraran aquí
     // obligarían a reconstruir la tabla todo el tiempo — eso era el parpadeo que cerraba la fila.
     const firma=JSON.stringify({
       r:rutas, a:_asigPorRuta,
-      t:rutas.map(r=>(_tripAsignada[r]||[]).map(x=>x.ced+':'+x.rol+':'+(x.origen||'')).sort().join('|')),
+      t:rutas.concat(sinRuta.map(v=>v.nombre))
+        .map(r=>(_tripAsignada[r]||[]).map(x=>x.ced+':'+x.rol+':'+(x.origen||'')).sort().join('|')),
       c:rutas.map(r=>[(_flotaDia.porRuta[r]||{}).tot,(_flotaDia.hojas[r]||{}).cargueCaj]),
       f:Object.keys(maestroConductores||{}).map(k=>k+':'+maestroConductores[k].ced),
       v:rutas.map(r=>{const x=(_flotaDia.val||{})[r];return x&&x.ok?(x.hora||'1')+'|'+(x.firma||''):'0';}),
@@ -8074,7 +8085,8 @@ async function renderFlota(fechaSel,forzar,silencioso){
       '</tr></thead><tbody>'+
       (rutas.length?rutas.map((r,i)=>_flFila(r,i,usoUnit,esHoy)).join('')
         :'<tr><td colspan="10"><div class="veh-cargando">No hay rutas ese día. Sube el PPAS desde la Rutina diaria.</div></td></tr>')+
-      sinRuta.map((v,i)=>_flFilaSinRuta(v,esHoy)).join('')+
+      // El índice arranca después de las rutas para que ningún id de fila se repita.
+      sinRuta.map((v,i)=>_flFilaSinRuta(v,esHoy,rutas.length+i)).join('')+
       '</tbody></table>';
     // Si el resultado es igual al anterior, no se toca el DOM: sin repintado, sin parpadeo y sin
     // perder la fila que el coordinador tenga abierta.
@@ -8304,20 +8316,55 @@ function abrirPickerPlaca(btn,ruta){
   setTimeout(()=>document.addEventListener('click',_fpkFuera),0);
 }
 
-/* El vehículo que ese día no salió a ninguna ruta: misma rejilla, en gris. */
-function _flFilaSinRuta(v,esHoy){
-  const fijo=(maestroConductores||{})[v.nombre]||null;
-  const celCond=esHoy?(fijo?_arChipSugerido(fijo,'',v.nombre):_arSelCond('',v.nombre,null))
+/* ══ EL VEHÍCULO SIN RUTA TAMBIÉN TIENE GENTE Y RECORRIDO (25-ago-2026) ══
+   Era una fila muerta: sin botón de auxiliares, sin clic, y el «Poner» del conductor fijo no hacía
+   nada porque escribía la clave con la ruta vacía —REGISTRO/{fecha}/__{cédula}.json— y después
+   `_flRepintarFila('')` no encontraba la fila y recargaba la tabla entera, dejando todo como estaba.
+
+   Pero «sin ruta de entrega» no es «sin trabajo»: el 25 de agosto GIM382 y GIM386 iban a 19 y 24
+   km/h mientras el sistema los daba por quietos y sin nadie a cargo. Son neveras, refrigeración,
+   supernumerarios —salen igual y alguien responde por ellos—.
+
+   La clave pasa a ser LA PLACA cuando no hay ruta. Es lo que corresponde: ese día esa tripulación
+   es del vehículo, no de una ruta que no existe. Y como una placa nunca coincide con un código
+   KA4Vxx, `rutaEntrega()` la deja fuera de los tableros de ruta sola, sin ensuciar ninguna cifra. */
+function _flFilaSinRuta(v,esHoy,idx){
+  const K=v.nombre;                    // la placa hace de clave
+  const fijo=(maestroConductores||{})[K]||null;
+  const gente=(_tripAsignada[K]||[]);
+  const cond=gente.find(x=>x.rol==='conductor')||null;
+  const auxs=gente.filter(x=>x!==cond);
+  let celCond;
+  if(!esHoy)celCond=cond?_arChip(cond,K,'conductor',true)
     :(fijo?'<span class="fl-nada">'+_nomCorto(fijo.nombre,3)+'</span>':'<span class="fl-nada">sin conductor fijo</span>');
-  return '<tr class="fl-fila sin-ruta">'+
-    '<td class="fl-c1"></td>'+
+  else if(cond)celCond=_arChip(cond,K,'conductor',false);
+  else if(fijo)celCond=_arChipSugerido(fijo,K,K);
+  else celCond=_arSelCond(K,K,null);
+  const pal=auxs.length>=2?1:2;
+  let celAux=auxs.slice(0,AUX_MAX).map(a=>_flChipMini(a,K,esHoy,pal)).join('');
+  if(esHoy&&auxs.length<AUX_MAX)celAux+='<button class="fl-add" title="Agregar un auxiliar a '+K+'"'+
+    ' onclick="event.stopPropagation();abrirPicker(this,\''+K+'\',\'auxiliar\')">+</button>';
+  if(!celAux)celAux='<span class="fl-nada">—</span>';
+  const estado=gente.length
+    ? '<span class="ar-est">Sin ruta · con gente</span>'
+    : '<span class="ar-est mute">No salió</span>';
+  return '<tr class="fl-fila sin-ruta" id="flf-'+idx+'" title="Toca para ver el recorrido de '+K+'"'+
+    ' onclick="flVerRecorridoPlaca(\''+K+'\',event)">'+
+    '<td class="fl-c1"><span class="caret">▸</span></td>'+
     '<td><span class="fl-nada">sin ruta</span></td>'+
-    '<td><span class="fl-placa"><b>'+v.nombre+'</b><small>'+(v.marca?v.marca+' '+(v.modelo||''):(v.tipo_vehiculo||''))+'</small></span></td>'+
-    '<td><span class="gpsc" data-gps="'+v.nombre+'">'+_flGps(v.nombre,esHoy)+'</span></td>'+
+    '<td><span class="fl-placa"><b>'+K+'</b><small>'+(v.marca?v.marca+' '+(v.modelo||''):(v.tipo_vehiculo||''))+'</small></span></td>'+
+    '<td><span class="gpsc" data-gps="'+K+'">'+_flGps(K,esHoy)+'</span></td>'+
     '<td class="n"><span class="fl-nada">—</span></td><td class="n"><span class="fl-nada">—</span></td>'+
-    '<td class="n" data-km="'+v.nombre+'"><span class="fl-cargando">…</span></td>'+
-    '<td>'+celCond+'</td><td><span class="fl-nada">—</span></td>'+
-    '<td class="cen"><span class="ar-est mute">No salió</span></td></tr>';
+    '<td class="n" data-km="'+K+'"><span class="fl-cargando">…</span></td>'+
+    '<td>'+celCond+'</td><td><div class="fl-enfila">'+celAux+'</div></td>'+
+    '<td class="cen">'+estado+'</td></tr>';
+}
+/* Ver el recorrido de una placa que no lleva ruta. El trazado sale del GPS, que es del vehículo y
+   no de la ruta, así que no hace falta ninguna: las paradas saldrán sin cliente y está bien, porque
+   este camión no iba a repartir. */
+function flVerRecorridoPlaca(unit,ev){
+  if(ev&&ev.target.closest('select,button'))return;   // no abrir al usar los controles
+  toggleRecorrido(unit,'',_flotaFecha||getColDate());
 }
 
 function _flVehTxt(unit){
