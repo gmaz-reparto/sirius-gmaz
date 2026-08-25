@@ -2344,6 +2344,7 @@ tr.abierta .tc-caret{transform:rotate(90deg)}
               <div class="rutas-filtro" id="rutas-filtro"></div>
               <div class="map-btns">
                 <button class="map-fab on" id="btn-trafico" onclick="haptic();toggleTrafico()" title="Tráfico en vivo">🚦</button>
+                <button class="map-fab on" id="btn-geoev" onclick="haptic();toggleEventosGeo()" title="Salidas y reingresos de zona">◇</button>
                 <button class="map-fab" id="btn-medir" onclick="haptic();toggleMedir()" title="Medir distancia">📏</button>
                 <button class="map-fab" id="btn-multi" onclick="haptic();abrirVistaMultiple()" title="Vista múltiple (un mapa por ruta)">▦</button>
                 <button class="map-fab" id="btn-fullmap" onclick="haptic();toggleMapaCompleto()" title="Pantalla completa">⛶</button>
@@ -6672,6 +6673,8 @@ async function pintarMapaDeFecha(f){
   const fecha=f||fechaCtx();
   const hoy=getColDate();
   const meta=document.getElementById('dash-map-meta');
+  // Los eventos de zona son de hoy: sobre el mapa de otra fecha son ruido con forma de dato.
+  if(fecha!==hoy)limpiarEventosGeocerca();
   if(fecha===hoy){
     /* En vivo: si el tablero ya tiene los datos de hoy se reutilizan; si trae otro día —porque se
        estuvo mirando el 20— hay que recargarlo, no repintar lo que haya quedado. */
@@ -6740,6 +6743,12 @@ function aplicarFiltroRutas(){
   // Geocercas y vehículos también respetan el filtro
   Object.keys(geocercas||{}).forEach(r=>{const g=geocercas[r];if(g&&g.poligonoGoogle)g.poligonoGoogle.setMap(rutaVisible(r)?dashMap:null);});
   flotaMarkers.forEach(m=>{if(m._ruta!=null)m.setMap(rutaVisible(m._ruta)?dashMap:null);});
+  /* Las salidas y reingresos de zona: viven en su propia capa y antes se quedaban pegados al mapa
+     pasara lo que pasara —se filtrara una ruta, se cambiara de día o se apagara todo—. */
+  _cadaMarcadorGeo(m=>{
+    const rs=m._rutas||[];
+    m.setMap(geoEventosOn&&(!rs.length||rs.some(r=>rutaVisible(r)))?dashMap:null);
+  });
 }
 /* ══ Pantalla completa del mapa ══ */
 function toggleMapaCompleto(){
@@ -7835,23 +7844,61 @@ function evaluarGeocercaVehiculo(unitId,ruta,lat,lng,vel,ignicion){
   dibujarTrailVehiculo(unitId,rutaLbl,estado);
   cargarEventosGeocerca();
 }
+/* ══ LOS PUNTOS DE GEOCERCA (25-ago-2026) ══
+   Marcan dónde un vehículo se salió de su zona y dónde volvió. Eran círculos rellenos del mismo
+   tamaño y forma que los clientes, en rojo y verde —los mismos colores de «pendiente» y
+   «entregado»—, así que en el mapa no había manera de saber que eran otra cosa. Y no obedecían
+   al filtro de rutas ni se borraban nunca: `aplicarFiltroRutas` mira `dashMarkers`, las geocercas y
+   la flota, pero esta capa vive aparte en `geocercaCapas` y nadie la tocaba.
+
+   Ahora son un rombo con borde —no se confunden con un cliente—, llevan su ruta para que el filtro
+   los esconda con ella, y tienen su propio interruptor en el mapa. */
+let geoEventosOn=true;
+function _icoGeoEvento(salida){
+  const col=salida?'#E30613':'#0E9F6E';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">'+
+    '<path d="M11 1.5 20.5 11 11 20.5 1.5 11z" fill="'+col+'" stroke="#fff" stroke-width="2.4"/>'+
+    '<path d="'+(salida?'M11 6.5v7m0 0-3-3m3 3 3-3':'M11 14.5v-7m0 0-3 3m3-3 3 3')+
+      '" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return {url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),
+    scaledSize:new google.maps.Size(22,22), anchor:new google.maps.Point(11,11)};
+}
 function dibujarTrailVehiculo(unitId,ruta,estado){
   if(!dashMap)return;
   const capa=geocercaCapas[unitId]=geocercaCapas[unitId]||{};
+  const rutas=Array.isArray(ruta)?ruta:String(ruta||'').split(' + ').filter(Boolean);
+  const visible=()=>geoEventosOn&&(!rutas.length||rutas.some(r=>rutaVisible(r)));
   // Sin línea de rastro roja en vivo: confundía el mapa. El recorrido se ve con "Ver ▶".
   if(capa.polyline){capa.polyline.setMap(null);capa.polyline=null;}
-  if(estado.puntoSalida){
-    if(capa.marcadorSalida)capa.marcadorSalida.setMap(null);
-    capa.marcadorSalida=new google.maps.Marker({position:estado.puntoSalida,map:dashMap,zIndex:1900,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#E30613',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
-      title:unitId+' salió aquí'});
-  }
-  if(estado.puntoEntrada){
-    if(capa.marcadorEntrada)capa.marcadorEntrada.setMap(null);
-    capa.marcadorEntrada=new google.maps.Marker({position:estado.puntoEntrada,map:dashMap,zIndex:1900,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#0E9F6E',fillOpacity:1,strokeColor:'#fff',strokeWeight:2},
-      title:unitId+' reingresó aquí'});
-  }
+  capa.rutas=rutas;
+  const poner=(clave,pos,salida,txt)=>{
+    if(capa[clave])capa[clave].setMap(null);
+    const mk=new google.maps.Marker({position:pos,map:visible()?dashMap:null,zIndex:1900,
+      icon:_icoGeoEvento(salida), title:unitId+' '+txt+(rutas.length?' · '+rutas.join(' + '):'')});
+    mk._ruta=rutas[0]||null; mk._rutas=rutas; mk._geo=true;
+    capa[clave]=mk;
+  };
+  if(estado.puntoSalida) poner('marcadorSalida',estado.puntoSalida,true,'salió de su zona aquí');
+  if(estado.puntoEntrada)poner('marcadorEntrada',estado.puntoEntrada,false,'volvió a su zona aquí');
+}
+/* Recorre los marcadores de geocerca aplicando una decisión. */
+function _cadaMarcadorGeo(fn){
+  Object.keys(geocercaCapas||{}).forEach(u=>{
+    const c=geocercaCapas[u]; if(!c)return;
+    [c.marcadorSalida,c.marcadorEntrada].forEach(m=>{ if(m)fn(m,c,u); });
+  });
+}
+/* Borrarlos del todo. Se usa al cambiar de día: son el estado EN VIVO de hoy y encima del mapa de
+   otra fecha no significan nada. */
+function limpiarEventosGeocerca(){
+  _cadaMarcadorGeo(m=>m.setMap(null));
+  geocercaCapas={};
+}
+function toggleEventosGeo(){
+  geoEventosOn=!geoEventosOn;
+  const b=document.getElementById('btn-geoev');if(b)b.classList.toggle('on',geoEventosOn);
+  aplicarFiltroRutas();
+  toast(geoEventosOn?'Se muestran las salidas y reingresos de zona':'Ocultas las salidas y reingresos de zona','ok');
 }
 async function registrarEventoGeocerca(unitId,ruta,tipo,lat,lng,vel,distanciaM,tiempoFueraSeg,estadoFuera){
   const base={fecha:getColDate(),hora:new Date().toISOString(),unit_id:unitId,ruta,tipo,lat,lng,velocidad:vel||0,distancia_limite_m:distanciaM,tiempo_fuera_seg:tiempoFueraSeg};
