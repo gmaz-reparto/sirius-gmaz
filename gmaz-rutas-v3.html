@@ -3104,7 +3104,19 @@ const CFG={
    que no son de este reparto: KA4V01, KA4V63 y las mayoristas que el cliente recoge en la empresa.
    Eso ensuciaba la efectividad —el 15 de agosto KA4V01 y KA4V63 metieron 237 cajas que nadie tenía
    que entregar— y le mostraba al coordinador rutas que no son suyas. Desde acá, doce y nada más. */
-const RUTAS_ENTREGA=['KA4V11','KA4V12','KA4V13','KA4V50','KA4V51','KA4V52','KA4V53','KA4V54','KA4V55','KA4V56'];
+/* ══ LAS RUTAS DE LA OPERACIÓN (ampliado 01-sep-2026) ══
+   Esta lista es la puerta de entrada de TODO: quien no esté aquí queda fuera del tablero, del mapa,
+   de las novedades, de la auditoría y del cruce con liquidación. Sus clientes se cargan al PPAS
+   igual, pero el sistema los ignora —en silencio, que es lo peligroso—.
+
+   El 1-sep-2026 entraron tres rutas que venían en el PPAS y no existían aquí:
+     · KA4V62 — reparto clásico: 31 clientes, 241 cajas (tiendas, panaderías, un Metro)
+     · KA4V72 — mayorista: UN cliente, 575 cajas (DISTRIBUIDORA SS, km 7 vía sur)
+     · KA4V73 — mayoristas: 8 depósitos y distribuidoras, 719 cajas
+   Las dos últimas mueven más cajas que cualquier ruta de reparto con una fracción de las paradas.
+   Operativamente son entrega —se carga, se lleva, se puede rechazar— y así se tratan. */
+const RUTAS_ENTREGA=['KA4V11','KA4V12','KA4V13','KA4V50','KA4V51','KA4V52','KA4V53','KA4V54','KA4V55','KA4V56',
+                     'KA4V62','KA4V72','KA4V73'];
 const RUTAS_AUTOVENTA=['KA4V03','KA4V04'];   // sin cargue ni clientes: solo tripulación, placa y GPS
 const RUTAS_APP=RUTAS_ENTREGA.concat(RUTAS_AUTOVENTA);
 /* Los pisos —KA4V11_2, KA4V52_3— son un segundo o tercer viaje de la MISMA ruta: misma tripulación,
@@ -4477,8 +4489,25 @@ const PALETA=['#E30613','#2563EB','#0E9F6E','#D97706','#7C3AED','#0891B2','#DB27
    Ahora el color sale de la posición fija de la ruta en RUTAS_APP, salga o no salga ese día. Y las
    de autoventa —KA4V03 y KA4V04— entran en el mismo reparto: son rutas de la operación aunque no
    lleven cargue ni lista de clientes. */
+/* ── Revisado 01-sep-2026 ──
+   La posición fija en RUTAS_APP arregló el día a día, pero no el año a año: al entrar KA4V62,
+   KA4V72 y KA4V73, las de autoventa se corrían dos puestos y cambiaban de color, y las tres nuevas
+   caían encima del rojo de la V11 y el azul de la V12 por el módulo de la paleta —indistinguibles
+   justo de las rutas más cargadas—.
+
+   La posición en una lista no es una identidad. Cada ruta tiene ahora su color ESCRITO, y agregar
+   una nueva no vuelve a mover el de ninguna otra. Una desconocida toma un color de reserva. */
+const COLOR_RUTA={
+  KA4V11:'#E30613', KA4V12:'#2563EB', KA4V13:'#0E9F6E', KA4V50:'#D97706',
+  KA4V51:'#7C3AED', KA4V52:'#0891B2', KA4V53:'#DB2777', KA4V54:'#65A30D',
+  KA4V55:'#EA580C', KA4V56:'#475569',
+  KA4V62:'#A21CAF',                    // magenta — reparto nuevo
+  KA4V72:'#854D0E', KA4V73:'#831843',  // tonos oscuros — mayoristas
+  KA4V03:'#7C2D12', KA4V04:'#1E3A8A'   // autoventa (conservan el suyo)
+};
 function colorDeRuta(r){
   const b=rutaBase(r);
+  if(COLOR_RUTA[b])return COLOR_RUTA[b];
   const i=RUTAS_APP.indexOf(b);
   if(i>=0)return PALETA[i%PALETA.length];
   return rutaColor[b]||'#4A5060';
@@ -4837,7 +4866,7 @@ async function cargarDash(fechaSel){
       toast('No hay PPAS guardado del '+fecha+': ese día no se puede reconstruir','err');
       return;
     }
-    // Solo las diez rutas de entrega: lo demás que venga en la tabla no es de esta operación.
+    // Solo las rutas de RUTAS_ENTREGA: lo demás que venga en la tabla no es de esta operación.
     const clientes_=(todos||[]).filter(c=>rutaEntrega(c.ruta)),
           novedades_=(novs||[]).filter(x=>rutaEntrega(x.ruta)),
           estados_=(est||[]).filter(x=>rutaEntrega(x.ruta));
@@ -9755,7 +9784,7 @@ async function cruceAuditoria(fecha){
   const vistos=new Set();
   Object.entries(ppas).forEach(([cod,c])=>{
     const ruta=rutaBase(c.ruta||c.r||'');
-    if(!rutaEntrega(ruta))return;              // solo las diez rutas de entrega
+    if(!rutaEntrega(ruta))return;              // solo las rutas de RUTAS_ENTREGA
     vistos.add(String(cod));
     const base={cod:String(cod),nombre:c.nombre||'',ruta,cargue:+c.caj||0,
       novedad:nov[String(cod)]||null,liquidado:liq[cod]?cajLiq(cod):null};
@@ -14155,7 +14184,10 @@ async function _entDatosDia(fecha){
   const out={fecha,liquidado:fact.size>0,rutas:{}};
   Object.entries(ppas).forEach(([cod,c])=>{
     const r=rutaBase(c.ruta||c.r||'—');
-    if(!rutaEntrega(r))return;                       // KA4V01, KA4V63 y mayoristas quedan fuera
+    /* Fuera lo que no esté en RUTAS_ENTREGA (KA4V01, KA4V63…). Los mayoristas KA4V72 y KA4V73 SÍ
+       entran desde el 1-sep-2026: mueven más cajas que cualquier ruta de reparto y su facturación
+       tiene que cruzarse con la liquidación como la de todas. */
+    if(!rutaEntrega(r))return;
     const o=out.rutas[r]||(out.rutas[r]={asig:0,fact:0,cajAsig:0,cargue:0,sinFact:[]});
     o.asig++; o.cajAsig+=(+c.caj||0);
     if(fact.has(String(cod)))o.fact++;
